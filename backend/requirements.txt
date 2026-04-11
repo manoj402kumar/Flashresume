@@ -1,0 +1,14 @@
+fastapi
+uvicorn[standard]
+python-multipart
+pdfplumber
+pdf2image
+Pillow
+google-generativeai
+openai
+python-dotenv
+supabase
+pydantic
+httpx
+razorpay
+resend
