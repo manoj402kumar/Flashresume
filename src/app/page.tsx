@@ -14,8 +14,78 @@ import {
   AlertTriangle,
   Wand2
 } from "lucide-react";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { parseResume, runFullAnalysis } from "@/lib/api";
 
 export default function App() {
+  const router = useRouter();
+  const [file, setFile] = useState<File | null>(null);
+  const [resumeText, setResumeText] = useState("");
+  const [jobDescription, setJobDescription] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [isDragging, setIsDragging] = useState(false);
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const droppedFile = e.dataTransfer.files[0];
+    if (droppedFile?.type === "application/pdf") {
+      setFile(droppedFile);
+      setResumeText("");
+      setError("");
+    } else {
+      setError("Please upload a PDF file");
+    }
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFile = e.target.files?.[0];
+    if (selectedFile) {
+      setFile(selectedFile);
+      setResumeText("");
+      setError("");
+    }
+  };
+
+  const handleGenerate = async () => {
+    if (!jobDescription.trim()) {
+      setError("Please paste a job description");
+      return;
+    }
+
+    if (!file && !resumeText.trim()) {
+      setError("Please upload a resume or paste text");
+      return;
+    }
+
+    setLoading(true);
+    setError("");
+
+    try {
+      let finalResumeText = resumeText;
+
+      if (file) {
+        const parseResult = await parseResume(file);
+        finalResumeText = parseResult.resume_text;
+      }
+
+      const analysisResult = await runFullAnalysis(finalResumeText, jobDescription);
+
+      localStorage.setItem("resume_text", finalResumeText);
+      localStorage.setItem("job_description", jobDescription);
+      localStorage.setItem("analysis", JSON.stringify(analysisResult.analysis));
+      localStorage.setItem("project_check", JSON.stringify(analysisResult.projectCheck));
+
+      router.push("/analyze");
+    } catch (err: any) {
+      setError(err.message || "Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen font-sans">
       {/* TopNavBar */}
@@ -29,7 +99,10 @@ export default function App() {
             <a href="#pricing" className="text-on-surface-variant hover:text-primary transition-colors font-medium">Pricing</a>
             <a href="#reviews" className="text-on-surface-variant hover:text-primary transition-colors font-medium">Reviews</a>
           </div>
-          <button className="flash-gradient text-white font-bold px-6 py-2.5 rounded-full hover:opacity-90 transition-all active:scale-95 shadow-lg shadow-primary/20">
+          <button
+            onClick={() => document.getElementById('file-upload')?.click()}
+            className="flash-gradient text-white font-bold px-6 py-2.5 rounded-full hover:opacity-90 transition-all active:scale-95 shadow-lg shadow-primary/20"
+          >
             Get Started
           </button>
         </div>
@@ -52,7 +125,10 @@ export default function App() {
               Just put your resume and we take the rest.
             </p>
             <div className="flex flex-wrap gap-4">
-              <button className="flash-gradient text-white text-lg font-bold px-8 py-4 rounded-full flex items-center gap-2 group transition-all shadow-xl shadow-primary/25">
+              <button
+                onClick={() => document.getElementById('file-upload')?.click()}
+                className="flash-gradient text-white text-lg font-bold px-8 py-4 rounded-full flex items-center gap-2 group transition-all shadow-xl shadow-primary/25"
+              >
                 Build My Resume
                 <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
               </button>
@@ -67,24 +143,56 @@ export default function App() {
           >
             <div className="bg-surface-container-lowest rounded-[2rem] p-8 shadow-2xl shadow-primary/5 border border-primary/5">
               <div className="space-y-6">
-                <div className="p-8 border-2 border-dashed border-primary-container/50 rounded-2xl bg-surface-container-low flex flex-col items-center justify-center group cursor-pointer hover:bg-surface-container-lowest transition-colors">
+                <input
+                  type="file"
+                  accept=".pdf"
+                  onChange={handleFileSelect}
+                  className="hidden"
+                  id="file-upload"
+                />
+                <label
+                  htmlFor="file-upload"
+                  onDrop={handleDrop}
+                  onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+                  onDragLeave={() => setIsDragging(false)}
+                  className={`p-8 border-2 border-dashed rounded-2xl flex flex-col items-center justify-center cursor-pointer transition-colors ${
+                    isDragging
+                      ? "border-primary bg-primary/5"
+                      : file
+                      ? "border-primary-container bg-primary-container/10"
+                      : "border-primary-container/50 bg-surface-container-low hover:bg-surface-container-lowest"
+                  }`}
+                >
                   <CloudUpload className="text-primary w-12 h-12 mb-4" />
-                  <span className="font-headline text-on-background font-bold">Drop your current resume</span>
-                  <span className="text-sm text-on-surface-variant">PDF, DOCX (Max 5MB)</span>
-                </div>
+                  <span className="font-headline text-on-background font-bold">
+                    {file ? file.name : "Drop your current resume"}
+                  </span>
+                  <span className="text-sm text-on-surface-variant">PDF (Max 10MB)</span>
+                </label>
                 <div className="space-y-2">
                   <label className="font-sans text-xs font-semibold uppercase tracking-wider text-on-surface-variant ml-1">
                     PASTE JOB DESCRIPTION
                   </label>
-                  <input
-                    type="text"
-                    className="w-full px-6 py-4 rounded-xl bg-surface-container-low border-none focus:ring-2 focus:ring-primary-container transition-all placeholder:text-on-surface-variant/50"
-                    placeholder="text"
+                  <textarea
+                    value={jobDescription}
+                    onChange={(e) => setJobDescription(e.target.value)}
+                    className="w-full px-6 py-4 rounded-xl bg-surface-container-low border-none focus:ring-2 focus:ring-primary-container transition-all placeholder:text-on-surface-variant/50 min-h-[120px] resize-none"
+                    placeholder="Paste the job description here..."
                   />
                 </div>
-                <button className="w-full bg-on-background text-white py-4 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-primary transition-colors group">
+                {error && (
+                  <div className="text-error text-sm font-medium flex items-center gap-2">
+                    <AlertTriangle className="w-4 h-4" />
+                    {error}
+                  </div>
+                )}
+                <button
+                  onClick={handleGenerate}
+                  disabled={loading}
+                  className="w-full bg-on-background text-white py-4 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-primary transition-colors group disabled:opacity-50 disabled:cursor-not-allowed"
+                >
                   <Bolt className="text-primary-container w-5 h-5 fill-primary-container" />
-                  Generate
+                  {loading ? "Analyzing..." : "Generate"}
                 </button>
               </div>
             </div>
@@ -358,7 +466,10 @@ export default function App() {
               <p className="text-xl mb-12 opacity-90 max-w-2xl mx-auto">
                 Stop sending basic resumes, send top 1% resume that recruiters really care.
               </p>
-              <button className="bg-white text-primary text-xl font-bold px-12 py-5 rounded-full hover:shadow-2xl transition-all active:scale-95">
+              <button
+                onClick={() => document.getElementById('file-upload')?.click()}
+                className="bg-white text-primary text-xl font-bold px-12 py-5 rounded-full hover:shadow-2xl transition-all active:scale-95"
+              >
                 Try Free Now
               </button>
             </div>

@@ -9,7 +9,11 @@ RULES — MUST FOLLOW:
 5. Weave job description keywords naturally into bullets
 6. Keep all dates, companies, institutions exactly as in original
 7. Return ONLY the JSON below. No markdown. No explanation.
-8. In the "changes" field, list every modification you made (e.g., "Enhanced project X bullet with Docker keyword", "Added AWS to skills")
+8. In the "changes" field, list EVERY modification with BEFORE → AFTER format:
+   - For additions: "Added Docker to developer_tools"
+   - For enhancements: "Enhanced Food Delivery App bullet 1: Changed 'Built using React' to 'Developed a scalable food delivery platform using React serving 500+ users'"
+   - For quantifications: "Enhanced Experience bullet 2: Changed 'Fixed bugs' to 'Resolved 50+ bugs, improving system stability by 30%'"
+   - Be SPECIFIC: show the exact old text and exact new text for each change
 
 OUTPUT FORMAT (Template v1 — strict):
 {{
@@ -63,9 +67,9 @@ OUTPUT FORMAT (Template v1 — strict):
     "developer_tools": ["Git", "Docker", "Postman"]
   }},
   "changes": [
-    "Added Docker to technical skills",
-    "Enhanced project X bullet 1 with AWS keyword",
-    "Quantified experience bullet 2 with 40% metric"
+    "Added Docker to developer_tools",
+    "Enhanced Food Delivery App bullet 1: Changed 'Built app' to 'Developed scalable food delivery platform serving 500+ users'",
+    "Enhanced Experience bullet 2: Changed 'Fixed bugs' to 'Resolved 50+ bugs, improving system stability by 40%'"
   ],
   "ats_score_before": {ats_score_before},
   "ats_score_after": 0

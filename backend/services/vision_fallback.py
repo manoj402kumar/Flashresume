@@ -2,6 +2,7 @@ import google.generativeai as genai
 import os
 import base64
 import io
+import platform
 from pdf2image import convert_from_bytes
 from dotenv import load_dotenv
 from prompts.extract_prompt import EXTRACT_PROMPT
@@ -11,12 +12,20 @@ load_dotenv()
 
 genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 
-# Set poppler path for Windows
-POPPLER_PATH = r"C:\Users\mummi\Downloads\Release-25.12.0-0\poppler-25.12.0\Library\bin"
+# Set poppler path - environment-aware for cross-platform compatibility
+if platform.system() == "Windows":
+    POPPLER_PATH = os.getenv("POPPLER_PATH", r"C:\Program Files\poppler\bin")
+else:
+    POPPLER_PATH = None  # Linux/Mac use system PATH after apt-get install poppler-utils
 
 def pdf_to_base64_images(pdf_bytes: bytes) -> list[str]:
     """Convert all PDF pages to base64 PNG strings at 200 DPI."""
-    images = convert_from_bytes(pdf_bytes, dpi=200, poppler_path=POPPLER_PATH)
+    # Only pass poppler_path on Windows
+    kwargs = {"dpi": 200}
+    if POPPLER_PATH:
+        kwargs["poppler_path"] = POPPLER_PATH
+    
+    images = convert_from_bytes(pdf_bytes, **kwargs)
     result = []
     for img in images:
         buffer = io.BytesIO()
