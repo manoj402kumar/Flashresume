@@ -31,12 +31,19 @@ export default function App() {
     e.preventDefault();
     setIsDragging(false);
     const droppedFile = e.dataTransfer.files[0];
-    if (droppedFile?.type === "application/pdf") {
+    const allowedTypes = [
+      "application/pdf",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "image/jpeg",
+      "image/jpg",
+      "image/png"
+    ];
+    if (droppedFile && allowedTypes.includes(droppedFile.type)) {
       setFile(droppedFile);
       setResumeText("");
       setError("");
     } else {
-      setError("Please upload a PDF file");
+      setError("Please upload PDF, DOCX, JPG, or PNG file");
     }
   };
 
@@ -145,7 +152,7 @@ export default function App() {
               <div className="space-y-6">
                 <input
                   type="file"
-                  accept=".pdf"
+                  accept=".pdf,.docx,.jpg,.jpeg,.png"
                   onChange={handleFileSelect}
                   className="hidden"
                   id="file-upload"
@@ -167,7 +174,7 @@ export default function App() {
                   <span className="font-headline text-on-background font-bold">
                     {file ? file.name : "Drop your current resume"}
                   </span>
-                  <span className="text-sm text-on-surface-variant">PDF (Max 10MB)</span>
+                  <span className="text-sm text-on-surface-variant">PDF, DOCX, JPG, PNG (Max 10MB)</span>
                 </label>
                 <div className="space-y-2">
                   <label className="font-sans text-xs font-semibold uppercase tracking-wider text-on-surface-variant ml-1">

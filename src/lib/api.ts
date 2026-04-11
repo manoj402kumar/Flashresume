@@ -19,9 +19,13 @@ export async function parseResume(file: File): Promise<ParseResponse> {
     throw new Error("File too large. Maximum size is 10MB.");
   }
 
-  // Validate file type
-  if (!file.name.toLowerCase().endsWith(".pdf")) {
-    throw new Error("Only PDF files are accepted.");
+  // Validate file type - support PDF, DOCX, JPG, PNG
+  const allowedExtensions = [".pdf", ".docx", ".jpg", ".jpeg", ".png"];
+  const fileName = file.name.toLowerCase();
+  const isValidType = allowedExtensions.some(ext => fileName.endsWith(ext));
+  
+  if (!isValidType) {
+    throw new Error("Unsupported file type. Please upload PDF, DOCX, JPG, or PNG.");
   }
 
   const formData = new FormData();
