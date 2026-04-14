@@ -48,7 +48,7 @@ def call_deepseek(prompt: str, retries: int = 1) -> dict:
                     model=model,
                     messages=[{"role": "user", "content": prompt}],
                     temperature=0.3,
-                    max_tokens=512
+                    max_tokens=4096
                 )
                 elapsed = round(time.time() - start, 2)
                 text = _clean_response(response.choices[0].message.content)
