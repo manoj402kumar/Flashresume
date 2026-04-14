@@ -1,4 +1,5 @@
 import os
+import re
 import time
 import google.generativeai as genai
 from dotenv import load_dotenv
@@ -7,10 +8,9 @@ load_dotenv()
 
 # Fallback Chain (confirmed + tested)
 FALLBACK_CHAIN = [
-    "gemini-2.5-flash",               # Primary    - best quality (8.25s)
-    "gemini-2.5-flash-lite",          # Fallback 1 - fastest (1.25s)
-    "gemini-3.1-flash-lite-preview",  # Fallback 2 - new gen (1.44s)
-    "gemini-flash-lite-latest",       # Fallback 3 - safe alias (1.77s)
+    "gemini-2.5-flash-lite",   # Fallback 1
+    "gemini-2.5-flash",        # Fallback 2
+    "gemma-3-27b-it",          # Gemma 3 27B - no thinking mode
 ]
 
 genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
@@ -27,16 +27,29 @@ def call_gemini(prompt: str, retries: int = 1) -> dict:
             try:
                 start = time.time()
                 model_instance = genai.GenerativeModel(model)
-                response = model_instance.generate_content(prompt)
+                response = model_instance.generate_content(
+                    prompt,
+                    generation_config=genai.GenerationConfig(
+                        temperature=0.1,
+                    ),
+                    request_options={"timeout": 120}
+                )
                 elapsed = round(time.time() - start, 2)
 
-                # Strip markdown code blocks if present
+                # Strip markdown code blocks and extract JSON
                 text = response.text.strip()
+                # Remove <think>...</think> blocks
+                text = re.sub(r'<think>.*?</think>', '', text, flags=re.DOTALL).strip()
+                # Remove markdown code blocks
                 if text.startswith("```"):
                     text = text.split("```")[1]
                     if text.startswith("json"):
                         text = text[4:]
                     text = text.strip()
+                # Extract JSON if buried in explanation text
+                match = re.search(r'\{.*\}', text, re.DOTALL)
+                if match:
+                    text = match.group(0)
 
                 return {
                     "success": True,

@@ -6,7 +6,6 @@ import pytesseract
 from PIL import Image
 from docx import Document
 from services.pdf_parser import extract_with_pdfplumber, is_extraction_good
-from services.vision_fallback import extract_with_gemini_vision
 
 # Configure Tesseract path for Windows
 if platform.system() == "Windows":
@@ -77,34 +76,24 @@ def extract_with_pymupdf_ocr(pdf_bytes: bytes) -> tuple[str, int]:
 
 def extract_resume_text(pdf_bytes: bytes) -> dict:
     """
-    4-layer orchestrator:
+    3-layer orchestrator:
     Layer 1: pdfplumber (fast, standard text PDFs)
     Layer 2: PyMuPDF (Canva/vector/complex layouts)
     Layer 3: PyMuPDF + Tesseract (scanned/image PDFs)
-    Layer 4: Gemini Vision (nuclear option for worst cases)
     """
-    # Layer 1 — pdfplumber (fast, zero deps)
+    # Layer 1 — pdfplumber
     text, page_count = extract_with_pdfplumber(pdf_bytes)
     if is_extraction_good(text):
-        print("✅ Layer 1 (pdfplumber) succeeded")
         return {"text": text, "page_count": page_count, "parser_used": "pdfplumber"}
 
-    # Layer 2 — PyMuPDF (Canva/vector/complex layout)
-    print("⚠️ Layer 1 failed → trying Layer 2 (PyMuPDF)...")
+    # Layer 2 — PyMuPDF
     text, page_count = extract_with_pymupdf(pdf_bytes)
     if is_extraction_good(text):
-        print("✅ Layer 2 (PyMuPDF) succeeded")
         return {"text": text, "page_count": page_count, "parser_used": "pymupdf"}
 
-    # Layer 3 — PyMuPDF + Tesseract OCR (scanned/image PDFs)
-    print("⚠️ Layer 2 failed → trying Layer 3 (PyMuPDF + Tesseract OCR)...")
+    # Layer 3 — PyMuPDF + Tesseract OCR
     text, page_count = extract_with_pymupdf_ocr(pdf_bytes)
     if is_extraction_good(text):
-        print("✅ Layer 3 (PyMuPDF + Tesseract) succeeded")
         return {"text": text, "page_count": page_count, "parser_used": "pymupdf_tesseract"}
 
-    # Layer 4 — Gemini Vision (nuclear option)
-    print("⚠️ Layer 3 failed → triggering Layer 4 (Gemini Vision fallback)...")
-    text = extract_with_gemini_vision(pdf_bytes)
-    print("✅ Layer 4 (Gemini Vision) succeeded")
-    return {"text": text, "page_count": page_count, "parser_used": "gemini_vision"}
+    raise ValueError("Could not extract text from PDF using any available method.")

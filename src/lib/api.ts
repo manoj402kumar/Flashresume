@@ -79,7 +79,7 @@ export async function analyzeResume(
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ resume_text, job_description }),
-      signal: AbortSignal.timeout(30000),
+      signal: AbortSignal.timeout(120000), // 120s timeout
     });
 
     if (!res.ok) {
@@ -123,7 +123,7 @@ export async function checkProjects(
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ resume_text, job_description }),
-      signal: AbortSignal.timeout(30000),
+      signal: AbortSignal.timeout(120000), // 120s timeout
     });
 
     if (!res.ok) {
