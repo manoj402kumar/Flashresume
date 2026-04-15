@@ -4,13 +4,17 @@ from prompts.generation_prompt import GENERATION_PROMPT
 from llm.master_llm_caller import call_llm
 from templates.template_v1_schema import TemplateV1
 
-def generate_resume(resume_text: str, job_description: str, approved_suggestions: list[str], ats_score_before: int) -> dict:
-    suggestions_text = "\n".join(approved_suggestions) if approved_suggestions else "None"
-
+def generate_resume(resume_text: str, job_description: str, ats_score_before: int, approved_project: str = "") -> dict:
+    # Build prompt with approved project if provided
+    if approved_project:
+        # Add approved project instruction to resume text
+        resume_text_with_project = f"{resume_text}\n\n[APPROVED NEW PROJECT TO ADD]:\n{approved_project}\n\nIMPORTANT: Include this approved project in the final resume. This project was suggested and approved by the user to improve JD relevance."
+    else:
+        resume_text_with_project = resume_text
+    
     prompt = GENERATION_PROMPT.format(
-        resume_text=resume_text,
+        resume_text=resume_text_with_project,
         job_description=job_description,
-        approved_suggestions=suggestions_text,
         ats_score_before=ats_score_before
     )
 
@@ -42,6 +46,26 @@ def generate_resume(resume_text: str, job_description: str, approved_suggestions
     # Validate against Pydantic Template v1 schema
     try:
         validated = TemplateV1(**data)
-        return validated.model_dump()
+        validated_dict = validated.model_dump()
+        
+        # ENFORCE MAX 2 PROJECTS (Code-level guarantee)
+        if len(validated_dict.get("projects", [])) > 2:
+            # Keep only top 2 projects (LLM should have ranked by relevance)
+            removed_projects = [p["title"] for p in validated_dict["projects"][2:]]
+            validated_dict["projects"] = validated_dict["projects"][:2]
+            
+            # Log the enforcement in changes
+            enforcement_msg = f"Enforced MAX 2 projects rule (removed: {', '.join(removed_projects)})"
+            if "changes" in validated_dict:
+                validated_dict["changes"].append(enforcement_msg)
+            else:
+                validated_dict["changes"] = [enforcement_msg]
+        
+        # ENFORCE MIN 2 PROJECTS (Safety check)
+        if len(validated_dict.get("projects", [])) < 2:
+            error_msg = f"Generated resume has only {len(validated_dict.get('projects', []))} project(s). Algorithm requires exactly 2 projects."
+            raise ValueError(error_msg)
+        
+        return validated_dict
     except Exception as e:
         raise ValueError(f"Generated JSON does not match Template v1 schema: {str(e)}")

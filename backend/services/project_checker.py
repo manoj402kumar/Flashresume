@@ -6,20 +6,37 @@ from llm.master_llm_caller import call_llm
 def extract_projects_section(resume_text: str) -> str:
     """
     Extract the projects section from resume text.
-    Uses regex to find content between PROJECTS header and next section.
+    Uses multiple strategies to find projects.
     """
-    # Try to find PROJECTS section (case insensitive)
+    # Strategy 1: Find PROJECTS header (case insensitive)
     patterns = [
-        r'PROJECTS?\s*\n(.*?)(?=\n[A-Z]{3,}|\Z)',  # PROJECTS followed by next section
-        r'Projects?\s*\n(.*?)(?=\n[A-Z]{3,}|\Z)',   # Projects followed by next section
+        r'PROJECTS?\s*[:\n](.*?)(?=\n\s*[A-Z][A-Z\s]{2,}[:\n]|\Z)',  # PROJECTS: or PROJECTS\n
+        r'Projects?\s*[:\n](.*?)(?=\n\s*[A-Z][A-Z\s]{2,}[:\n]|\Z)',   # Projects: or Projects\n
     ]
     
     for pattern in patterns:
         match = re.search(pattern, resume_text, re.IGNORECASE | re.DOTALL)
         if match:
-            return match.group(1).strip()
+            projects_text = match.group(1).strip()
+            if len(projects_text) > 50:  # Valid projects section should have content
+                return projects_text
     
-    # If no projects section found, return empty
+    # Strategy 2: Look for project-like content (tech stack indicators)
+    # If we find React, Node, Python, etc. with bullet points, it's likely projects
+    tech_keywords = ['react', 'node', 'python', 'java', 'mongodb', 'express', 'django', 'flask', 'angular', 'vue']
+    lines = resume_text.split('\n')
+    
+    for i, line in enumerate(lines):
+        line_lower = line.lower()
+        # Check if line contains tech keywords and looks like a project title
+        if any(tech in line_lower for tech in tech_keywords):
+            # Extract surrounding context (likely a project)
+            start = max(0, i - 2)
+            end = min(len(lines), i + 10)
+            context = '\n'.join(lines[start:end])
+            if len(context) > 50:
+                return f"Found project content:\n{context}"
+    
     return "No projects section found in resume."
 
 def check_project_relevance(resume_text: str, job_description: str) -> dict:
@@ -27,12 +44,9 @@ def check_project_relevance(resume_text: str, job_description: str) -> dict:
     Check if resume projects are relevant to job description.
     Returns project relevance analysis with suggestions if needed.
     """
-    # Extract projects section from resume
-    projects_section = extract_projects_section(resume_text)
-    
     # Build prompt
     prompt = PROJECT_CHECK_PROMPT.format(
-        resume_projects=projects_section,
+        resume_text=resume_text,
         job_description=job_description
     )
     
@@ -45,7 +59,7 @@ def check_project_relevance(resume_text: str, job_description: str) -> dict:
     
     raw_response = result["text"]
     
-    # Strip DeepSeek thinking tokens if present
+    # Strip thinking tokens if present
     raw_response = re.sub(r'<think>.*?</think>', '', raw_response, flags=re.DOTALL).strip()
     
     # Parse JSON response
@@ -61,5 +75,17 @@ def check_project_relevance(resume_text: str, job_description: str) -> dict:
                 raise ValueError(f"Project check returned unparseable JSON: {raw_response[:300]}")
         else:
             raise ValueError(f"Project check returned unparseable JSON: {raw_response[:300]}")
+    
+    # ENFORCE: Keep only top 2 relevant projects (if more than 2)
+    if "relevant_projects" in data and len(data["relevant_projects"]) > 2:
+        data["relevant_projects"] = data["relevant_projects"][:2]
+    
+    # VALIDATION: Ensure suggested_project is object or null (not array)
+    if "suggested_project" in data:
+        if isinstance(data["suggested_project"], list):
+            if len(data["suggested_project"]) > 0:
+                data["suggested_project"] = data["suggested_project"][0]
+            else:
+                data["suggested_project"] = None
     
     return data

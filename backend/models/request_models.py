@@ -8,6 +8,6 @@ class AnalyzeRequest(BaseModel):
 class GenerateRequest(BaseModel):
     resume_text: str
     job_description: str
-    approved_suggestions: List[str]
     ats_score_before: int
+    approved_project: str = ""  # Only if user approved suggested project
     template_id: str = "v1"  # future: user picks template

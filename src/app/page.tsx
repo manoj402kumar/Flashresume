@@ -12,11 +12,13 @@ import {
   Upload,
   Verified,
   AlertTriangle,
-  Wand2
+  Wand2,
+  FileText,
+  X
 } from "lucide-react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { parseResume, runFullAnalysis } from "@/lib/api";
+import { parseResume, analyzeResume } from "@/lib/api";
 
 export default function App() {
   const router = useRouter();
@@ -26,6 +28,10 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [isDragging, setIsDragging] = useState(false);
+  const [inputType, setInputType] = useState<"file" | "text">("file");
+  const [parsedText, setParsedText] = useState("");
+  const [showParsedText, setShowParsedText] = useState(false);
+  const [parsing, setParsing] = useState(false);
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
@@ -47,12 +53,45 @@ export default function App() {
     }
   };
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
     if (selectedFile) {
       setFile(selectedFile);
       setResumeText("");
       setError("");
+      setParsedText("");
+      
+      // Auto-parse for better UX (silent background parsing)
+      setParsing(true);
+      try {
+        const parseResult = await parseResume(selectedFile);
+        setParsedText(parseResult.resume_text);
+      } catch (err: any) {
+        // Silent fail - user can click button if needed
+        console.log("Auto-parse failed:", err.message);
+      } finally {
+        setParsing(false);
+      }
+    }
+  };
+
+  const handleSeeParsedText = async () => {
+    if (!file) {
+      setError("Please upload a file first");
+      return;
+    }
+
+    setParsing(true);
+    setError("");
+
+    try {
+      const parseResult = await parseResume(file);
+      setParsedText(parseResult.resume_text);
+      setShowParsedText(true);
+    } catch (err: any) {
+      setError(err.message || "Failed to parse file");
+    } finally {
+      setParsing(false);
     }
   };
 
@@ -62,8 +101,12 @@ export default function App() {
       return;
     }
 
-    if (!file && !resumeText.trim()) {
-      setError("Please upload a resume or paste text");
+    if (inputType === "file" && !file) {
+      setError("Please upload a resume file");
+      return;
+    }
+    if (inputType === "text" && !resumeText.trim()) {
+      setError("Please paste your resume text");
       return;
     }
 
@@ -73,17 +116,16 @@ export default function App() {
     try {
       let finalResumeText = resumeText;
 
-      if (file) {
+      if (inputType === "file" && file) {
         const parseResult = await parseResume(file);
         finalResumeText = parseResult.resume_text;
       }
 
-      const analysisResult = await runFullAnalysis(finalResumeText, jobDescription);
+      const analysisResult = await analyzeResume(finalResumeText, jobDescription);
 
       localStorage.setItem("resume_text", finalResumeText);
       localStorage.setItem("job_description", jobDescription);
-      localStorage.setItem("analysis", JSON.stringify(analysisResult.analysis));
-      localStorage.setItem("project_check", JSON.stringify(analysisResult.projectCheck));
+      localStorage.setItem("analysis", JSON.stringify(analysisResult));
 
       router.push("/analyze");
     } catch (err: any) {
@@ -94,7 +136,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen font-sans">
+    <div className="min-h-screen font-sans" suppressHydrationWarning>
       {/* TopNavBar */}
       <nav className="fixed top-0 w-full z-50 glass-header border-b border-surface-container-low">
         <div className="flex justify-between items-center max-w-7xl mx-auto px-6 py-4 w-full">
@@ -150,32 +192,68 @@ export default function App() {
           >
             <div className="bg-surface-container-lowest rounded-[2rem] p-8 shadow-2xl shadow-primary/5 border border-primary/5">
               <div className="space-y-6">
-                <input
-                  type="file"
-                  accept=".pdf,.docx,.jpg,.jpeg,.png"
-                  onChange={handleFileSelect}
-                  className="hidden"
-                  id="file-upload"
-                />
-                <label
-                  htmlFor="file-upload"
-                  onDrop={handleDrop}
-                  onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
-                  onDragLeave={() => setIsDragging(false)}
-                  className={`p-8 border-2 border-dashed rounded-2xl flex flex-col items-center justify-center cursor-pointer transition-colors ${
-                    isDragging
-                      ? "border-primary bg-primary/5"
-                      : file
-                      ? "border-primary-container bg-primary-container/10"
-                      : "border-primary-container/50 bg-surface-container-low hover:bg-surface-container-lowest"
-                  }`}
-                >
-                  <CloudUpload className="text-primary w-12 h-12 mb-4" />
-                  <span className="font-headline text-on-background font-bold">
-                    {file ? file.name : "Drop your current resume"}
-                  </span>
-                  <span className="text-sm text-on-surface-variant">PDF, DOCX, JPG, PNG (Max 10MB)</span>
-                </label>
+                <div className="flex gap-2 p-1.5 bg-surface-container-low rounded-xl">
+                  <button
+                    onClick={() => setInputType("file")}
+                    className={`flex-1 py-2.5 rounded-lg font-bold text-sm transition-all focus:outline-none focus:ring-2 focus:ring-primary ${
+                      inputType === "file" 
+                        ? "bg-surface-container-lowest text-primary shadow-sm" 
+                        : "text-on-surface-variant hover:text-on-background hover:bg-surface-container-low/50"
+                    }`}
+                  >
+                    Upload File
+                  </button>
+                  <button
+                    onClick={() => setInputType("text")}
+                    className={`flex-1 py-2.5 rounded-lg font-bold text-sm transition-all focus:outline-none focus:ring-2 focus:ring-primary ${
+                      inputType === "text" 
+                        ? "bg-surface-container-lowest text-primary shadow-sm" 
+                        : "text-on-surface-variant hover:text-on-background hover:bg-surface-container-low/50"
+                    }`}
+                  >
+                    Paste Text
+                  </button>
+                </div>
+                
+                {inputType === "file" ? (
+                  <>
+                    <input
+                      type="file"
+                      accept=".pdf,.docx,.jpg,.jpeg,.png"
+                      onChange={handleFileSelect}
+                      className="hidden"
+                      id="file-upload"
+                    />
+                    <label
+                      htmlFor="file-upload"
+                      onDrop={handleDrop}
+                      onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+                      onDragLeave={() => setIsDragging(false)}
+                      className={`p-8 border-2 border-dashed rounded-2xl flex flex-col items-center justify-center cursor-pointer transition-colors ${
+                        isDragging
+                          ? "border-primary bg-primary/5"
+                          : file
+                          ? "border-primary-container bg-primary-container/10"
+                          : "border-primary-container/50 bg-surface-container-low hover:bg-surface-container-lowest"
+                      }`}
+                    >
+                      <CloudUpload className="text-primary w-12 h-12 mb-4" />
+                      <span className="font-headline text-on-background font-bold text-center">
+                        {file ? file.name : "Drop your current resume"}
+                      </span>
+                      <span className="text-sm text-on-surface-variant mt-2 text-center">PDF, DOCX, JPG, PNG (Max 10MB)</span>
+                    </label>
+                  </>
+                ) : (
+                  <div className="space-y-2">
+                    <textarea
+                      value={resumeText}
+                      onChange={(e) => setResumeText(e.target.value)}
+                      className="w-full px-6 py-4 rounded-xl bg-surface-container-low border-none focus:ring-2 focus:ring-primary-container transition-all placeholder:text-on-surface-variant/50 min-h-[224px] resize-none"
+                      placeholder="Paste your current resume text here... (Experience, Education, Skills, etc.)"
+                    />
+                  </div>
+                )}
                 <div className="space-y-2">
                   <label className="font-sans text-xs font-semibold uppercase tracking-wider text-on-surface-variant ml-1">
                     PASTE JOB DESCRIPTION
@@ -192,6 +270,16 @@ export default function App() {
                     <AlertTriangle className="w-4 h-4" />
                     {error}
                   </div>
+                )}
+                {inputType === "file" && file && (
+                  <button
+                    onClick={handleSeeParsedText}
+                    disabled={parsing}
+                    className="w-full bg-surface-container-high text-on-background py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-surface-container-highest transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <FileText className="w-5 h-5" />
+                    {parsing ? "Parsing..." : "See Parsed Text"}
+                  </button>
                 )}
                 <button
                   onClick={handleGenerate}
@@ -486,6 +574,36 @@ export default function App() {
           </div>
         </section>
       </main>
+
+      {/* Parsed Text Modal */}
+      {showParsedText && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-surface-container-lowest rounded-2xl max-w-4xl w-full max-h-[80vh] flex flex-col">
+            <div className="flex justify-between items-center p-6 border-b border-surface-container-low">
+              <h3 className="font-headline text-2xl font-bold">Parsed Resume Text</h3>
+              <button
+                onClick={() => setShowParsedText(false)}
+                className="p-2 hover:bg-surface-container-low rounded-lg transition-colors"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+            <div className="p-6 overflow-y-auto flex-1">
+              <pre className="whitespace-pre-wrap text-sm text-on-surface-variant font-mono bg-surface-container-low p-4 rounded-xl">
+                {parsedText}
+              </pre>
+            </div>
+            <div className="p-6 border-t border-surface-container-low">
+              <button
+                onClick={() => setShowParsedText(false)}
+                className="w-full bg-primary text-white py-3 rounded-xl font-bold hover:opacity-90 transition-opacity"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Footer */}
       <footer className="bg-surface-container-low w-full py-12 border-t border-on-surface-variant/10">

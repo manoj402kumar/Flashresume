@@ -116,6 +116,13 @@ function EditableSkillTags({
   );
 }
 
+// Sanitize LLM garbage values like "LinkedIn Profile", "GitHub Link", placeholder URLs
+const JUNK_PATTERNS = /^(linkedin profile|github link|linkedin|github|link|url|n\/a|none|your.*(url|link|profile|username))$/i;
+function cleanDisplayUrl(val: string | undefined | null, fallback: string): string {
+  if (!val || JUNK_PATTERNS.test(val.trim())) return fallback;
+  return val.replace(/^https?:\/\//i, "");
+}
+
 export default function ResultPage() {
   const router = useRouter();
   const [resume, setResume] = useState<TemplateV1 | null>(null);
@@ -133,7 +140,18 @@ export default function ResultPage() {
       router.push("/");
       return;
     }
-    setResume(JSON.parse(resumeData));
+    const parsed = JSON.parse(resumeData);
+    // Sanitize junk LLM values on load so edit fields show clean defaults
+    parsed.heading.linkedin_url = cleanDisplayUrl(parsed.heading.linkedin_url, "linkedin.com/in/username");
+    parsed.heading.github_url = cleanDisplayUrl(parsed.heading.github_url, "github.com/username");
+    // Build hrefs from display text if not already set
+    if (!parsed.heading.linkedin_url_href) {
+      parsed.heading.linkedin_url_href = `https://${parsed.heading.linkedin_url}`;
+    }
+    if (!parsed.heading.github_url_href) {
+      parsed.heading.github_url_href = `https://${parsed.heading.github_url}`;
+    }
+    setResume(parsed);
     setLoading(false);
   }, [router]);
 
@@ -212,7 +230,7 @@ export default function ResultPage() {
 
   if (loading || !resume) {
     return (
-      <div className="min-h-screen bg-surface flex items-center justify-center">
+      <div suppressHydrationWarning className="min-h-screen bg-surface flex items-center justify-center">
         <div className="text-center">
           <div className="relative">
             <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-primary mx-auto mb-6"></div>
@@ -398,46 +416,55 @@ export default function ResultPage() {
                     <input
                       type="text"
                       value={resume.heading.name}
-                      onChange={(e) =>
-                        updateResume({
-                          heading: { ...resume.heading, name: e.target.value },
-                        })
-                      }
+                      onChange={(e) => updateResume({ heading: { ...resume.heading, name: e.target.value } })}
                       className="w-full text-2xl font-bold text-on-background border-2 border-primary-container/40 rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary transition-all"
                       placeholder="Full Name"
                     />
                     <input
                       type="tel"
                       value={resume.heading.phone}
-                      onChange={(e) =>
-                        updateResume({
-                          heading: { ...resume.heading, phone: e.target.value },
-                        })
-                      }
+                      onChange={(e) => updateResume({ heading: { ...resume.heading, phone: e.target.value } })}
                       className="w-full border-2 border-surface-container-high rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary transition-all"
                       placeholder="Phone"
                     />
                     <input
                       type="email"
                       value={resume.heading.email}
-                      onChange={(e) =>
-                        updateResume({
-                          heading: { ...resume.heading, email: e.target.value },
-                        })
-                      }
+                      onChange={(e) => updateResume({ heading: { ...resume.heading, email: e.target.value } })}
                       className="w-full border-2 border-surface-container-high rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary transition-all"
                       placeholder="Email"
                     />
+                    {/* LinkedIn: display text + actual URL */}
+                    <p className="text-xs text-on-surface-variant font-semibold uppercase tracking-wide">LinkedIn</p>
+                    <input
+                      type="text"
+                      value={cleanDisplayUrl(resume.heading.linkedin_url, "linkedin.com/in/username")}
+                      onChange={(e) => updateResume({ heading: { ...resume.heading, linkedin_url: e.target.value } })}
+                      className="w-full border-2 border-surface-container-high rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary transition-all"
+                      placeholder="linkedin.com/in/username"
+                    />
                     <input
                       type="url"
-                      value={resume.heading.linkedin_url}
-                      onChange={(e) =>
-                        updateResume({
-                          heading: { ...resume.heading, linkedin_url: e.target.value },
-                        })
-                      }
+                      value={resume.heading.linkedin_url_href || "https://linkedin.com/in/username"}
+                      onChange={(e) => updateResume({ heading: { ...resume.heading, linkedin_url_href: e.target.value } })}
+                      className="w-full border-2 border-surface-container-high rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary transition-all text-on-surface-variant"
+                      placeholder="https://linkedin.com/in/username"
+                    />
+                    {/* GitHub: display text + actual URL */}
+                    <p className="text-xs text-on-surface-variant font-semibold uppercase tracking-wide">GitHub</p>
+                    <input
+                      type="text"
+                      value={cleanDisplayUrl(resume.heading.github_url, "github.com/username")}
+                      onChange={(e) => updateResume({ heading: { ...resume.heading, github_url: e.target.value } })}
                       className="w-full border-2 border-surface-container-high rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary transition-all"
-                      placeholder="LinkedIn URL"
+                      placeholder="github.com/username"
+                    />
+                    <input
+                      type="url"
+                      value={resume.heading.github_url_href || "https://github.com/username"}
+                      onChange={(e) => updateResume({ heading: { ...resume.heading, github_url_href: e.target.value } })}
+                      className="w-full border-2 border-surface-container-high rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary transition-all text-on-surface-variant"
+                      placeholder="https://github.com/username"
                     />
                   </div>
                 ) : (
@@ -452,15 +479,62 @@ export default function ResultPage() {
                       <p className="flex items-center gap-2">
                         <span className="w-5 h-5">📧</span> {resume.heading.email}
                       </p>
-                      {resume.heading.linkedin_url && (
-                        <p className="flex items-center gap-2">
-                          <span className="w-5 h-5">🔗</span> {resume.heading.linkedin_url}
-                        </p>
-                      )}
+                      <p className="flex items-center gap-2">
+                        <span className="w-5 h-5">🔗</span>
+                        <a
+                          href={resume.heading.linkedin_url_href || `https://${cleanDisplayUrl(resume.heading.linkedin_url, "linkedin.com/in/username")}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-primary hover:underline"
+                        >
+                          {cleanDisplayUrl(resume.heading.linkedin_url, "linkedin.com/in/username")}
+                        </a>
+                      </p>
+                      <p className="flex items-center gap-2">
+                        <span className="w-5 h-5">💻</span>
+                        <a
+                          href={resume.heading.github_url_href || `https://${cleanDisplayUrl(resume.heading.github_url, "github.com/username")}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-primary hover:underline"
+                        >
+                          {cleanDisplayUrl(resume.heading.github_url, "github.com/username")}
+                        </a>
+                      </p>
                     </div>
                   </>
                 )}
               </motion.div>
+
+              {/* Summary Section */}
+              {resume.summary && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.35 }}
+                  whileHover={{ y: -4 }}
+                  className="bg-surface-container-lowest rounded-[2rem] p-8 shadow-xl hover:shadow-2xl transition-all duration-300 border border-primary/5"
+                >
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="w-12 h-12 rounded-2xl bg-primary-container/20 flex items-center justify-center">
+                      <Zap className="w-6 h-6 text-primary" />
+                    </div>
+                    <h3 className="font-headline text-2xl font-bold text-on-background">Summary</h3>
+                  </div>
+                  
+                  {editMode ? (
+                    <textarea
+                      value={resume.summary}
+                      onChange={(e) => updateResume({ summary: e.target.value })}
+                      className="w-full border-2 border-surface-container-high rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary resize-none"
+                      rows={3}
+                      placeholder="Professional summary..."
+                    />
+                  ) : (
+                    <p className="text-on-background leading-relaxed">{resume.summary}</p>
+                  )}
+                </motion.div>
+              )}
 
               {/* Education Section */}
               {resume.education.length > 0 && (
@@ -507,7 +581,7 @@ export default function ResultPage() {
                           <div className="grid grid-cols-2 gap-2">
                             <input
                               type="text"
-                              value={edu.location}
+                              value={edu.location || ''}
                               onChange={(e) => {
                                 const newEducation = [...resume.education];
                                 newEducation[idx].location = e.target.value;
@@ -518,7 +592,7 @@ export default function ResultPage() {
                             />
                             <input
                               type="text"
-                              value={edu.duration}
+                              value={edu.duration || ''}
                               onChange={(e) => {
                                 const newEducation = [...resume.education];
                                 newEducation[idx].duration = e.target.value;
@@ -572,47 +646,47 @@ export default function ResultPage() {
                             className="w-full font-bold border-2 border-surface-container-high rounded-xl px-4 py-2 focus:ring-2 focus:ring-primary"
                             placeholder="Job Title"
                           />
+                          <input
+                            type="text"
+                            value={exp.company}
+                            onChange={(e) => {
+                              const newExperience = [...resume.experience];
+                              newExperience[idx].company = e.target.value;
+                              updateResume({ experience: newExperience });
+                            }}
+                            className="w-full border-2 border-surface-container-high rounded-xl px-4 py-2 focus:ring-2 focus:ring-primary"
+                            placeholder="Company"
+                          />
                           <div className="grid grid-cols-2 gap-2">
                             <input
                               type="text"
-                              value={exp.company}
+                              value={exp.duration || ''}
                               onChange={(e) => {
                                 const newExperience = [...resume.experience];
-                                newExperience[idx].company = e.target.value;
+                                newExperience[idx].duration = e.target.value;
                                 updateResume({ experience: newExperience });
                               }}
-                              className="border-2 border-surface-container-high rounded-xl px-4 py-2 focus:ring-2 focus:ring-primary"
-                              placeholder="Company"
+                              className="text-sm border-2 border-surface-container-high rounded-xl px-4 py-2 focus:ring-2 focus:ring-primary"
+                              placeholder="Duration"
                             />
                             <input
                               type="text"
-                              value={exp.location}
+                              value={exp.location || ''}
                               onChange={(e) => {
                                 const newExperience = [...resume.experience];
                                 newExperience[idx].location = e.target.value;
                                 updateResume({ experience: newExperience });
                               }}
-                              className="border-2 border-surface-container-high rounded-xl px-4 py-2 focus:ring-2 focus:ring-primary"
+                              className="text-sm border-2 border-surface-container-high rounded-xl px-4 py-2 focus:ring-2 focus:ring-primary"
                               placeholder="Location"
                             />
                           </div>
-                          <input
-                            type="text"
-                            value={exp.duration}
-                            onChange={(e) => {
-                              const newExperience = [...resume.experience];
-                              newExperience[idx].duration = e.target.value;
-                              updateResume({ experience: newExperience });
-                            }}
-                            className="w-full text-sm border-2 border-surface-container-high rounded-xl px-4 py-2 focus:ring-2 focus:ring-primary"
-                            placeholder="Duration"
-                          />
                         </div>
                       ) : (
                         <>
                           <p className="font-bold text-lg text-on-background">{exp.job_title}</p>
-                          <p className="text-on-surface-variant">{exp.company}, {exp.location}</p>
-                          <p className="text-sm text-on-surface-variant mb-3">{exp.duration}</p>
+                          <p className="text-on-surface-variant">{exp.company}</p>
+                          <p className="text-sm text-on-surface-variant mb-3">{exp.duration}{exp.location && ` • ${exp.location}`}</p>
                         </>
                       )}
                       <ul className="space-y-2">
@@ -694,15 +768,15 @@ export default function ResultPage() {
                             placeholder="Tech Stack"
                           />
                           <input
-                            type="text"
-                            value={proj.duration}
+                            type="url"
+                            value={proj.link || ''}
                             onChange={(e) => {
                               const newProjects = [...resume.projects];
-                              newProjects[idx].duration = e.target.value;
+                              newProjects[idx].link = e.target.value;
                               updateResume({ projects: newProjects });
                             }}
                             className="w-full text-sm border-2 border-surface-container-high rounded-xl px-4 py-2 focus:ring-2 focus:ring-primary"
-                            placeholder="Duration"
+                            placeholder="Project Link (GitHub/Live URL)"
                           />
                         </div>
                       ) : (
@@ -711,7 +785,11 @@ export default function ResultPage() {
                           <p className="text-sm text-on-surface-variant mb-1">
                             <strong>Tech Stack:</strong> {proj.tech_stack}
                           </p>
-                          <p className="text-sm text-on-surface-variant mb-3">{proj.duration}</p>
+                          {proj.link && proj.link !== 'Link' && (
+                            <a href={proj.link.startsWith('http') ? proj.link : `https://${proj.link}`} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline mb-3 inline-block">
+                              {proj.link}
+                            </a>
+                          )}
                         </>
                       )}
                       <ul className="space-y-2">
@@ -899,8 +977,88 @@ export default function ResultPage() {
                 </div>
               </motion.div>
 
-              {/* Achievements Section */}
-              {resume.achievements.length > 0 && (
+              {/* Certifications Section (if 2+ certifications) */}
+              {resume.certifications && resume.certifications.length > 0 && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.75 }}
+                  whileHover={{ y: -4 }}
+                  className="bg-surface-container-lowest rounded-[2rem] p-8 shadow-xl hover:shadow-2xl transition-all duration-300 border border-primary/5"
+                >
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="w-12 h-12 rounded-2xl bg-primary-container/20 flex items-center justify-center">
+                      <Award className="w-6 h-6 text-primary" />
+                    </div>
+                    <h3 className="font-headline text-2xl font-bold text-on-background">Certifications</h3>
+                  </div>
+                  
+                  <ul className="space-y-3">
+                    {resume.certifications.map((cert, idx) => (
+                      <li key={idx} className="flex items-start gap-3 text-on-background">
+                        <span className="text-primary mt-1">•</span>
+                        {editMode ? (
+                          <textarea
+                            value={cert}
+                            onChange={(e) => {
+                              const newCertifications = [...resume.certifications!];
+                              newCertifications[idx] = e.target.value;
+                              updateResume({ certifications: newCertifications });
+                            }}
+                            className="flex-1 border-2 border-surface-container-high rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary resize-none"
+                            rows={2}
+                          />
+                        ) : (
+                          <span className="flex-1">{cert}</span>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                </motion.div>
+              )}
+
+              {/* Certifications & Achievements (Merged - if exactly 1 certification) */}
+              {resume.certifications_and_achievements && resume.certifications_and_achievements.length > 0 && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.75 }}
+                  whileHover={{ y: -4 }}
+                  className="bg-surface-container-lowest rounded-[2rem] p-8 shadow-xl hover:shadow-2xl transition-all duration-300 border border-primary/5"
+                >
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="w-12 h-12 rounded-2xl bg-tertiary-container/20 flex items-center justify-center">
+                      <Award className="w-6 h-6 text-tertiary-container" />
+                    </div>
+                    <h3 className="font-headline text-2xl font-bold text-on-background">Certifications & Achievements</h3>
+                  </div>
+                  
+                  <ul className="space-y-3">
+                    {resume.certifications_and_achievements.map((item, idx) => (
+                      <li key={idx} className="flex items-start gap-3 text-on-background">
+                        <span className="text-tertiary-container mt-1">•</span>
+                        {editMode ? (
+                          <textarea
+                            value={item}
+                            onChange={(e) => {
+                              const newItems = [...resume.certifications_and_achievements!];
+                              newItems[idx] = e.target.value;
+                              updateResume({ certifications_and_achievements: newItems });
+                            }}
+                            className="flex-1 border-2 border-surface-container-high rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary resize-none"
+                            rows={2}
+                          />
+                        ) : (
+                          <span className="flex-1">{item}</span>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                </motion.div>
+              )}
+
+              {/* Achievements Section (always show if not merged with certifications) */}
+              {!resume.certifications_and_achievements && resume.achievements && resume.achievements.length > 0 && (
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -923,7 +1081,7 @@ export default function ResultPage() {
                           <textarea
                             value={achievement}
                             onChange={(e) => {
-                              const newAchievements = [...resume.achievements];
+                              const newAchievements = [...resume.achievements!];
                               newAchievements[idx] = e.target.value;
                               updateResume({ achievements: newAchievements });
                             }}

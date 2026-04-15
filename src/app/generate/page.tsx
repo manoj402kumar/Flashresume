@@ -38,7 +38,7 @@ export default function GeneratePage() {
         const resumeText = localStorage.getItem("resume_text");
         const jobDescription = localStorage.getItem("job_description");
         const analysisData = localStorage.getItem("analysis");
-        const approvedSuggestionsData = localStorage.getItem("approved_suggestions");
+        const approvedProjectData = localStorage.getItem("approved_project");
 
         // Validation
         if (!resumeText || !jobDescription || !analysisData) {
@@ -47,9 +47,9 @@ export default function GeneratePage() {
         }
 
         const analysis = JSON.parse(analysisData);
-        const approvedSuggestions = approvedSuggestionsData 
-          ? JSON.parse(approvedSuggestionsData) 
-          : [];
+        const approvedProject = approvedProjectData 
+          ? JSON.parse(approvedProjectData) 
+          : null;
 
         // Step 1: Analyzing content
         setCurrentStep(0);
@@ -70,8 +70,8 @@ export default function GeneratePage() {
         const generatedResume = await generateResume({
           resume_text: resumeText,
           job_description: jobDescription,
-          approved_suggestions: approvedSuggestions,
           ats_score_before: analysis.ats_score,
+          approved_project: approvedProject ? `${approvedProject.title}: ${approvedProject.description}` : undefined
         });
 
         // Step 3: Applying improvements
@@ -271,7 +271,7 @@ export default function GeneratePage() {
                     <div className="flex items-start gap-3">
                       <Brain className="w-5 h-5 text-tertiary-container flex-shrink-0 mt-0.5" />
                       <p className="text-sm text-on-surface-variant leading-relaxed">
-                        Our AI is analyzing your resume and applying approved improvements to maximize your ATS score.
+                        Our AI is analyzing your resume and applying optimizations to maximize your ATS score.
                       </p>
                     </div>
                   </motion.div>
@@ -321,11 +321,11 @@ export default function GeneratePage() {
                       Try Again
                     </button>
                     <button
-                      onClick={() => router.push("/consent")}
+                      onClick={() => router.push("/preview")}
                       className="flex-1 py-4 px-6 rounded-xl font-bold text-on-background bg-surface-container-low border-2 border-surface-container-high hover:bg-surface-container-lowest transition-all duration-300 flex items-center justify-center gap-2"
                     >
                       <ArrowLeft className="w-5 h-5" />
-                      Back to Review
+                      Back to Preview
                     </button>
                   </div>
                 </div>

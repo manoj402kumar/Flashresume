@@ -5,6 +5,7 @@ import {
   View,
   StyleSheet,
   Font,
+  Link,
 } from "@react-pdf/renderer";
 import type { TemplateV1 } from "@/lib/api";
 
@@ -41,6 +42,10 @@ const styles = StyleSheet.create({
     color: "#000",
     marginBottom: 4,
   },
+  link: {
+    color: "#000",
+    textDecoration: "none",
+  },
   // Section Headers
   sectionTitle: {
     fontSize: 11.5,
@@ -52,6 +57,11 @@ const styles = StyleSheet.create({
   },
   sectionDivider: {
     borderBottom: "0.75pt solid #000",
+    marginBottom: 6,
+  },
+  summaryText: {
+    fontSize: 10,
+    textAlign: "justify",
     marginBottom: 6,
   },
   // Education
@@ -142,6 +152,19 @@ const styles = StyleSheet.create({
   },
 });
 
+const JUNK_PATTERNS = /^(linkedin profile|github link|linkedin|github|link|url|n\/a|none|your.*(url|link|profile|username))$/i;
+function cleanDisplayUrl(val: string | undefined | null, fallback: string): string {
+  if (!val || JUNK_PATTERNS.test(val.trim())) return fallback;
+  return val.replace(/^https?:\/\//i, "");
+}
+
+function getValidUrl(val: string | undefined | null, fallback: string): string {
+  if (!val || JUNK_PATTERNS.test(val.trim())) return `https://${fallback}`;
+  const trimmed = val.trim();
+  if (/^https?:\/\//i.test(trimmed)) return trimmed;
+  return `https://${trimmed}`;
+}
+
 interface ResumePDFProps {
   resume: TemplateV1;
 }
@@ -154,10 +177,30 @@ export default function ResumePDF({ resume }: ResumePDFProps) {
         <View style={styles.heading}>
           <Text style={styles.name}>{resume.heading.name.toUpperCase()}</Text>
           <Text style={styles.contactInfo}>
-            {resume.heading.phone} • {resume.heading.email}
-            {resume.heading.linkedin_url && ` • ${resume.heading.linkedin_url}`}
+            {resume.heading.phone}
+            {" • "}
+            <Link src={`mailto:${resume.heading.email}`} style={styles.link}>
+              {resume.heading.email}
+            </Link>
+            {" • "}
+            <Link src={getValidUrl(resume.heading.linkedin_url, "linkedin.com/in/username")} style={styles.link}>
+              {cleanDisplayUrl(resume.heading.linkedin_url, "linkedin.com/in/username")}
+            </Link>
+            {" • "}
+            <Link src={getValidUrl(resume.heading.github_url, "github.com/username")} style={styles.link}>
+              {cleanDisplayUrl(resume.heading.github_url, "github.com/username")}
+            </Link>
           </Text>
         </View>
+
+        {/* SUMMARY */}
+        {resume.summary && resume.summary.trim() !== "" && (
+          <View>
+            <Text style={styles.sectionTitle}>SUMMARY</Text>
+            <View style={styles.sectionDivider} />
+            <Text style={styles.summaryText}>{resume.summary}</Text>
+          </View>
+        )}
 
         {/* EDUCATION */}
         {resume.education.length > 0 && (
@@ -190,9 +233,10 @@ export default function ResumePDF({ resume }: ResumePDFProps) {
                   <Text style={styles.jobTitle}>{exp.job_title}</Text>
                   <Text style={styles.duration}>{exp.duration}</Text>
                 </View>
-                <Text style={styles.company}>
-                  {exp.company} • {exp.location}
-                </Text>
+                <View style={styles.titleRow}>
+                  <Text style={styles.company}>{exp.company}</Text>
+                  <Text style={styles.location}>{exp.location}</Text>
+                </View>
                 <View style={styles.bullets}>
                   {exp.bullets.map((bullet, bidx) => (
                     <View key={bidx} style={styles.bullet}>
@@ -279,19 +323,36 @@ export default function ResumePDF({ resume }: ResumePDFProps) {
           </View>
         </View>
 
-        {/* ACHIEVEMENTS */}
-        {resume.achievements.length > 0 && (
-          <View>
-            <Text style={styles.sectionTitle}>ACHIEVEMENTS</Text>
-            <View style={styles.sectionDivider} />
-            {resume.achievements.map((achievement, idx) => (
-              <View key={idx} style={styles.achievementItem}>
-                <Text style={styles.bulletPoint}>•</Text>
-                <Text style={styles.bulletText}>{achievement}</Text>
-              </View>
-            ))}
-          </View>
-        )}
+        {/* CERTIFICATIONS & ACHIEVEMENTS */}
+        {(() => {
+          const items =
+            resume.certifications_and_achievements ??
+            (resume.certifications?.length && resume.achievements?.length
+              ? [...resume.certifications, ...resume.achievements]
+              : resume.certifications?.length
+              ? resume.certifications
+              : resume.achievements ?? []);
+          const label =
+            resume.certifications_and_achievements
+              ? "CERTIFICATIONS & ACHIEVEMENTS"
+              : resume.certifications?.length && resume.achievements?.length
+              ? "CERTIFICATIONS & ACHIEVEMENTS"
+              : resume.certifications?.length
+              ? "CERTIFICATIONS"
+              : "ACHIEVEMENTS";
+          return items.length > 0 ? (
+            <View>
+              <Text style={styles.sectionTitle}>{label}</Text>
+              <View style={styles.sectionDivider} />
+              {items.map((item, idx) => (
+                <View key={idx} style={styles.achievementItem}>
+                  <Text style={styles.bulletPoint}>•</Text>
+                  <Text style={styles.bulletText}>{item}</Text>
+                </View>
+              ))}
+            </View>
+          ) : null;
+        })()}
       </Page>
     </Document>
   );

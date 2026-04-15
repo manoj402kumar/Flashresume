@@ -8,13 +8,13 @@ router = APIRouter()
 
 @router.post("/generate")
 async def generate_resume_endpoint(request: GenerateRequest):
-    # Step 1: Generate the rewritten resume with Template v1 validation
+    # Generate the rewritten resume with Template v1 validation
     try:
         generated = generate_resume(
             request.resume_text,
             request.job_description,
-            request.approved_suggestions,
-            request.ats_score_before
+            request.ats_score_before,
+            request.approved_project
         )
     except ValueError as e:
         raise HTTPException(status_code=500, detail=str(e))

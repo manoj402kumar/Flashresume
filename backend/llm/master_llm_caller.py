@@ -1,11 +1,10 @@
 import json
 from .gemini_fallback import call_gemini
 from .qwen_fallback import call_qwen
-from .deepseek_fallback import call_deepseek
 
 def call_llm(prompt: str) -> dict:
     """
-    Master LLM caller — chains Gemini -> Qwen -> DeepSeek (coming soon).
+    Master LLM caller — chains Gemini -> Qwen.
     Returns dict: { success, text, model, provider, speed, all_attempts }
     """
     all_attempts = []
@@ -32,19 +31,6 @@ def call_llm(prompt: str) -> dict:
             "text": result["text"],
             "model": result["model"],
             "provider": "qwen",
-            "speed": result["speed"],
-            "all_attempts": all_attempts
-        }
-
-    # Layer 3 — DeepSeek via NVIDIA NIM
-    result = call_deepseek(prompt)
-    all_attempts.extend(result.get("attempts", []))
-    if result["success"]:
-        return {
-            "success": True,
-            "text": result["text"],
-            "model": result["model"],
-            "provider": "deepseek",
             "speed": result["speed"],
             "all_attempts": all_attempts
         }
@@ -78,7 +64,7 @@ Return exactly this JSON format:
 """
 
     print("Testing master LLM caller...")
-    print("Chain: Gemini -> Qwen -> DeepSeek\n")
+    print("Chain: Gemini -> Qwen\n")
 
     result = call_llm(TEST_PROMPT)
 

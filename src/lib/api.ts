@@ -53,20 +53,33 @@ export async function parseResume(file: File): Promise<ParseResponse> {
 }
 
 // ────────────────────────────────────────────────────────────────────────────
-// STEP 2a: Analyze Resume (ATS Scoring)
+// STEP 2: Analyze Resume (Combined: ATS Scoring + Project Check)
 // ────────────────────────────────────────────────────────────────────────────
 
-export interface AnalyzeResponse {
+export interface SuggestedProject {
+  title: string;
+  tech_stack: string;
+  description: string;
+}
+
+export interface CombinedAnalysisResponse {
+  // ATS Analysis
   ats_score: number;
   matched_skills: string[];
   missing_skills: string[];
-  suggestions: string[];
+  // Project Check
+  has_relevant_projects: boolean;
+  relevant_projects: string[];
+  total_projects_count: number;
+  least_relevant_project?: string;
+  suggested_project?: SuggestedProject;
+  requires_consent: boolean;
 }
 
 export async function analyzeResume(
   resume_text: string,
   job_description: string
-): Promise<AnalyzeResponse> {
+): Promise<CombinedAnalysisResponse> {
   if (!resume_text.trim()) {
     throw new Error("Resume text cannot be empty.");
   }
@@ -97,58 +110,14 @@ export async function analyzeResume(
 }
 
 // ────────────────────────────────────────────────────────────────────────────
-// STEP 2b: Check Project Relevance
-// ────────────────────────────────────────────────────────────────────────────
-
-export interface ProjectCheckResponse {
-  has_relevant_projects: boolean;
-  relevant_projects: string[];
-  suggested_projects: string[];
-  requires_consent: boolean;
-}
-
-export async function checkProjects(
-  resume_text: string,
-  job_description: string
-): Promise<ProjectCheckResponse> {
-  if (!resume_text.trim()) {
-    throw new Error("Resume text cannot be empty.");
-  }
-  if (!job_description.trim()) {
-    throw new Error("Job description cannot be empty.");
-  }
-
-  try {
-    const res = await fetch(`${BASE}/api/check-projects`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ resume_text, job_description }),
-      signal: AbortSignal.timeout(120000), // 120s timeout
-    });
-
-    if (!res.ok) {
-      const errorText = await res.text();
-      throw new Error(`Project check failed (${res.status}): ${errorText}`);
-    }
-
-    return await res.json();
-  } catch (err: any) {
-    if (err.name === "TimeoutError") {
-      throw new Error("Project check timed out. Please try again.");
-    }
-    throw new Error(err.message || "Failed to check projects. Please try again.");
-  }
-}
-
-// ────────────────────────────────────────────────────────────────────────────
 // STEP 3: Generate Optimized Resume
 // ────────────────────────────────────────────────────────────────────────────
 
 export interface GenerateRequest {
   resume_text: string;
   job_description: string;
-  approved_suggestions: string[];
   ats_score_before: number;
+  approved_project?: string;
 }
 
 export interface TemplateV1 {
@@ -158,7 +127,11 @@ export interface TemplateV1 {
     phone: string;
     email: string;
     linkedin_url: string;
+    linkedin_url_href?: string;
+    github_url?: string;
+    github_url_href?: string;
   };
+  summary?: string;
   education: Array<{
     institution: string;
     location: string;
@@ -178,7 +151,9 @@ export interface TemplateV1 {
     duration: string;
     bullets: string[];
   }>;
-  achievements: string[];
+  achievements?: string[] | null;
+  certifications?: string[] | null;
+  certifications_and_achievements?: string[] | null;
   technical_skills: {
     languages: string[];
     frameworks: string[];
@@ -220,30 +195,5 @@ export async function generateResume(
       throw new Error("Generation timed out. The AI is taking longer than expected. Please try again.");
     }
     throw new Error(err.message || "Failed to generate resume. Please try again.");
-  }
-}
-
-// ────────────────────────────────────────────────────────────────────────────
-// Helper: Run Analyze + Project Check in Parallel
-// ────────────────────────────────────────────────────────────────────────────
-
-export interface AnalysisResult {
-  analysis: AnalyzeResponse;
-  projectCheck: ProjectCheckResponse;
-}
-
-export async function runFullAnalysis(
-  resume_text: string,
-  job_description: string
-): Promise<AnalysisResult> {
-  try {
-    const [analysis, projectCheck] = await Promise.all([
-      analyzeResume(resume_text, job_description),
-      checkProjects(resume_text, job_description),
-    ]);
-
-    return { analysis, projectCheck };
-  } catch (err: any) {
-    throw new Error(err.message || "Analysis failed. Please try again.");
   }
 }
