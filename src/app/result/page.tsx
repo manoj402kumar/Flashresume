@@ -982,7 +982,7 @@ export default function ResultPage() {
                   )}
                   {resume.technical_skills.frameworks.length > 0 && (
                     <div>
-                      <p className="font-semibold text-on-background mb-2">Frameworks:</p>
+                      <p className="font-semibold text-on-background mb-2">Frameworks & Libraries:</p>
                       <EditableSkillTags
                         skills={resume.technical_skills.frameworks}
                         onChange={(newSkills) =>
@@ -1075,6 +1075,32 @@ export default function ResultPage() {
                         colorClass="bg-surface-container-high text-on-surface-variant"
                         highlightedSkills={resume.changes
                           .filter((c) => c.toLowerCase().includes("developer_tools") || c.toLowerCase().includes("tools"))
+                          .map((c) => {
+                            const match = c.match(/Added (.+?) to/i);
+                            return match ? match[1].toLowerCase() : "";
+                          })
+                          .filter(Boolean)}
+                        showHighlights={showHighlights}
+                      />
+                    </div>
+                  )}
+                  {resume.technical_skills.miscellaneous && resume.technical_skills.miscellaneous.length > 0 && (
+                    <div>
+                      <p className="font-semibold text-on-background mb-2">Miscellaneous:</p>
+                      <EditableSkillTags
+                        skills={resume.technical_skills.miscellaneous}
+                        onChange={(newSkills) =>
+                          updateResume({
+                            technical_skills: {
+                              ...resume.technical_skills,
+                              miscellaneous: newSkills,
+                            },
+                          })
+                        }
+                        editMode={editMode}
+                        colorClass="bg-red-500/10 text-red-600"
+                        highlightedSkills={resume.changes
+                          .filter((c) => c.toLowerCase().includes("miscellaneous"))
                           .map((c) => {
                             const match = c.match(/Added (.+?) to/i);
                             return match ? match[1].toLowerCase() : "";

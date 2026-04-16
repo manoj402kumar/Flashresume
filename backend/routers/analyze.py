@@ -20,18 +20,10 @@ async def analyze_resume(request: AnalyzeRequest):
     """
     try:
         # Step 1: ATS Analysis
-        ats_result = score_resume(
-            request.resume_text,
-            request.job_description,
-            preferred_model=request.preferred_model
-        )
+        ats_result = score_resume(request.resume_text, request.job_description)
         
         # Step 2: Project Relevance Check
-        project_result = check_project_relevance(
-            request.resume_text,
-            request.job_description,
-            preferred_model=request.preferred_model
-        )
+        project_result = check_project_relevance(request.resume_text, request.job_description)
         
         # Combine both results into single response
         return CombinedAnalysisResponse(
