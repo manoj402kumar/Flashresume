@@ -1,52 +1,44 @@
 import os
 import re
 import time
-import google.generativeai as genai
+from google import genai
+from google.genai import types
 from dotenv import load_dotenv
 
 load_dotenv()
 
-# Fallback Chain (confirmed + tested)
 FALLBACK_CHAIN = [
-    "gemini-2.5-flash",        # Primary - strong instruction following
-    "gemini-2.5-flash-lite",   # Fallback 1 - faster but weaker
-    "gemma-3-27b-it",          # Fallback 2 - Gemma 3 27B
+    "gemini-2.5-flash",
+    "gemini-2.5-flash-lite-preview-06-17",
+    "gemma-3-27b-it",
 ]
 
-genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
+
 
 def call_gemini(prompt: str, retries: int = 1) -> dict:
-    """
-    Tries each model in FALLBACK_CHAIN in order.
-    Returns dict: { success, text, model, speed, attempts }
-    """
     attempts = []
 
     for model in FALLBACK_CHAIN:
         for attempt in range(retries + 1):
             try:
                 start = time.time()
-                model_instance = genai.GenerativeModel(model)
-                response = model_instance.generate_content(
-                    prompt,
-                    generation_config=genai.GenerationConfig(
-                        temperature=0.1,
-                    ),
-                    request_options={"timeout": 120}
+                response = client.models.generate_content(
+                    model=model,
+                    contents=prompt,
+                    config=types.GenerateContentConfig(temperature=0.1),
                 )
                 elapsed = round(time.time() - start, 2)
 
-                # Strip markdown code blocks and extract JSON
                 text = response.text.strip()
-                # Remove <think>...</think> blocks
                 text = re.sub(r'<think>.*?</think>', '', text, flags=re.DOTALL).strip()
-                # Remove markdown code blocks
+
                 if text.startswith("```"):
                     text = text.split("```")[1]
                     if text.startswith("json"):
                         text = text[4:]
                     text = text.strip()
-                # Extract JSON if buried in explanation text
+
                 match = re.search(r'\{.*\}', text, re.DOTALL)
                 if match:
                     text = match.group(0)
@@ -64,21 +56,15 @@ def call_gemini(prompt: str, retries: int = 1) -> dict:
                 attempts.append({"model": model, "status": err[:60]})
 
                 if "429" in err or "404" in err:
-                    break  # rate limited or not found - skip to next model
+                    break
                 elif "503" in err or "500" in err:
                     if attempt < retries:
                         time.sleep(3)
-                    continue  # server error - retry same model
+                    continue
                 else:
                     break
 
-    return {
-        "success": False,
-        "text": None,
-        "model": None,
-        "speed": None,
-        "attempts": attempts
-    }
+    return {"success": False, "text": None, "model": None, "speed": None, "attempts": attempts}
 
 
 if __name__ == "__main__":

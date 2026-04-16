@@ -1,49 +1,46 @@
 import os
+import re
 import time
-from openai import OpenAI
+from mistralai.client import Mistral
 from dotenv import load_dotenv
 
 load_dotenv()
 
-QWEN_FALLBACK_CHAIN = [
-    "qwen/qwen3.6-plus:free",                 # Confirmed PASS (28.3s)
-    "qwen/qwen3-next-80b-a3b-instruct:free",  # Exists - rate limited only
-    "qwen/qwen3-coder:free",                  # Exists - rate limited only
+MISTRAL_FALLBACK_CHAIN = [
+    "mistral-large-latest",
+    "mistral-small-latest",
+    "open-mistral-7b",
 ]
 
-client = OpenAI(
-    api_key=os.getenv("OPENROUTER_API_KEY"),
-    base_url="https://openrouter.ai/api/v1"
-)
+client = Mistral(api_key=os.getenv("MISTRAL_API_KEY"))
 
-def call_qwen(prompt: str, retries: int = 1) -> dict:
-    """
-    Tries each Qwen model via OpenRouter in order.
-    Returns dict: { success, text, model, speed, attempts }
-    """
+
+def call_mistral(prompt: str, retries: int = 1) -> dict:
     attempts = []
 
-    for model in QWEN_FALLBACK_CHAIN:
+    for model in MISTRAL_FALLBACK_CHAIN:
         for attempt in range(retries + 1):
             try:
                 start = time.time()
-                response = client.chat.completions.create(
+                response = client.chat.complete(
                     model=model,
                     messages=[{"role": "user", "content": prompt}],
-                    temperature=0.3,
-                    extra_headers={
-                        "HTTP-Referer": "https://resumeiq.dev",
-                        "X-Title": "ResumeIQ"
-                    }
+                    temperature=0.1,
                 )
                 elapsed = round(time.time() - start, 2)
 
                 text = response.choices[0].message.content.strip()
+                text = re.sub(r'<think>.*?</think>', '', text, flags=re.DOTALL).strip()
+
                 if text.startswith("```"):
                     text = text.split("```")[1]
                     if text.startswith("json"):
                         text = text[4:]
                     text = text.strip()
+
+                match = re.search(r'\{.*\}', text, re.DOTALL)
+                if match:
+                    text = match.group(0)
 
                 return {
                     "success": True,
@@ -66,35 +63,29 @@ def call_qwen(prompt: str, retries: int = 1) -> dict:
                 else:
                     break
 
-    return {
-        "success": False,
-        "text": None,
-        "model": None,
-        "speed": None,
-        "attempts": attempts
-    }
+    return {"success": False, "text": None, "model": None, "speed": None, "attempts": attempts}
 
 
 if __name__ == "__main__":
     TEST_PROMPT = """
-    Return ONLY valid JSON, no explanation:
-    {
-      "ats_score": 85,
-      "matched_skills": ["Python", "FastAPI", "PostgreSQL"],
-      "missing_skills": ["Docker"],
-      "verdict": "Good Match"
-    }
-    """
+You are an ATS resume analyzer.
+Return ONLY valid JSON with no extra text:
+{
+  "ats_score": 85,
+  "matched_skills": ["Python", "FastAPI"],
+  "missing_skills": ["Docker"],
+  "verdict": "Good Match"
+}
+"""
+    print("Testing Mistral fallback chain...")
+    print(f"Chain: {' -> '.join(MISTRAL_FALLBACK_CHAIN)}\n")
 
-    print("Testing Qwen fallback chain via OpenRouter...")
-    print(f"Chain: {' -> '.join(QWEN_FALLBACK_CHAIN)}\n")
-
-    result = call_qwen(TEST_PROMPT)
+    result = call_mistral(TEST_PROMPT)
 
     if result["success"]:
         print(f"[PASS] Served by : {result['model']}")
         print(f"       Speed     : {result['speed']}s")
         print(f"       Response  :\n{result['text']}")
     else:
-        print("[FAIL] All Qwen models exhausted")
+        print("[FAIL] All Mistral models exhausted")
         print(f"       Attempts  : {result['attempts']}")

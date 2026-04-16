@@ -7,7 +7,8 @@ Pillow
 pypdfium2
 pytesseract
 python-docx
-google-generativeai
+google-genai
 openai
+mistralai
 python-dotenv
 pydantic
