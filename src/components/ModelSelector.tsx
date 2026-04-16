@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
 
-export type ModelChoice = "gemini" | "mistral";
+export type ModelChoice = "gemini" | "mistral" | "groq";
 
 export interface ModelSelection {
   provider: ModelChoice;
@@ -48,6 +48,21 @@ const PROVIDER_MODELS = {
       { id: "open-mistral-nemo",     label: "Mistral Nemo",   note: "Fastest"      },
     ],
     default: "mistral-medium-latest",
+  },
+  groq: {
+    label: "Groq",
+    badge: "Ultra Fast ⚡⚡",
+    description: "LPU inference",
+    activeBg: "bg-red-500/10 border-red-500/50",
+    activeText: "text-red-400",
+    dot: "bg-red-400",
+    models: [
+      { id: "llama-3.3-70b-versatile",        label: "Llama 3.3 70B", note: "Best quality" },
+      { id: "llama-4-scout-17b-16e-instruct", label: "Llama 4 Scout", note: "Latest model" },
+      { id: "qwen-qwq-32b",                   label: "Qwen QwQ 32B",  note: "Strong JSON"  },
+      { id: "llama3-8b-8192",                 label: "Llama 3 8B",    note: "Fastest"      },
+    ],
+    default: "llama-3.3-70b-versatile",
   },
 } as const;
 

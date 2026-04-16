@@ -44,6 +44,8 @@ def call_llm(prompt: str, preferred_model: str = None) -> dict:
         ]
     elif active_pref == "mistral":
         chain = [("mistral", call_mistral), ("gemini", call_gemini), ("groq", call_groq)]
+    elif active_pref == "groq":
+        chain = [("groq", call_groq), ("mistral", call_mistral), ("gemini", call_gemini)]
     else:
         chain = [("gemini", call_gemini), ("mistral", call_mistral), ("groq", call_groq)]
 
