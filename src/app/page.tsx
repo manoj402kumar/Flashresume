@@ -19,7 +19,7 @@ import {
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { parseResume, analyzeResume } from "@/lib/api";
-import ModelSelector, { type ModelChoice } from "@/components/ModelSelector";
+import ModelSelector, { type ModelSelection, DEFAULT_MODEL_SELECTION } from "@/components/ModelSelector";
 
 export default function App() {
   const router = useRouter();
@@ -33,7 +33,7 @@ export default function App() {
   const [parsedText, setParsedText] = useState("");
   const [showParsedText, setShowParsedText] = useState(false);
   const [parsing, setParsing] = useState(false);
-  const [selectedModel, setSelectedModel] = useState<ModelChoice>("mistral");
+  const [selectedModel, setSelectedModel] = useState<ModelSelection>(DEFAULT_MODEL_SELECTION);
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
@@ -124,11 +124,12 @@ export default function App() {
 
       localStorage.setItem("resume_text", finalResumeText);
       localStorage.setItem("job_description", jobDescription);
-      localStorage.setItem("selected_model", selectedModel);
+      localStorage.setItem("selected_model", selectedModel.model);
+      localStorage.setItem("selected_provider", selectedModel.provider);
 
       if (hasJD) {
         // Normal flow: analyze against JD, show analysis page
-        const analysisResult = await analyzeResume(finalResumeText, jobDescription, selectedModel);
+        const analysisResult = await analyzeResume(finalResumeText, jobDescription, selectedModel.model);
         localStorage.setItem("analysis", JSON.stringify(analysisResult));
         router.push("/analyze");
       } else {

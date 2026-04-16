@@ -16,14 +16,14 @@ import {
   Code
 } from "lucide-react";
 import type { CombinedAnalysisResponse } from "@/lib/api";
-import ModelSelector, { type ModelChoice } from "@/components/ModelSelector";
+import ModelSelector, { type ModelSelection, DEFAULT_MODEL_SELECTION } from "@/components/ModelSelector";
 
 export default function AnalyzePage() {
   const router = useRouter();
   const [analysis, setAnalysis] = useState<CombinedAnalysisResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [projectApproved, setProjectApproved] = useState(false);
-  const [selectedModel, setSelectedModel] = useState<ModelChoice>("mistral");
+  const [selectedModel, setSelectedModel] = useState<ModelSelection>(DEFAULT_MODEL_SELECTION);
 
   useEffect(() => {
     const analysisData = localStorage.getItem("analysis");
@@ -43,8 +43,11 @@ export default function AnalyzePage() {
     setAnalysis(parsedAnalysis);
 
     // Restore model selection from Step 1
-    const savedModel = localStorage.getItem("selected_model") as ModelChoice;
-    if (savedModel) setSelectedModel(savedModel);
+    const savedModel = localStorage.getItem("selected_model");
+    const savedProvider = localStorage.getItem("selected_provider") as "gemini" | "mistral";
+    if (savedModel && savedProvider) {
+      setSelectedModel({ provider: savedProvider, model: savedModel });
+    }
 
     setLoading(false);
   }, [router]);
@@ -285,9 +288,10 @@ export default function AnalyzePage() {
         >
           <ModelSelector
             value={selectedModel}
-            onChange={(m) => {
-              setSelectedModel(m);
-              localStorage.setItem("selected_model", m);
+            onChange={(sel) => {
+              setSelectedModel(sel);
+              localStorage.setItem("selected_model", sel.model);
+              localStorage.setItem("selected_provider", sel.provider);
             }}
             label="Select AI Model for Resume Generation"
           />

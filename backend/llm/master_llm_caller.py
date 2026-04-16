@@ -1,8 +1,8 @@
 import os
 import json
 from dotenv import load_dotenv
-from .gemini_fallback import call_gemini
-from .mistral_fallback import call_mistral
+from .gemini_fallback import call_gemini, call_gemini_with_model
+from .mistral_fallback import call_mistral, call_mistral_with_model
 
 load_dotenv()
 
@@ -12,18 +12,30 @@ ENV_PREFERRED = os.getenv("PREFERRED_LLM", "gemini").lower()
 def call_llm(prompt: str, preferred_model: str = None) -> dict:
     """
     Master LLM caller.
-    Order is determined by:
-      1. preferred_model arg (per-request override from frontend)
-      2. PREFERRED_LLM env var (global default)
+    preferred_model can be:
+      - a provider name: "gemini" or "mistral"
+      - a specific model ID: "mistral-large-latest", "gemini-2.5-flash", etc.
     """
     all_attempts = []
     active_pref = (preferred_model or ENV_PREFERRED).lower()
 
-    chain = (
-        [("mistral", call_mistral), ("gemini", call_gemini)]
-        if active_pref == "mistral"
-        else [("gemini", call_gemini), ("mistral", call_mistral)]
-    )
+    MISTRAL_PREFIXES = ("mistral-", "open-mistral-", "ministral-", "codestral-", "pixtral-")
+    GEMINI_PREFIXES  = ("gemini-", "gemma-")
+
+    if any(active_pref.startswith(p) for p in MISTRAL_PREFIXES):
+        chain = [
+            ("mistral", lambda p: call_mistral_with_model(p, active_pref)),
+            ("gemini",  call_gemini),
+        ]
+    elif any(active_pref.startswith(p) for p in GEMINI_PREFIXES):
+        chain = [
+            ("gemini",  lambda p: call_gemini_with_model(p, active_pref)),
+            ("mistral", call_mistral),
+        ]
+    elif active_pref == "mistral":
+        chain = [("mistral", call_mistral), ("gemini", call_gemini)]
+    else:
+        chain = [("gemini", call_gemini), ("mistral", call_mistral)]
 
     for provider_name, caller in chain:
         result = caller(prompt)
@@ -63,8 +75,8 @@ JOB DESCRIPTION: Looking for a backend developer with Python, FastAPI, and datab
   "verdict": "Good Match"
 }
 """
-    chain_order = "mistral -> gemini" if PREFERRED_LLM == "mistral" else "gemini -> mistral"
-    print(f"Active preference: PREFERRED_LLM={PREFERRED_LLM.upper()}")
+    chain_order = "mistral -> gemini" if ENV_PREFERRED == "mistral" else "gemini -> mistral"
+    print(f"Active preference: PREFERRED_LLM={ENV_PREFERRED.upper()}")
     print(f"Chain: {chain_order}\n")
 
     result = call_llm(TEST_PROMPT)

@@ -16,10 +16,9 @@ FALLBACK_CHAIN = [
 client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 
 
-def call_gemini(prompt: str, retries: int = 1) -> dict:
+def _call_gemini_chain(prompt: str, chain: list, retries: int = 1) -> dict:
     attempts = []
-
-    for model in FALLBACK_CHAIN:
+    for model in chain:
         for attempt in range(retries + 1):
             try:
                 start = time.time()
@@ -29,32 +28,23 @@ def call_gemini(prompt: str, retries: int = 1) -> dict:
                     config=types.GenerateContentConfig(temperature=0.1),
                 )
                 elapsed = round(time.time() - start, 2)
-
                 text = response.text.strip()
                 text = re.sub(r'<think>.*?</think>', '', text, flags=re.DOTALL).strip()
-
                 if text.startswith("```"):
                     text = text.split("```")[1]
                     if text.startswith("json"):
                         text = text[4:]
                     text = text.strip()
-
                 match = re.search(r'\{.*\}', text, re.DOTALL)
                 if match:
                     text = match.group(0)
-
                 return {
-                    "success": True,
-                    "text": text,
-                    "model": model,
-                    "speed": elapsed,
-                    "attempts": attempts + [{"model": model, "status": "pass"}]
+                    "success": True, "text": text, "model": model,
+                    "speed": elapsed, "attempts": attempts + [{"model": model, "status": "pass"}]
                 }
-
             except Exception as e:
                 err = str(e)
                 attempts.append({"model": model, "status": err[:60]})
-
                 if "429" in err or "404" in err:
                     break
                 elif "503" in err or "500" in err:
@@ -63,8 +53,16 @@ def call_gemini(prompt: str, retries: int = 1) -> dict:
                     continue
                 else:
                     break
-
     return {"success": False, "text": None, "model": None, "speed": None, "attempts": attempts}
+
+
+def call_gemini(prompt: str) -> dict:
+    return _call_gemini_chain(prompt, FALLBACK_CHAIN)
+
+
+def call_gemini_with_model(prompt: str, preferred_model_id: str) -> dict:
+    remaining = [m for m in FALLBACK_CHAIN if m != preferred_model_id]
+    return _call_gemini_chain(prompt, [preferred_model_id] + remaining)
 
 
 if __name__ == "__main__":
