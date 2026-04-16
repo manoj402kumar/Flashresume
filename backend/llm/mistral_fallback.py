@@ -7,9 +7,9 @@ from dotenv import load_dotenv
 load_dotenv()
 
 MISTRAL_FALLBACK_CHAIN = [
-    "mistral-large-latest",
-    "mistral-small-latest",
-    "open-mistral-7b",
+    "mistral-large-latest",    # Primary - best quality, 0.83s
+    "mistral-medium-latest",   # Fallback 1 - good balance, 0.62s
+    "open-mistral-nemo",       # Fallback 2 - fast, 0.83s
 ]
 
 client = Mistral(api_key=os.getenv("MISTRAL_API_KEY"))

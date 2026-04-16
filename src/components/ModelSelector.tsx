@@ -21,7 +21,7 @@ const MODELS = [
   {
     id: "mistral" as ModelChoice,
     name: "Mistral",
-    badge: "La Plateforme",
+    badge: "Recommended ⚡",
     description: "High quality JSON",
     activeBg: "bg-orange-400/10 border-orange-400/50",
     activeText: "text-orange-400",

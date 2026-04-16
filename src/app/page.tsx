@@ -33,7 +33,7 @@ export default function App() {
   const [parsedText, setParsedText] = useState("");
   const [showParsedText, setShowParsedText] = useState(false);
   const [parsing, setParsing] = useState(false);
-  const [selectedModel, setSelectedModel] = useState<ModelChoice>("gemini");
+  const [selectedModel, setSelectedModel] = useState<ModelChoice>("mistral");
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
@@ -124,12 +124,12 @@ export default function App() {
 
       localStorage.setItem("resume_text", finalResumeText);
       localStorage.setItem("job_description", jobDescription);
+      localStorage.setItem("selected_model", selectedModel);
 
       if (hasJD) {
         // Normal flow: analyze against JD, show analysis page
         const analysisResult = await analyzeResume(finalResumeText, jobDescription, selectedModel);
         localStorage.setItem("analysis", JSON.stringify(analysisResult));
-        localStorage.setItem("selected_model", selectedModel);
         router.push("/analyze");
       } else {
         // No-JD mode: skip analysis entirely, go straight to preview

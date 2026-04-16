@@ -23,7 +23,7 @@ export default function AnalyzePage() {
   const [analysis, setAnalysis] = useState<CombinedAnalysisResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [projectApproved, setProjectApproved] = useState(false);
-  const [selectedModel, setSelectedModel] = useState<ModelChoice>("gemini");
+  const [selectedModel, setSelectedModel] = useState<ModelChoice>("mistral");
 
   useEffect(() => {
     const analysisData = localStorage.getItem("analysis");

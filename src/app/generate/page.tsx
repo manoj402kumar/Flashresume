@@ -50,7 +50,7 @@ export default function GeneratePage() {
         const approvedProject = approvedProjectData 
           ? JSON.parse(approvedProjectData) 
           : null;
-        const selectedModel = localStorage.getItem("selected_model") || "gemini";
+        const selectedModel = localStorage.getItem("selected_model") || "mistral";
 
         // Step 1: Analyzing content
         setCurrentStep(0);

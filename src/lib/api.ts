@@ -79,7 +79,7 @@ export interface CombinedAnalysisResponse {
 export async function analyzeResume(
   resume_text: string,
   job_description: string,
-  preferred_model: string = "gemini"
+  preferred_model: string = "mistral"
 ): Promise<CombinedAnalysisResponse> {
   if (!resume_text.trim()) {
     throw new Error("Resume text cannot be empty.");
