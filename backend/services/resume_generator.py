@@ -4,7 +4,7 @@ from prompts.generation_prompt import GENERATION_PROMPT
 from llm.master_llm_caller import call_llm
 from templates.template_v1_schema import TemplateV1
 
-def generate_resume(resume_text: str, job_description: str, ats_score_before: int, approved_project: str = "") -> dict:
+def generate_resume(resume_text: str, job_description: str, ats_score_before: int, approved_project: str = "", preferred_model: str = "gemini") -> dict:
     # Build prompt with approved project if provided
     if approved_project:
         # Add approved project instruction to resume text
@@ -18,7 +18,7 @@ def generate_resume(resume_text: str, job_description: str, ats_score_before: in
         ats_score_before=ats_score_before
     )
 
-    result = call_llm(prompt)
+    result = call_llm(prompt, preferred_model=preferred_model)
     
     # Check if LLM call failed
     if not result["success"]:

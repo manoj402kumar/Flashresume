@@ -6,20 +6,22 @@ from .mistral_fallback import call_mistral
 
 load_dotenv()
 
-PREFERRED_LLM = os.getenv("PREFERRED_LLM", "gemini").lower()
+ENV_PREFERRED = os.getenv("PREFERRED_LLM", "gemini").lower()
 
 
-def call_llm(prompt: str) -> dict:
+def call_llm(prompt: str, preferred_model: str = None) -> dict:
     """
-    Master LLM caller. Order controlled by PREFERRED_LLM in .env:
-      PREFERRED_LLM=gemini  -> Gemini first, Mistral fallback (default)
-      PREFERRED_LLM=mistral -> Mistral first, Gemini fallback
+    Master LLM caller.
+    Order is determined by:
+      1. preferred_model arg (per-request override from frontend)
+      2. PREFERRED_LLM env var (global default)
     """
     all_attempts = []
+    active_pref = (preferred_model or ENV_PREFERRED).lower()
 
     chain = (
         [("mistral", call_mistral), ("gemini", call_gemini)]
-        if PREFERRED_LLM == "mistral"
+        if active_pref == "mistral"
         else [("gemini", call_gemini), ("mistral", call_mistral)]
     )
 

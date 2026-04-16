@@ -3,7 +3,7 @@ import re
 from prompts.analysis_prompt import ANALYSIS_PROMPT
 from llm.master_llm_caller import call_llm
 
-def score_resume(resume_text: str, job_description: str) -> dict:
+def score_resume(resume_text: str, job_description: str, preferred_model: str = "gemini") -> dict:
     """
     Analyzes resume against JD using the fine-tuned algorithm.
     Returns detailed analysis including section-wise gaps.
@@ -12,7 +12,7 @@ def score_resume(resume_text: str, job_description: str) -> dict:
         resume_text=resume_text,
         job_description=job_description
     )
-    result = call_llm(prompt)
+    result = call_llm(prompt, preferred_model=preferred_model)
     
     if not result["success"]:
         raise ValueError(f"All LLM providers failed: {result['all_attempts']}")

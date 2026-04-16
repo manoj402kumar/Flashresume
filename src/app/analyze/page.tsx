@@ -16,12 +16,14 @@ import {
   Code
 } from "lucide-react";
 import type { CombinedAnalysisResponse } from "@/lib/api";
+import ModelSelector, { type ModelChoice } from "@/components/ModelSelector";
 
 export default function AnalyzePage() {
   const router = useRouter();
   const [analysis, setAnalysis] = useState<CombinedAnalysisResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [projectApproved, setProjectApproved] = useState(false);
+  const [selectedModel, setSelectedModel] = useState<ModelChoice>("gemini");
 
   useEffect(() => {
     const analysisData = localStorage.getItem("analysis");
@@ -39,6 +41,11 @@ export default function AnalyzePage() {
     console.log("[DEBUG] requires_consent:", parsedAnalysis.requires_consent);
     
     setAnalysis(parsedAnalysis);
+
+    // Restore model selection from Step 1
+    const savedModel = localStorage.getItem("selected_model") as ModelChoice;
+    if (savedModel) setSelectedModel(savedModel);
+
     setLoading(false);
   }, [router]);
 
@@ -267,6 +274,23 @@ export default function AnalyzePage() {
               </p>
             </div>
           </div>
+        </motion.div>
+
+        {/* Model Selector */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.55 }}
+          className="mb-8"
+        >
+          <ModelSelector
+            value={selectedModel}
+            onChange={(m) => {
+              setSelectedModel(m);
+              localStorage.setItem("selected_model", m);
+            }}
+            label="Select AI Model for Resume Generation"
+          />
         </motion.div>
 
         {/* Action Button */}

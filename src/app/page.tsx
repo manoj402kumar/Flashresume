@@ -19,6 +19,7 @@ import {
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { parseResume, analyzeResume } from "@/lib/api";
+import ModelSelector, { type ModelChoice } from "@/components/ModelSelector";
 
 export default function App() {
   const router = useRouter();
@@ -32,6 +33,7 @@ export default function App() {
   const [parsedText, setParsedText] = useState("");
   const [showParsedText, setShowParsedText] = useState(false);
   const [parsing, setParsing] = useState(false);
+  const [selectedModel, setSelectedModel] = useState<ModelChoice>("gemini");
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
@@ -125,8 +127,9 @@ export default function App() {
 
       if (hasJD) {
         // Normal flow: analyze against JD, show analysis page
-        const analysisResult = await analyzeResume(finalResumeText, jobDescription);
+        const analysisResult = await analyzeResume(finalResumeText, jobDescription, selectedModel);
         localStorage.setItem("analysis", JSON.stringify(analysisResult));
+        localStorage.setItem("selected_model", selectedModel);
         router.push("/analyze");
       } else {
         // No-JD mode: skip analysis entirely, go straight to preview
@@ -297,6 +300,11 @@ export default function App() {
                     {parsing ? "Parsing..." : "See Parsed Text"}
                   </button>
                 )}
+                <ModelSelector
+                  value={selectedModel}
+                  onChange={setSelectedModel}
+                  label="Select AI Model"
+                />
                 <button
                   onClick={handleGenerate}
                   disabled={loading}
