@@ -1,5 +1,5 @@
 ANALYSIS_PROMPT = """
-Analyze this resume against the job description. Calculate ATS score and identify keyword matches.
+Analyze this resume against the job description. Calculate ATS score based on number of keywords matched from job description and identify keyword matches.
 
 Return ONLY valid JSON. No markdown. No explanation. No code block. Raw JSON only.
 

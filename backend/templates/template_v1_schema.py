@@ -35,6 +35,7 @@ class TechnicalSkills(BaseModel):
     databases: list[str]
     cloud_services: list[str]
     developer_tools: list[str]
+    miscellaneous: list[str] = []
 
 class TemplateV1(BaseModel):
     template_id: str = "v1"

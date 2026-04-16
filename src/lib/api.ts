@@ -160,6 +160,7 @@ export interface TemplateV1 {
     databases: string[];
     cloud_services: string[];
     developer_tools: string[];
+    miscellaneous: string[];
   };
   changes: string[];
   ats_score_before: number;

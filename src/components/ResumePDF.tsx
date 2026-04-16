@@ -132,7 +132,7 @@ const styles = StyleSheet.create({
   skillLabel: {
     fontSize: 10,
     fontWeight: "bold",
-    width: 110,
+    width: 130,
     flexShrink: 0,
   },
   skillList: {
@@ -296,7 +296,7 @@ export default function ResumePDF({ resume }: ResumePDFProps) {
           <View style={styles.sectionDivider} />
           <View style={styles.skillsContainer}>
             {resume.technical_skills.languages.length > 0 && (
-              <View style={styles.skillCategory}>
+              <View style={styles.skillCategory} wrap={false}>
                 <Text style={styles.skillLabel}>Languages:</Text>
                 <Text style={styles.skillList}>
                   {resume.technical_skills.languages.join(", ")}
@@ -304,15 +304,15 @@ export default function ResumePDF({ resume }: ResumePDFProps) {
               </View>
             )}
             {resume.technical_skills.frameworks.length > 0 && (
-              <View style={styles.skillCategory}>
-                <Text style={styles.skillLabel}>Frameworks:</Text>
+              <View style={styles.skillCategory} wrap={false}>
+                <Text style={styles.skillLabel}>Frameworks & Libraries:</Text>
                 <Text style={styles.skillList}>
                   {resume.technical_skills.frameworks.join(", ")}
                 </Text>
               </View>
             )}
             {resume.technical_skills.databases.length > 0 && (
-              <View style={styles.skillCategory}>
+              <View style={styles.skillCategory} wrap={false}>
                 <Text style={styles.skillLabel}>Databases:</Text>
                 <Text style={styles.skillList}>
                   {resume.technical_skills.databases.join(", ")}
@@ -320,7 +320,7 @@ export default function ResumePDF({ resume }: ResumePDFProps) {
               </View>
             )}
             {resume.technical_skills.cloud_services.length > 0 && (
-              <View style={styles.skillCategory}>
+              <View style={styles.skillCategory} wrap={false}>
                 <Text style={styles.skillLabel}>Cloud Services:</Text>
                 <Text style={styles.skillList}>
                   {resume.technical_skills.cloud_services.join(", ")}
@@ -328,10 +328,18 @@ export default function ResumePDF({ resume }: ResumePDFProps) {
               </View>
             )}
             {resume.technical_skills.developer_tools.length > 0 && (
-              <View style={styles.skillCategory}>
+              <View style={styles.skillCategory} wrap={false}>
                 <Text style={styles.skillLabel}>Developer Tools:</Text>
                 <Text style={styles.skillList}>
                   {resume.technical_skills.developer_tools.join(", ")}
+                </Text>
+              </View>
+            )}
+            {resume.technical_skills.miscellaneous && resume.technical_skills.miscellaneous.length > 0 && (
+              <View style={styles.skillCategory} wrap={false}>
+                <Text style={styles.skillLabel}>Miscellaneous:</Text>
+                <Text style={styles.skillList}>
+                  {resume.technical_skills.miscellaneous.join(", ")}
                 </Text>
               </View>
             )}
