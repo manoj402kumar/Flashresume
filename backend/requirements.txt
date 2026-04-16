@@ -10,5 +10,6 @@ python-docx
 google-genai
 openai
 mistralai
+groq
 python-dotenv
 pydantic

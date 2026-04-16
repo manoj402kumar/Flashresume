@@ -3,6 +3,7 @@ import json
 from dotenv import load_dotenv
 from .gemini_fallback import call_gemini, call_gemini_with_model
 from .mistral_fallback import call_mistral, call_mistral_with_model
+from .groq_fallback import call_groq, call_groq_with_model
 
 load_dotenv()
 
@@ -21,21 +22,30 @@ def call_llm(prompt: str, preferred_model: str = None) -> dict:
 
     MISTRAL_PREFIXES = ("mistral-", "open-mistral-", "ministral-", "codestral-", "pixtral-")
     GEMINI_PREFIXES  = ("gemini-", "gemma-")
+    GROQ_PREFIXES    = ("llama-", "llama3-", "llama3.", "mixtral-", "qwen-", "gemma2-", "deepseek-", "llama-4")
 
     if any(active_pref.startswith(p) for p in MISTRAL_PREFIXES):
         chain = [
             ("mistral", lambda p: call_mistral_with_model(p, active_pref)),
             ("gemini",  call_gemini),
+            ("groq",    call_groq),
         ]
     elif any(active_pref.startswith(p) for p in GEMINI_PREFIXES):
         chain = [
             ("gemini",  lambda p: call_gemini_with_model(p, active_pref)),
             ("mistral", call_mistral),
+            ("groq",    call_groq),
+        ]
+    elif any(active_pref.startswith(p) for p in GROQ_PREFIXES):
+        chain = [
+            ("groq",    lambda p: call_groq_with_model(p, active_pref)),
+            ("mistral", call_mistral),
+            ("gemini",  call_gemini),
         ]
     elif active_pref == "mistral":
-        chain = [("mistral", call_mistral), ("gemini", call_gemini)]
+        chain = [("mistral", call_mistral), ("gemini", call_gemini), ("groq", call_groq)]
     else:
-        chain = [("gemini", call_gemini), ("mistral", call_mistral)]
+        chain = [("gemini", call_gemini), ("mistral", call_mistral), ("groq", call_groq)]
 
     for provider_name, caller in chain:
         result = caller(prompt)
