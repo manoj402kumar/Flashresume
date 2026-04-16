@@ -1,0 +1,13 @@
+fastapi
+uvicorn[standard]
+python-multipart
+pdfplumber
+pdf2image
+Pillow
+pypdfium2
+pytesseract
+python-docx
+google-generativeai
+openai
+python-dotenv
+pydantic
