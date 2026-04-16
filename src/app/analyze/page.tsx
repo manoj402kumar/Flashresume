@@ -44,12 +44,12 @@ export default function AnalyzePage() {
 
   const handleProceed = () => {
     // Save project approval if needed
-    if (analysis?.requires_consent && analysis.suggested_project) {
-      if (projectApproved) {
-        localStorage.setItem("approved_project", JSON.stringify(analysis.suggested_project));
-      } else {
-        localStorage.removeItem("approved_project");
-      }
+    if (analysis?.requires_consent && analysis.suggested_project && projectApproved) {
+      localStorage.setItem("approved_project", JSON.stringify(analysis.suggested_project));
+    } else {
+      // CRITIAL FIX: If consent is not required or not approved, explicitly clear
+      // any lingering approved project from a previous session to prevent leaking.
+      localStorage.removeItem("approved_project");
     }
 
     // Go to preview page

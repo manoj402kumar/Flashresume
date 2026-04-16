@@ -96,11 +96,6 @@ export default function App() {
   };
 
   const handleGenerate = async () => {
-    if (!jobDescription.trim()) {
-      setError("Please paste a job description");
-      return;
-    }
-
     if (inputType === "file" && !file) {
       setError("Please upload a resume file");
       return;
@@ -113,6 +108,10 @@ export default function App() {
     setLoading(true);
     setError("");
 
+    const hasJD = jobDescription.trim().length > 0;
+    // Clear stale no_jd_mode flag from any previous session
+    localStorage.removeItem("no_jd_mode");
+
     try {
       let finalResumeText = resumeText;
 
@@ -121,13 +120,30 @@ export default function App() {
         finalResumeText = parseResult.resume_text;
       }
 
-      const analysisResult = await analyzeResume(finalResumeText, jobDescription);
-
       localStorage.setItem("resume_text", finalResumeText);
       localStorage.setItem("job_description", jobDescription);
-      localStorage.setItem("analysis", JSON.stringify(analysisResult));
 
-      router.push("/analyze");
+      if (hasJD) {
+        // Normal flow: analyze against JD, show analysis page
+        const analysisResult = await analyzeResume(finalResumeText, jobDescription);
+        localStorage.setItem("analysis", JSON.stringify(analysisResult));
+        router.push("/analyze");
+      } else {
+        // No-JD mode: skip analysis entirely, go straight to preview
+        const dummyAnalysis = {
+          ats_score: 0,
+          matched_skills: [],
+          missing_skills: [],
+          has_relevant_projects: true,
+          relevant_projects: [],
+          total_projects_count: 0,
+          requires_consent: false,
+          suggested_project: null,
+        };
+        localStorage.setItem("analysis", JSON.stringify(dummyAnalysis));
+        localStorage.setItem("no_jd_mode", "true");
+        router.push("/preview");
+      }
     } catch (err: any) {
       setError(err.message || "Something went wrong. Please try again.");
     } finally {
@@ -287,7 +303,7 @@ export default function App() {
                   className="w-full bg-on-background text-white py-4 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-primary transition-colors group disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Bolt className="text-primary-container w-5 h-5 fill-primary-container" />
-                  {loading ? "Analyzing..." : "Generate"}
+                  {loading ? "Processing..." : jobDescription.trim() ? "Generate" : "Optimize Resume"}
                 </button>
               </div>
             </div>

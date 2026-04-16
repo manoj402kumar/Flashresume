@@ -558,7 +558,7 @@ export default function ResultPage() {
                         <div className="space-y-2">
                           <input
                             type="text"
-                            value={edu.degree}
+                            value={edu.degree || ''}
                             onChange={(e) => {
                               const newEducation = [...resume.education];
                               newEducation[idx].degree = e.target.value;
@@ -569,7 +569,7 @@ export default function ResultPage() {
                           />
                           <input
                             type="text"
-                            value={edu.institution}
+                            value={edu.institution || ''}
                             onChange={(e) => {
                               const newEducation = [...resume.education];
                               newEducation[idx].institution = e.target.value;
@@ -602,16 +602,53 @@ export default function ResultPage() {
                               placeholder="Duration"
                             />
                           </div>
+                          <div className="flex justify-between items-center mt-2">
+                            <input
+                              type="text"
+                              value={edu.cgpa || ''}
+                              onChange={(e) => {
+                                const newEducation = [...resume.education];
+                                newEducation[idx].cgpa = e.target.value;
+                                updateResume({ education: newEducation });
+                              }}
+                              className="flex-1 border-2 border-surface-container-high rounded-xl px-4 py-2 focus:ring-2 focus:ring-primary mr-4"
+                              placeholder="CGPA / Score"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const newEducation = resume.education.filter((_, i) => i !== idx);
+                                updateResume({ education: newEducation });
+                              }}
+                              className="px-3 py-1 text-sm text-red-500 hover:bg-red-50 rounded-lg transition-colors font-semibold"
+                            >
+                              Remove
+                            </button>
+                          </div>
                         </div>
                       ) : (
                         <>
                           <p className="font-bold text-lg text-on-background">{edu.degree}</p>
                           <p className="text-on-surface-variant">{edu.institution}, {edu.location}</p>
-                          <p className="text-sm text-on-surface-variant">{edu.duration}</p>
+                          <p className="text-sm text-on-surface-variant">{edu.duration}{edu.cgpa ? ` • CGPA: ${edu.cgpa}` : ''}</p>
                         </>
                       )}
                     </div>
                   ))}
+                  {editMode && (
+                    <div className="mt-4 flex justify-center">
+                      <button
+                        onClick={() => {
+                          const newEducation = [...resume.education, { institution: '', location: '', degree: '', duration: '', cgpa: '' }];
+                          updateResume({ education: newEducation });
+                        }}
+                        className="px-4 py-2 bg-primary/10 text-primary font-bold rounded-xl hover:bg-primary/20 transition-colors"
+                        type="button"
+                      >
+                        + Add Education Field
+                      </button>
+                    </div>
+                  )}
                 </motion.div>
               )}
 
@@ -637,7 +674,7 @@ export default function ResultPage() {
                         <div className="space-y-2 mb-4">
                           <input
                             type="text"
-                            value={exp.job_title}
+                            value={exp.job_title || ''}
                             onChange={(e) => {
                               const newExperience = [...resume.experience];
                               newExperience[idx].job_title = e.target.value;
@@ -648,7 +685,7 @@ export default function ResultPage() {
                           />
                           <input
                             type="text"
-                            value={exp.company}
+                            value={exp.company || ''}
                             onChange={(e) => {
                               const newExperience = [...resume.experience];
                               newExperience[idx].company = e.target.value;
@@ -720,8 +757,36 @@ export default function ResultPage() {
                           );
                         })}
                       </ul>
+                      {editMode && (
+                        <div className="flex justify-end items-center mt-3">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const newExperience = resume.experience.filter((_, i) => i !== idx);
+                              updateResume({ experience: newExperience });
+                            }}
+                            className="px-3 py-1 text-sm text-red-500 hover:bg-red-50 rounded-lg transition-colors font-semibold"
+                          >
+                            Remove Experience
+                          </button>
+                        </div>
+                      )}
                     </div>
                   ))}
+                  {editMode && (
+                    <div className="mt-4 flex justify-center">
+                      <button
+                        onClick={() => {
+                          const newExperience = [...resume.experience, { job_title: '', company: '', location: '', duration: '', bullets: [''] }];
+                          updateResume({ experience: newExperience });
+                        }}
+                        className="px-4 py-2 bg-primary/10 text-primary font-bold rounded-xl hover:bg-primary/20 transition-colors"
+                        type="button"
+                      >
+                        + Add Experience
+                      </button>
+                    </div>
+                  )}
                 </motion.div>
               )}
 
@@ -745,17 +810,41 @@ export default function ResultPage() {
                     <div key={idx} className="mb-8 last:mb-0">
                       {editMode ? (
                         <div className="space-y-2 mb-4">
-                          <input
-                            type="text"
-                            value={proj.title}
-                            onChange={(e) => {
-                              const newProjects = [...resume.projects];
-                              newProjects[idx].title = e.target.value;
-                              updateResume({ projects: newProjects });
-                            }}
-                            className="w-full font-bold border-2 border-surface-container-high rounded-xl px-4 py-2 focus:ring-2 focus:ring-primary"
-                            placeholder="Project Title"
-                          />
+                          <div className="flex gap-2">
+                            <input
+                              type="text"
+                              value={proj.title}
+                              onChange={(e) => {
+                                const newProjects = [...resume.projects];
+                                newProjects[idx].title = e.target.value;
+                                updateResume({ projects: newProjects });
+                              }}
+                              className="flex-[2] font-bold border-2 border-surface-container-high rounded-xl px-4 py-2 focus:ring-2 focus:ring-primary"
+                              placeholder="Project Title"
+                            />
+                            <input
+                              type="text"
+                              value={proj.link || ''}
+                              onChange={(e) => {
+                                const newProjects = [...resume.projects];
+                                newProjects[idx].link = e.target.value;
+                                updateResume({ projects: newProjects });
+                              }}
+                              className="flex-1 text-sm border-2 border-surface-container-high rounded-xl px-4 py-2 focus:ring-2 focus:ring-primary"
+                              placeholder="Display Text (Link/GitHub)"
+                            />
+                            <input
+                              type="url"
+                              value={proj.link_href || ''}
+                              onChange={(e) => {
+                                const newProjects = [...resume.projects];
+                                newProjects[idx].link_href = e.target.value;
+                                updateResume({ projects: newProjects });
+                              }}
+                              className="flex-[1.5] text-sm border-2 border-surface-container-high rounded-xl px-4 py-2 focus:ring-2 focus:ring-primary"
+                              placeholder="Actual Repo URL"
+                            />
+                          </div>
                           <input
                             type="text"
                             value={proj.tech_stack}
@@ -767,29 +856,22 @@ export default function ResultPage() {
                             className="w-full text-sm border-2 border-surface-container-high rounded-xl px-4 py-2 focus:ring-2 focus:ring-primary"
                             placeholder="Tech Stack"
                           />
-                          <input
-                            type="url"
-                            value={proj.link || ''}
-                            onChange={(e) => {
-                              const newProjects = [...resume.projects];
-                              newProjects[idx].link = e.target.value;
-                              updateResume({ projects: newProjects });
-                            }}
-                            className="w-full text-sm border-2 border-surface-container-high rounded-xl px-4 py-2 focus:ring-2 focus:ring-primary"
-                            placeholder="Project Link (GitHub/Live URL)"
-                          />
                         </div>
                       ) : (
                         <>
-                          <p className="font-bold text-lg text-on-background">{proj.title}</p>
-                          <p className="text-sm text-on-surface-variant mb-1">
-                            <strong>Tech Stack:</strong> {proj.tech_stack}
-                          </p>
-                          {proj.link && proj.link !== 'Link' && (
-                            <a href={proj.link.startsWith('http') ? proj.link : `https://${proj.link}`} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline mb-3 inline-block">
-                              {proj.link}
+                          <div className="flex justify-between items-start mb-2">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <p className="font-bold text-lg text-on-background">{proj.title}</p>
+                              {proj.tech_stack && (
+                                <p className="text-sm text-on-surface-variant italic">
+                                  <span className="not-italic mr-2">|</span>{proj.tech_stack}
+                                </p>
+                              )}
+                            </div>
+                            <a href={proj.link_href ? (proj.link_href.startsWith('http') ? proj.link_href : `https://${proj.link_href}`) : 'https://github.com/reponame'} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline ml-4 flex-shrink-0">
+                              {proj.link || 'Link'}
                             </a>
-                          )}
+                          </div>
                         </>
                       )}
                       <ul className="space-y-2">
@@ -823,8 +905,36 @@ export default function ResultPage() {
                           );
                         })}
                       </ul>
+                      {editMode && (
+                        <div className="flex justify-end items-center mt-3">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const newProjects = resume.projects.filter((_, i) => i !== idx);
+                              updateResume({ projects: newProjects });
+                            }}
+                            className="px-3 py-1 text-sm text-red-500 hover:bg-red-50 rounded-lg transition-colors font-semibold"
+                          >
+                            Remove Project
+                          </button>
+                        </div>
+                      )}
                     </div>
                   ))}
+                  {editMode && (
+                    <div className="mt-4 flex justify-center">
+                      <button
+                        onClick={() => {
+                          const newProjects = [...resume.projects, { title: '', tech_stack: '', link: '', link_href: '', bullets: [''] }];
+                          updateResume({ projects: newProjects });
+                        }}
+                        className="px-4 py-2 bg-primary/10 text-primary font-bold rounded-xl hover:bg-primary/20 transition-colors"
+                        type="button"
+                      >
+                        + Add Project
+                      </button>
+                    </div>
+                  )}
                 </motion.div>
               )}
 
@@ -1017,85 +1127,95 @@ export default function ResultPage() {
                 </motion.div>
               )}
 
-              {/* Certifications & Achievements (Merged - if exactly 1 certification) */}
-              {resume.certifications_and_achievements && resume.certifications_and_achievements.length > 0 && (
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.75 }}
-                  whileHover={{ y: -4 }}
-                  className="bg-surface-container-lowest rounded-[2rem] p-8 shadow-xl hover:shadow-2xl transition-all duration-300 border border-primary/5"
-                >
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="w-12 h-12 rounded-2xl bg-tertiary-container/20 flex items-center justify-center">
-                      <Award className="w-6 h-6 text-tertiary-container" />
-                    </div>
-                    <h3 className="font-headline text-2xl font-bold text-on-background">Certifications & Achievements</h3>
-                  </div>
-                  
-                  <ul className="space-y-3">
-                    {resume.certifications_and_achievements.map((item, idx) => (
-                      <li key={idx} className="flex items-start gap-3 text-on-background">
-                        <span className="text-tertiary-container mt-1">•</span>
-                        {editMode ? (
-                          <textarea
-                            value={item}
-                            onChange={(e) => {
-                              const newItems = [...resume.certifications_and_achievements!];
-                              newItems[idx] = e.target.value;
-                              updateResume({ certifications_and_achievements: newItems });
-                            }}
-                            className="flex-1 border-2 border-surface-container-high rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary resize-none"
-                            rows={2}
-                          />
-                        ) : (
-                          <span className="flex-1">{item}</span>
-                        )}
-                      </li>
-                    ))}
-                  </ul>
-                </motion.div>
-              )}
+              {/* Certifications / Achievements */}
+              {(() => {
+                const combinedItems = [
+                  ...(resume.certifications_and_achievements ?? []),
+                  ...(resume.certifications ?? []),
+                  ...(resume.achievements ?? []),
+                ];
+                const uniqueItems = [...new Set(combinedItems)];
 
-              {/* Achievements Section (always show if not merged with certifications) */}
-              {!resume.certifications_and_achievements && resume.achievements && resume.achievements.length > 0 && (
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.8 }}
-                  whileHover={{ y: -4 }}
-                  className="bg-surface-container-lowest rounded-[2rem] p-8 shadow-xl hover:shadow-2xl transition-all duration-300 border border-primary/5"
-                >
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="w-12 h-12 rounded-2xl bg-tertiary-container/20 flex items-center justify-center">
-                      <Award className="w-6 h-6 text-tertiary-container" />
+                if (uniqueItems.length === 0) return null;
+
+                return (
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.75 }}
+                    whileHover={{ y: -4 }}
+                    className="bg-surface-container-lowest rounded-[2rem] p-8 shadow-xl hover:shadow-2xl transition-all duration-300 border border-primary/5"
+                  >
+                    <div className="flex items-center gap-3 mb-6">
+                      <div className="w-12 h-12 rounded-2xl bg-tertiary-container/20 flex items-center justify-center">
+                        <Award className="w-6 h-6 text-tertiary-container" />
+                      </div>
+                      <h3 className="font-headline text-2xl font-bold text-on-background">Certifications / Achievements</h3>
                     </div>
-                    <h3 className="font-headline text-2xl font-bold text-on-background">Achievements</h3>
-                  </div>
-                  
-                  <ul className="space-y-3">
-                    {resume.achievements.map((achievement, idx) => (
-                      <li key={idx} className="flex items-start gap-3 text-on-background">
-                        <span className="text-tertiary-container mt-1">•</span>
-                        {editMode ? (
-                          <textarea
-                            value={achievement}
-                            onChange={(e) => {
-                              const newAchievements = [...resume.achievements!];
-                              newAchievements[idx] = e.target.value;
-                              updateResume({ achievements: newAchievements });
-                            }}
-                            className="flex-1 border-2 border-surface-container-high rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary resize-none"
-                            rows={2}
-                          />
-                        ) : (
-                          <span className="flex-1">{achievement}</span>
-                        )}
-                      </li>
-                    ))}
-                  </ul>
-                </motion.div>
-              )}
+                    
+                    <ul className="space-y-3">
+                      {uniqueItems.map((item, idx) => (
+                        <li key={idx} className="flex items-start gap-3 text-on-background">
+                          <span className="text-tertiary-container mt-1">•</span>
+                          {editMode ? (
+                            <div className="flex-1 flex gap-2">
+                              <textarea
+                                value={item}
+                                onChange={(e) => {
+                                  const newItems = [...uniqueItems];
+                                  newItems[idx] = e.target.value;
+                                  updateResume({ 
+                                    certifications_and_achievements: newItems,
+                                    certifications: [],
+                                    achievements: []
+                                  });
+                                }}
+                                className="flex-1 border-2 border-surface-container-high rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary resize-none"
+                                rows={2}
+                              />
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const newItems = uniqueItems.filter((_, i) => i !== idx);
+                                  updateResume({ 
+                                    certifications_and_achievements: newItems,
+                                    certifications: [],
+                                    achievements: []
+                                  });
+                                }}
+                                className="px-3 py-1 text-sm text-red-500 hover:bg-red-50 rounded-lg transition-colors font-semibold self-start mt-1"
+                              >
+                                Remove
+                              </button>
+                            </div>
+                          ) : (
+                            <span className="flex-1">{item}</span>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                    
+                    {editMode && (
+                      <div className="mt-4 flex justify-center">
+                        <button
+                          onClick={() => {
+                            const newItems = [...uniqueItems, ''];
+                            updateResume({ 
+                              certifications_and_achievements: newItems,
+                              certifications: [],
+                              achievements: []
+                            });
+                          }}
+                          className="px-4 py-2 bg-primary/10 text-primary font-bold rounded-xl hover:bg-primary/20 transition-colors"
+                          type="button"
+                        >
+                          + Add More
+                        </button>
+                      </div>
+                    )}
+                  </motion.div>
+                );
+              })()}
             </div>
 
             {/* Changes Sidebar - Right (1 column) */}

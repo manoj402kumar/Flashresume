@@ -83,9 +83,6 @@ export async function analyzeResume(
   if (!resume_text.trim()) {
     throw new Error("Resume text cannot be empty.");
   }
-  if (!job_description.trim()) {
-    throw new Error("Job description cannot be empty.");
-  }
 
   try {
     const res = await fetch(`${BASE}/api/analyze`, {
@@ -137,6 +134,7 @@ export interface TemplateV1 {
     location: string;
     degree: string;
     duration: string;
+    cgpa?: string | null;
   }>;
   experience: Array<{
     job_title: string;
@@ -150,6 +148,8 @@ export interface TemplateV1 {
     tech_stack: string;
     duration: string;
     bullets: string[];
+    link?: string;
+    link_href?: string;
   }>;
   achievements?: string[] | null;
   certifications?: string[] | null;
@@ -171,9 +171,6 @@ export async function generateResume(
 ): Promise<TemplateV1> {
   if (!payload.resume_text.trim()) {
     throw new Error("Resume text cannot be empty.");
-  }
-  if (!payload.job_description.trim()) {
-    throw new Error("Job description cannot be empty.");
   }
 
   try {

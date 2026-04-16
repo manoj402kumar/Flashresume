@@ -28,13 +28,11 @@ const styles = StyleSheet.create({
   heading: {
     marginBottom: 10,
     textAlign: "center",
-    borderBottom: "1.5pt solid #000",
-    paddingBottom: 8,
   },
   name: {
     fontSize: 18,
     fontWeight: "bold",
-    marginBottom: 4,
+    marginBottom: 6,
     letterSpacing: 0.5,
   },
   contactInfo: {
@@ -211,11 +209,11 @@ export default function ResumePDF({ resume }: ResumePDFProps) {
               <View key={idx} style={styles.educationItem}>
                 <View style={styles.institutionRow}>
                   <Text style={styles.institution}>{edu.institution}</Text>
-                  <Text style={styles.location}>{edu.location}</Text>
+                  <Text style={styles.duration}>{edu.duration}</Text>
                 </View>
                 <View style={styles.titleRow}>
-                  <Text style={styles.degree}>{edu.degree}</Text>
-                  <Text style={styles.duration}>{edu.duration}</Text>
+                  <Text style={styles.degree}>{edu.degree}{edu.cgpa ? ` | CGPA: ${edu.cgpa}` : ""}</Text>
+                  <Text style={styles.location}>{edu.location}</Text>
                 </View>
               </View>
             ))}
@@ -258,10 +256,27 @@ export default function ResumePDF({ resume }: ResumePDFProps) {
             {resume.projects.map((proj, idx) => (
               <View key={idx} style={styles.experienceItem}>
                 <View style={styles.titleRow}>
-                  <Text style={styles.jobTitle}>{proj.title}</Text>
-                  <Text style={styles.duration}>{proj.duration}</Text>
+                  <View style={{ flexDirection: "row" }}>
+                    <Text style={styles.jobTitle}>{proj.title}</Text>
+                    {proj.tech_stack ? (
+                      <Text style={{ fontSize: 10.5, fontStyle: "italic" }}>
+                        <Text style={{ fontWeight: "normal", fontStyle: "normal" }}> | </Text>
+                        {proj.tech_stack}
+                      </Text>
+                    ) : null}
+                  </View>
+                  <View style={{ flexDirection: "row" }}>
+                    <Text style={styles.duration}>{proj.duration}</Text>
+                    {(proj.link || proj.link_href) ? (
+                      <>
+                        <Text style={{ fontSize: 10.5, marginHorizontal: 4 }}> | </Text>
+                        <Link src={getValidUrl(proj.link_href || proj.link, "github.com/reponame")} style={{ ...styles.link, textDecoration: "underline", fontSize: 10.5 }}>
+                          {proj.link || "Link"}
+                        </Link>
+                      </>
+                    ) : null}
+                  </View>
                 </View>
-                <Text style={styles.company}>{proj.tech_stack}</Text>
                 <View style={styles.bullets}>
                   {proj.bullets.map((bullet, bidx) => (
                     <View key={bidx} style={styles.bullet}>
@@ -323,28 +338,20 @@ export default function ResumePDF({ resume }: ResumePDFProps) {
           </View>
         </View>
 
-        {/* CERTIFICATIONS & ACHIEVEMENTS */}
+        {/* CERTIFICATIONS / ACHIEVEMENTS */}
         {(() => {
-          const items =
-            resume.certifications_and_achievements ??
-            (resume.certifications?.length && resume.achievements?.length
-              ? [...resume.certifications, ...resume.achievements]
-              : resume.certifications?.length
-              ? resume.certifications
-              : resume.achievements ?? []);
-          const label =
-            resume.certifications_and_achievements
-              ? "CERTIFICATIONS & ACHIEVEMENTS"
-              : resume.certifications?.length && resume.achievements?.length
-              ? "CERTIFICATIONS & ACHIEVEMENTS"
-              : resume.certifications?.length
-              ? "CERTIFICATIONS"
-              : "ACHIEVEMENTS";
-          return items.length > 0 ? (
+          const items = [
+            ...(resume.certifications_and_achievements ?? []),
+            ...(resume.certifications ?? []),
+            ...(resume.achievements ?? []),
+          ];
+          // Deduplicate in case backend populates both merged and individual arrays
+          const unique = [...new Set(items)];
+          return unique.length > 0 ? (
             <View>
-              <Text style={styles.sectionTitle}>{label}</Text>
+              <Text style={styles.sectionTitle}>CERTIFICATIONS / ACHIEVEMENTS</Text>
               <View style={styles.sectionDivider} />
-              {items.map((item, idx) => (
+              {unique.map((item, idx) => (
                 <View key={idx} style={styles.achievementItem}>
                   <Text style={styles.bulletPoint}>•</Text>
                   <Text style={styles.bulletText}>{item}</Text>

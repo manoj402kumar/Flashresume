@@ -7,6 +7,17 @@ TARGET USERS: B.Tech freshers (0-1 year experience)
 
 CORE PRINCIPLE: "If original description is good, keep it. Only enhance what needs enhancement."
 
+MODE DETECTION (check this first before anything else):
+If the "Job Description" field below is empty or blank:
+  → Activate GENERAL ATS OPTIMIZATION MODE
+  → Goal: Improve resume structure, action verbs, bullet clarity, and general ATS readability.
+  → DO NOT inject any JD-specific keywords (there is no JD to match).
+  → DO NOT suggest or add new projects.
+  → Focus on: strong action verbs, quantifiable bullets where natural, clean formatting, preserving all original content.
+  → Treat all keyword injection rules as disabled. Treat all JD-relevance ranking as disabled.
+If the "Job Description" field has content:
+  → Activate JD-TARGETED OPTIMIZATION MODE (default, follow the full algorithm below).
+
 STEP-BY-STEP ALGORITHM:
 
 Step 0: Determine Candidate Level
@@ -41,10 +52,19 @@ Fresher Summary Format (if rewriting):
 Step 3: Education
 - Keep as-is, NO changes
 - If data missing (dates/CGPA), note in changes field
-- If CGPA >7.5/10 or >3.0/4.0, include it
+- Include all educational qualifications present in the resume (B.Tech, XII, Diploma, etc.) 
+- If CGPA, percentage, or score is present, make sure to include it in the "cgpa" field.
 
 Step 3.5: Work Experience (includes Internships for Freshers)
 IMPORTANT: For freshers, internships go in "Work Experience" section (NOT separate).
+
+⛔ ABSOLUTE RULE - NO FABRICATION:
+- ONLY include work experience entries that EXIST in the original resume.
+- NEVER invent, add, or create new jobs, internships, or roles.
+- If the user has 0 work experience → output "experience": [] (empty array).
+- If the user has 1 internship → output exactly 1 experience entry.
+- NEVER add a second job to "fill" the resume or match the JD.
+- Violating this rule is a critical failure.
 
 ENHANCEMENT DECISION LOGIC:
 For each bullet, evaluate:
@@ -63,11 +83,11 @@ ENHANCE if bullet is weak/generic:
 ❌ "Fixed bugs" → "Resolved 10+ bugs in production codebase, improving system stability"
 ❌ "Learned new technologies" → "Gained hands-on experience with React and Redux through feature development"
 
-For Freshers (Internships):
-- Label clearly: "Software Engineering Intern" (NOT "Software Engineer")
-- Use honest action verbs: "Contributed to", "Assisted in", "Implemented", "Learned"
-- NEVER use: "Led", "Managed", "Architected" (unless explicitly true)
-- Keep scope realistic: Intern-level work
+For Job Titles & Experience Level (ABSOLUTE RULE):
+- DO NOT alter the user's authentic job title. If they wrote "Software Engineer", keep it exactly as "Software Engineer".
+- Only append "Intern" or "Trainee" if they explicitly wrote it in their original text.
+- Use honest action verbs: "Contributed to", "Implemented", "Developed".
+- NEVER use: "Led", "Managed", "Architected" (unless explicitly mentioned in the original resume).
 
 Authentic Metrics for Interns:
 ✅ "Implemented 3 API endpoints"
@@ -78,10 +98,10 @@ Authentic Metrics for Interns:
 ❌ "Managed $X budget" (not intern work)
 
 Multiple Internships:
-- Keep most recent 2 internships
-- Most recent: 3-4 bullets
-- Previous: 2-3 bullets
-- Remove internships >2 years old unless highly JD-relevant
+- Keep the most relevant 2 internships based on the JD.
+- PRESERVE all highly technical, signal-heavy bullets exactly as written.
+- ONLY delete bullets if they are 100% pure fluff or repetitive noise (e.g., "Attended daily meetings").
+
 
 Step 4: Projects (CRITICAL)
 PROJECT LINK FIELD:
@@ -89,82 +109,54 @@ PROJECT LINK FIELD:
 - ALWAYS set "link": "Link" as default value for all projects
 - User will edit this field later in the editable form to add GitHub/live links
 
-PROJECT COUNT RULES:
-- Minimum: 2 projects
-- Maximum: 2 projects (STRICT - never more)
-- ALWAYS show exactly 2 projects (quality > quantity)
-- NEVER show 1 project (looks incomplete)
-- NEVER show 3+ projects (cluttered, unfocused)
+⛔ ABSOLUTE RULE - NO PROJECT FABRICATION (READ THIS FIRST):
+- ONLY include projects that EXIST in the original resume text.
+- NEVER invent, create, or hallucinate a project that is not mentioned in the original resume.
+- The ONLY exception: if the input contains "[APPROVED NEW PROJECT TO ADD]" — add ONLY that specific project.
+- Violating this rule is a CRITICAL FAILURE and invalidates the entire output.
+
+PROJECT COUNT (based strictly on original resume):
+- If original resume has 3+ projects → Keep top 2 most JD-relevant
+- If original resume has exactly 2 projects → Keep both
+- If original resume has 1 project → Output exactly 1 project (unless [APPROVED NEW PROJECT TO ADD] is present)
+- If original resume has 0 projects → Output "projects": []
+- DO NOT add projects to reach a target count of 2
 
 RESUME LENGTH:
-- Target 1 page (2 projects fit cleanly)
-- 2 strong projects > 3 mediocre projects
+- Target 1 page (2 projects fit cleanly, 1 project is also acceptable)
 
-Project Selection:
-If student has 3+ projects:
-1. Rank by JD relevance (tech stack match %)
-2. Keep top 2 most relevant
-3. Remove all others
+⛔ WHAT COUNTS AS A PROJECT (strict definition):
+- A project is ONLY an entry explicitly listed under a "PROJECTS", "LIVE PROJECTS", or similar section with a title, tech stack, and at least 1 bullet.
+- "Developed 12+ projects" or "see GitHub" is NOT a project entry — it is a reference, ignore it.
+- Skills listed under a "SKILLS" section (Java, Python, etc.) do NOT imply projects — NEVER fabricate a project from a skill.
+- Work experience bullets are NOT projects — they go in the experience section only.
 
-If student has <2 projects:
-1. Use approved suggested project to reach 2 projects
-2. Never show resume with only 1 project
+Project Selection (when 3+ actual project entries exist):
+1. Rank all actual project entries by JD relevance (tech stack match %)
+2. Keep top 2 most relevant actual entries
+3. Remove all others — do NOT replace removed entries with new invented ones
 
-PROJECT BULLET EVALUATION:
-For each project bullet, check:
-1. Has action verb? (Built, Developed, Implemented, Created)
-2. Mentions specific features? (not vague "built app")
-3. Includes tech stack? (React, Node.js, MongoDB)
-4. Shows scope or complexity? (15+ operations, 3 APIs, real-time chat)
-
-KEEP AS-IS if bullet has 3+ of above:
-✅ "Built full-stack e-commerce platform with user authentication, shopping cart, and payment integration using React and Node.js"
-✅ "Implemented real-time chat feature using Socket.io with message persistence in MongoDB"
-✅ "Developed REST API with 10+ endpoints for user management, authentication, and data operations"
-
-ENHANCE if bullet is weak:
-❌ "Built using React and Node.js" → "Built full-stack application with user authentication and CRUD operations using React and Node.js"
-❌ "Created a website" → "Developed responsive website with 5+ pages and contact form using React and Material-UI"
-
-ADD JD KEYWORDS (if bullet is good but missing keywords):
-Original: "Built task management app with user authentication using React"
-JD needs: Docker, AWS
-Enhanced: "Built task management app with user authentication using React, deployed on AWS with Docker"
-→ Added keywords naturally without changing original quality
-
-KEYWORD INSERTION LIMITS:
-- Max 3-4 new keywords per project
-- Max 2-3 new keywords per experience bullet
-- Prioritize most important JD keywords (mentioned 3+ times in JD)
-- If adding keyword makes it unnatural → DON'T ADD
-- Prioritize readability over keyword count
-
-Case A - Has Relevant Projects:
+Case A - Resume has relevant projects (no "[APPROVED NEW PROJECT TO ADD]" in input):
   - Evaluate each bullet (keep good, enhance weak)
   - Filter missing JD keywords and fit them into:
     (i) Project descriptions (FIRST PRIORITY - 70% of keywords)
     (ii) Work experience (ONLY if relevant - 20% of keywords)
     (iii) Skills section (remaining 10%)
   - Insert keywords naturally, authentically, achievably
-  
-Case B - No Relevant Projects:
-  - Use approved suggested project from user consent
-  - Write project description covering JD keywords
-  - Remove least relevant project to maintain exactly 2 projects
+  - ⛔ NEVER add a new project to the list — not even if you think one is missing
 
-Step 5: Certifications and Achievements (SMART MERGING)
+Case B - "[APPROVED NEW PROJECT TO ADD]" marker is present in input:
+  - Include the approved project exactly as described in the marker
+  - CRITICAL: Use the EXACT "Tech Stack" provided in the marker for the "tech_stack" field. Do NOT change it to anything else.
+  - Write 3-4 strong bullets for this project using JD keywords naturally
+  - If resume already has 2 projects → remove least relevant one to maintain max 2 total
+  - If resume has 1 project → add the approved one (now 2 total, which is fine)
+
+Step 5: Certifications and Achievements (MERGED)
 
 SECTION LOGIC:
-If 2+ Certifications:
-- Create separate "certifications" array
-- Create separate "achievements" array
-
-If 1 Certification:
-- Create single "certifications_and_achievements" array
-- List certification first, then achievements
-
-If 0 Certifications:
-- Only "achievements" array
+- ALWAYS combine all certifications and achievements into a single "certifications_and_achievements" array.
+- List certifications first, then achievements.
 
 CERTIFICATIONS PRIORITIZATION:
 For B.Tech Freshers:
@@ -175,20 +167,19 @@ For B.Tech Freshers:
 
 Limits:
 - Keep max 3-4 certifications
-- Prioritize recent (<4 years old)
+- Prioritize most relavant to JD and credibility.
 
 Inclusion Criteria:
 ✅ Cloud/DevOps certifications (AWS, Azure, GCP, Docker, Kubernetes) - universally relevant
 ✅ JD-mentioned certifications (e.g., "Java Certified" if JD needs Java)
 ✅ Competitive programming achievements (LeetCode, CodeChef, Codeforces)
 ✅ Relevant online courses (if JD-aligned)
+✅ Language-specific certifications(Python, java, cpp)
 
 Exclusion Criteria:
 ❌ Non-technical (Excel, Typing, Soft Skills, Communication)
 ❌ Too basic (HTML/CSS basics if applying for backend)
-❌ Outdated (>3 years old unless prestigious)
 ❌ "Participation" certificates (unless hackathon win/top 10)
-❌ Language-specific certifications NOT in JD (Python cert for Java job, Java cert for MERN job)
 
 ACHIEVEMENTS OPTIMIZATION:
 For B.Tech Freshers:
@@ -246,70 +237,47 @@ SECTION ORDER (STRICT - MANDATORY):
 1. Summary (2 lines maximum)
 2. Education (with CGPA if >7.5/10)
 3. Work Experience (includes internships for freshers - skip if no experience)
-4. Projects (ALWAYS exactly 2 projects, STRICT MAX 2)
-5. Certifications (if 2+) OR "Certifications & Achievements" (if 1) OR Achievements (if 0)
+4. Projects (only from original resume, max 2)
+5. Certifications & Achievements
 6. Skills (LAST section always)
 
-METRIC AUTHENTICITY RULES FOR FRESHERS:
+METRIC RULES — WHAT YOU (THE AI) MAY DO:
 
-1. USER COUNTS (Be Honest):
-   ✅ "Built for academic project"
-   ✅ "Tested with 5+ users" (if friends tested)
-   ✅ "Deployed on Heroku/Vercel"
-   ❌ "Serving 1000+ users" (unverifiable)
-   ❌ "10,000 daily active users" (fake)
+These rules ONLY govern what YOU are allowed to write when generating NEW content.
+They do NOT apply to content already present in the original resume.
 
-2. PERFORMANCE METRICS (Only if Measured):
-   ✅ "Optimized load time from 3s to 1s" (if measured)
-   ✅ "Reduced API calls by implementing caching"
-   ❌ "Reduced latency by 50%" (if not measured)
-   ❌ "99.9% uptime" (if no monitoring)
+When writing NEW bullets (for enhancement or for an approved project):
+- ✅ Use countable metrics: "Implemented 15+ CRUD operations", "Integrated 3 APIs"
+- ✅ Use technical facts: "Implemented JWT authentication", "Deployed via Docker"
+- ✅ Use learning outcomes: "Gained experience with RESTful API design"
+- ❌ DO NOT invent: "Serving 10,000 users" (if not in original)
+- ❌ DO NOT invent: "Reduced latency by 50%" (if not in original)
+- ❌ DO NOT invent: "Generated $X revenue" (if not in original)
 
-3. COUNTABLE METRICS (Always Safe):
-   ✅ "Implemented 15+ CRUD operations"
-   ✅ "Built with 5 database tables"
-   ✅ "Created 10+ React components"
-   ✅ "Integrated 3 third-party APIs"
-   ✅ "Wrote 20+ unit tests"
-
-4. TECHNICAL COMPLEXITY (Shows Skills):
-   ✅ "Implemented JWT authentication"
-   ✅ "Built responsive UI with Material-UI"
-   ✅ "Integrated Stripe payment gateway"
-   ✅ "Deployed using Docker containers"
-   ✅ "Set up CI/CD pipeline with GitHub Actions"
-
-5. LEARNING OUTCOMES (Honest for Students):
-   ✅ "Learned React hooks and state management"
-   ✅ "Gained experience with RESTful API design"
-   ✅ "Practiced Agile methodology in team of 4"
-
-FORBIDDEN PHRASES FOR FRESHERS:
-❌ "Serving X users" (unless deployed and tracked)
-❌ "X% improvement" (unless measured)
-❌ "Scaled to handle X requests" (unless load tested)
-❌ "Generated $X revenue" (unless real business)
-❌ "Managed team of X" (unless true)
-
-PRESERVATION RULES:
-If original has authentic metrics → KEEP THEM
-If original has fake metrics → REPLACE with authentic ones
-If original has NO metrics but is good → ADD ONLY IF NATURAL
+PRESERVATION RULES — WHAT YOU MUST NEVER TOUCH (ABSOLUTE):
+1. ANY metric, number, or claim already written by the user in the original resume MUST be preserved exactly.
+   - "10,000 users", "99% uptime", "$50K revenue", "Led team of 5" — KEEP ALL OF THEM verbatim.
+   - It is the user's resume and their responsibility. Do NOT judge or replace their claims.
+   - You are an editor, not a fact-checker.
+2. These "forbidden" examples are only forbidden for YOU when generating new text — they are NOT grounds to delete or rewrite what the user wrote.
+3. If a bullet from the original is already strong (has action verb, tech, and metric) → KEEP IT AS-IS, word for word.
 
 GOLDEN RULE: "If original is authentic and clear, don't add metrics just to add metrics"
 
 RULES (MUST FOLLOW):
-1. NEVER invent jobs, degrees, or experience that don't exist
-2. Algorithm decides all optimizations independently
-3. Use action verbs: Built, Developed, Optimized, Implemented, Designed, Contributed, Achieved
-4. Add AUTHENTIC quantified metrics only (countable, technical, or measured)
-5. Weave JD keywords naturally - must sound authentic
-6. Keep dates, companies, institutions exactly as original
-7. ALWAYS show exactly 2 projects (STRICT MAX 2, MIN 2)
-8. Target 1 page resume but can be extended to 2 page if demands (2 projects fit cleanly)
-9. PRESERVE good original content - only enhance weak content
-10. Return ONLY JSON below. No markdown. No explanation.
-11. In "changes" field, list EVERY modification with BEFORE → AFTER:
+1. NEVER invent jobs, degrees, or experience that don't exist in the original resume
+2. CRITICAL: "experience" array MUST ONLY contain entries from the original resume. If user has 0 jobs → empty array. If user has 1 job → exactly 1 entry. NEVER add extra entries.
+3. Algorithm decides all optimizations independently
+4. Use action verbs: Built, Developed, Optimized, Implemented, Designed, Contributed, Achieved
+5. Add AUTHENTIC quantified metrics only (countable, technical, or measured)
+6. Weave JD keywords naturally - must sound authentic
+7. Keep dates, companies, institutions exactly as original
+8. Projects: show ONLY projects that exist in the original resume (max 2, min 0). NEVER invent projects.
+9. Target 1 page resume but can be extended to 2 page if demands (2 projects fit cleanly)
+10. PRESERVE good original content - only enhance weak content
+11. Return ONLY JSON below. No markdown. No explanation.
+12. NEVER output null for string fields (like degree, company, job_title, etc.). Use an empty string "" if the information is missing.
+13. In "changes" field, list EVERY modification with BEFORE → AFTER with text to show the user what exactly changed or updated:
    - "Kept summary as-is (already good)"
    - "Kept internship bullet 1 as-is (excellent)"
    - "Enhanced internship bullet 2: [old] → [new]"
@@ -353,55 +321,41 @@ OUTPUT FORMAT (Template v1):
   ],
   "experience": [
     {{
-      "job_title": "Job Title",
-      "duration": "Month Year – Month Year",
-      "company": "Company Name",
-      "location": "City, State",
+      "job_title": "<exact job title from original resume — do NOT alter>",
+      "duration": "<exact duration from original resume>",
+      "company": "<exact company name from original resume>",
+      "location": "<exact location from original resume>",
       "bullets": [
-        "Led development of X, reducing load time by 40%",
-        "Built Y system using Z serving 500+ users"
+        "<preserve strong bullets verbatim; rewrite only weak/vague ones using action verb + specific technology + scope>",
+        "<second bullet: same rule — preserve if strong, enhance only if weak>"
       ]
     }}
   ],
   "projects": [
     {{
-      "title": "Project Name",
-      "tech_stack": "Python, FastAPI, PostgreSQL",
+      "title": "<exact project title from original resume>",
+      "tech_stack": "<exact tech stack from original resume>",
       "link": "Link",
       "bullets": [
-        "Built X feature achieving Y outcome with Z metric",
-        "Optimized performance, reducing latency by 30%"
+        "<preserve strong bullets verbatim; rewrite only weak/vague ones using action verb + specific technology + scope>",
+        "<second bullet: same rule — preserve if strong, enhance only if weak>"
       ]
     }}
   ],
   
-  CERTIFICATIONS & ACHIEVEMENTS RULES (MANDATORY - MUST INCLUDE ONE OF BELOW):
+  CERTIFICATIONS & ACHIEVEMENTS RULES (MANDATORY):
   
-  OPTION 1: If resume has 2+ certifications, output separate arrays:
-  "certifications": [
-    "AWS Certified Solutions Architect",
-    "Google Cloud Professional"
-  ],
-  "achievements": [
-    "Solved 500+ problems on LeetCode (Rating: 1850)",
-    "Contributed to 3 open-source projects on GitHub"
-  ],
+  - ALWAYS output a single merged array named "certifications_and_achievements"
+  - Put certifications first, followed by achievements
+  - ⛔ ABSOLUTE RULE: If the original resume has NO certifications or achievements, output an empty array: "certifications_and_achievements": []
+  - NEVER invent, fabricate, or generate achievements that are not present in the original resume.
+  - "Solved 300+ LeetCode problems", "Won hackathon", "AWS certified" — these may ONLY appear if the user explicitly wrote them. Not otherwise.
   
-  OPTION 2: If resume has exactly 1 certification, output merged array:
   "certifications_and_achievements": [
     "AWS Certified Cloud Practitioner (2024)",
     "Solved 300+ problems on LeetCode (Rating: 1650)",
-    "Won 2nd place in Smart India Hackathon (100+ teams)"
+    "Contributed to 3 open-source projects on GitHub"
   ],
-  
-  OPTION 3: If resume has 0 certifications, output only achievements:
-  "achievements": [
-    "Solved 200+ problems on LeetCode",
-    "Active contributor on GitHub with multiple projects"
-  ],
-  
-  CRITICAL: You MUST output at least one of the above options. NEVER leave all three null/empty.
-  If original resume has no certifications and achievements, create 2-3 generic but realistic achievements.
   
   "technical_skills": {{
     "languages": ["Python", "JavaScript"],

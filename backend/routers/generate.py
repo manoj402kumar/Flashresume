@@ -20,13 +20,16 @@ async def generate_resume_endpoint(request: GenerateRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
     # Step 2: Calculate ATS score on the newly generated resume
-    # Convert the generated JSON back to plain text for scoring
-    generated_text = str(generated)
-    try:
-        after_analysis = score_resume(generated_text, request.job_description)
-        ats_after = after_analysis.get("ats_score", 0)
-    except Exception:
-        ats_after = 0   # Non-fatal — don't fail the whole request
+    # Skip scoring if no JD was provided (no JD = no meaningful ATS match)
+    if request.job_description and request.job_description.strip():
+        generated_text = str(generated)
+        try:
+            after_analysis = score_resume(generated_text, request.job_description)
+            ats_after = after_analysis.get("ats_score", 0)
+        except Exception:
+            ats_after = 0   # Non-fatal — don't fail the whole request
+    else:
+        ats_after = 0  # No JD mode — ATS scoring not applicable
     
     # Update ats_score_after in the generated resume
     generated["ats_score_after"] = ats_after

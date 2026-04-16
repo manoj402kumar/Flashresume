@@ -8,9 +8,9 @@ load_dotenv()
 
 # Fallback Chain (confirmed + tested)
 FALLBACK_CHAIN = [
-    "gemini-2.5-flash-lite",   # Fallback 1
-    "gemini-2.5-flash",        # Fallback 2
-    "gemma-3-27b-it",          # Gemma 3 27B - no thinking mode
+    "gemini-2.5-flash",        # Primary - strong instruction following
+    "gemini-2.5-flash-lite",   # Fallback 1 - faster but weaker
+    "gemma-3-27b-it",          # Fallback 2 - Gemma 3 27B
 ]
 
 genai.configure(api_key=os.getenv("GEMINI_API_KEY"))

@@ -61,10 +61,10 @@ def generate_resume(resume_text: str, job_description: str, ats_score_before: in
             else:
                 validated_dict["changes"] = [enforcement_msg]
         
-        # ENFORCE MIN 2 PROJECTS (Safety check)
-        if len(validated_dict.get("projects", [])) < 2:
-            error_msg = f"Generated resume has only {len(validated_dict.get('projects', []))} project(s). Algorithm requires exactly 2 projects."
-            raise ValueError(error_msg)
+        # NOTE: we no longer hard-error on < 2 projects.
+        # The generation prompt now correctly allows 1 project when the original
+        # resume had only 1 and no approved project was provided.
+        # The LLM is responsible for not fabricating projects.
         
         return validated_dict
     except Exception as e:

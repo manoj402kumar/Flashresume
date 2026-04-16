@@ -40,8 +40,8 @@ export default function GeneratePage() {
         const analysisData = localStorage.getItem("analysis");
         const approvedProjectData = localStorage.getItem("approved_project");
 
-        // Validation
-        if (!resumeText || !jobDescription || !analysisData) {
+        // Validation — job_description is optional (no-JD mode), only resumeText and analysis are required
+        if (!resumeText || analysisData === null) {
           router.push("/");
           return;
         }
@@ -71,7 +71,7 @@ export default function GeneratePage() {
           resume_text: resumeText,
           job_description: jobDescription,
           ats_score_before: analysis.ats_score,
-          approved_project: approvedProject ? `${approvedProject.title}: ${approvedProject.description}` : undefined
+          approved_project: approvedProject ? `${approvedProject.title} | Tech Stack: ${approvedProject.tech_stack} | Description: ${approvedProject.description}` : undefined
         });
 
         // Step 3: Applying improvements

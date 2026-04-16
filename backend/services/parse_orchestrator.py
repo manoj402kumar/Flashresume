@@ -1,7 +1,7 @@
 import os
 import platform
 import io
-import fitz  # PyMuPDF
+import pypdfium2 as pdfium  # Replaced PyMuPDF with pypdfium2 for better stability
 import pytesseract
 from PIL import Image
 from docx import Document
@@ -44,33 +44,35 @@ def extract_from_docx(docx_bytes: bytes) -> dict:
 
 
 def extract_with_pymupdf(pdf_bytes: bytes) -> tuple[str, int]:
-    """Layer 2: PyMuPDF — handles Canva/vector/complex layout PDFs."""
-    doc = fitz.open(stream=pdf_bytes, filetype="pdf")
+    """Layer 2: pypdfium2 — handles Canva/vector/complex layout PDFs."""
+    doc = pdfium.PdfDocument(pdf_bytes)
     page_count = len(doc)
-    text_parts = [page.get_text("text").strip() for page in doc]
-    doc.close()
+    text_parts = []
+    for page in doc:
+        text_page = page.get_textpage()
+        text_parts.append(text_page.get_text_bounded().strip())
     return "\n\n".join(text_parts), page_count
 
 
 def extract_with_pymupdf_ocr(pdf_bytes: bytes) -> tuple[str, int]:
-    """Layer 3: PyMuPDF + Tesseract — per-page OCR for scanned PDFs."""
-    doc = fitz.open(stream=pdf_bytes, filetype="pdf")
+    """Layer 3: pypdfium2 + Tesseract — per-page OCR for scanned PDFs."""
+    doc = pdfium.PdfDocument(pdf_bytes)
     page_count = len(doc)
     text_parts = []
 
     for page_num, page in enumerate(doc):
-        page_text = page.get_text("text").strip()
+        text_page = page.get_textpage()
+        page_text = text_page.get_text_bounded().strip()
 
         # Only OCR if this specific page has no readable text
         if len(page_text) < 50:
             print(f"Page {page_num + 1} appears scanned, using OCR...")
-            pix = page.get_pixmap(dpi=300)
-            img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
+            # Render at 300 DPI (72 DPI is base, so scale = 300/72)
+            img = page.render(scale=300/72).to_pil()
             page_text = pytesseract.image_to_string(img, lang="eng").strip()
 
         text_parts.append(page_text)
 
-    doc.close()
     return "\n\n".join(text_parts), page_count
 
 

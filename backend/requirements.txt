@@ -4,14 +4,10 @@ python-multipart
 pdfplumber
 pdf2image
 Pillow
-PyMuPDF
+pypdfium2
 pytesseract
 python-docx
 google-generativeai
 openai
 python-dotenv
-supabase
 pydantic
-httpx
-razorpay
-resend

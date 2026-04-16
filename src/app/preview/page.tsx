@@ -16,16 +16,19 @@ import {
 export default function PreviewPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [noJdMode, setNoJdMode] = useState(false);
 
   useEffect(() => {
-    // Validate required data
+    // Validate required data — job_description is now optional
     const resumeText = localStorage.getItem("resume_text");
-    const jobDescription = localStorage.getItem("job_description");
     const analysis = localStorage.getItem("analysis");
 
-    if (!resumeText || !jobDescription || !analysis) {
+    if (!resumeText || !analysis) {
       router.push("/");
+      return;
     }
+
+    setNoJdMode(localStorage.getItem("no_jd_mode") === "true");
   }, [router]);
 
   const handleGenerate = () => {
@@ -34,7 +37,11 @@ export default function PreviewPage() {
   };
 
   const handleBack = () => {
-    router.push("/analyze");
+    if (noJdMode) {
+      router.push("/");
+    } else {
+      router.push("/analyze");
+    }
   };
 
   return (
@@ -75,7 +82,7 @@ export default function PreviewPage() {
                 </li>
                 <li className="flex items-start gap-2">
                   <CheckCircle2 className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
-                  <span>Optimize Projects section with JD-relevant keywords and technical details</span>
+                  <span>{noJdMode ? "Strengthen project bullets with technical clarity and action verbs" : "Optimize Projects section with JD-relevant keywords and technical details"}</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <CheckCircle2 className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
@@ -85,10 +92,12 @@ export default function PreviewPage() {
                   <CheckCircle2 className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
                   <span>Maintain exactly 2 high-quality projects for optimal resume length</span>
                 </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle2 className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
-                  <span>Naturally integrate missing keywords from job description</span>
-                </li>
+                {!noJdMode && (
+                  <li className="flex items-start gap-2">
+                    <CheckCircle2 className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
+                    <span>Naturally integrate missing keywords from job description</span>
+                  </li>
+                )}
               </ul>
             </div>
           </div>
@@ -223,7 +232,7 @@ export default function PreviewPage() {
             className="px-8 py-4 rounded-full font-bold text-on-background bg-surface-container-low border-2 border-surface-container-high hover:bg-surface-container-lowest transition-all flex items-center justify-center gap-2 disabled:opacity-50"
           >
             <ArrowLeft className="w-5 h-5" />
-            Back to Analysis
+            {noJdMode ? "Back to Home" : "Back to Analysis"}
           </button>
           <button
             onClick={handleGenerate}
