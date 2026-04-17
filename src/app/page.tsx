@@ -122,6 +122,8 @@ export default function App() {
 
       localStorage.setItem("resume_text", finalResumeText);
       localStorage.setItem("job_description", jobDescription);
+      // Clear any leaked state from previous runs
+      localStorage.removeItem("approved_project");
 
       if (hasJD) {
         // Normal flow: analyze against JD, show analysis page
@@ -230,7 +232,8 @@ export default function App() {
                     Paste Text
                   </button>
                 </div>
-                
+
+
                 {inputType === "file" ? (
                   <>
                     <input
@@ -270,6 +273,17 @@ export default function App() {
                     />
                   </div>
                 )}
+                <div className="flex justify-end mt-1">
+                  <a 
+                    href="/reference_Resume.pdf" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-xs font-semibold text-tertiary hover:text-tertiary-container transition-colors flex items-center gap-1.5"
+                  >
+                    <FileText className="w-3.5 h-3.5" />
+                    First time? View Gold Standard Template
+                  </a>
+                </div>
                 <div className="space-y-2">
                   <label className="font-sans text-xs font-semibold uppercase tracking-wider text-on-surface-variant ml-1">
                     PASTE JOB DESCRIPTION

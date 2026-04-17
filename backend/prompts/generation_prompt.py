@@ -61,15 +61,22 @@ IMPORTANT: For freshers, internships go in "Work Experience" section (NOT separa
 
 ENHANCEMENT DECISION LOGIC:
 For each bullet, evaluate:
-1. Has action verb? (Developed, Built, Implemented, Contributed)
-2. Mentions specific work? (not vague "worked on")
-3. Includes technologies? (Node.js, React, MongoDB)
-4. Shows scope or impact? (3 APIs, 10+ bugs, feature for X team)
+1. What problem being solved?
+2. Has action verb? (Developed, Built, Implemented, Contributed)
+3. Mentions specific work? (not vague "worked on")
+4. Includes technologies? (Node.js, React, MongoDB)
+5. Shows scope or impact and numbers? (3 APIs, 10+ bugs, redeuced 50% response time, with 90% accuracy, feature for X team)
 
-KEEP AS-IS if bullet has 3+ of above:
+KEEP AS-IS if bullet met any of the above format. Improvise using below examples if really needed only without altering actual meaning or data in original bullet points from resume_text.
+✅ "In the format of implemented X using Y resulted in Z"
 ✅ "Contributed to backend API development using Node.js and Express, implementing 3 REST endpoints"
 ✅ "Developed REST API for user authentication using Node.js and Express"
 ✅ "Implemented 3 microservices handling payment processing"
+✅ "Developed a feature for X team, which resulted in Y% improvement"
+✅ "Fixed 10+ bugs in production codebase, improving system stability"
+✅ "optimized backend response time by 50%"
+✅ "with 90% accuracy"
+
 
 ENHANCE if bullet is weak/generic:
 ❌ "Worked on backend development" → "Contributed to backend API development using Node.js, implementing 3 REST endpoints"
@@ -81,14 +88,6 @@ For Job Titles & Experience Level (ABSOLUTE RULE):
 - Only append "Intern" or "Trainee" if they explicitly wrote it in RESUME_TEXT.
 - Use honest action verbs: "Contributed to", "Implemented", "Developed".
 - NEVER use: "Led", "Managed", "Architected" (unless explicitly mentioned in RESUME_TEXT).
-
-Authentic Metrics for Interns:
-✅ "Implemented 3 API endpoints"
-✅ "Fixed 10+ bugs in production"
-✅ "Contributed to feature used by 5-member team"
-✅ "Learned React, Node.js through hands-on development"
-❌ "Led team of 5" (unless true)
-❌ "Managed $X budget" (not intern work)
 
 Multiple Internships:
 - Keep the most relevant 2 internships based on JOB_DESCRIPTION.
@@ -130,8 +129,8 @@ Project Selection (when 3+ actual project entries exist):
 3. Remove all others — do NOT replace removed entries with new invented ones
 
 Case A - RESUME_TEXT has relevant projects (no "[APPROVED NEW PROJECT TO ADD]" in RESUME_TEXT):
-  - Evaluate each bullet (keep good, enhance weak)
-  - Filter missing JOB_DESCRIPTION keywords and fit them into:
+  - Evaluate each bullet (keep good, enhance weak with action verbs, what problem being solved with metrics, impact to impress recruiters (but authentic, realistic, achievable wrt orginal bullet points)) for each project.
+  - Filter missing JOB_DESCRIPTION keywords and fit them into: (you have to must do this ignore any rule that objecting this in this prompt later or before.)
     (i) Project descriptions (FIRST PRIORITY - 70% of keywords)
     (ii) Work experience (ONLY if relevant - 20% of keywords)
     (iii) Skills section (remaining 10%)
@@ -141,7 +140,7 @@ Case A - RESUME_TEXT has relevant projects (no "[APPROVED NEW PROJECT TO ADD]" i
 Case B - "[APPROVED NEW PROJECT TO ADD]" marker is present in RESUME_TEXT:
   - Include the approved project exactly as described in the marker
   - CRITICAL: Use the EXACT "Tech Stack" provided in the marker for the "tech_stack" field. Do NOT change it to anything else.
-  - Write 3-4 strong bullets for this project using JOB_DESCRIPTION keywords naturally using professional way of writing job description points starting with action verbs.
+  - Write 3-4 strong bullets for this project using JOB_DESCRIPTION keywords naturally using professional way of writing job description with the template [what you solved(action verb) + how you solved + what is the impact(metrics, numbers, percentages)]
   - If RESUME_TEXT already has 2 projects → remove least relevant one to maintain max 2 total
   - If RESUME_TEXT has 1 project → add the approved one (now 2 total, which is fine)
 

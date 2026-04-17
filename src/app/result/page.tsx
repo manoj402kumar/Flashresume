@@ -791,7 +791,18 @@ export default function ResultPage() {
                         })}
                       </ul>
                       {editMode && (
-                        <div className="flex justify-end items-center mt-3">
+                        <div className="flex justify-between items-center mt-3">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const newExperience = [...resume.experience];
+                              newExperience[idx].bullets.push('');
+                              updateResume({ experience: newExperience });
+                            }}
+                            className="px-3 py-1 text-sm text-primary hover:bg-primary/10 rounded-lg transition-colors font-semibold"
+                          >
+                            + Add Bullet Point
+                          </button>
                           <button
                             type="button"
                             onClick={() => {
@@ -939,7 +950,18 @@ export default function ResultPage() {
                         })}
                       </ul>
                       {editMode && (
-                        <div className="flex justify-end items-center mt-3">
+                        <div className="flex justify-between items-center mt-3">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const newProjects = [...resume.projects];
+                              newProjects[idx].bullets.push('');
+                              updateResume({ projects: newProjects });
+                            }}
+                            className="px-3 py-1 text-sm text-primary hover:bg-primary/10 rounded-lg transition-colors font-semibold"
+                          >
+                            + Add Bullet Point
+                          </button>
                           <button
                             type="button"
                             onClick={() => {
@@ -987,7 +1009,7 @@ export default function ResultPage() {
                 </div>
                 
                 <div className="space-y-4">
-                  {resume.technical_skills.languages.length > 0 && (
+                  {(editMode || resume.technical_skills.languages.length > 0) && (
                     <div>
                       <p className="font-semibold text-on-background mb-2">Languages:</p>
                       <EditableSkillTags
@@ -1013,7 +1035,7 @@ export default function ResultPage() {
                       />
                     </div>
                   )}
-                  {resume.technical_skills.frameworks.length > 0 && (
+                  {(editMode || resume.technical_skills.frameworks.length > 0) && (
                     <div>
                       <p className="font-semibold text-on-background mb-2">Frameworks & Libraries:</p>
                       <EditableSkillTags
@@ -1039,7 +1061,7 @@ export default function ResultPage() {
                       />
                     </div>
                   )}
-                  {resume.technical_skills.databases.length > 0 && (
+                  {(editMode || resume.technical_skills.databases.length > 0) && (
                     <div>
                       <p className="font-semibold text-on-background mb-2">Databases:</p>
                       <EditableSkillTags
@@ -1065,7 +1087,7 @@ export default function ResultPage() {
                       />
                     </div>
                   )}
-                  {resume.technical_skills.cloud_services.length > 0 && (
+                  {(editMode || resume.technical_skills.cloud_services.length > 0) && (
                     <div>
                       <p className="font-semibold text-on-background mb-2">Cloud Services:</p>
                       <EditableSkillTags
@@ -1091,7 +1113,7 @@ export default function ResultPage() {
                       />
                     </div>
                   )}
-                  {resume.technical_skills.developer_tools.length > 0 && (
+                  {(editMode || resume.technical_skills.developer_tools.length > 0) && (
                     <div>
                       <p className="font-semibold text-on-background mb-2">Developer Tools:</p>
                       <EditableSkillTags
@@ -1117,7 +1139,7 @@ export default function ResultPage() {
                       />
                     </div>
                   )}
-                  {resume.technical_skills.miscellaneous && resume.technical_skills.miscellaneous.length > 0 && (
+                  {(editMode || (resume.technical_skills.miscellaneous && resume.technical_skills.miscellaneous.length > 0)) && (
                     <div>
                       <p className="font-semibold text-on-background mb-2">Miscellaneous:</p>
                       <EditableSkillTags

@@ -6,15 +6,17 @@ from llm.master_llm_caller import call_llm
 from templates.template_v1_schema import TemplateV1
 
 def generate_resume(resume_text: str, job_description: str, ats_score_before: int, approved_project: str = "") -> dict:
-    # Build prompt with approved project if provided
-    if approved_project:
+    is_no_jd_mode = not job_description or not job_description.strip()
+
+    # Build prompt with approved project ONLY if we are in JD optimization mode
+    if approved_project and not is_no_jd_mode:
         # Add approved project instruction to resume text
         resume_text_with_project = f"{resume_text}\n\n[APPROVED NEW PROJECT TO ADD]:\n{approved_project}\n\nIMPORTANT: Include this approved project in the final resume. This project was suggested and approved by the user to improve JD relevance."
     else:
         resume_text_with_project = resume_text
     
     # Route to correct prompt based on JD presence
-    if not job_description or not job_description.strip():
+    if is_no_jd_mode:
         # General formatting mode (No JD) - 100% strict preservation
         prompt = GENERAL_OPTIMIZATION_PROMPT.format(
             resume_text=resume_text_with_project,

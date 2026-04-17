@@ -36,14 +36,14 @@ Step 3.5: Work Experience (includes Internships for Freshers)
 - DO NOT alter the user's authentic job title. If RESUME_TEXT has "Software Engineer", keep it exactly as "Software Engineer".
 - Keep ALL bullet points from RESUME_TEXT.
 - PRESERVE strong bullets from RESUME_TEXT verbatim.
-- ENHANCE weak bullets: use strong action verbs (Developed, Built, Implemented), better sentence framing without changing the original meaning or data from RESUME_TEXT.
+- ENHANCE weak bullets: use strong action verbs (Developed, Built, Implemented), better sentence framing, metrics if realistic and achievable without changing the original meaning or data from RESUME_TEXT.
 
 Step 4: Projects
 - ALWAYS set "link": "Link" as default value for all projects.
 - ONLY include projects that EXIST in RESUME_TEXT.
 - Keep ALL bullet points from RESUME_TEXT.
-- If bullets from RESUME_TEXT are already strong, keep them as-is verbatim.
-- Enhance weak bullets with better action verbs and sentence framing without changing the original meaning or data from RESUME_TEXT.
+- If bullets from RESUME_TEXT are already strong, keep them as-is.
+- Enhance weak bullets with better action verbs and sentence framing, metrics and impact if realistic and achievable without changing the original meaning or data from RESUME_TEXT.
 
 Step 5: Certifications and Achievements
 - ALWAYS output a single merged array named "certifications_and_achievements"
@@ -56,6 +56,7 @@ For B.Tech Freshers — keep ONLY if present in RESUME_TEXT:
 2. Hackathon wins/top placements
 3. Open-source contributions
 4. College achievements (if impressive)
+5. Similar achievements as above which recruiters care.
 
 Format:
 ✅ "Solved 300+ problems on LeetCode (Rating: 1650)"
@@ -65,8 +66,8 @@ Format:
 ❌ "Good at problem solving" (generic — remove if in RESUME_TEXT)
 
 Step 6: Skills Optimization (STRICT PRESERVATION)
-Extract and categorize ALL skills from the skills section of RESUME_TEXT. Do NOT miss anything.
-1. NEVER invent any skills not present in RESUME_TEXT.
+Extract and categorize ALL skills from the skills section only of RESUME_TEXT. Do NOT miss anything.
+1. NEVER invent any skills not present in RESUME_TEXT of skills section.
 2. NEVER delete skills to meet arbitrary limits. Include everything from RESUME_TEXT (including HTML, CSS, VS Code, Git, etc.).
 3. Categorize them neatly:
    - Languages (Python, Java, JavaScript, etc.)
@@ -74,6 +75,7 @@ Extract and categorize ALL skills from the skills section of RESUME_TEXT. Do NOT
    - Databases
    - Cloud Services
    - Developer Tools & Methodologies (Git, Docker, Agile, VS Code)
+   - Miscellaneous
 4. If a skill from RESUME_TEXT doesn't fit standard categories, map it to "Miscellaneous" array.
 
 OUTPUT FORMAT (Template v1):
