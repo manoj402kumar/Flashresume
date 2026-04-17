@@ -21,7 +21,7 @@ export default function AnalyzePage() {
   const router = useRouter();
   const [analysis, setAnalysis] = useState<CombinedAnalysisResponse | null>(null);
   const [loading, setLoading] = useState(true);
-  const [projectApproved, setProjectApproved] = useState(false);
+  const [projectApproved, setProjectApproved] = useState(true);
 
   useEffect(() => {
     const analysisData = localStorage.getItem("analysis");
@@ -107,6 +107,12 @@ export default function AnalyzePage() {
                 ? "Good match! We'll optimize it further."
                 : "Needs improvement. Our AI will enhance it."}
             </p>
+            {analysis.model_used && (
+              <div className="mt-4 inline-flex items-center gap-2 px-3 py-1.5 bg-surface-container-high rounded-full text-xs text-on-surface-variant border border-surface-container-high">
+                <Sparkles className="w-3 h-3 text-primary" />
+                <span>Analyzed by <span className="font-semibold text-on-background">{analysis.model_used}</span></span>
+              </div>
+            )}
           </div>
         </motion.div>
 
@@ -248,6 +254,18 @@ export default function AnalyzePage() {
                 Yes, add this project to my resume
               </span>
             </label>
+            {!projectApproved && (
+              <motion.div 
+                initial={{ opacity: 0, y: -5 }} 
+                animate={{ opacity: 1, y: 0 }} 
+                className="mt-3 text-sm text-error flex items-start gap-2 px-1"
+              >
+                <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+                <span>
+                  <strong>Warning:</strong> Unselecting this project will directly affect your ATS score. Your probability of being shortlisted will significantly decrease without relevant projects.
+                </span>
+              </motion.div>
+            )}
           </motion.div>
         )}
 

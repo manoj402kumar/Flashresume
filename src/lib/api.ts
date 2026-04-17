@@ -74,6 +74,7 @@ export interface CombinedAnalysisResponse {
   least_relevant_project?: string;
   suggested_project?: SuggestedProject;
   requires_consent: boolean;
+  model_used?: string;
 }
 
 export async function analyzeResume(
@@ -165,6 +166,7 @@ export interface TemplateV1 {
   changes: string[];
   ats_score_before: number;
   ats_score_after: number;
+  _model_used?: string;
 }
 
 export async function generateResume(

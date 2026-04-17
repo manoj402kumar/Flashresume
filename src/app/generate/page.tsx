@@ -23,6 +23,15 @@ export default function GeneratePage() {
   const [error, setError] = useState("");
   const [progress, setProgress] = useState(0);
   const [currentStep, setCurrentStep] = useState(0);
+  const [timeLeft, setTimeLeft] = useState(60);
+
+  useEffect(() => {
+    if (progress === 100 || error) return;
+    const interval = setInterval(() => {
+      setTimeLeft((prev) => (prev > 0 ? prev - 1 : 0));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [progress, error]);
 
   const steps = [
     { icon: FileText, label: "Analyzing content", color: "text-primary" },
@@ -196,7 +205,9 @@ export default function GeneratePage() {
                     </div>
                     <div className="flex justify-between items-center mt-3">
                       <p className="text-sm font-bold text-primary">{progress}% complete</p>
-                      <p className="text-xs text-on-surface-variant">Usually takes 15-30 seconds</p>
+                      <p className="text-xs text-on-surface-variant">
+                        {timeLeft > 0 ? `Estimated time remaining: ${timeLeft}s` : "Wrapping up..."}
+                      </p>
                     </div>
                   </div>
 

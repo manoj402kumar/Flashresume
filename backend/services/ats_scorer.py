@@ -21,7 +21,10 @@ def score_resume(resume_text: str, job_description: str) -> dict:
 
     # Attempt direct JSON parse
     try:
-        return json.loads(raw_response.strip())
+        data = json.loads(raw_response.strip())
+        data["_model_used"] = result.get("model", "unknown")
+        data["_provider"] = result.get("provider", "unknown")
+        return data
     except json.JSONDecodeError:
         pass
 

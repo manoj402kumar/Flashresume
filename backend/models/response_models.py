@@ -22,3 +22,4 @@ class CombinedAnalysisResponse(BaseModel):
     least_relevant_project: Optional[str]
     suggested_project: Optional[SuggestedProject]
     requires_consent: bool
+    model_used: Optional[str] = None

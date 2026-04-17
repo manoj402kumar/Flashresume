@@ -34,6 +34,8 @@ def generate_resume(resume_text: str, job_description: str, ats_score_before: in
     if not result["success"]:
         raise ValueError(f"All LLM providers failed: {result['all_attempts']}")
     
+    model_used = result.get("model", "unknown")
+
     raw_response = result["text"]
     
     # Strip DeepSeek thinking tokens if present
@@ -76,6 +78,6 @@ def generate_resume(resume_text: str, job_description: str, ats_score_before: in
         # resume had only 1 and no approved project was provided.
         # The LLM is responsible for not fabricating projects.
         
-        return validated_dict
+        return validated_dict, model_used
     except Exception as e:
         raise ValueError(f"Generated JSON does not match Template v1 schema: {str(e)}")
