@@ -79,7 +79,8 @@ export interface CombinedAnalysisResponse {
 
 export async function analyzeResume(
   resume_text: string,
-  job_description: string
+  job_description: string,
+  preferred_model?: string
 ): Promise<CombinedAnalysisResponse> {
   if (!resume_text.trim()) {
     throw new Error("Resume text cannot be empty.");
@@ -89,7 +90,7 @@ export async function analyzeResume(
     const res = await fetch(`${BASE}/api/analyze`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ resume_text, job_description }),
+      body: JSON.stringify({ resume_text, job_description, preferred_model }),
       signal: AbortSignal.timeout(120000), // 120s timeout
     });
 
@@ -116,6 +117,7 @@ export interface GenerateRequest {
   job_description: string;
   ats_score_before: number;
   approved_project?: string;
+  preferred_model?: string;
 }
 
 export interface TemplateV1 {

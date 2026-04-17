@@ -12,14 +12,15 @@ import {
   CheckCircle2,
   Loader2
 } from "lucide-react";
+import ModelSelector, { DEFAULT_MODEL_SELECTION, type ModelSelection } from "@/components/ModelSelector";
 
 export default function PreviewPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [noJdMode, setNoJdMode] = useState(false);
+  const [modelSelection, setModelSelection] = useState<ModelSelection>(DEFAULT_MODEL_SELECTION);
 
   useEffect(() => {
-    // Validate required data — job_description is now optional
     const resumeText = localStorage.getItem("resume_text");
     const analysis = localStorage.getItem("analysis");
 
@@ -29,6 +30,18 @@ export default function PreviewPage() {
     }
 
     setNoJdMode(localStorage.getItem("no_jd_mode") === "true");
+
+    const savedModel = localStorage.getItem("preferred_model");
+    if (savedModel) {
+      const providerPrefixes: [string, ModelSelection["provider"]][] = [
+        ["mistral-", "mistral"], ["open-mistral-", "mistral"],
+        ["gemini-", "gemini"], ["gemma-", "gemini"],
+        ["llama-3.3-70b", "cerebras"], ["qwen-3-", "cerebras"], ["llama3.1-", "cerebras"],
+        ["llama-", "groq"], ["llama3-", "groq"], ["qwen-", "groq"],
+      ];
+      const provider = providerPrefixes.find(([p]) => savedModel.startsWith(p))?.[1] ?? "mistral";
+      setModelSelection({ provider, model: savedModel });
+    }
   }, [router]);
 
   const handleGenerate = () => {
@@ -217,6 +230,23 @@ export default function PreviewPage() {
           <p className="text-sm text-on-surface-variant leading-relaxed">
             We preserve your authentic experience and only improve weak/generic content. The goal is to help you get shortlisted in ATS while ensuring you can confidently discuss everything in your interview.
           </p>
+        </motion.div>
+
+        {/* Model Selector */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.45 }}
+          className="mb-8"
+        >
+          <ModelSelector
+            value={modelSelection}
+            onChange={(sel) => {
+              setModelSelection(sel);
+              localStorage.setItem("preferred_model", sel.model);
+            }}
+            label="Select AI Model for Resume Generation"
+          />
         </motion.div>
 
         {/* Action Buttons */}

@@ -11,3 +11,7 @@ google-generativeai
 openai
 python-dotenv
 pydantic
+google-genai>=1.0.0
+mistralai>=1.0.0
+groq>=0.11.0
+cerebras-cloud-sdk>=1.0.0

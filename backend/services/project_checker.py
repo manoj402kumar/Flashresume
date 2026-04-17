@@ -39,7 +39,7 @@ def extract_projects_section(resume_text: str) -> str:
     
     return "No projects section found in resume."
 
-def check_project_relevance(resume_text: str, job_description: str) -> dict:
+def check_project_relevance(resume_text: str, job_description: str, preferred_model: str = None) -> dict:
     """
     Check if resume projects are relevant to job description.
     Returns project relevance analysis with suggestions if needed.
@@ -51,30 +51,49 @@ def check_project_relevance(resume_text: str, job_description: str) -> dict:
     )
     
     # Call LLM
-    result = call_llm(prompt)
+    result = call_llm(prompt, preferred_model=preferred_model)
     
     # Check if LLM call failed
     if not result["success"]:
         raise ValueError(f"All LLM providers failed: {result['all_attempts']}")
     
     raw_response = result["text"]
-    
-    # Strip thinking tokens if present
+
+    # Layer 1: Strip <think> tags and markdown reasoning preamble
     raw_response = re.sub(r'<think>.*?</think>', '', raw_response, flags=re.DOTALL).strip()
-    
-    # Parse JSON response
+    raw_response = re.sub(r'^[\s\S]*?(?=\{)', '', raw_response, count=1).strip()
+
+    # Layer 2: Strip markdown code fences
+    if raw_response.startswith("```"):
+        raw_response = re.sub(r'^```(?:json)?\s*', '', raw_response)
+        raw_response = re.sub(r'\s*```$', '', raw_response).strip()
+
+    # Layer 3: Direct parse
+    data = None
     try:
         data = json.loads(raw_response)
     except json.JSONDecodeError:
-        # Regex fallback
-        match = re.search(r'\{.*\}', raw_response, re.DOTALL)
-        if match:
-            try:
-                data = json.loads(match.group())
-            except json.JSONDecodeError:
-                raise ValueError(f"Project check returned unparseable JSON: {raw_response[:300]}")
-        else:
-            raise ValueError(f"Project check returned unparseable JSON: {raw_response[:300]}")
+        pass
+
+    # Layer 4: Brace-matching walk to find outermost valid JSON object
+    if data is None:
+        for start_match in re.finditer(r'\{', raw_response):
+            start = start_match.start()
+            depth = 0
+            for i, ch in enumerate(raw_response[start:]):
+                if ch == '{': depth += 1
+                elif ch == '}': depth -= 1
+                if depth == 0:
+                    try:
+                        data = json.loads(raw_response[start:start + i + 1])
+                        break
+                    except json.JSONDecodeError:
+                        continue
+            if data is not None:
+                break
+
+    if data is None:
+        raise ValueError(f"Project check returned unparseable JSON: {raw_response[:400]}")
     
     # ENFORCE: Keep only top 2 relevant projects (if more than 2)
     if "relevant_projects" in data and len(data["relevant_projects"]) > 2:

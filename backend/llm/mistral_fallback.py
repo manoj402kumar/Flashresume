@@ -1,34 +1,33 @@
 import os
 import re
 import time
-from google import genai
-from google.genai import types
+from mistralai.client import Mistral
 from dotenv import load_dotenv
 
 load_dotenv()
 
-FALLBACK_CHAIN = [
-    "gemini-2.5-flash",
-    "gemini-2.5-flash-lite-preview-06-17",
-    "gemma-3-27b-it",
+MISTRAL_FALLBACK_CHAIN = [
+    "mistral-medium-latest",   # Primary - most thorough, best keyword injection
+    "mistral-large-latest",    # Fallback 1 - best ATS improvement
+    "open-mistral-nemo",       # Fallback 2 - fast, decent quality
 ]
 
-client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
+client = Mistral(api_key=os.getenv("MISTRAL_API_KEY"))
 
 
-def _call_gemini_chain(prompt: str, chain: list, retries: int = 1) -> dict:
+def _call_mistral_chain(prompt: str, chain: list, retries: int = 1) -> dict:
     attempts = []
     for model in chain:
         for attempt in range(retries + 1):
             try:
                 start = time.time()
-                response = client.models.generate_content(
+                response = client.chat.complete(
                     model=model,
-                    contents=prompt,
-                    config=types.GenerateContentConfig(temperature=0.1),
+                    messages=[{"role": "user", "content": prompt}],
+                    temperature=0.1,
                 )
                 elapsed = round(time.time() - start, 2)
-                text = response.text.strip()
+                text = response.choices[0].message.content.strip()
                 text = re.sub(r'<think>.*?</think>', '', text, flags=re.DOTALL).strip()
                 if text.startswith("```"):
                     text = text.split("```")[1]
@@ -56,36 +55,35 @@ def _call_gemini_chain(prompt: str, chain: list, retries: int = 1) -> dict:
     return {"success": False, "text": None, "model": None, "speed": None, "attempts": attempts}
 
 
-def call_gemini(prompt: str) -> dict:
-    return _call_gemini_chain(prompt, FALLBACK_CHAIN)
+def call_mistral(prompt: str) -> dict:
+    return _call_mistral_chain(prompt, MISTRAL_FALLBACK_CHAIN)
 
 
-def call_gemini_with_model(prompt: str, preferred_model_id: str) -> dict:
-    remaining = [m for m in FALLBACK_CHAIN if m != preferred_model_id]
-    return _call_gemini_chain(prompt, [preferred_model_id] + remaining)
+def call_mistral_with_model(prompt: str, preferred_model_id: str) -> dict:
+    remaining = [m for m in MISTRAL_FALLBACK_CHAIN if m != preferred_model_id]
+    return _call_mistral_chain(prompt, [preferred_model_id] + remaining)
 
 
 if __name__ == "__main__":
     TEST_PROMPT = """
-    You are an ATS resume analyzer.
-    Return ONLY valid JSON with no extra text:
-    {
-      "ats_score": 85,
-      "matched_skills": ["Python", "FastAPI"],
-      "missing_skills": ["Docker"],
-      "verdict": "Good Match"
-    }
-    """
+You are an ATS resume analyzer.
+Return ONLY valid JSON with no extra text:
+{
+  "ats_score": 85,
+  "matched_skills": ["Python", "FastAPI"],
+  "missing_skills": ["Docker"],
+  "verdict": "Good Match"
+}
+"""
+    print("Testing Mistral fallback chain...")
+    print(f"Chain: {' -> '.join(MISTRAL_FALLBACK_CHAIN)}\n")
 
-    print("Testing fallback chain...")
-    print(f"Chain: {' -> '.join(FALLBACK_CHAIN)}\n")
-
-    result = call_gemini(TEST_PROMPT)
+    result = call_mistral(TEST_PROMPT)
 
     if result["success"]:
         print(f"[PASS] Served by : {result['model']}")
         print(f"       Speed     : {result['speed']}s")
         print(f"       Response  :\n{result['text']}")
     else:
-        print("[FAIL] All models exhausted")
+        print("[FAIL] All Mistral models exhausted")
         print(f"       Attempts  : {result['attempts']}")

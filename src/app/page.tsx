@@ -19,6 +19,7 @@ import {
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { parseResume, analyzeResume } from "@/lib/api";
+import ModelSelector, { DEFAULT_MODEL_SELECTION, type ModelSelection } from "@/components/ModelSelector";
 
 export default function App() {
   const router = useRouter();
@@ -32,6 +33,7 @@ export default function App() {
   const [parsedText, setParsedText] = useState("");
   const [showParsedText, setShowParsedText] = useState(false);
   const [parsing, setParsing] = useState(false);
+  const [modelSelection, setModelSelection] = useState<ModelSelection>(DEFAULT_MODEL_SELECTION);
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
@@ -124,10 +126,11 @@ export default function App() {
       localStorage.setItem("job_description", jobDescription);
       // Clear any leaked state from previous runs
       localStorage.removeItem("approved_project");
+      localStorage.setItem("preferred_model", modelSelection.model);
 
       if (hasJD) {
         // Normal flow: analyze against JD, show analysis page
-        const analysisResult = await analyzeResume(finalResumeText, jobDescription);
+        const analysisResult = await analyzeResume(finalResumeText, jobDescription, modelSelection.model);
         localStorage.setItem("analysis", JSON.stringify(analysisResult));
         router.push("/analyze");
       } else {
@@ -144,6 +147,7 @@ export default function App() {
         };
         localStorage.setItem("analysis", JSON.stringify(dummyAnalysis));
         localStorage.setItem("no_jd_mode", "true");
+        localStorage.setItem("preferred_model", modelSelection.model);
         router.push("/preview");
       }
     } catch (err: any) {
@@ -311,6 +315,11 @@ export default function App() {
                     {parsing ? "Parsing..." : "See Parsed Text"}
                   </button>
                 )}
+                <ModelSelector
+                  value={modelSelection}
+                  onChange={setModelSelection}
+                  label="Select AI Model"
+                />
                 <button
                   onClick={handleGenerate}
                   disabled={loading}
