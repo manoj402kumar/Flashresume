@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
 
-export type ModelChoice = "gemini" | "mistral" | "groq";
+export type ModelChoice = "gemini" | "mistral" | "groq" | "cerebras";
 
 export interface ModelSelection {
   provider: ModelChoice;
@@ -63,6 +63,20 @@ const PROVIDER_MODELS = {
       { id: "llama3-8b-8192",                 label: "Llama 3 8B",    note: "Fastest"      },
     ],
     default: "llama-3.3-70b-versatile",
+  },
+  cerebras: {
+    label: "Cerebras",
+    badge: "Wafer Scale 🧠",
+    description: "1M tokens/day free",
+    activeBg: "bg-purple-500/10 border-purple-500/50",
+    activeText: "text-purple-400",
+    dot: "bg-purple-400",
+    models: [
+      { id: "llama-3.3-70b", label: "Llama 3.3 70B", note: "Best quality" },
+      { id: "qwen-3-32b",    label: "Qwen 3 32B",    note: "Strong JSON"  },
+      { id: "llama3.1-8b",   label: "Llama 3.1 8B",  note: "Fastest"      },
+    ],
+    default: "llama-3.3-70b",
   },
 } as const;
 
