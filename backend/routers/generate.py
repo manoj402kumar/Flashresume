@@ -10,7 +10,7 @@ router = APIRouter()
 async def generate_resume_endpoint(request: GenerateRequest):
     # Generate the rewritten resume with Template v1 validation
     try:
-        generated = generate_resume(
+        generated, model_used = generate_resume(
             request.resume_text,
             request.job_description,
             request.ats_score_before,
@@ -32,8 +32,9 @@ async def generate_resume_endpoint(request: GenerateRequest):
     else:
         ats_after = 0  # No JD mode — ATS scoring not applicable
     
-    # Update ats_score_after in the generated resume
+    # Update ats_score_after and inject model info into the generated resume
     generated["ats_score_after"] = ats_after
+    generated["_model_used"] = model_used
 
     # Return Template v1 JSON directly (no wrapper)
     return JSONResponse(content=generated)

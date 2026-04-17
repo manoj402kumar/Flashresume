@@ -45,7 +45,8 @@ async def analyze_resume(request: AnalyzeRequest):
             total_projects_count=project_result.get("total_projects_count", 0),
             least_relevant_project=project_result.get("least_relevant_project"),
             suggested_project=project_result.get("suggested_project"),
-            requires_consent=project_result["requires_consent"]
+            requires_consent=project_result["requires_consent"],
+            model_used=ats_result.get("_model_used")
         )
     except ValueError as e:
         raise HTTPException(status_code=500, detail=str(e))

@@ -141,7 +141,7 @@ Case A - RESUME_TEXT has relevant projects (no "[APPROVED NEW PROJECT TO ADD]" i
 Case B - "[APPROVED NEW PROJECT TO ADD]" marker is present in RESUME_TEXT:
   - Include the approved project exactly as described in the marker
   - CRITICAL: Use the EXACT "Tech Stack" provided in the marker for the "tech_stack" field. Do NOT change it to anything else.
-  - Write 3-4 strong bullets for this project using JOB_DESCRIPTION keywords naturally using professional way of writing job description points.
+  - Write 3-4 strong bullets for this project using JOB_DESCRIPTION keywords naturally using professional way of writing job description points starting with action verbs.
   - If RESUME_TEXT already has 2 projects → remove least relevant one to maintain max 2 total
   - If RESUME_TEXT has 1 project → add the approved one (now 2 total, which is fine)
 
@@ -208,7 +208,7 @@ Category Order:
 1. Languages (programming languages only)
 2. Frameworks & Libraries
 3. Databases
-4. Cloud Services (only if used in projects)
+4. Cloud Services
 5. Developer Tools (Git, Docker, Postman, VSCode - professional tools only)
 6. Miscellaneous (like Linux, Android development, non-categorizable tools)
 
@@ -225,8 +225,8 @@ SECTION ORDER (STRICT - MANDATORY):
 2. Education (with CGPA if >7.5/10)
 3. Work Experience (includes internships for freshers - skip if no experience)
 4. Projects (only from RESUME_TEXT, max 2)
-5. Certifications & Achievements
-6. Skills (LAST section always)
+5. Skills (LAST section always)
+6. Certifications & Achievements
 
 METRIC RULES — WHAT YOU (THE AI) MAY DO:
 

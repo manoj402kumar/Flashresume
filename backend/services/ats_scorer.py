@@ -31,7 +31,7 @@ def score_resume(resume_text: str, job_description: str, preferred_model: str = 
     # Layer 3: Direct parse
     data = None
     try:
-        data = json.loads(raw_response)
+        data = json.loads(raw_response.strip())
     except json.JSONDecodeError:
         pass
 
@@ -59,4 +59,6 @@ def score_resume(resume_text: str, job_description: str, preferred_model: str = 
     if "relevant_projects" in data and len(data["relevant_projects"]) > 2:
         data["relevant_projects"] = data["relevant_projects"][:2]
 
+    data["_model_used"] = result.get("model", "unknown")
+    data["_provider"] = result.get("provider", "unknown")
     return data
