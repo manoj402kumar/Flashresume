@@ -35,23 +35,42 @@ def generate_resume(resume_text: str, job_description: str, ats_score_before: in
         raise ValueError(f"All LLM providers failed: {result['all_attempts']}")
     
     raw_response = result["text"]
-    
-    # Strip DeepSeek thinking tokens if present
-    raw_response = re.sub(r'<think>.*?</think>', '', raw_response, flags=re.DOTALL).strip()
 
-    # Direct parse
+    # Layer 1: Strip <think> tags and markdown reasoning preamble
+    raw_response = re.sub(r'<think>.*?</think>', '', raw_response, flags=re.DOTALL).strip()
+    raw_response = re.sub(r'^[\s\S]*?(?=\{)', '', raw_response, count=1).strip()
+
+    # Layer 2: Strip markdown code fences
+    if raw_response.startswith("```"):
+        raw_response = re.sub(r'^```(?:json)?\s*', '', raw_response)
+        raw_response = re.sub(r'\s*```$', '', raw_response).strip()
+
+    # Layer 3: Direct parse
+    data = None
     try:
         data = json.loads(raw_response)
     except json.JSONDecodeError:
-        # Regex fallback
-        match = re.search(r'\{.*\}', raw_response, re.DOTALL)
-        if match:
-            try:
-                data = json.loads(match.group())
-            except json.JSONDecodeError:
-                raise ValueError(f"Resume generation returned unparseable JSON: {raw_response[:300]}")
-        else:
-            raise ValueError(f"Resume generation returned unparseable JSON: {raw_response[:300]}")
+        pass
+
+    # Layer 4: Brace-matching walk to find outermost valid JSON object
+    if data is None:
+        for start_match in re.finditer(r'\{', raw_response):
+            start = start_match.start()
+            depth = 0
+            for i, ch in enumerate(raw_response[start:]):
+                if ch == '{': depth += 1
+                elif ch == '}': depth -= 1
+                if depth == 0:
+                    try:
+                        data = json.loads(raw_response[start:start + i + 1])
+                        break
+                    except json.JSONDecodeError:
+                        continue
+            if data is not None:
+                break
+
+    if data is None:
+        raise ValueError(f"Resume generation returned unparseable JSON: {raw_response[:400]}")
     
     # Validate against Pydantic Template v1 schema
     try:
