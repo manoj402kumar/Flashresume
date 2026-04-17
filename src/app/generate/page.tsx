@@ -50,6 +50,7 @@ export default function GeneratePage() {
         const approvedProject = approvedProjectData 
           ? JSON.parse(approvedProjectData) 
           : null;
+        const preferredModel = localStorage.getItem("preferred_model") || undefined;
 
         // Step 1: Analyzing content
         setCurrentStep(0);
@@ -71,7 +72,8 @@ export default function GeneratePage() {
           resume_text: resumeText,
           job_description: jobDescription,
           ats_score_before: analysis.ats_score,
-          approved_project: approvedProject ? `${approvedProject.title} | Tech Stack: ${approvedProject.tech_stack} | Description: ${approvedProject.description}` : undefined
+          approved_project: approvedProject ? `${approvedProject.title} | Tech Stack: ${approvedProject.tech_stack} | Description: ${approvedProject.description}` : undefined,
+          preferred_model: preferredModel,
         });
 
         // Step 3: Applying improvements
