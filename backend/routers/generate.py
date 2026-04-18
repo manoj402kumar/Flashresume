@@ -6,9 +6,54 @@ from services.ats_scorer import score_resume
 
 router = APIRouter()
 
+def flatten_resume_to_text(resume: dict) -> str:
+    """
+    Converts the structured TemplateV1 JSON dict into plain readable text
+    so the ATS scorer LLM can meaningfully compare it against the JD.
+    """
+    lines = []
+
+    # Heading
+    h = resume.get("heading", {})
+    if h.get("name"): lines.append(h["name"])
+    if h.get("email"): lines.append(h["email"])
+
+    # Summary
+    if resume.get("summary"):
+        lines.append(resume["summary"])
+
+    # Education
+    for edu in resume.get("education", []):
+        lines.append(f"{edu.get('degree', '')} | {edu.get('institution', '')} | {edu.get('cgpa', '')}")
+
+    # Work Experience
+    for exp in resume.get("experience", []):
+        lines.append(f"{exp.get('job_title', '')} at {exp.get('company', '')}")
+        for bullet in exp.get("bullets", []):
+            lines.append(bullet)
+
+    # Projects
+    for proj in resume.get("projects", []):
+        lines.append(f"Project: {proj.get('title', '')} | {proj.get('tech_stack', '')}")
+        for bullet in proj.get("bullets", []):
+            lines.append(bullet)
+
+    # Technical Skills — flatten all categories into one readable block
+    skills = resume.get("technical_skills", {})
+    for category, skill_list in skills.items():
+        if skill_list:
+            lines.append(f"{category}: {', '.join(skill_list)}")
+
+    # Certifications & Achievements
+    for cert in resume.get("certifications_and_achievements", []):
+        lines.append(cert)
+
+    return "\n".join(lines)
+
+
 @router.post("/generate")
 async def generate_resume_endpoint(request: GenerateRequest):
-    # Generate the rewritten resume with Template v1 validation
+    # Step 1: Generate the rewritten resume with Template v1 validation
     try:
         generated, model_used = generate_resume(
             request.resume_text,
@@ -21,10 +66,11 @@ async def generate_resume_endpoint(request: GenerateRequest):
     except ValueError as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-    # Step 2: Calculate ATS score on the newly generated resume
-    # Skip scoring if no JD was provided (no JD = no meaningful ATS match)
+    # Step 2: Re-score the generated resume against the JD to get a real ATS score
+    # Skip if no JD provided (no-JD mode — ATS scoring is not applicable)
     if request.job_description and request.job_description.strip():
-        generated_text = str(generated)
+        # Convert structured dict → readable text before scoring
+        generated_text = flatten_resume_to_text(generated)
         try:
             after_analysis = score_resume(generated_text, request.job_description, preferred_model=request.preferred_model)
             ats_after = after_analysis.get("ats_score", 0)
@@ -32,10 +78,11 @@ async def generate_resume_endpoint(request: GenerateRequest):
             ats_after = 0   # Non-fatal — don't fail the whole request
     else:
         ats_after = 0  # No JD mode — ATS scoring not applicable
-    
-    # Update ats_score_after and inject model info into the generated resume
+
+    # Step 3: Inject real ATS score and model info into the response
     generated["ats_score_after"] = ats_after
     generated["_model_used"] = model_used
 
     # Return Template v1 JSON directly (no wrapper)
     return JSONResponse(content=generated)
+
