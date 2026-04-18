@@ -15,6 +15,7 @@ async def generate_resume_endpoint(request: GenerateRequest):
             request.job_description,
             request.ats_score_before,
             request.approved_project,
+            missing_keywords=request.missing_keywords,
             preferred_model=request.preferred_model
         )
     except ValueError as e:

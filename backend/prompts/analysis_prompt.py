@@ -1,7 +1,7 @@
 ANALYSIS_PROMPT = """
 Analyze this resume against the job description. Calculate ATS score based on number of keywords matched from job description and identify keyword matches.
 
-Return ONLY valid JSON. No markdown. No explanation. No code block. Raw JSON only.
+Return ONLY valid JSON. No markdown code blocks. DO NOT use markdown formatting (like **bold**, *italics*, etc.) inside the JSON string values. Use plain text only. No explanation. Raw JSON only.
 
 TARGET USERS: B.Tech freshers (0-1 year experience)
 OBJECTIVE: Calculate ATS score based on keyword matching

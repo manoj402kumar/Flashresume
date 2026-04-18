@@ -11,5 +11,6 @@ class GenerateRequest(BaseModel):
     job_description: str
     ats_score_before: int
     approved_project: str = ""
+    missing_keywords: List[str] = []
     template_id: str = "v1"
     preferred_model: Optional[str] = "mistral-medium-latest"

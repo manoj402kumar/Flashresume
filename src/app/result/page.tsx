@@ -273,200 +273,149 @@ export default function ResultPage() {
   const scoreImprovement = resume.ats_score_after - resume.ats_score_before;
 
   return (
-    <div className="min-h-screen bg-surface font-sans">
-      {/* Glassmorphic Toolbar - Fixed Top */}
-      <motion.div
-        initial={{ y: -100, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.6 }}
-        className="fixed top-0 left-0 right-0 z-50 glass-header border-b border-surface-container-low"
-      >
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            {/* Left: Logo */}
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-primary-container/20 flex items-center justify-center">
-                <FileText className="w-5 h-5 text-primary" />
-              </div>
-              <div>
-                <h1 className="font-headline text-lg font-bold text-on-background">Your Resume</h1>
-                <p className="text-xs text-on-surface-variant">AI-Optimized</p>
-              </div>
+    <div className="h-[100dvh] flex flex-col bg-surface font-sans overflow-hidden">
+      {/* Top App Bar - Fixed non-scrolling */}
+      <header className="flex-shrink-0 z-50 bg-surface border-b border-surface-container-low shadow-sm">
+        <div className="w-full px-4 sm:px-6 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-primary-container/20 flex items-center justify-center">
+              <FileText className="w-5 h-5 text-primary" />
             </div>
+            <div>
+              <h1 className="font-headline text-lg font-bold text-on-background leading-tight">Your Resume</h1>
+              <p className="text-xs text-on-surface-variant leading-tight flex items-center gap-1">
+                <Sparkles className="w-3 h-3 text-primary" /> AI-Optimized
+              </p>
+            </div>
+          </div>
 
-            {/* Center: Score Badge - Enhanced Visibility */}
-            <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              transition={{ type: "spring", delay: 0.3 }}
-              className="hidden md:flex items-center gap-4 bg-gradient-to-r from-primary-container/20 to-primary/10 px-8 py-4 rounded-[2rem] border-2 border-primary/30 shadow-lg"
+          <div className="flex items-center gap-2 sm:gap-4">
+            <AnimatePresence>
+              {hasUnsavedChanges && (
+                <motion.button
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.9 }}
+                  onClick={handleSaveChanges}
+                  className="flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl bg-green-500 text-white font-semibold hover:bg-green-600 transition-all shadow-md text-sm"
+                  title="Save changes"
+                >
+                  <Save className="w-4 h-4" />
+                  <span className="hidden sm:inline">Save</span>
+                </motion.button>
+              )}
+            </AnimatePresence>
+            
+            <button
+              onClick={handleCopyJSON}
+              className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-xl text-sm font-semibold text-on-surface-variant bg-surface-container-low hover:bg-surface-container-high transition-colors"
             >
-              <div className="text-center px-3">
-                <p className="text-xs font-semibold text-on-surface-variant uppercase tracking-wide mb-1">Before</p>
-                <p className="text-3xl font-bold text-on-surface-variant">{resume.ats_score_before}</p>
-              </div>
-              <div className="flex flex-col items-center">
-                <TrendingUp className="w-6 h-6 text-primary animate-pulse" />
-                <div className="w-12 h-0.5 bg-primary mt-1"></div>
-              </div>
-              <div className="text-center px-3">
-                <p className="text-xs font-semibold text-primary uppercase tracking-wide mb-1">After</p>
-                <p className="text-3xl font-bold text-primary">{resume.ats_score_after}</p>
-              </div>
-              <div className="bg-gradient-to-r from-primary to-primary-container text-white px-5 py-2 rounded-full text-lg font-bold shadow-md animate-pulse">
-                +{scoreImprovement}
-              </div>
-            </motion.div>
+              <Copy className="w-4 h-4" />
+              {copied ? "Copied" : "JSON"}
+            </button>
+            
+            <button
+              onClick={handleStartOver}
+              className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-xl text-sm font-semibold text-on-surface-variant bg-surface-container-low hover:bg-surface-container-high transition-colors"
+            >
+              <Home className="w-4 h-4" />
+              Start Over
+            </button>
 
-            {/* Right: Actions - Enhanced Visibility */}
-            <div className="flex items-center gap-3">
-              <AnimatePresence>
-                {hasUnsavedChanges && (
-                  <motion.button
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    exit={{ scale: 0 }}
-                    onClick={handleSaveChanges}
-                    className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-green-500 to-green-600 text-white font-semibold hover:opacity-90 transition-all shadow-md"
-                    title="Save changes"
-                  >
-                    <Save className="w-5 h-5" />
-                    <span className="hidden lg:inline text-sm">Save</span>
-                  </motion.button>
-                )}
-              </AnimatePresence>
-            </div>
+            <button
+              onClick={handleDownloadPDF}
+              disabled={downloadingPDF}
+              className={`flex items-center gap-2 px-4 py-1.5 sm:px-5 sm:py-2 rounded-xl text-sm font-bold text-white transition-all shadow-sm ${
+                downloadingPDF
+                  ? "bg-surface-container-high cursor-not-allowed"
+                  : "bg-primary hover:bg-primary/90"
+              }`}
+            >
+              {downloadingPDF ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  <span className="hidden sm:inline">Wait...</span>
+                </>
+              ) : (
+                <>
+                  <Download className="w-4 h-4" />
+                  <span className="hidden sm:inline">Download</span>
+                </>
+              )}
+            </button>
           </div>
         </div>
-      </motion.div>
+      </header>
 
-      {/* Main Content */}
-      <div className="pt-24 pb-32 px-4">
-        <div className="max-w-7xl mx-auto">
-          {/* Slim Success Banner */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: -10 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-            className="bg-primary/10 border border-primary/20 rounded-[1.5rem] px-8 py-5 mb-8 flex items-center justify-center gap-4 shadow-sm"
-          >
-            <motion.div
-              initial={{ scale: 0, rotate: -45 }}
-              animate={{ scale: 1, rotate: 0 }}
-              transition={{ type: "spring", duration: 0.8, delay: 0.4 }}
-              className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0"
-            >
-              <CheckCircle2 className="w-6 h-6 text-primary" />
-            </motion.div>
-            
-            <h1 className="font-headline text-2xl font-bold text-on-background m-0">
-              Your resume is ready
-            </h1>
-          </motion.div>
-
-              {/* Mobile Score Display - Enhanced */}
-              <div className="md:hidden flex items-center justify-center gap-4 bg-gradient-to-r from-primary-container/20 to-primary/10 backdrop-blur-sm px-6 py-5 rounded-2xl border-2 border-primary/30 shadow-lg">
-                <div className="text-center">
-                  <p className="text-xs font-semibold text-on-surface-variant uppercase tracking-wide">Before</p>
-                  <p className="text-3xl font-bold text-on-surface-variant">{resume.ats_score_before}</p>
-                </div>
-                <div className="flex flex-col items-center">
-                  <TrendingUp className="w-6 h-6 text-primary animate-pulse" />
-                  <div className="w-8 h-0.5 bg-primary mt-1"></div>
-                </div>
-                <div className="text-center">
-                  <p className="text-xs font-semibold text-primary uppercase tracking-wide">After</p>
-                  <p className="text-3xl font-bold text-primary">{resume.ats_score_after}</p>
-                </div>
-                <div className="bg-gradient-to-r from-primary to-primary-container text-white px-4 py-2 rounded-full text-base font-bold shadow-md animate-pulse">
-                  +{scoreImprovement}
-                </div>
-              </div>
-
-          {/* PDF PREVIEW ON TOP */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5 }}
-            className="mb-12 rounded-[2rem] overflow-hidden border-2 border-primary/20 shadow-x2xl bg-surface-container-lowest"
-          >
-            <div className="bg-primary/5 px-6 py-4 border-b border-primary/10 flex flex-col sm:flex-row items-center justify-between gap-4">
-              <h2 className="font-headline font-bold text-on-background flex items-center gap-2">
-                <FileText className="w-5 h-5 text-primary" />
-                Live PDF Preview
-              </h2>
-              
-              <div className="flex items-center gap-4">
-                {(matchedKeywords.length > 0 || missingKeywords.length > 0) && (
-                  <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4 bg-surface-container-lowest px-4 py-2 rounded-xl shadow-sm border border-primary/5 text-sm">
-                    <div className="flex items-center gap-3 font-medium text-on-surface-variant border-r border-primary/10 pr-3">
-                      <span className="flex items-center gap-1.5"><div className="w-3 h-3 bg-[#fef08a] rounded-sm border border-[#eab308]/30"></div> Matched</span>
-                      <span className="flex items-center gap-1.5"><div className="w-3 h-3 bg-[#bbf7d0] rounded-sm border border-[#22c55e]/30"></div> Added</span>
-                    </div>
-                    <label className="flex items-center gap-2 cursor-pointer group select-none">
-                      <span className="font-semibold text-on-background group-hover:text-primary transition-colors">Highlights</span>
-                      <div className="relative">
-                        <input 
-                          type="checkbox" 
-                          className="sr-only" 
-                          checked={showHighlights}
-                          onChange={(e) => setShowHighlights(e.target.checked)}
-                        />
-                        <div className={`block w-10 h-6 rounded-full transition-colors duration-300 shadow-inner ${showHighlights ? 'bg-primary' : 'bg-surface-container-high'}`}></div>
-                        <div className={`absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform duration-300 shadow-sm ${showHighlights ? 'transform translate-x-4' : ''}`}></div>
-                      </div>
-                    </label>
-                  </div>
+      {/* Main Workspace */}
+      <div className="flex-1 overflow-hidden flex flex-col lg:flex-row relative">
+        
+        {/* Left Column (Editor & Metrics) */}
+        <div className="w-full lg:w-[45%] h-full flex flex-col bg-surface border-r border-surface-container-low z-10 shadow-xl lg:shadow-none transition-all">
+          
+          {/* Segmented Toggles inside Sticky Top */}
+          <div className="flex-shrink-0 bg-surface/95 backdrop-blur-md p-4 border-b border-surface-container-low flex flex-col gap-3 py-4 sticky top-0 z-20">
+            <div className="flex bg-surface-container-lowest p-1 rounded-[1.25rem] border border-surface-container-low shadow-inner">
+              <button
+                onClick={() => { setEditMode(true); setShowChanges(false); }}
+                className={`flex-1 py-2 px-2 text-sm font-semibold transition-all rounded-xl flex items-center justify-center gap-2 ${
+                  editMode
+                    ? "bg-primary text-white shadow-md relative"
+                    : "text-on-surface-variant hover:text-on-background hover:bg-surface-container"
+                }`}
+              >
+                <Edit3 className={`w-4 h-4 ${editMode ? 'text-white' : 'text-on-surface-variant'}`} />
+                Edit Form
+                {hasUnsavedChanges && !editMode && (
+                  <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
                 )}
-              </div>
+              </button>
+              <button
+                onClick={() => { setShowChanges(true); setEditMode(false); }}
+                className={`flex-1 py-2 px-2 text-sm font-semibold transition-all rounded-xl flex items-center justify-center gap-2 ${
+                  showChanges
+                    ? "bg-secondary-container text-secondary-container-on shadow-md text-secondary"
+                    : "text-on-surface-variant hover:text-on-background hover:bg-surface-container"
+                }`}
+              >
+                <Sparkles className={`w-4 h-4 ${showChanges ? 'text-secondary' : 'text-on-surface-variant'}`} />
+                AI Changes & ATS
+              </button>
             </div>
-            <div className="h-[850px] w-full">
-              <PDFViewer key={showHighlights ? "highlight-on" : "highlight-off"} width="100%" height="100%" className="border-none">
-                <ResumePDF 
-                  resume={resume} 
-                  showHighlights={showHighlights}
-                  matchedKeywords={matchedKeywords}
-                  missingKeywords={missingKeywords}
-                />
-              </PDFViewer>
-            </div>
-          </motion.div>
-
-          {/* Bottom Panel Toggles */}
-          <div className="flex flex-col sm:flex-row gap-4 mb-8">
-            <button
-              onClick={() => {
-                setEditMode(prev => !prev);
-                setShowChanges(false);
-              }}
-              className={`flex-1 p-6 rounded-[2rem] border-2 transition-all duration-300 flex items-center justify-center gap-4 ${editMode ? 'bg-primary-container/20 border-primary shadow-lg scale-[1.02]' : 'bg-surface-container-lowest border-primary/5 hover:bg-surface-container-low hover:border-primary/50 text-on-surface-variant hover:text-on-background'}`}
-            >
-              <div className={`p-3 rounded-xl transition-colors ${editMode ? 'bg-primary text-white' : 'bg-surface-container-high flex items-center justify-center text-on-surface'}`}>
-                <Edit3 className="w-6 h-6" />
-              </div>
-              <div className="text-left">
-                <h3 className={`font-headline font-bold text-lg transition-colors ${editMode ? 'text-primary' : ''}`}>Edit Form</h3>
-                <p className="text-sm opacity-80 mt-0.5">Manually tweak your resume details</p>
-              </div>
-            </button>
-            <button
-              onClick={() => {
-                setShowChanges(prev => !prev);
-                setEditMode(false);
-              }}
-              className={`flex-1 p-6 rounded-[2rem] border-2 transition-all duration-300 flex items-center justify-center gap-4 ${showChanges ? 'bg-secondary-container/20 border-secondary-container shadow-lg scale-[1.02]' : 'bg-surface-container-lowest border-secondary-container/5 hover:bg-surface-container-low hover:border-secondary-container/50 text-on-surface-variant hover:text-on-background'}`}
-            >
-              <div className={`p-3 rounded-xl transition-colors ${showChanges ? 'bg-secondary-container text-secondary' : 'bg-surface-container-high flex items-center justify-center text-on-surface'}`}>
-                <Sparkles className="w-6 h-6" />
-              </div>
-              <div className="text-left">
-                <h3 className={`font-headline font-bold text-lg transition-colors ${showChanges ? 'text-secondary-container' : ''}`}>Changes Made</h3>
-                <p className="text-sm opacity-80 mt-0.5">Review AI optimizations and metrics</p>
-              </div>
-            </button>
+            
+            {/* ATS Score Context Mini-Banner (When changes are shown) */}
+            <AnimatePresence>
+              {showChanges && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0, marginTop: 0 }}
+                  animate={{ opacity: 1, height: 'auto', marginTop: '0.5rem' }}
+                  exit={{ opacity: 0, height: 0, marginTop: 0 }}
+                  className="overflow-hidden"
+                >
+                  <div className="flex items-center justify-between bg-primary-container/20 border border-primary/20 px-5 py-3 rounded-xl shadow-sm">
+                    <div className="text-center">
+                      <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider">Before</p>
+                      <p className="text-xl font-black text-on-surface-variant">{resume.ats_score_before}</p>
+                    </div>
+                    <div className="flex flex-col items-center flex-1 px-4">
+                      <TrendingUp className="w-5 h-5 text-primary mb-1 animate-pulse" />
+                    </div>
+                    <div className="text-center relative">
+                      <p className="text-[10px] font-bold text-primary uppercase tracking-wider">After</p>
+                      <p className="text-xl font-black text-primary">{resume.ats_score_after}</p>
+                    </div>
+                    <div className="ml-4 bg-primary text-white px-3 py-1 rounded-lg text-sm font-bold shadow-sm whitespace-nowrap">
+                      +{scoreImprovement} Points
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
 
-          <AnimatePresence mode="wait">
+          {/* Scrollable Panel Content */}
+          <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:px-8 lg:py-6 pb-24 hide-scrollbar">
+<AnimatePresence mode="wait">
             {editMode && (
               <motion.div
                 key="edit-form"
@@ -1402,54 +1351,47 @@ export default function ResultPage() {
               </motion.div>
             )}
           </AnimatePresence>
+          </div>
         </div>
-      </div>
 
-      {/* Fixed Action Bar - Bottom */}
-      <motion.div
-        initial={{ y: 100, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.6, delay: 0.8 }}
-        className="fixed bottom-0 left-0 right-0 z-40 glass-header border-t border-surface-container-low p-6"
-      >
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row gap-4">
-          <button
-            onClick={handleDownloadPDF}
-            disabled={downloadingPDF}
-            className={`flex-1 py-4 px-6 rounded-xl font-bold text-white transition-all flex items-center justify-center gap-2 ${
-              downloadingPDF
-                ? "bg-surface-container-high cursor-not-allowed"
-                : "flash-gradient hover:opacity-90 shadow-xl shadow-primary/25 active:scale-95"
-            }`}
-          >
-            {downloadingPDF ? (
-              <>
-                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                <span>Generating PDF...</span>
-              </>
-            ) : (
-              <>
-                <Download className="w-5 h-5" />
-                <span>Download PDF</span>
-              </>
-            )}
-          </button>
-          <button
-            onClick={handleCopyJSON}
-            className="flex-1 py-4 px-6 rounded-xl font-bold text-on-background bg-surface-container-low border-2 border-surface-container-high hover:bg-surface-container-lowest transition-all flex items-center justify-center gap-2"
-          >
-            <Copy className="w-5 h-5" />
-            {copied ? "Copied!" : "Copy JSON"}
-          </button>
-          <button
-            onClick={handleStartOver}
-            className="flex-1 py-4 px-6 rounded-xl font-bold text-on-background bg-surface-container-low border-2 border-surface-container-high hover:bg-surface-container-lowest transition-all flex items-center justify-center gap-2"
-          >
-            <Home className="w-5 h-5" />
-            Start Over
-          </button>
+        {/* Right Column (Live PDF Preview) */}
+        <div className="w-full lg:w-[55%] h-[60vh] lg:h-full bg-surface-container-lowest relative flex flex-col">
+          {/* Floating Highlight Toggle */}
+          {(matchedKeywords.length > 0 || missingKeywords.length > 0) && (
+            <div className="absolute top-4 right-4 z-10 flex items-center gap-3 bg-surface/90 backdrop-blur-md px-4 py-2.5 rounded-2xl shadow-lg border border-primary/10">
+              <div className="flex items-center gap-3 font-medium text-xs text-on-surface-variant border-r border-primary/10 pr-3">
+                <span className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 bg-[#fef08a] rounded-sm border border-[#eab308]/30"></div> Matched</span>
+                <span className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 bg-[#bbf7d0] rounded-sm border border-[#22c55e]/30"></div> Added</span>
+              </div>
+              <label className="flex items-center gap-2 cursor-pointer group select-none">
+                <span className="text-xs font-semibold text-on-background group-hover:text-primary transition-colors">Highlights</span>
+                <div className="relative">
+                  <input 
+                    type="checkbox" 
+                    className="sr-only" 
+                    checked={showHighlights}
+                    onChange={(e) => setShowHighlights(e.target.checked)}
+                  />
+                  <div className={`block w-8 h-4 rounded-full transition-colors duration-300 shadow-inner ${showHighlights ? 'bg-primary' : 'bg-surface-container-high'}`}></div>
+                  <div className={`absolute left-0.5 top-0.5 bg-white w-3 h-3 rounded-full transition-transform duration-300 shadow-sm ${showHighlights ? 'transform translate-x-4' : ''}`}></div>
+                </div>
+              </label>
+            </div>
+          )}
+          
+          <div className="flex-1 w-full bg-surface-container-lowest">
+            <PDFViewer key={showHighlights ? "highlight-on" : "highlight-off"} width="100%" height="100%" className="border-none" showToolbar={true}>
+              <ResumePDF 
+                resume={resume} 
+                showHighlights={showHighlights}
+                matchedKeywords={matchedKeywords}
+                missingKeywords={missingKeywords}
+              />
+            </PDFViewer>
+          </div>
         </div>
-      </motion.div>
+
+      </div>
     </div>
   );
 }

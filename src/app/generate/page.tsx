@@ -82,6 +82,7 @@ export default function GeneratePage() {
           job_description: jobDescription,
           ats_score_before: analysis.ats_score,
           approved_project: approvedProject ? `${approvedProject.title} | Tech Stack: ${approvedProject.tech_stack} | Description: ${approvedProject.description}` : undefined,
+          missing_keywords: analysis.missing_skills || [],
           preferred_model: preferredModel,
         });
 

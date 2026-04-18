@@ -12,8 +12,8 @@ INPUT LABELS (referred throughout this prompt):
 ⛔ ABSOLUTE RULE - ZERO FABRICATION:
 1. DO NOT inject any keywords or technologies not present in RESUME_TEXT.
 2. DO NOT invent, add, or create new jobs, internships, projects, degrees, or achievements not in RESUME_TEXT.
-3. DO NOT invent skills (e.g. if RESUME_TEXT does not contain "Docker", do not add it).
-4. DO NOT delete any legitimate skills from RESUME_TEXT (including HTML, CSS, VS Code, etc.).
+3. DO NOT extract skills from anywhere outside the explicitly labeled "Skills" section. Even if a tech is mentioned in a project/job, DO NOT add it to the technical_skills array if it isn't in the original Skills block.
+4. DO NOT delete any legitimate skills explicitly listed in the Skills section of RESUME_TEXT.
 
 STEP-BY-STEP ALGORITHM:
 
@@ -36,14 +36,14 @@ Step 3.5: Work Experience (includes Internships for Freshers)
 - DO NOT alter the user's authentic job title. If RESUME_TEXT has "Software Engineer", keep it exactly as "Software Engineer".
 - Keep ALL bullet points from RESUME_TEXT.
 - PRESERVE strong bullets from RESUME_TEXT verbatim.
-- ENHANCE weak bullets with better sentence framing, better words choice if required following resume writing principles without changing any meaning, data of original resume_text or putting non existing data.
+- ENHANCE weak bullets with better sentence framing, better words choice if required following resume writing principles without changing any meaning, data of original bullet points from resume_text and never invent non existing data.
 
 Step 4: Projects
 - ALWAYS set "link": "Link" as default value for all projects.
 - ONLY include projects that EXIST in RESUME_TEXT.
 - Keep ALL bullet points from RESUME_TEXT.
 - If bullets from RESUME_TEXT are already strong, keep them as-is.
-- ENHANCE weak bullets with better sentence framing, better words choice if required following resume writing principles without changing any meaning, data of original resume_text or putting non existing data.
+- ENHANCE weak bullets with better sentence framing, better words choice if required following resume writing principles without changing any meaning, data of original bullet points from resume_text and never invent non existing data.
 
 Step 5: Certifications and Achievements
 - ALWAYS output a single merged array named "certifications_and_achievements"
@@ -66,9 +66,10 @@ Format:
 ❌ "Good at problem solving" (generic — remove if in RESUME_TEXT)
 
 Step 6: Skills Optimization (STRICT PRESERVATION)
-Extract and categorize ALL skills from the skills section only of RESUME_TEXT. Do NOT miss anything.
-1. NEVER invent any skills not present in RESUME_TEXT of skills section.
-2. NEVER delete skills to meet arbitrary limits. Include everything from RESUME_TEXT (including HTML, CSS, VS Code, Git, etc.).
+Extract and categorize ALL skills ONLY from the dedicated "Skills" section of almost at the bottom of RESUME_TEXT.
+1. ⛔ CRITICAL RULE: NEVER extract skills from the "Work Experience" or "Projects" sections. If a skill (e.g., "Docker") is mentioned in a project but not in the original Skills section, DO NOT add it.
+2. NEVER invent any skills not present explicitly in the Skills section of RESUME_TEXT.
+3. NEVER delete skills to meet arbitrary limits. Include everything from the Skills section.
 3. Categorize them neatly:
    - Languages (Python, Java, JavaScript, etc.)
    - Frameworks & Libraries (React, Django, Pandas, etc.)
@@ -78,8 +79,10 @@ Extract and categorize ALL skills from the skills section only of RESUME_TEXT. D
    - Miscellaneous
 4. If a skill from RESUME_TEXT doesn't fit standard categories, map it to "Miscellaneous" array.
 
-OUTPUT FORMAT (Template v1):
-{{
+81. OUTPUT FORMAT (Template v1):
+82. - Return ONLY valid JSON below.
+83. - DO NOT use markdown formatting (like **bold**, *italics*, # headers, etc.) inside the JSON string values. Use plain text only. No explanation.
+84. {{
   "template_id": "v1",
   "heading": {{
     "name": "Full Name",
@@ -128,12 +131,12 @@ OUTPUT FORMAT (Template v1):
   ],
   
   "technical_skills": {{
-    "languages": ["<only extract from RESUME_TEXT>"],
-    "frameworks": ["<only extract from RESUME_TEXT>"],
-    "databases": ["<only extract from RESUME_TEXT>"],
-    "cloud_services": ["<only extract from RESUME_TEXT>"],
-    "developer_tools": ["<only extract from RESUME_TEXT>"],
-    "miscellaneous": ["<only extract from RESUME_TEXT>"]
+    "languages": ["<only extract from dedicated Skills section of RESUME_TEXT, NEVER from projects/experience>"],
+    "frameworks": ["<only extract from dedicated Skills section of RESUME_TEXT, NEVER from projects/experienc>"],
+    "databases": ["<only extract from dedicated Skills section of RESUME_TEXT, NEVER from projects/experienc>"],
+    "cloud_services": ["<only extract from dedicated Skills section of RESUME_TEXT, NEVER from projects/experienc>"],
+    "developer_tools": ["<only extract from dedicated Skills section of RESUME_TEXT, NEVER from projects/experienc>"],
+    "miscellaneous": ["<only extract from dedicated Skills section of RESUME_TEXT, NEVER from projects/experienc>"]
   }},
   "changes": [
     "Rewrote Summary: [old summary] → [new summary]",

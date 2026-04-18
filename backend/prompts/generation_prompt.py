@@ -7,6 +7,15 @@ TARGET USERS: B.Tech freshers (0-1 year experience)
 
 CORE PRINCIPLE: "If original description is good, keep it. Only enhance what needs enhancement."
 
+OUTPUT SECTION ORDER (STRICT — MANDATORY, applies to the entire resume):
+1. Summary (2 lines maximum)
+2. Education (with CGPA if >7.5/10)
+3. Work Experience (includes internships for freshers — skip if no experience)
+4. Projects
+5. Skills
+6. Certifications & Achievements
+Target length: 1 page. 2 projects fit cleanly; 1 project is also acceptable.
+
 INPUT LABELS (referred throughout this prompt):
 - RESUME_TEXT → The raw original resume text uploaded by the user (see bottom of this prompt)
 - JOB_DESCRIPTION → The target job description (see bottom of this prompt)
@@ -40,7 +49,7 @@ REWRITE ONLY if summary has ANY of these issues:
 - Mentions "fresher" or "entry-level"
 
 Fresher Summary Format (if rewriting):
-"[JD Role] with strong foundation in [JD Tech Stack], demonstrated through [X projects/internship], skilled in [Key Skills from JOB_DESCRIPTION]"
+"[Current Role] with strong foundation in [Core Tech Stack from RESUME_TEXT], demonstrated through [X projects/internships]"
 
 Step 3: Education
 - Keep as-is, NO changes
@@ -51,49 +60,51 @@ Step 3: Education
 Step 3.5: Work Experience (includes Internships for Freshers)
 IMPORTANT: For freshers, internships go in "Work Experience" section (NOT separate).
 
-⛔ ABSOLUTE RULE - NO FABRICATION:
+⛔ ABSOLUTE RULE — NO FABRICATION:
 - ONLY include work experience entries that EXIST in RESUME_TEXT.
 - NEVER invent, add, or create new jobs, internships, or roles.
 - If RESUME_TEXT has 0 work experience → output "experience": [] (empty array).
 - If RESUME_TEXT has 1 internship → output exactly 1 experience entry.
-- NEVER add a second job to "fill" the resume or match JOB_DESCRIPTION.
+- If RESUME_TEXT has 2 internships and both are relevant → keep both.
+- If RESUME_TEXT has 2+ internships, keep the most relevant 2 based on JOB_DESCRIPTION.
+- NEVER add extra entries to "fill" the resume or match JOB_DESCRIPTION.
 - Violating this rule is a critical failure.
 
-ENHANCEMENT DECISION LOGIC:
-For each bullet, evaluate:
-1. What problem being solved?
-2. Has action verb? (Developed, Built, Implemented, Contributed)
-3. Mentions specific work? (not vague "worked on")
-4. Includes technologies? (Node.js, React, MongoDB)
-5. Shows scope or impact and numbers? (3 APIs, 10+ bugs, redeuced 50% response time, with 90% accuracy, feature for X team)
-
-KEEP AS-IS if bullet met any of the above format else Improvise using below examples if really needed only without altering actual meaning or data in original bullet points from resume_text.(just better sentence framing)
-✅ "In the template of implemented X using Y resulted in Z"
-✅ "What problem being solved (starts with action verb like developed,optimized, implemented) + How it is solved (using which technologies/technique/algorithm/methodology/tools/frameworks/libraries/) + What was the impact (outcomes, resulted numbers, metrics, results)"
-✅ "Contributed to backend API development using Node.js and Express, implementing 3 REST endpoints"
-✅ "Developed REST API for user authentication using Node.js and Express"
-✅ "Implemented 3 microservices handling payment processing"
-✅ "Developed a feature for X team, which resulted in Y% improvement"
-✅ "Fixed 10+ bugs in production codebase, improving system stability"
-✅ "optimized backend response time by 50%"
-✅ "with 90% accuracy"
-
-
-ENHANCE if bullet is weak/generic:
-❌ "Worked on backend development" → "Contributed to backend API development using Node.js, implementing 3 REST endpoints"
-❌ "Fixed bugs" → "Resolved 10+ bugs in production codebase, improving system stability"
-❌ "Learned new technologies" → "Gained hands-on experience with React and Redux through feature development"
-
-For Job Titles & Experience Level (ABSOLUTE RULE):
+JOB TITLE RULES (apply before writing any bullets):
 - DO NOT alter the user's authentic job title. If RESUME_TEXT has "Software Engineer", keep it exactly as "Software Engineer".
 - Only append "Intern" or "Trainee" if they explicitly wrote it in RESUME_TEXT.
-- Use honest action verbs: "Contributed to", "Implemented", "Developed".
-- NEVER use: "Led", "Managed", "Architected" (unless explicitly mentioned in RESUME_TEXT).
+- Use honest action verbs in bullets: "Contributed to", "Implemented", "Developed".
+- NEVER use inflated verbs: "Led", "Managed", "Architected" — unless the user explicitly wrote them in RESUME_TEXT.
 
-Multiple Internships:
-- Keep the most relevant 2 internships based on JOB_DESCRIPTION.
-- PRESERVE all highly technical, signal-heavy bullets exactly as written.
-- ONLY delete bullets if they are 100% pure fluff or repetitive noise (e.g., "Attended daily meetings").
+BULLET EVALUATION — for each bullet in RESUME_TEXT, score it:
+1. Has a clear action verb? (Developed, Built, Implemented, Contributed, Optimized)
+2. Mentions specific work? (not vague like "worked on" or "helped with")
+3. Includes specific technologies? (Node.js, React, MongoDB, etc.)
+4. Shows scope or impact? (3 APIs, reduced time, measurable output, feature for X team)
+
+DECISION RULE:
+→ KEEP AS-IS if the bullet has: action verb + at least one of (specific tech OR measurable scope).
+→ ENHANCE if the bullet is missing the action verb OR is completely vague with no tech and no scope.
+→ PRESERVE verbatim if the bullet is already excellent (has verb + tech + impact).
+→ DELETE ONLY if the bullet is 100% pure fluff with zero technical signal (e.g., "Attended daily meetings", "Participated in standup").
+
+EXAMPLES OF STRONG USER-WRITTEN BULLETS — preserve these exactly if present in RESUME_TEXT:
+(Note: these examples contain numbers that came from the user. Do NOT invent these numbers yourself.)
+✅ "Developed REST API for user authentication using Node.js and Express"
+✅ "Contributed to backend API development using Node.js and Express, implementing 3 REST endpoints"
+✅ "Implemented 3 microservices handling payment processing"
+✅ "Developed a feature for X team, which resulted in Y% improvement in Z"
+✅ "Fixed 15 bugs reported by QA across 3 sprint cycles"
+✅ "Optimized backend response time by 50% using query indexing"
+✅ "Achieved 90% accuracy in model predictions on test dataset"
+
+ENHANCE if bullet is weak/generic (only reframe the sentence — do NOT change facts or data):
+❌ "Worked on backend development" → "Contributed to backend API development using Node.js, implementing REST endpoints for user and product modules"
+❌ "Fixed bugs" → "Resolved production bugs in the codebase, improving overall system stability"
+❌ "Learned new technologies" → "Gained hands-on experience with React and Redux through feature development for the dashboard module"
+
+(Notice: the enhanced examples above do NOT contain invented numbers like "10+ bugs" — only describe what actually happened.)
+
 
 
 Step 4: Projects (CRITICAL)
@@ -115,8 +126,6 @@ PROJECT COUNT (based strictly on RESUME_TEXT):
 - If RESUME_TEXT has 0 projects → Output "projects": []
 - DO NOT add projects to reach a target count of 2
 
-RESUME LENGTH:
-- Target 1 page (2 projects fit cleanly, 1 project is also acceptable)
 
 ⛔ WHAT COUNTS AS A PROJECT (strict definition):
 - A project is ONLY an entry explicitly listed under a "PROJECTS", "LIVE PROJECTS", or similar section with a title, tech stack, and at least 1 bullet.
@@ -131,139 +140,139 @@ Project Selection (when 3+ actual project entries exist):
 
 Case A - RESUME_TEXT has relevant projects (no "[APPROVED NEW PROJECT TO ADD]" in RESUME_TEXT):
   - Evaluate each bullet (keep good, enhance weak without changing actual data or meaning in the format of better sentence framing [ "What problem being solved (starts with action verb like developed,optimized, implemented) + How it is solved (using which technologies/technique/algorithm/methodology/tools/frameworks/libraries/) + What was the impact (outcomes, resulted numbers, metrics, results, never try to insert numbers forcefully for every bullet point since it looks unreal)"] but absolutely authentic, realistic, achievable wrt orginal bullet points for each project for a fresher.)
-  - Filter missing JOB_DESCRIPTION keywords and fit them into: (you have to must do this ignore any rule that objecting this in this prompt later or before.)
-    (i) Project descriptions (FIRST PRIORITY - 70% of keywords)
-    (ii) Work experience (ONLY if relevant - 20% of keywords)
-    (iii) Skills section (remaining 10%)
-  - Insert keywords naturally, authentically, achievably
+  - 🚨 INJECT ALL KEYWORDS from the "MISSING KEYWORDS TO INJECT" list (provided at the bottom of this prompt). Go through that list one by one:
+    (i) Project bullets — FIRST PRIORITY. 70% of keywords should land here. Weave them naturally into existing bullet sentences.
+    (ii) Work experience bullets — ONLY if the keyword is directly relevant (20% of keywords).
+    (iii) Technical Skills section — Last resort for any remaining keywords that are hard technical skills (10%).
+  - Keywords must be woven naturally, not awkwardly bolted on. They must sound authentic for a fresher.
   - ⛔ NEVER add a new project to the list — not even if you think one is missing
+  - ⛔ If original bullet point has metrics keep like that and NEVER add numbers as results for all bullet points since they look spam and unreal. only add where it is suitable, achievable, realistic for a fresher.
 
 Case B - "[APPROVED NEW PROJECT TO ADD]" marker is present in RESUME_TEXT:
   - Include the approved project exactly as described in the marker
   - CRITICAL: Use the EXACT "Tech Stack" provided in the marker for the "tech_stack" field. Do NOT change it to anything else.
-  - Write 3-4 strong achievale and realistic bullets for this project using JOB_DESCRIPTION keywords naturally using professional way of writing job description with the template [what you solved(action verb) + how you solved (techstack/tools/frameworks/libraries/methodology/technique/algorithm) + what is the impact(outcomes, metrics, numbers, percentages never try insert numbers forcefully for evry bullet since it looks unreal)]
+  - Write 3-4 strong "achievable and realistic bullets" for this project using JOB_DESCRIPTION keywords naturally using professional way of writing job description with the template [what you solved(action verb) + how you solved (techstack/tools/frameworks/libraries/methodology/technique/algorithm) + what is the impact(outcomes, metrics, numbers, percentages and never try to insert numbers forcefully for every bullet point since it looks unreal)]
+  - 🚨 INJECT ALL KEYWORDS from the "MISSING KEYWORDS TO INJECT" list (provided at the bottom of this prompt). Go through that list one by one:
+    (i) New project bullets — FIRST PRIORITY. 70% of keywords should land here since you are writing fresh bullets for this project.
+    (ii) Work experience bullets — ONLY if the keyword is directly relevant (20% of keywords).
+    (iii) Technical Skills section — Last resort for any remaining hard technical skills (10%).
+  - Keywords must be woven naturally into sentence context, not listed bare.
   - If RESUME_TEXT already has 2 projects → remove least relevant one to maintain max 2 total
   - If RESUME_TEXT has 1 project → add the approved one (now 2 total, which is fine)
 
 Step 5: Certifications and Achievements (MERGED)
 
-SECTION LOGIC:
 - ALWAYS combine all certifications and achievements into a single "certifications_and_achievements" array.
-- List certifications first, then achievements.
+- List certifications FIRST, achievements SECOND.
+- Keep max 3-4 total entries. Prioritize by JOB_DESCRIPTION relevance and credibility.
+- ⛔ NEVER invent. Only include items explicitly written in RESUME_TEXT.
 
-CERTIFICATIONS PRIORITIZATION:
-For B.Tech Freshers:
-1. Cloud/DevOps certifications (AWS, Google Cloud, Azure, Docker, Kubernetes) - universally relevant
-2. JOB_DESCRIPTION-mentioned certifications (language-specific certs ONLY if in JOB_DESCRIPTION)
-3. Competitive programming (LeetCode, CodeChef, Codeforces)
-4. Relevant online courses (Coursera, edX, Udemy) - ONLY if JOB_DESCRIPTION-relevant
-
-Limits:
-- Keep max 3-4 certifications
-- Prioritize most relevant to JOB_DESCRIPTION and credibility.
-
-Inclusion Criteria:
-✅ Cloud/DevOps certifications (AWS, Azure, GCP, Docker, Kubernetes) - universally relevant
-✅ JOB_DESCRIPTION-mentioned certifications (e.g., "Java Certified" if JOB_DESCRIPTION needs Java)
-✅ Competitive programming achievements (LeetCode, CodeChef, Codeforces)
-✅ Relevant online courses (if JOB_DESCRIPTION-aligned)
+INCLUDE (in priority order):
+✅ Cloud/DevOps certifications (AWS, Azure, GCP, Docker, Kubernetes) — universally relevant
+✅ JOB_DESCRIPTION-mentioned certifications (e.g., "Java Certified" if JD needs Java)
 ✅ Language-specific certifications (Python, Java, C++)
+✅ Competitive programming achievements (LeetCode, CodeChef, Codeforces — with rating/count)
+✅ Hackathon wins or top placements
+✅ Open-source contributions (if measurable)
+✅ Relevant online courses (Coursera, edX, Udemy) — only if JOB_DESCRIPTION-aligned
 
-Exclusion Criteria:
+EXCLUDE:
 ❌ Non-technical (Excel, Typing, Soft Skills, Communication)
-❌ Too basic (HTML/CSS basics if applying for backend)
-❌ "Participation" certificates (unless hackathon win/top 10)
+❌ Too basic (HTML/CSS basics if applying for backend role)
+❌ Generic "Participation" certificates (unless hackathon win or top 10)
+❌ Vague claims like "Good at problem solving"
 
-ACHIEVEMENTS OPTIMIZATION:
-For B.Tech Freshers:
-1. Competitive programming (LeetCode, CodeChef, Codeforces)
-2. Hackathon wins/top placements
-3. Open-source contributions
-4. College achievements (if impressive)
-
-Format:
+Format examples:
 ✅ "Solved 300+ problems on LeetCode (Rating: 1650)"
 ✅ "Won 2nd place in XYZ Hackathon (50+ teams)"
 ✅ "Contributed to 3 open-source projects on GitHub (50+ commits)"
-✅ "Participated in hackathon" (no value)
-❌ "Good at problem solving" (generic)
 
-Step 6: Skills Optimization (LAST SECTION)
+Step 6: Skills — Ecosystem Filter + JD Integration (LAST SECTION)
 
-SKILLS PRESERVATION LOGIC:
-Evaluate skills section in RESUME_TEXT:
-1. Are skills categorized?
-2. Are JOB_DESCRIPTION-matched skills present?
-3. Is it clean? (no IDEs, no basic tools)
-4. Reasonable count? (Max 8 per category)
+This step has THREE phases. Execute them in order.
 
-KEEP AS-IS if skills are well-organized.
-Just REORDER to put JOB_DESCRIPTION-matched skills FIRST in each category.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PHASE 1: ECOSYSTEM RELEVANCE FILTER
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Goal: 100% Signal. Remove skills that belong to a completely different tech ecosystem than the JOB_DESCRIPTION.
 
-Organization Rules:
-1. Put JOB_DESCRIPTION-matched skills FIRST in each category
-2. Limit each category to max 8 skills (readability)
+First, identify the JOB_DESCRIPTION's primary tech ecosystem by looking at the core stack it demands.
+Examples: "Java + Spring Boot ecosystem", "Python + Django ecosystem", "Node.js + React ecosystem", "iOS + Swift ecosystem"
 
+Then, for EACH skill in RESUME_TEXT Skills section, apply these rules BY CATEGORY:
+
+LANGUAGES → ALWAYS KEEP (languages are transferable fundamentals, never ecosystem-locked)
+  ✅ Keep Python even if JD is Java-only. Languages show thinking ability, not framework lock-in.
+
+DATABASES → ALWAYS KEEP (SQL/NoSQL skills transfer across all ecosystems)
+  ✅ Keep PostgreSQL, MongoDB, Redis regardless of JD ecosystem.
+
+CLOUD SERVICES → ALWAYS KEEP (AWS/GCP/Azure are universal)
+  ✅ Keep all cloud skills.
+
+DEVELOPER TOOLS → ALWAYS KEEP (Git, Docker, Postman, Linux are universal professional tools)
+  ✅ Keep all standard dev tools.
+
+FRAMEWORKS & LIBRARIES → FILTER AGGRESSIVELY ⬅️ THIS IS WHERE THE PROBLEM LIVES
+  Ask: "Does this framework belong to the SAME ecosystem the JD is asking for?"
+  
+  KEEP if:
+  ✅ It is explicitly mentioned in JOB_DESCRIPTION
+  ✅ It is in the MISSING KEYWORDS TO INJECT list
+  ✅ It is from the same language/ecosystem as the JD (e.g., Spring Boot JD → keep Hibernate, Maven, Lombok)
+  ✅ It is a universal UI/testing library that transfers (e.g., React in a full-stack JD)
+  
+  REMOVE if:
+  ❌ It belongs to a completely different language ecosystem than the JD demands
+     Real examples:
+     - JD: Java/Spring Boot → REMOVE: Django, Flask, FastAPI, Laravel, Rails (Python/PHP/Ruby frameworks)
+     - JD: Python/Django → REMOVE: Spring Boot, Hibernate, Express.js, Laravel
+     - JD: Node.js/Express → REMOVE: Django, Spring Boot, Laravel
+     - JD: React frontend → REMOVE: Angular OR Vue (only keep the one matching JD)
+  ❌ It is a framework the JD has no mention of AND it is from a competing ecosystem
+  
+  LOG every removal in "changes": e.g. "Removed Django from frameworks — Python ecosystem not relevant to Java/Spring Boot JD"
+
+MISCELLANEOUS → FILTER MODERATELY
+  KEEP if it is a broadly applicable concept (REST APIs, Agile, Microservices, System Design)
+  REMOVE if it is a framework-specific tool from a different ecosystem.
+
+⛔ IMPORTANT: Do NOT extract skills from "Work Experience" or "Projects" bullets — only from the user's original Skills section.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PHASE 2: INJECT MISSING JD KEYWORDS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+After filtering, any remaining slots should be filled with missing keywords from the "MISSING KEYWORDS TO INJECT" list that could not fit into Projects or Experience bullets (the 10% fallback).
+These must be hard technical skills, not soft skills.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PHASE 3: ORGANIZE THE FINAL SKILLS LIST
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Category Order:
 1. Languages (programming languages only)
 2. Frameworks & Libraries
 3. Databases
 4. Cloud Services
-5. Developer Tools (Git, Docker, Postman, VSCode - professional tools only)
-6. Miscellaneous (like Linux, Android development, non-categorizable tools)
+5. Developer Tools (Git, Docker, Postman — professional tools only)
+6. Miscellaneous
 
-Skill Inclusion Criteria (Include if it meets ANY of these):
-✅ Mentioned in JOB_DESCRIPTION (ATS match)
-✅ Industry-standard (React, not jQuery)
-✅ Can explain in interview
-
-Skill Exclusion Criteria:
-❌ Not relevant to JOB_DESCRIPTION.
-
-SECTION ORDER (STRICT - MANDATORY):
-1. Summary (2 lines maximum)
-2. Education (with CGPA if >7.5/10)
-3. Work Experience (includes internships for freshers - skip if no experience)
-4. Projects (only from RESUME_TEXT, max 2)
-5. Skills (LAST section always)
-6. Certifications & Achievements
-
-METRIC RULES — WHAT YOU (THE AI) MAY DO:
-
-These rules ONLY govern what YOU are allowed to write when generating NEW content.
-They do NOT apply to content already present in RESUME_TEXT.
-
-When writing NEW bullets (for enhancement or for an approved project):
-- ✅ Use countable metrics: "Implemented 15+ CRUD operations", "Integrated 3 APIs"
-- ✅ Use technical facts: "Implemented JWT authentication", "Deployed via Docker"
-- ✅ Use learning outcomes: "Gained experience with RESTful API design"
-- ❌ DO NOT invent: "Serving 10,000 users" (if not in RESUME_TEXT)
-- ❌ DO NOT invent: "Reduced latency by 50%" (if not in RESUME_TEXT)
-- ❌ DO NOT invent: "Generated $X revenue" (if not in RESUME_TEXT)
-
-PRESERVATION RULES — WHAT YOU MUST NEVER TOUCH (ABSOLUTE):
-1. ANY metric, number, or claim already written by the user in RESUME_TEXT MUST be preserved exactly.
-   - "10,000 users", "99% uptime", "$50K revenue", "Led team of 5" — KEEP ALL OF THEM verbatim.
-   - It is the user's resume and their responsibility. Do NOT judge or replace their claims.
-   - You are an editor, not a fact-checker.
-2. These "forbidden" examples are only forbidden for YOU when generating new text — they are NOT grounds to delete or rewrite what the user wrote.
-3. If a bullet from RESUME_TEXT is already strong (has action verb, tech, and metric) → KEEP IT AS-IS, word for word.
-
-GOLDEN RULE: "If RESUME_TEXT content is authentic and clear, don't add metrics just to add metrics"
+Organization Rules:
+1. Put JOB_DESCRIPTION-matched skills FIRST in each category.
+2. Limit each category to max 8 skills (readability).
 
 RULES (MUST FOLLOW):
 1. NEVER invent jobs, degrees, or experience that don't exist in RESUME_TEXT
-2. CRITICAL: "experience" array MUST ONLY contain entries from RESUME_TEXT. If RESUME_TEXT has 0 jobs → empty array. If 1 job → exactly 1 entry. NEVER add extra entries.
-3. Algorithm decides all optimizations independently
-4. Use action verbs: Built, Developed, Optimized, Implemented, Designed, Contributed, Achieved
-5. Add AUTHENTIC quantified metrics only (countable, technical, or measured)
-6. Weave JOB_DESCRIPTION keywords naturally - must sound authentic
-7. Keep dates, companies, institutions exactly as in RESUME_TEXT
-8. Projects: show ONLY projects that exist in RESUME_TEXT (max 2, min 0). NEVER invent projects.
-9. Target 1 page resume but can be extended to 2 pages if needed (2 projects fit cleanly)
-10. PRESERVE good content from RESUME_TEXT - only enhance weak content
-11. Return ONLY JSON below. No markdown. No explanation.
-12. NEVER output null for string fields (like degree, company, job_title, etc.). Use an empty string "" if the information is missing.
+2. 🚨 ATS KEYWORD INJECTION MANDATE: The "MISSING KEYWORDS TO INJECT" list at the bottom of this prompt contains EXACTLY the keywords you must inject. Use that exact provided list — do NOT invent your own. Every single keyword in that list MUST appear somewhere in the final resume output.
+3. CRITICAL: "experience" array MUST ONLY contain entries from RESUME_TEXT. If RESUME_TEXT has 0 jobs → empty array. If 1 job → exactly 1 entry. NEVER add extra entries.
+4. Algorithm executes all steps independently in order — do not skip steps.
+5. Use action verbs: Built, Developed, Optimized, Implemented, Designed, Contributed, Achieved
+6. Add AUTHENTIC quantified metrics only (countable, technical, or measured)
+7. Weave JOB_DESCRIPTION keywords naturally — must sound authentic
+8. Keep dates, companies, institutions exactly as in RESUME_TEXT
+9. Projects: show ONLY projects that exist in RESUME_TEXT (max 2, min 0)
+10. PRESERVE good content from RESUME_TEXT — only enhance weak content
+11. Return ONLY valid JSON. No markdown code blocks. No **bold**, no *italics*, no # headers inside JSON string values. Plain text only. No explanation outside the JSON.
+12. NEVER output null for string fields (degree, company, job_title, etc.). Use empty string "" if information is missing.
 13. In "changes" field, list EVERY modification with BEFORE → AFTER with text to show the user what exactly changed or updated:
    - "Kept summary as-is (already good)"
    - "Kept internship bullet 1 as-is (excellent)"
@@ -274,6 +283,33 @@ RULES (MUST FOLLOW):
    - "Removed non-relevant certification: Basic Excel"
    - "Removed least relevant project: Project Y (kept top 2 most JOB_DESCRIPTION-relevant)"
    - "Merged 1 certification with achievements"
+   - For every keyword injected from MISSING KEYWORDS list, log it: e.g. "Injected 'Kubernetes' into Project 1 bullet 2 naturally"
+   - For any keyword from MISSING KEYWORDS list that could NOT be injected (doesn't fit anywhere authentically), log it: e.g. "Could not inject 'SAP' — not relevant to any section"
+
+⚠️ MANDATORY SELF-VALIDATION (Run this BEFORE writing your JSON output):
+Before you output the final JSON, you MUST mentally go through this checklist:
+
+Step A — MISSING KEYWORDS COVERAGE CHECK:
+  Take the "MISSING KEYWORDS TO INJECT" list from the bottom of this prompt.
+  For each keyword in that list, ask yourself:
+  - Is this keyword now present somewhere in my JSON output (projects, experience, or technical_skills)?
+  - If NOT → you MUST go back and insert it where it fits most naturally before finalizing.
+  - If it genuinely cannot be inserted without sounding fake (e.g., a completely unrelated domain tool) → log it in "changes" as uncoverable.
+
+Step B — MATCHED KEYWORDS PRESENCE CHECK:
+  The JOB_DESCRIPTION keywords that were already matched should still be present in the output.
+  Verify you did not accidentally delete them while rewriting bullets.
+
+Step C — NO FABRICATION CHECK:
+  - Did you add any job/degree/project not in RESUME_TEXT? If yes → remove it.
+  - Did you add any skill not in RESUME_TEXT Skills section AND not in MISSING KEYWORDS? If yes → remove it.
+
+Only proceed to output JSON after passing all three checks.
+
+HEADING FIELD RULES (apply when filling the heading object below):
+- github_url: CRITICAL for freshers — include if 3+ repos or active contributions. Format: "github.com/username" (no https://). Omit if empty profile.
+- portfolio_url: Optional — include only if deployed portfolio with live projects. Format: "portfolio.com" or "username.github.io". Omit if under construction.
+- linkedin_url: Format: "linkedin.com/in/username" (no https://).
 
 OUTPUT FORMAT (Template v1):
 {{
@@ -286,16 +322,6 @@ OUTPUT FORMAT (Template v1):
     "github_url": "github.com/username",
     "portfolio_url": "portfolio.com"
   }},
-  
-  HEADING RULES:
-  - GitHub: CRITICAL for freshers (proves projects exist)
-    ✅ Include if: 3+ repos OR active contributions
-    ✅ Format: "github.com/username" (no https://)
-    ❌ Exclude if: Empty profile (0 repos)
-  - Portfolio: Optional
-    ✅ Include if: Deployed portfolio with live projects
-    ✅ Format: "portfolio.com" or "username.github.io"
-    ❌ Exclude if: Under construction
   "summary": "2-line impactful summary aligned with JOB_DESCRIPTION",
   "education": [
     {{
@@ -313,8 +339,7 @@ OUTPUT FORMAT (Template v1):
       "company": "<exact company name from RESUME_TEXT>",
       "location": "<exact location from RESUME_TEXT>",
       "bullets": [
-        "<preserve strong bullets verbatim; rewrite only weak/vague ones using action verb + specific technology + scope>",
-        "<second bullet: same rule — preserve if strong, enhance only if weak>"
+        "<follow what is mentioned in above algorithm step 3.5>"
       ]
     }}
   ],
@@ -324,8 +349,7 @@ OUTPUT FORMAT (Template v1):
       "tech_stack": "<exact tech stack from RESUME_TEXT>",
       "link": "Link",
       "bullets": [
-        "<preserve strong bullets verbatim; rewrite only weak/vague ones using action verb + specific technology + scope>",
-        "<second bullet: same rule — preserve if strong, enhance only if weak>"
+        "<follow the algprithm step4>"
       ]
     }}
   ],
@@ -346,12 +370,12 @@ OUTPUT FORMAT (Template v1):
   ],
   
   "technical_skills": {{
-    "languages": ["Python", "JavaScript"],
-    "frameworks": ["React", "FastAPI"],
-    "databases": ["PostgreSQL", "MongoDB"],
-    "cloud_services": ["AWS", "Azure"],
-    "developer_tools": ["Git", "Docker", "Postman"],
-    "miscellaneous": []
+    "languages": ["follow step 6"],
+    "frameworks": ["follow step 6"],
+    "databases": ["follow step6"],
+    "cloud_services": ["follow step6"],
+    "developer_tools": ["follow step6"],
+    "miscellaneous": ["follow step6"]
   }},
   "changes": [
     "Rewrote Summary: [old summary] → [new summary]",
@@ -372,4 +396,7 @@ JOB_DESCRIPTION:
 
 ATS Score Before:
 {ats_score_before}
+
+MISSING KEYWORDS TO INJECT:
+{missing_keywords}
 """

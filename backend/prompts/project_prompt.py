@@ -40,7 +40,7 @@ SUGGESTED PROJECT QUALITY RULES (CRITICAL - follow these when suggesting a proje
    - Solving a real-world problem (not just a tech demo)
    - Using 60-80% of the JD's required tech stack naturally
 
-Return ONLY this JSON format. No markdown. No explanation. Raw JSON only.
+Return ONLY this JSON format. No markdown code blocks. DO NOT use markdown formatting (like **bold**, *italics*, etc.) inside the JSON string values. Use plain text only. No explanation. Raw JSON only.
 
 {{
   "has_relevant_projects": true/false,

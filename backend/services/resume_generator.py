@@ -5,7 +5,7 @@ from prompts.general_optimization_prompt import GENERAL_OPTIMIZATION_PROMPT
 from llm.master_llm_caller import call_llm
 from templates.template_v1_schema import TemplateV1
 
-def generate_resume(resume_text: str, job_description: str, ats_score_before: int, approved_project: str = "", preferred_model: str = None) -> dict:
+def generate_resume(resume_text: str, job_description: str, ats_score_before: int, approved_project: str = "", missing_keywords: list[str] = None, preferred_model: str = None) -> dict:
     is_no_jd_mode = not job_description or not job_description.strip()
 
     # Build prompt with approved project ONLY if we are in JD optimization mode
@@ -27,7 +27,8 @@ def generate_resume(resume_text: str, job_description: str, ats_score_before: in
         prompt = GENERATION_PROMPT.format(
             resume_text=resume_text_with_project,
             job_description=job_description,
-            ats_score_before=ats_score_before
+            ats_score_before=ats_score_before,
+            missing_keywords=", ".join(missing_keywords) if missing_keywords else "None"
         )
 
     result = call_llm(prompt, preferred_model=preferred_model)

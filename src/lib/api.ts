@@ -117,6 +117,7 @@ export interface GenerateRequest {
   job_description: string;
   ats_score_before: number;
   approved_project?: string;
+  missing_keywords?: string[];
   preferred_model?: string;
 }
 
