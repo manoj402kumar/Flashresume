@@ -334,7 +334,7 @@ export default function GeneratePage() {
                       Try Again
                     </button>
                     <button
-                      onClick={() => router.push("/preview")}
+                      onClick={() => router.push("/")}
                       className="flex-1 py-4 px-6 rounded-xl font-bold text-on-background bg-surface-container-low border-2 border-surface-container-high hover:bg-surface-container-lowest transition-all duration-300 flex items-center justify-center gap-2"
                     >
                       <ArrowLeft className="w-5 h-5" />

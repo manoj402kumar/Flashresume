@@ -98,13 +98,13 @@ export default function ModelSelector({ value, onChange, label }: ModelSelectorP
   };
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-3 mt-4">
       {label && (
-        <p className="text-xs font-semibold uppercase tracking-wider text-on-surface-variant ml-1">
+        <label className="text-sm font-bold text-on-background px-1 block">
           {label}
-        </p>
+        </label>
       )}
-      <div className="flex gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 relative">
         {(Object.keys(PROVIDER_MODELS) as ModelChoice[]).map((providerId) => {
           const provider = PROVIDER_MODELS[providerId];
           const isActive = value.provider === providerId;
@@ -112,57 +112,65 @@ export default function ModelSelector({ value, onChange, label }: ModelSelectorP
           const selectedModel = isActive ? provider.models.find(m => m.id === value.model) : null;
 
           return (
-            <div key={providerId} className="flex-1 relative">
+            <div key={providerId} className="relative z-10 flex flex-col">
               <button
                 type="button"
                 onClick={() => handleProviderClick(providerId)}
-                className={`w-full flex items-center gap-2 px-4 py-3 rounded-xl border-2 transition-all text-left active:scale-95
-                  ${isActive ? provider.activeBg : "bg-surface-container-low border-transparent hover:border-surface-container-high"}`}
+                className={`w-full flex-1 flex flex-col justify-center items-start text-left px-4 py-3 rounded-2xl transition-all duration-300 border focus:outline-none focus:ring-2 focus:ring-primary/30
+                  ${isActive 
+                    ? `bg-surface-container-lowest ${provider.activeText.replace('text-', 'border-')}/30 shadow-md transform scale-[1.02] ring-1 ring-inset ${provider.activeText.replace('text-', 'ring-')}/20 text-on-background` 
+                    : "bg-surface-container-low border-surface-container-high hover:bg-surface-container-low/80 text-on-surface-variant hover:border-on-surface-variant/20"}`}
               >
-                <div className="flex-1 min-w-0">
-                  <div className={`font-bold text-sm truncate ${isActive ? provider.activeText : "text-on-surface-variant"}`}>
+                <div className="flex items-center justify-between w-full mb-1">
+                  <div className={`font-bold tracking-tight text-[15px] ${isActive ? provider.activeText : ""}`}>
                     {provider.label}
-                    <span className={`ml-2 text-[10px] font-normal px-1.5 py-0.5 rounded-full
-                      ${isActive ? "bg-on-background/10 text-on-background" : "bg-surface-container-high text-on-surface-variant"}`}>
-                      {provider.badge}
-                    </span>
                   </div>
-                  <div className="text-[11px] text-on-surface-variant truncate">
-                    {isActive && selectedModel ? selectedModel.label : provider.description}
-                  </div>
+                  {isActive && (
+                    <div className={`w-2 h-2 rounded-full ${provider.dot} animate-pulse shadow-sm`} />
+                  )}
                 </div>
-                <div className="flex items-center gap-1.5 flex-shrink-0">
-                  {isActive && <div className={`w-2 h-2 rounded-full ${provider.dot}`} />}
-                  {isActive && (isOpen
-                    ? <ChevronUp className={`w-3.5 h-3.5 ${provider.activeText}`} />
-                    : <ChevronDown className={`w-3.5 h-3.5 ${provider.activeText}`} />
+                
+                <div className="text-[12px] opacity-80 truncate w-full mb-2">
+                  {isActive && selectedModel ? selectedModel.label : provider.description}
+                </div>
+
+                <div className="mt-auto w-full flex items-center justify-between">
+                  <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full
+                    ${isActive ? "bg-surface-container-high text-on-background" : "bg-surface-container text-on-surface"}`}>
+                    {provider.badge}
+                  </span>
+                  {isActive && (
+                    <div className="flex items-center justify-center bg-surface-container-high rounded-full p-1">
+                       {isOpen ? <ChevronUp className={`w-3.5 h-3.5 ${provider.activeText}`} /> : <ChevronDown className={`w-3.5 h-3.5 ${provider.activeText}`} />}
+                    </div>
                   )}
                 </div>
               </button>
 
               {isActive && isOpen && (
-                <div className={`absolute top-full left-0 right-0 mt-1.5 rounded-xl border-2 overflow-hidden z-20 shadow-xl ${provider.activeBg}`}>
-                  {provider.models.map((model, idx) => {
-                    const isSelected = value.model === model.id;
-                    return (
-                      <button
-                        key={model.id}
-                        type="button"
-                        onClick={() => handleModelSelect(providerId, model.id)}
-                        className={`w-full flex items-center justify-between px-4 py-2.5 text-left transition-colors
-                          ${isSelected ? "bg-on-background/10" : "hover:bg-on-background/5"}
-                          ${idx !== provider.models.length - 1 ? "border-b border-on-background/5" : ""}`}
-                      >
-                        <div>
-                          <div className={`text-sm font-semibold ${isSelected ? provider.activeText : "text-on-surface-variant"}`}>
-                            {model.label}
+                <div className="absolute top-full left-0 right-0 mt-2 z-50 bg-surface-container-lowest rounded-2xl border border-surface-container-highest shadow-2xl overflow-hidden transform origin-top animate-in fade-in slide-in-from-top-2">
+                  <div className="p-1">
+                    {provider.models.map((model) => {
+                      const isSelected = value.model === model.id;
+                      return (
+                        <button
+                          key={model.id}
+                          type="button"
+                          onClick={() => handleModelSelect(providerId, model.id)}
+                          className={`w-full flex items-center justify-between px-3 py-2.5 text-left rounded-xl transition-colors mb-0.5 last:mb-0
+                            ${isSelected ? "bg-surface-container-high" : "hover:bg-surface-container-low"}`}
+                        >
+                          <div>
+                            <div className={`text-[13px] font-bold ${isSelected ? provider.activeText : "text-on-background"}`}>
+                              {model.label}
+                            </div>
+                            <div className="text-[11px] text-on-surface-variant leading-tight">{model.note}</div>
                           </div>
-                          <div className="text-[11px] text-on-surface-variant/70">{model.note}</div>
-                        </div>
-                        {isSelected && <div className={`w-2 h-2 rounded-full flex-shrink-0 ${provider.dot}`} />}
-                      </button>
-                    );
-                  })}
+                          {isSelected && <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${provider.dot}`} />}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
               )}
             </div>

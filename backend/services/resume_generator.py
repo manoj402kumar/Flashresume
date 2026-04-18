@@ -76,6 +76,34 @@ def generate_resume(resume_text: str, job_description: str, ats_score_before: in
     if data is None:
         raise ValueError(f"Resume generation returned unparseable JSON: {raw_response[:400]}")
     
+    # Pre-process certifications_and_achievements to flatten any hallucinated dicts into strings
+    c_and_a = data.get("certifications_and_achievements")
+    if isinstance(c_and_a, list):
+        cleaned_c_and_a = []
+        for item in c_and_a:
+            if isinstance(item, dict):
+                # Flatten it into a string: e.g. "Name - Year"
+                parts = [str(v) for k, v in item.items() if k != "type" and str(v).strip()]
+                cleaned_c_and_a.append(" | ".join(parts) if parts else str(item))
+            elif isinstance(item, str):
+                cleaned_c_and_a.append(item)
+            else:
+                cleaned_c_and_a.append(str(item))
+        data["certifications_and_achievements"] = cleaned_c_and_a
+
+    # Pre-process legacy separate fields if they exist
+    for field in ["certifications", "achievements"]:
+        arr = data.get(field)
+        if isinstance(arr, list):
+            cleaned_arr = []
+            for item in arr:
+                if isinstance(item, dict):
+                    parts = [str(v) for k, v in item.items() if k != "type" and str(v).strip()]
+                    cleaned_arr.append(" | ".join(parts) if parts else str(item))
+                else:
+                    cleaned_arr.append(str(item))
+            data[field] = cleaned_arr
+
     # Validate against Pydantic Template v1 schema
     try:
         validated = TemplateV1(**data)

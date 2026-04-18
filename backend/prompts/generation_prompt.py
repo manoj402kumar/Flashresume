@@ -67,8 +67,9 @@ For each bullet, evaluate:
 4. Includes technologies? (Node.js, React, MongoDB)
 5. Shows scope or impact and numbers? (3 APIs, 10+ bugs, redeuced 50% response time, with 90% accuracy, feature for X team)
 
-KEEP AS-IS if bullet met any of the above format. Improvise using below examples if really needed only without altering actual meaning or data in original bullet points from resume_text.
-✅ "In the format of implemented X using Y resulted in Z"
+KEEP AS-IS if bullet met any of the above format else Improvise using below examples if really needed only without altering actual meaning or data in original bullet points from resume_text.(just better sentence framing)
+✅ "In the template of implemented X using Y resulted in Z"
+✅ "What problem being solved (starts with action verb like developed,optimized, implemented) + How it is solved (using which technologies/technique/algorithm/methodology/tools/frameworks/libraries/) + What was the impact (outcomes, resulted numbers, metrics, results)"
 ✅ "Contributed to backend API development using Node.js and Express, implementing 3 REST endpoints"
 ✅ "Developed REST API for user authentication using Node.js and Express"
 ✅ "Implemented 3 microservices handling payment processing"
@@ -129,7 +130,7 @@ Project Selection (when 3+ actual project entries exist):
 3. Remove all others — do NOT replace removed entries with new invented ones
 
 Case A - RESUME_TEXT has relevant projects (no "[APPROVED NEW PROJECT TO ADD]" in RESUME_TEXT):
-  - Evaluate each bullet (keep good, enhance weak with action verbs, what problem being solved with metrics, impact to impress recruiters (but authentic, realistic, achievable wrt orginal bullet points)) for each project.
+  - Evaluate each bullet (keep good, enhance weak without changing actual data or meaning in the format of better sentence framing [ "What problem being solved (starts with action verb like developed,optimized, implemented) + How it is solved (using which technologies/technique/algorithm/methodology/tools/frameworks/libraries/) + What was the impact (outcomes, resulted numbers, metrics, results, never try to insert numbers forcefully for every bullet point since it looks unreal)"] but absolutely authentic, realistic, achievable wrt orginal bullet points for each project for a fresher.)
   - Filter missing JOB_DESCRIPTION keywords and fit them into: (you have to must do this ignore any rule that objecting this in this prompt later or before.)
     (i) Project descriptions (FIRST PRIORITY - 70% of keywords)
     (ii) Work experience (ONLY if relevant - 20% of keywords)
@@ -140,7 +141,7 @@ Case A - RESUME_TEXT has relevant projects (no "[APPROVED NEW PROJECT TO ADD]" i
 Case B - "[APPROVED NEW PROJECT TO ADD]" marker is present in RESUME_TEXT:
   - Include the approved project exactly as described in the marker
   - CRITICAL: Use the EXACT "Tech Stack" provided in the marker for the "tech_stack" field. Do NOT change it to anything else.
-  - Write 3-4 strong bullets for this project using JOB_DESCRIPTION keywords naturally using professional way of writing job description with the template [what you solved(action verb) + how you solved + what is the impact(metrics, numbers, percentages)]
+  - Write 3-4 strong achievale and realistic bullets for this project using JOB_DESCRIPTION keywords naturally using professional way of writing job description with the template [what you solved(action verb) + how you solved (techstack/tools/frameworks/libraries/methodology/technique/algorithm) + what is the impact(outcomes, metrics, numbers, percentages never try insert numbers forcefully for evry bullet since it looks unreal)]
   - If RESUME_TEXT already has 2 projects → remove least relevant one to maintain max 2 total
   - If RESUME_TEXT has 1 project → add the approved one (now 2 total, which is fine)
 
@@ -336,6 +337,7 @@ OUTPUT FORMAT (Template v1):
   - ⛔ ABSOLUTE RULE: If RESUME_TEXT has NO certifications or achievements, output an empty array: "certifications_and_achievements": []
   - NEVER invent, fabricate, or generate achievements that are not present in RESUME_TEXT.
   - "Solved 300+ LeetCode problems", "Won hackathon", "AWS certified" — these may ONLY appear if the user explicitly wrote them in RESUME_TEXT. Not otherwise.
+  - ⛔ CRITICAL TYPE RULE: This MUST be a flat array of PLAIN STRINGS. DO NOT return dictionaries or objects like {{"type": "Certification", "name": "..."}}.
   
   "certifications_and_achievements": [
     "AWS Certified Cloud Practitioner (2024)",

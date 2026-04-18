@@ -52,8 +52,8 @@ export default function AnalyzePage() {
       localStorage.removeItem("approved_project");
     }
 
-    // Go to preview page
-    router.push("/preview");
+    // Go to generate page
+    router.push("/generate");
   };
 
   if (loading || !analysis) {

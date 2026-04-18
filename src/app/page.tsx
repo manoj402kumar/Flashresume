@@ -62,7 +62,7 @@ export default function App() {
       setResumeText("");
       setError("");
       setParsedText("");
-      
+
       // Auto-parse for better UX (silent background parsing)
       setParsing(true);
       try {
@@ -148,7 +148,7 @@ export default function App() {
         localStorage.setItem("analysis", JSON.stringify(dummyAnalysis));
         localStorage.setItem("no_jd_mode", "true");
         localStorage.setItem("preferred_model", modelSelection.model);
-        router.push("/preview");
+        router.push("/generate");
       }
     } catch (err: any) {
       setError(err.message || "Something went wrong. Please try again.");
@@ -181,57 +181,46 @@ export default function App() {
 
       <main className="pt-24">
         {/* Hero Section */}
-        <section className="max-w-7xl mx-auto px-6 py-20 md:py-32 grid lg:grid-cols-12 gap-12 items-center">
+        <section className="max-w-5xl mx-auto px-6 py-20 md:py-32 flex flex-col items-center">
           <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
-            className="lg:col-span-7"
+            className="text-center mb-16"
           >
-            <h1 className="font-headline text-5xl md:text-7xl font-bold tracking-tight text-on-background leading-[1.1] mb-8">
-              Your resume, <br />
-              <span className="text-primary italic">rebuilt</span> in <span className="bg-primary-container/30 px-3 rounded-xl">60 seconds.</span>
+            <h1 className="font-headline text-5xl md:text-7xl font-bold tracking-tight text-on-background leading-[1.1] mb-6">
+              Your resume, <br className="md:hidden" />
+              <span className="text-primary italic">rebuilt</span> in <span className="bg-primary-container/30 px-3 rounded-xl mx-1">60 seconds.</span>
             </h1>
-            <p className="text-xl text-on-surface-variant max-w-xl mb-12 leading-relaxed">
+            <p className="text-xl text-on-surface-variant max-w-2xl mx-auto leading-relaxed">
               Just put your resume and we take the rest.
             </p>
-            <div className="flex flex-wrap gap-4">
-              <button
-                onClick={() => document.getElementById('file-upload')?.click()}
-                className="flash-gradient text-white text-lg font-bold px-8 py-4 rounded-full flex items-center gap-2 group transition-all shadow-xl shadow-primary/25"
-              >
-                Build My Resume
-                <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
-              </button>
-            </div>
           </motion.div>
 
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
-            className="lg:col-span-5 relative"
+            className="w-full max-w-2xl relative mx-auto"
           >
             <div className="bg-surface-container-lowest rounded-[2rem] p-8 shadow-2xl shadow-primary/5 border border-primary/5">
               <div className="space-y-6">
                 <div className="flex gap-2 p-1.5 bg-surface-container-low rounded-xl">
                   <button
                     onClick={() => setInputType("file")}
-                    className={`flex-1 py-2.5 rounded-lg font-bold text-sm transition-all focus:outline-none focus:ring-2 focus:ring-primary ${
-                      inputType === "file" 
-                        ? "bg-surface-container-lowest text-primary shadow-sm" 
-                        : "text-on-surface-variant hover:text-on-background hover:bg-surface-container-low/50"
-                    }`}
+                    className={`flex-1 py-2.5 rounded-lg font-bold text-sm transition-all focus:outline-none focus:ring-2 focus:ring-primary ${inputType === "file"
+                      ? "bg-surface-container-lowest text-primary shadow-sm"
+                      : "text-on-surface-variant hover:text-on-background hover:bg-surface-container-low/50"
+                      }`}
                   >
                     Upload File
                   </button>
                   <button
                     onClick={() => setInputType("text")}
-                    className={`flex-1 py-2.5 rounded-lg font-bold text-sm transition-all focus:outline-none focus:ring-2 focus:ring-primary ${
-                      inputType === "text" 
-                        ? "bg-surface-container-lowest text-primary shadow-sm" 
-                        : "text-on-surface-variant hover:text-on-background hover:bg-surface-container-low/50"
-                    }`}
+                    className={`flex-1 py-2.5 rounded-lg font-bold text-sm transition-all focus:outline-none focus:ring-2 focus:ring-primary ${inputType === "text"
+                      ? "bg-surface-container-lowest text-primary shadow-sm"
+                      : "text-on-surface-variant hover:text-on-background hover:bg-surface-container-low/50"
+                      }`}
                   >
                     Paste Text
                   </button>
@@ -252,13 +241,12 @@ export default function App() {
                       onDrop={handleDrop}
                       onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
                       onDragLeave={() => setIsDragging(false)}
-                      className={`p-8 border-2 border-dashed rounded-2xl flex flex-col items-center justify-center cursor-pointer transition-colors ${
-                        isDragging
-                          ? "border-primary bg-primary/5"
-                          : file
+                      className={`p-8 border-2 border-dashed rounded-2xl flex flex-col items-center justify-center cursor-pointer transition-colors ${isDragging
+                        ? "border-primary bg-primary/5"
+                        : file
                           ? "border-primary-container bg-primary-container/10"
                           : "border-primary-container/50 bg-surface-container-low hover:bg-surface-container-lowest"
-                      }`}
+                        }`}
                     >
                       <CloudUpload className="text-primary w-12 h-12 mb-4" />
                       <span className="font-headline text-on-background font-bold text-center">
@@ -278,9 +266,9 @@ export default function App() {
                   </div>
                 )}
                 <div className="flex justify-end mt-1">
-                  <a 
-                    href="/reference_Resume.pdf" 
-                    target="_blank" 
+                  <a
+                    href="/reference_Resume.pdf"
+                    target="_blank"
                     rel="noopener noreferrer"
                     className="text-xs font-semibold text-tertiary hover:text-tertiary-container transition-colors flex items-center gap-1.5"
                   >
@@ -389,7 +377,7 @@ export default function App() {
               viewport={{ once: true }}
             >
               <h2 className="font-headline text-4xl md:text-6xl font-bold text-on-background mb-8 leading-tight">See what AI actually fixes.</h2>
-              <p className="text-xl text-on-surface-variant mb-10">Stop guessing. We analyze your resume against 50+ industry-specific criteria to ensure you're in the top 1% of applicants.</p>
+              <p className="text-xl text-on-surface-variant mb-10">Flashresume objective is simple "Build resume that passes ats machine and then human recruiter in actual interview"</p>
               <ul className="space-y-6">
                 {[
                   "Action Verb Optimization",
@@ -598,7 +586,7 @@ export default function App() {
             <div className="relative z-10">
               <h2 className="font-headline text-4xl md:text-6xl font-bold mb-6">Let's make it happen together.</h2>
               <p className="text-xl mb-12 opacity-90 max-w-2xl mx-auto">
-                Stop sending basic resumes, send top 1% resume that recruiters really care.
+                Stop sending basic resumes, send top 1% resume that recruiters care.
               </p>
               <button
                 onClick={() => document.getElementById('file-upload')?.click()}

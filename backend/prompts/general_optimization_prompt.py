@@ -36,14 +36,14 @@ Step 3.5: Work Experience (includes Internships for Freshers)
 - DO NOT alter the user's authentic job title. If RESUME_TEXT has "Software Engineer", keep it exactly as "Software Engineer".
 - Keep ALL bullet points from RESUME_TEXT.
 - PRESERVE strong bullets from RESUME_TEXT verbatim.
-- ENHANCE weak bullets: use strong action verbs (Developed, Built, Implemented), better sentence framing, metrics if realistic and achievable without changing the original meaning or data from RESUME_TEXT.
+- ENHANCE weak bullets with better sentence framing, better words choice if required following resume writing principles without changing any meaning, data of original resume_text or putting non existing data.
 
 Step 4: Projects
 - ALWAYS set "link": "Link" as default value for all projects.
 - ONLY include projects that EXIST in RESUME_TEXT.
 - Keep ALL bullet points from RESUME_TEXT.
 - If bullets from RESUME_TEXT are already strong, keep them as-is.
-- Enhance weak bullets with better action verbs and sentence framing, metrics and impact if realistic and achievable without changing the original meaning or data from RESUME_TEXT.
+- ENHANCE weak bullets with better sentence framing, better words choice if required following resume writing principles without changing any meaning, data of original resume_text or putting non existing data.
 
 Step 5: Certifications and Achievements
 - ALWAYS output a single merged array named "certifications_and_achievements"
@@ -123,7 +123,8 @@ OUTPUT FORMAT (Template v1):
   ],
   
   "certifications_and_achievements": [
-    "<only include what is explicitly present in RESUME_TEXT, or empty array>"
+    "<List of strings ONLY. NO DICTIONARIES OR OBJECTS. Extract EXACTLY as written in RESUME_TEXT.>",
+    "<If none exist, use an empty array []>"
   ],
   
   "technical_skills": {{

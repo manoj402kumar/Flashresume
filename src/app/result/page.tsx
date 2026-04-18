@@ -133,12 +133,14 @@ export default function ResultPage() {
   const router = useRouter();
   const [resume, setResume] = useState<TemplateV1 | null>(null);
   const [loading, setLoading] = useState(true);
-  const [showChanges, setShowChanges] = useState(true);
+  const [showChanges, setShowChanges] = useState(false);
   const [copied, setCopied] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [showHighlights, setShowHighlights] = useState(true);
   const [downloadingPDF, setDownloadingPDF] = useState(false);
+  const [missingKeywords, setMissingKeywords] = useState<string[]>([]);
+  const [matchedKeywords, setMatchedKeywords] = useState<string[]>([]);
 
   useEffect(() => {
     const resumeData = localStorage.getItem("generated_resume");
@@ -157,6 +159,17 @@ export default function ResultPage() {
     if (!parsed.heading.github_url_href) {
       parsed.heading.github_url_href = `https://${parsed.heading.github_url}`;
     }
+    
+    // Load analysis keywords for PDF highlighting
+    const analysisData = localStorage.getItem("analysis");
+    if (analysisData) {
+      try {
+        const parsedAnalysis = JSON.parse(analysisData);
+        setMissingKeywords(parsedAnalysis.missing_skills || []);
+        setMatchedKeywords(parsedAnalysis.matched_skills || []);
+      } catch(e) {}
+    }
+
     setResume(parsed);
     setLoading(false);
   }, [router]);
@@ -217,8 +230,15 @@ export default function ResultPage() {
         console.log('LaTeX PDF generation failed, falling back to React-PDF:', latexError);
       }
       
-      // Fallback to React-PDF if LaTeX fails
-      const blob = await pdf(<ResumePDF resume={resume} />).toBlob();
+      // Fallback to React-PDF if LaTeX fails (ensure highlights are strictly DISABLED for downloaded PDF)
+      const blob = await pdf(
+        <ResumePDF 
+          resume={resume} 
+          showHighlights={false} 
+          matchedKeywords={[]} 
+          missingKeywords={[]} 
+        />
+      ).toBlob();
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
@@ -300,30 +320,6 @@ export default function ResultPage() {
 
             {/* Right: Actions - Enhanced Visibility */}
             <div className="flex items-center gap-3">
-              <button
-                onClick={() => setShowHighlights(!showHighlights)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-xl font-semibold transition-all shadow-md ${
-                  showHighlights
-                    ? "bg-gradient-to-r from-yellow-400 to-yellow-500 text-white"
-                    : "bg-surface-container-low text-on-surface-variant hover:bg-surface-container-lowest border-2 border-surface-container-high"
-                }`}
-                title="Toggle AI highlights"
-              >
-                <Sparkles className="w-5 h-5" />
-                <span className="hidden lg:inline text-sm">Highlights</span>
-              </button>
-              <button
-                onClick={() => setEditMode(!editMode)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-xl font-semibold transition-all shadow-md ${
-                  editMode
-                    ? "bg-gradient-to-r from-primary to-primary-container text-white"
-                    : "bg-surface-container-low text-on-surface-variant hover:bg-surface-container-lowest border-2 border-surface-container-high"
-                }`}
-                title="Toggle edit mode"
-              >
-                {editMode ? <Eye className="w-5 h-5" /> : <Edit3 className="w-5 h-5" />}
-                <span className="hidden lg:inline text-sm">{editMode ? "View" : "Edit"}</span>
-              </button>
               <AnimatePresence>
                 {hasUnsavedChanges && (
                   <motion.button
@@ -347,42 +343,26 @@ export default function ResultPage() {
       {/* Main Content */}
       <div className="pt-24 pb-32 px-4">
         <div className="max-w-7xl mx-auto">
-          {/* Hero Success Banner */}
+          {/* Slim Success Banner */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            className="bg-gradient-to-br from-primary/20 to-primary-container/20 rounded-[3rem] p-12 mb-12 relative overflow-hidden"
+            initial={{ opacity: 0, scale: 0.95, y: -10 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            className="bg-primary/10 border border-primary/20 rounded-[1.5rem] px-8 py-5 mb-8 flex items-center justify-center gap-4 shadow-sm"
           >
-            {/* Decorative blur orbs */}
-            <div className="absolute -top-20 -right-20 w-64 h-64 bg-primary-container/30 blur-3xl rounded-full animate-pulse"></div>
-            <div className="absolute -bottom-20 -left-20 w-64 h-64 bg-secondary-container/10 blur-3xl rounded-full animate-pulse" style={{ animationDelay: '1s' }}></div>
+            <motion.div
+              initial={{ scale: 0, rotate: -45 }}
+              animate={{ scale: 1, rotate: 0 }}
+              transition={{ type: "spring", duration: 0.8, delay: 0.4 }}
+              className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0"
+            >
+              <CheckCircle2 className="w-6 h-6 text-primary" />
+            </motion.div>
             
-            <div className="relative z-10 text-center">
-              <motion.div
-                initial={{ scale: 0, rotate: 0 }}
-                animate={{ scale: 1, rotate: 360 }}
-                transition={{ type: "spring", duration: 1, delay: 0.4 }}
-                className="inline-block mb-6"
-              >
-                <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center">
-                  <CheckCircle2 className="w-12 h-12 text-primary" />
-                </div>
-              </motion.div>
-              
-              <h1 className="font-headline text-4xl md:text-5xl font-bold text-on-background mb-4">
-                Your Resume is Ready!
-              </h1>
-              <p className="text-xl text-on-surface-variant mb-4">
-                AI-enhanced and optimized for ATS systems
-              </p>
-              {resume._model_used && (
-                <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 border border-primary/20 rounded-full text-sm mb-8">
-                  <Sparkles className="w-4 h-4 text-primary animate-pulse" />
-                  <span className="text-on-surface-variant">Generated by</span>
-                  <span className="font-bold text-primary">{resume._model_used}</span>
-                </div>
-              )}
+            <h1 className="font-headline text-2xl font-bold text-on-background m-0">
+              Your resume is ready
+            </h1>
+          </motion.div>
 
               {/* Mobile Score Display - Enhanced */}
               <div className="md:hidden flex items-center justify-center gap-4 bg-gradient-to-r from-primary-container/20 to-primary/10 backdrop-blur-sm px-6 py-5 rounded-2xl border-2 border-primary/30 shadow-lg">
@@ -402,8 +382,6 @@ export default function ResultPage() {
                   +{scoreImprovement}
                 </div>
               </div>
-            </div>
-          </motion.div>
 
           {/* PDF PREVIEW ON TOP */}
           <motion.div
@@ -412,23 +390,92 @@ export default function ResultPage() {
             transition={{ delay: 0.5 }}
             className="mb-12 rounded-[2rem] overflow-hidden border-2 border-primary/20 shadow-x2xl bg-surface-container-lowest"
           >
-            <div className="bg-primary/5 p-4 border-b border-primary/10 flex items-center justify-between">
+            <div className="bg-primary/5 px-6 py-4 border-b border-primary/10 flex flex-col sm:flex-row items-center justify-between gap-4">
               <h2 className="font-headline font-bold text-on-background flex items-center gap-2">
                 <FileText className="w-5 h-5 text-primary" />
                 Live PDF Preview
               </h2>
+              
+              <div className="flex items-center gap-4">
+                {(matchedKeywords.length > 0 || missingKeywords.length > 0) && (
+                  <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4 bg-surface-container-lowest px-4 py-2 rounded-xl shadow-sm border border-primary/5 text-sm">
+                    <div className="flex items-center gap-3 font-medium text-on-surface-variant border-r border-primary/10 pr-3">
+                      <span className="flex items-center gap-1.5"><div className="w-3 h-3 bg-[#fef08a] rounded-sm border border-[#eab308]/30"></div> Matched</span>
+                      <span className="flex items-center gap-1.5"><div className="w-3 h-3 bg-[#bbf7d0] rounded-sm border border-[#22c55e]/30"></div> Added</span>
+                    </div>
+                    <label className="flex items-center gap-2 cursor-pointer group select-none">
+                      <span className="font-semibold text-on-background group-hover:text-primary transition-colors">Highlights</span>
+                      <div className="relative">
+                        <input 
+                          type="checkbox" 
+                          className="sr-only" 
+                          checked={showHighlights}
+                          onChange={(e) => setShowHighlights(e.target.checked)}
+                        />
+                        <div className={`block w-10 h-6 rounded-full transition-colors duration-300 shadow-inner ${showHighlights ? 'bg-primary' : 'bg-surface-container-high'}`}></div>
+                        <div className={`absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform duration-300 shadow-sm ${showHighlights ? 'transform translate-x-4' : ''}`}></div>
+                      </div>
+                    </label>
+                  </div>
+                )}
+              </div>
             </div>
             <div className="h-[850px] w-full">
-              <PDFViewer width="100%" height="100%" className="border-none">
-                <ResumePDF resume={resume} />
+              <PDFViewer key={showHighlights ? "highlight-on" : "highlight-off"} width="100%" height="100%" className="border-none">
+                <ResumePDF 
+                  resume={resume} 
+                  showHighlights={showHighlights}
+                  matchedKeywords={matchedKeywords}
+                  missingKeywords={missingKeywords}
+                />
               </PDFViewer>
             </div>
           </motion.div>
 
-          {/* Two-Column Layout */}
-          <div className="grid lg:grid-cols-3 gap-8">
-            {/* Resume Content - Left (2 columns) */}
-            <div className="lg:col-span-2 space-y-6">
+          {/* Bottom Panel Toggles */}
+          <div className="flex flex-col sm:flex-row gap-4 mb-8">
+            <button
+              onClick={() => {
+                setEditMode(prev => !prev);
+                setShowChanges(false);
+              }}
+              className={`flex-1 p-6 rounded-[2rem] border-2 transition-all duration-300 flex items-center justify-center gap-4 ${editMode ? 'bg-primary-container/20 border-primary shadow-lg scale-[1.02]' : 'bg-surface-container-lowest border-primary/5 hover:bg-surface-container-low hover:border-primary/50 text-on-surface-variant hover:text-on-background'}`}
+            >
+              <div className={`p-3 rounded-xl transition-colors ${editMode ? 'bg-primary text-white' : 'bg-surface-container-high flex items-center justify-center text-on-surface'}`}>
+                <Edit3 className="w-6 h-6" />
+              </div>
+              <div className="text-left">
+                <h3 className={`font-headline font-bold text-lg transition-colors ${editMode ? 'text-primary' : ''}`}>Edit Form</h3>
+                <p className="text-sm opacity-80 mt-0.5">Manually tweak your resume details</p>
+              </div>
+            </button>
+            <button
+              onClick={() => {
+                setShowChanges(prev => !prev);
+                setEditMode(false);
+              }}
+              className={`flex-1 p-6 rounded-[2rem] border-2 transition-all duration-300 flex items-center justify-center gap-4 ${showChanges ? 'bg-secondary-container/20 border-secondary-container shadow-lg scale-[1.02]' : 'bg-surface-container-lowest border-secondary-container/5 hover:bg-surface-container-low hover:border-secondary-container/50 text-on-surface-variant hover:text-on-background'}`}
+            >
+              <div className={`p-3 rounded-xl transition-colors ${showChanges ? 'bg-secondary-container text-secondary' : 'bg-surface-container-high flex items-center justify-center text-on-surface'}`}>
+                <Sparkles className="w-6 h-6" />
+              </div>
+              <div className="text-left">
+                <h3 className={`font-headline font-bold text-lg transition-colors ${showChanges ? 'text-secondary-container' : ''}`}>Changes Made</h3>
+                <p className="text-sm opacity-80 mt-0.5">Review AI optimizations and metrics</p>
+              </div>
+            </button>
+          </div>
+
+          <AnimatePresence mode="wait">
+            {editMode && (
+              <motion.div
+                key="edit-form"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.3 }}
+                className="w-full max-w-4xl mx-auto space-y-6"
+              >
               {/* Heading Section */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
@@ -1297,17 +1344,19 @@ export default function ResultPage() {
                   </motion.div>
                 );
               })()}
-            </div>
+              </motion.div>
+            )}
 
-            {/* Changes Sidebar - Right (1 column) */}
-            <div className="lg:col-span-1">
-              <div className="sticky top-24">
-                <motion.div
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.5 }}
-                  className="bg-surface-container-lowest rounded-[2rem] p-8 shadow-2xl border border-secondary-container/10"
-                >
+            {showChanges && (
+              <motion.div
+                key="changes-made"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.3 }}
+                className="w-full max-w-2xl mx-auto"
+              >
+                <div className="bg-surface-container-lowest rounded-[2rem] p-8 shadow-2xl border border-secondary-container/10">
                   <div className="flex items-center justify-between mb-6">
                     <div className="flex items-center gap-3">
                       <Sparkles className="w-6 h-6 text-secondary-container" />
@@ -1337,7 +1386,7 @@ export default function ResultPage() {
                         key={idx}
                         initial={{ opacity: 0, x: -20 }}
                         animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: 0.6 + idx * 0.05 }}
+                        transition={{ delay: 0.2 + idx * 0.05 }}
                         className="p-4 bg-primary-container/5 border border-primary-container/20 rounded-xl hover:bg-primary-container/10 transition-colors"
                       >
                         <div className="flex items-start gap-3">
@@ -1349,10 +1398,10 @@ export default function ResultPage() {
                       </motion.div>
                     ))}
                   </div>
-                </motion.div>
-              </div>
-            </div>
-          </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
 

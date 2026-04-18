@@ -165,9 +165,63 @@ function getValidUrl(val: string | undefined | null, fallback: string): string {
 
 interface ResumePDFProps {
   resume: TemplateV1;
+  showHighlights?: boolean;
+  matchedKeywords?: string[];
+  missingKeywords?: string[];
 }
 
-export default function ResumePDF({ resume }: ResumePDFProps) {
+function HighlightedText({ text, matched, missing, showHighlights, style }: { text: string; matched: string[]; missing: string[]; showHighlights: boolean; style?: any; }) {
+  if (!showHighlights || (!matched?.length && !missing?.length) || !text) {
+    return <Text style={style}>{text}</Text>;
+  }
+
+  const escapeRegex = (s: string) => s.replace(/[-\/\\^$*+?.()|[\]{}]/g, "\\$&");
+  
+  const wordTypes = new Map<string, "matched" | "missing">();
+  const allWords: string[] = [];
+
+  (matched || []).forEach(w => {
+    const word = w.trim();
+    if(word) {
+      wordTypes.set(word.toLowerCase(), "matched");
+      const startB = /^[a-z0-9]/i.test(word) ? "\\b" : "";
+      const endB = /[a-z0-9]$/i.test(word) ? "\\b" : "";
+      allWords.push(`${startB}${escapeRegex(word)}${endB}`);
+    }
+  });
+
+  (missing || []).forEach(w => {
+    const word = w.trim();
+    if(word) {
+      wordTypes.set(word.toLowerCase(), "missing");
+      const startB = /^[a-z0-9]/i.test(word) ? "\\b" : "";
+      const endB = /[a-z0-9]$/i.test(word) ? "\\b" : "";
+      allWords.push(`${startB}${escapeRegex(word)}${endB}`);
+    }
+  });
+
+  if (allWords.length === 0) return <Text style={style}>{text}</Text>;
+
+  allWords.sort((a, b) => b.length - a.length);
+
+  const regex = new RegExp(`(${allWords.join("|")})`, "gi");
+  const parts = text.split(regex);
+  
+  return (
+    <Text style={style}>
+      {parts.map((part, i) => {
+        const type = wordTypes.get(part.toLowerCase());
+        if (type) {
+          const bgColor = type === "matched" ? "#fef08a" : "#bbf7d0";
+          return <Text key={i} style={{ backgroundColor: bgColor }}>{part}</Text>;
+        }
+        return <Text key={i}>{part}</Text>;
+      })}
+    </Text>
+  );
+}
+
+export default function ResumePDF({ resume, showHighlights = false, matchedKeywords = [], missingKeywords = [] }: ResumePDFProps) {
   return (
     <Document>
       <Page size="A4" style={styles.page}>
@@ -196,7 +250,13 @@ export default function ResumePDF({ resume }: ResumePDFProps) {
           <View>
             <Text style={styles.sectionTitle}>SUMMARY</Text>
             <View style={styles.sectionDivider} />
-            <Text style={styles.summaryText}>{resume.summary}</Text>
+            <HighlightedText 
+              text={resume.summary} 
+              matched={matchedKeywords} 
+              missing={missingKeywords} 
+              showHighlights={showHighlights} 
+              style={styles.summaryText} 
+            />
           </View>
         )}
 
@@ -239,7 +299,13 @@ export default function ResumePDF({ resume }: ResumePDFProps) {
                   {exp.bullets.map((bullet, bidx) => (
                     <View key={bidx} style={styles.bullet}>
                       <Text style={styles.bulletPoint}>•</Text>
-                      <Text style={styles.bulletText}>{bullet}</Text>
+                      <HighlightedText 
+                        text={bullet} 
+                        matched={matchedKeywords} 
+                        missing={missingKeywords} 
+                        showHighlights={showHighlights} 
+                        style={styles.bulletText} 
+                      />
                     </View>
                   ))}
                 </View>
@@ -281,7 +347,13 @@ export default function ResumePDF({ resume }: ResumePDFProps) {
                   {proj.bullets.map((bullet, bidx) => (
                     <View key={bidx} style={styles.bullet}>
                       <Text style={styles.bulletPoint}>•</Text>
-                      <Text style={styles.bulletText}>{bullet}</Text>
+                      <HighlightedText 
+                        text={bullet} 
+                        matched={matchedKeywords} 
+                        missing={missingKeywords} 
+                        showHighlights={showHighlights} 
+                        style={styles.bulletText} 
+                      />
                     </View>
                   ))}
                 </View>
