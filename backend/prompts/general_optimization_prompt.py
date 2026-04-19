@@ -45,7 +45,22 @@ Step 4: Projects
 - If bullets from RESUME_TEXT are already strong, keep them as-is.
 - ENHANCE weak bullets with better sentence framing, better words choice if required following resume writing principles without changing any meaning, data of original bullet points from resume_text and never invent non existing data.
 
-Step 5: Certifications and Achievements
+Step 5: Skills Optimization (STRICT PRESERVATION)
+Extract and categorize ALL skills ONLY from the dedicated "Skills" section of almost at the bottom of RESUME_TEXT.
+1. ⛔ CRITICAL RULE: NEVER extract skills from the "Work Experience" or "Projects" sections. If a skill (e.g., "Docker") is mentioned in a project but not in the original Skills section, DO NOT add it.
+2. NEVER invent any skills not present explicitly in the Skills section of RESUME_TEXT.
+3. NEVER delete skills to meet arbitrary limits. Include everything from the Skills section.
+3. Categorize them neatly:
+   - Languages (Python, Java, JavaScript, etc.)
+   - Frameworks & Libraries (React, Django, Pandas, etc.)
+   - Databases
+   - Cloud Services
+   - Developer Tools & Methodologies (Git, Docker, Agile, VS Code)
+   - Miscellaneous
+4. If a skill from RESUME_TEXT doesn't fit standard categories, map it to "Miscellaneous" array.
+
+
+Step 6: Certifications and Achievements
 - ALWAYS output a single merged array named "certifications_and_achievements"
 - Put certifications first, followed by achievements
 - ⛔ ABSOLUTE RULE: If RESUME_TEXT has NO certifications or achievements, output an empty array: [].
@@ -65,19 +80,6 @@ Format:
 ✅ "Participated in hackathon"
 ❌ "Good at problem solving" (generic — remove if in RESUME_TEXT)
 
-Step 6: Skills Optimization (STRICT PRESERVATION)
-Extract and categorize ALL skills ONLY from the dedicated "Skills" section of almost at the bottom of RESUME_TEXT.
-1. ⛔ CRITICAL RULE: NEVER extract skills from the "Work Experience" or "Projects" sections. If a skill (e.g., "Docker") is mentioned in a project but not in the original Skills section, DO NOT add it.
-2. NEVER invent any skills not present explicitly in the Skills section of RESUME_TEXT.
-3. NEVER delete skills to meet arbitrary limits. Include everything from the Skills section.
-3. Categorize them neatly:
-   - Languages (Python, Java, JavaScript, etc.)
-   - Frameworks & Libraries (React, Django, Pandas, etc.)
-   - Databases
-   - Cloud Services
-   - Developer Tools & Methodologies (Git, Docker, Agile, VS Code)
-   - Miscellaneous
-4. If a skill from RESUME_TEXT doesn't fit standard categories, map it to "Miscellaneous" array.
 
 81. OUTPUT FORMAT (Template v1):
 82. - Return ONLY valid JSON below.
@@ -109,18 +111,17 @@ Extract and categorize ALL skills ONLY from the dedicated "Skills" section of al
       "company": "<exact company name from RESUME_TEXT>",
       "location": "<exact location from RESUME_TEXT>",
       "bullets": [
-        "<preserve strong bullets from RESUME_TEXT verbatim; rewrite only weak/vague ones using action verb + specific technology + scope>",
-        "<second bullet: same rule>"
+        "<follow step3.5>",
       ]
     }}
   ],
   "projects": [
     {{
       "title": "<exact project title from RESUME_TEXT>",
-      "tech_stack": "<exact tech stack from RESUME_TEXT>",
+      "tech_stack": "<exact tech stack from RESUME_TEXT limit to 7 order by prioritized>",
       "link": "Link",
       "bullets": [
-        "<preserve strong bullets from RESUME_TEXT verbatim; rewrite only weak/vague ones using action verb + specific technology + scope>"
+        "<follow step 4>"
       ]
     }}
   ],

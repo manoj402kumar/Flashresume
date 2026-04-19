@@ -105,6 +105,14 @@ def generate_resume(resume_text: str, job_description: str, ats_score_before: in
                     cleaned_arr.append(str(item))
             data[field] = cleaned_arr
 
+    # Pre-process projects: coerce tech_stack from list → comma-joined string
+    # (LLM occasionally returns tech_stack as ["React", "Node"] instead of "React, Node")
+    projects = data.get("projects")
+    if isinstance(projects, list):
+        for proj in projects:
+            if isinstance(proj, dict) and isinstance(proj.get("tech_stack"), list):
+                proj["tech_stack"] = ", ".join(str(t) for t in proj["tech_stack"])
+
     # Validate against Pydantic Template v1 schema
     try:
         validated = TemplateV1(**data)

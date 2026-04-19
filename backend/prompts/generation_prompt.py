@@ -2,7 +2,7 @@ GENERATION_PROMPT = """
 You are optimizing a resume for ATS using the following algorithm:
 
 GOAL: 0% Noise, 100% Signal. Target 1 page resume. Improvise existing resume, NOT rewrite.
-OBJECTIVE: Pass ATS + User can handle interview (no fake experience).
+OBJECTIVE: Pass ATS + User can handle actual interview with achievable, provable edits.
 TARGET USERS: B.Tech freshers (0-1 year experience)
 
 CORE PRINCIPLE: "If original description is good, keep it. Only enhance what needs enhancement."
@@ -181,34 +181,7 @@ PROJECT LINK FIELD (output detail — applies to ALL projects):
 - ALWAYS set "link": "Link" as default value for all projects.
 - User will edit this field later in the editable form to add GitHub/live links.
 
-Step 5: Certifications and Achievements (MERGED)
-
-- ALWAYS combine all certifications and achievements into a single "certifications_and_achievements" array.
-- List certifications FIRST, achievements SECOND.
-- Keep max 3-4 total entries. Prioritize by JOB_DESCRIPTION relevance and credibility.
-- ⛔ NEVER invent. Only include items explicitly written in RESUME_TEXT.
-
-INCLUDE (in priority order):
-✅ Cloud/DevOps certifications (AWS, Azure, GCP, Docker, Kubernetes) — universally relevant
-✅ JOB_DESCRIPTION-mentioned certifications (e.g., "Java Certified" if JD needs Java)
-✅ Language-specific certifications (Python, Java, C++)
-✅ Competitive programming achievements (LeetCode, CodeChef, Codeforces — with rating/count)
-✅ Hackathon wins or top placements
-✅ Open-source contributions (if measurable)
-✅ Relevant online courses (Coursera, edX, Udemy) — only if JOB_DESCRIPTION-aligned
-
-EXCLUDE:
-❌ Non-technical (Excel, Typing, Soft Skills, Communication)
-❌ Too basic (HTML/CSS basics if applying for backend role)
-❌ Generic "Participation" certificates (unless hackathon win or top 10)
-❌ Vague claims like "Good at problem solving"
-
-Format examples:
-✅ "Solved 300+ problems on LeetCode (Rating: 1650)"
-✅ "Won 2nd place in XYZ Hackathon (50+ teams)"
-✅ "Contributed to 3 open-source projects on GitHub (50+ commits)"
-
-Step 6: Skills — Ecosystem Filter + JD Integration (LAST SECTION)
+Step 5: Skills — Ecosystem Filter + JD Integration (LAST SECTION)
 
 This step has THREE phases. Execute them in order.
 
@@ -280,6 +253,35 @@ Category Order:
 Organization Rules:
 1. Put JOB_DESCRIPTION-matched skills FIRST in each category.
 2. Limit each category to max 8 skills (readability).
+
+Step 6: Certifications and Achievements (MERGED)
+
+- ALWAYS combine all certifications and achievements into a single "certifications_and_achievements" array.
+- List certifications FIRST, achievements SECOND.
+- Keep max 3-4 total entries. Prioritize by JOB_DESCRIPTION relevance and credibility.
+- ⛔ NEVER invent. Only include items explicitly written in RESUME_TEXT.
+
+INCLUDE (in priority order):
+✅ Cloud/DevOps certifications (AWS, Azure, GCP, Docker, Kubernetes) — universally relevant
+✅ JOB_DESCRIPTION-mentioned certifications (e.g., "Java Certified" if JD needs Java)
+✅ Language-specific certifications (Python, Java, C++)
+✅ Competitive programming achievements (LeetCode, CodeChef, Codeforces — with rating/count)
+✅ Hackathon wins or top placements
+✅ Open-source contributions (if measurable)
+✅ Relevant online courses (Coursera, edX, Udemy) — only if JOB_DESCRIPTION-aligned
+
+EXCLUDE:
+❌ Non-technical (Excel, Typing, Soft Skills, Communication)
+❌ Too basic (HTML/CSS basics if applying for backend role)
+❌ Generic "Participation" certificates (unless hackathon win or top 10)
+❌ Vague claims like "Good at problem solving"
+
+Format examples:
+✅ "Solved 300+ problems on LeetCode (Rating: 1650)"
+✅ "Won 2nd place in XYZ Hackathon (50+ teams)"
+✅ "Contributed to 3 open-source projects on GitHub (50+ commits)"
+
+
 
 RULES (MUST FOLLOW):
 1. NEVER invent jobs, degrees, or experience that don't exist in RESUME_TEXT
@@ -360,7 +362,7 @@ OUTPUT FORMAT (Template v1):
       "company": "<exact company name from RESUME_TEXT>",
       "location": "<exact location from RESUME_TEXT>",
       "bullets": [
-        "<follow what is mentioned in above algorithm step 3.5>"
+        "<follow what is mentioned in above algorithm>"
       ]
     }}
   ],
@@ -383,20 +385,18 @@ OUTPUT FORMAT (Template v1):
   - NEVER invent, fabricate, or generate achievements that are not present in RESUME_TEXT.
   - "Solved 300+ LeetCode problems", "Won hackathon", "AWS certified" — these may ONLY appear if the user explicitly wrote them in RESUME_TEXT. Not otherwise.
   - ⛔ CRITICAL TYPE RULE: This MUST be a flat array of PLAIN STRINGS. DO NOT return dictionaries or objects like {{"type": "Certification", "name": "..."}}.
-  
-  "certifications_and_achievements": [
+   "certifications_and_achievements": [
     "AWS Certified Cloud Practitioner (2024)",
     "Solved 300+ problems on LeetCode (Rating: 1650)",
     "Contributed to 3 open-source projects on GitHub"
   ],
-  
   "technical_skills": {{
-    "languages": ["follow step 6"],
-    "frameworks": ["follow step 6"],
-    "databases": ["follow step6"],
-    "cloud_services": ["follow step6"],
-    "developer_tools": ["follow step6"],
-    "miscellaneous": ["follow step6"]
+    "languages": ["follow step 5"],
+    "frameworks": ["follow step 5"],
+    "databases": ["follow step5"],
+    "cloud_services": ["follow step5"],
+    "developer_tools": ["follow step5"],
+    "miscellaneous": ["follow step5"]
   }},
   "changes": [
     "Rewrote Summary: [old summary] → [new summary]",
