@@ -298,7 +298,7 @@ export default function AnalyzePage() {
             onClick={handleProceed}
             className="flash-gradient text-white text-lg font-bold px-12 py-5 rounded-full flex items-center gap-3 hover:opacity-90 transition-all shadow-xl shadow-primary/25 active:scale-95"
           >
-            Continue to Preview
+            Continue to Generate
             <ArrowRight className="w-6 h-6" />
           </button>
         </motion.div>
