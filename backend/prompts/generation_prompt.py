@@ -250,7 +250,7 @@ FRAMEWORKS & LIBRARIES → FILTER AGGRESSIVELY ⬅️ THIS IS WHERE THE PROBLEM 
      - JD: Python/Django → REMOVE: Spring Boot, Hibernate, Express.js, Laravel
      - JD: Node.js/Express → REMOVE: Django, Spring Boot, Laravel
      - JD: React frontend → REMOVE: Angular OR Vue (only keep the one matching JD)
-  ❌ It is a framework the JD has no mention of AND it is from a competing ecosystem
+  ❌ It is a framework the JD has no mention of AND it is from a competing ecosystem or different tech stack.
   
   LOG every removal in "changes": e.g. "Removed Django from frameworks — Python ecosystem not relevant to Java/Spring Boot JD"
 
@@ -367,7 +367,7 @@ OUTPUT FORMAT (Template v1):
   "projects": [
     {{
       "title": "<exact project title from RESUME_TEXT>",
-      "tech_stack": "<exact tech stack from RESUME_TEXT>",
+      "tech_stack": "<exact tech stack from RESUME_TEXT limit to 7 prioritized>",
       "link": "Link",
       "bullets": [
         "<follow the algprithm step4>"
