@@ -9,11 +9,7 @@ import {
 } from "@react-pdf/renderer";
 import type { TemplateV1 } from "@/lib/api";
 
-// Register fonts (using default serif for ATS compatibility)
-Font.register({
-  family: "Times-Roman",
-  src: "https://fonts.gstatic.com/s/timesnewroman/v1/LJ8a3LwzZTmNaZvR4V4kY_XDTjb_lvqh4yU.ttf",
-});
+// Using built-in standard 14 PostScript font (Times-Roman) for 100% reliability and ATS compatibility.
 
 // FlashResume Template v1 Styles
 const styles = StyleSheet.create({
@@ -176,13 +172,13 @@ function HighlightedText({ text, matched, missing, showHighlights, style }: { te
   }
 
   const escapeRegex = (s: string) => s.replace(/[-\/\\^$*+?.()|[\]{}]/g, "\\$&");
-  
+
   const wordTypes = new Map<string, "matched" | "missing">();
   const allWords: string[] = [];
 
   (matched || []).forEach(w => {
     const word = w.trim();
-    if(word) {
+    if (word) {
       wordTypes.set(word.toLowerCase(), "matched");
       const startB = /^[a-z0-9]/i.test(word) ? "\\b" : "";
       const endB = /[a-z0-9]$/i.test(word) ? "\\b" : "";
@@ -192,7 +188,7 @@ function HighlightedText({ text, matched, missing, showHighlights, style }: { te
 
   (missing || []).forEach(w => {
     const word = w.trim();
-    if(word) {
+    if (word) {
       wordTypes.set(word.toLowerCase(), "missing");
       const startB = /^[a-z0-9]/i.test(word) ? "\\b" : "";
       const endB = /[a-z0-9]$/i.test(word) ? "\\b" : "";
@@ -206,7 +202,7 @@ function HighlightedText({ text, matched, missing, showHighlights, style }: { te
 
   const regex = new RegExp(`(${allWords.join("|")})`, "gi");
   const parts = text.split(regex);
-  
+
   return (
     <Text style={style}>
       {parts.map((part, i) => {
@@ -250,12 +246,12 @@ export default function ResumePDF({ resume, showHighlights = false, matchedKeywo
           <View>
             <Text style={styles.sectionTitle}>SUMMARY</Text>
             <View style={styles.sectionDivider} />
-            <HighlightedText 
-              text={resume.summary} 
-              matched={matchedKeywords} 
-              missing={missingKeywords} 
-              showHighlights={showHighlights} 
-              style={styles.summaryText} 
+            <HighlightedText
+              text={resume.summary}
+              matched={matchedKeywords}
+              missing={missingKeywords}
+              showHighlights={showHighlights}
+              style={styles.summaryText}
             />
           </View>
         )}
@@ -299,12 +295,12 @@ export default function ResumePDF({ resume, showHighlights = false, matchedKeywo
                   {exp.bullets.map((bullet, bidx) => (
                     <View key={bidx} style={styles.bullet}>
                       <Text style={styles.bulletPoint}>•</Text>
-                      <HighlightedText 
-                        text={bullet} 
-                        matched={matchedKeywords} 
-                        missing={missingKeywords} 
-                        showHighlights={showHighlights} 
-                        style={styles.bulletText} 
+                      <HighlightedText
+                        text={bullet}
+                        matched={matchedKeywords}
+                        missing={missingKeywords}
+                        showHighlights={showHighlights}
+                        style={styles.bulletText}
                       />
                     </View>
                   ))}
@@ -347,12 +343,12 @@ export default function ResumePDF({ resume, showHighlights = false, matchedKeywo
                   {proj.bullets.map((bullet, bidx) => (
                     <View key={bidx} style={styles.bullet}>
                       <Text style={styles.bulletPoint}>•</Text>
-                      <HighlightedText 
-                        text={bullet} 
-                        matched={matchedKeywords} 
-                        missing={missingKeywords} 
-                        showHighlights={showHighlights} 
-                        style={styles.bulletText} 
+                      <HighlightedText
+                        text={bullet}
+                        matched={matchedKeywords}
+                        missing={missingKeywords}
+                        showHighlights={showHighlights}
+                        style={styles.bulletText}
                       />
                     </View>
                   ))}
@@ -370,49 +366,73 @@ export default function ResumePDF({ resume, showHighlights = false, matchedKeywo
             {resume.technical_skills.languages.length > 0 && (
               <View style={styles.skillCategory} wrap={false}>
                 <Text style={styles.skillLabel}>Languages:</Text>
-                <Text style={styles.skillList}>
-                  {resume.technical_skills.languages.join(", ")}
-                </Text>
+                <HighlightedText
+                  text={resume.technical_skills.languages.join(", ")}
+                  matched={matchedKeywords}
+                  missing={missingKeywords}
+                  showHighlights={showHighlights}
+                  style={styles.skillList}
+                />
               </View>
             )}
             {resume.technical_skills.frameworks.length > 0 && (
               <View style={styles.skillCategory} wrap={false}>
                 <Text style={styles.skillLabel}>Frameworks & Libraries:</Text>
-                <Text style={styles.skillList}>
-                  {resume.technical_skills.frameworks.join(", ")}
-                </Text>
+                <HighlightedText
+                  text={resume.technical_skills.frameworks.join(", ")}
+                  matched={matchedKeywords}
+                  missing={missingKeywords}
+                  showHighlights={showHighlights}
+                  style={styles.skillList}
+                />
               </View>
             )}
             {resume.technical_skills.databases.length > 0 && (
               <View style={styles.skillCategory} wrap={false}>
                 <Text style={styles.skillLabel}>Databases:</Text>
-                <Text style={styles.skillList}>
-                  {resume.technical_skills.databases.join(", ")}
-                </Text>
+                <HighlightedText
+                  text={resume.technical_skills.databases.join(", ")}
+                  matched={matchedKeywords}
+                  missing={missingKeywords}
+                  showHighlights={showHighlights}
+                  style={styles.skillList}
+                />
               </View>
             )}
             {resume.technical_skills.cloud_services.length > 0 && (
               <View style={styles.skillCategory} wrap={false}>
                 <Text style={styles.skillLabel}>Cloud Services:</Text>
-                <Text style={styles.skillList}>
-                  {resume.technical_skills.cloud_services.join(", ")}
-                </Text>
+                <HighlightedText
+                  text={resume.technical_skills.cloud_services.join(", ")}
+                  matched={matchedKeywords}
+                  missing={missingKeywords}
+                  showHighlights={showHighlights}
+                  style={styles.skillList}
+                />
               </View>
             )}
             {resume.technical_skills.developer_tools.length > 0 && (
               <View style={styles.skillCategory} wrap={false}>
                 <Text style={styles.skillLabel}>Developer Tools:</Text>
-                <Text style={styles.skillList}>
-                  {resume.technical_skills.developer_tools.join(", ")}
-                </Text>
+                <HighlightedText
+                  text={resume.technical_skills.developer_tools.join(", ")}
+                  matched={matchedKeywords}
+                  missing={missingKeywords}
+                  showHighlights={showHighlights}
+                  style={styles.skillList}
+                />
               </View>
             )}
             {resume.technical_skills.miscellaneous && resume.technical_skills.miscellaneous.length > 0 && (
               <View style={styles.skillCategory} wrap={false}>
                 <Text style={styles.skillLabel}>Miscellaneous:</Text>
-                <Text style={styles.skillList}>
-                  {resume.technical_skills.miscellaneous.join(", ")}
-                </Text>
+                <HighlightedText
+                  text={resume.technical_skills.miscellaneous.join(", ")}
+                  matched={matchedKeywords}
+                  missing={missingKeywords}
+                  showHighlights={showHighlights}
+                  style={styles.skillList}
+                />
               </View>
             )}
           </View>
@@ -434,7 +454,13 @@ export default function ResumePDF({ resume, showHighlights = false, matchedKeywo
               {unique.map((item, idx) => (
                 <View key={idx} style={styles.achievementItem}>
                   <Text style={styles.bulletPoint}>•</Text>
-                  <Text style={styles.bulletText}>{item}</Text>
+                  <HighlightedText
+                    text={item}
+                    matched={matchedKeywords}
+                    missing={missingKeywords}
+                    showHighlights={showHighlights}
+                    style={styles.bulletText}
+                  />
                 </View>
               ))}
             </View>

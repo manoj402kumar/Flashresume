@@ -134,6 +134,7 @@ export default function ResultPage() {
   const [resume, setResume] = useState<TemplateV1 | null>(null);
   const [loading, setLoading] = useState(true);
   const [showChanges, setShowChanges] = useState(false);
+  const [showMissedKeywords, setShowMissedKeywords] = useState(false);
   const [copied, setCopied] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
@@ -357,7 +358,7 @@ export default function ResultPage() {
           <div className="flex-shrink-0 bg-surface/95 backdrop-blur-md p-4 border-b border-surface-container-low flex flex-col gap-3 py-4 sticky top-0 z-20">
             <div className="flex bg-surface-container-lowest p-1 rounded-[1.25rem] border border-surface-container-low shadow-inner">
               <button
-                onClick={() => { setEditMode(true); setShowChanges(false); }}
+                onClick={() => { setEditMode(true); setShowChanges(false); setShowMissedKeywords(false); }}
                 className={`flex-1 py-2 px-2 text-sm font-semibold transition-all rounded-xl flex items-center justify-center gap-2 ${
                   editMode
                     ? "bg-primary text-white shadow-md relative"
@@ -371,7 +372,7 @@ export default function ResultPage() {
                 )}
               </button>
               <button
-                onClick={() => { setShowChanges(true); setEditMode(false); }}
+                onClick={() => { setShowChanges(true); setEditMode(false); setShowMissedKeywords(false); }}
                 className={`flex-1 py-2 px-2 text-sm font-semibold transition-all rounded-xl flex items-center justify-center gap-2 ${
                   showChanges
                     ? "bg-secondary-container text-secondary-container-on shadow-md text-secondary"
@@ -379,7 +380,21 @@ export default function ResultPage() {
                 }`}
               >
                 <Sparkles className={`w-4 h-4 ${showChanges ? 'text-secondary' : 'text-on-surface-variant'}`} />
-                AI Changes & ATS
+                AI Changes
+              </button>
+              <button
+                onClick={() => { setShowMissedKeywords(true); setEditMode(false); setShowChanges(false); }}
+                className={`flex-1 py-2 px-2 text-sm font-semibold transition-all rounded-xl flex items-center justify-center gap-2 ${
+                  showMissedKeywords
+                    ? "bg-error text-white shadow-md relative"
+                    : "text-on-surface-variant hover:text-on-background hover:bg-surface-container"
+                }`}
+              >
+                <Zap className={`w-4 h-4 ${showMissedKeywords ? 'text-white' : 'text-on-surface-variant'}`} />
+                Missed Keywords
+                {missingKeywords.length > 0 && !showMissedKeywords && (
+                  <span className="absolute top-2 right-2 flex min-w-[16px] h-4 items-center justify-center rounded-full bg-error px-1 text-[10px] font-bold text-white shadow-[0_0_0_2px_#fff]">{missingKeywords.length}</span>
+                )}
               </button>
             </div>
             
@@ -1347,6 +1362,56 @@ export default function ResultPage() {
                       </motion.div>
                     ))}
                   </div>
+                </div>
+              </motion.div>
+            )}
+
+            {showMissedKeywords && (
+              <motion.div
+                key="missed-keywords"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.3 }}
+                className="w-full max-w-2xl mx-auto"
+              >
+                <div className="bg-surface-container-lowest rounded-[2rem] p-8 shadow-2xl border border-error/10">
+                  <div className="flex items-center justify-between mb-6">
+                    <div className="flex items-center gap-3">
+                      <Zap className="w-6 h-6 text-error" />
+                      <h3 className="font-headline text-2xl font-bold text-on-background">Missed Keywords</h3>
+                    </div>
+                    <span className="bg-error/20 px-3 py-1 rounded-full text-sm font-bold text-error">
+                      {missingKeywords.length}
+                    </span>
+                  </div>
+
+                  {missingKeywords.length === 0 ? (
+                    <div className="text-center p-8 bg-green-500/10 rounded-xl border border-green-500/20">
+                      <CheckCircle2 className="w-12 h-12 text-green-500 mx-auto mb-3" />
+                      <p className="text-on-background font-bold text-lg">All Keywords Covered!</p>
+                      <p className="text-on-surface-variant text-sm mt-1">Your resume includes all necessary keywords from the job description.</p>
+                    </div>
+                  ) : (
+                    <>
+                      <p className="text-on-surface-variant mb-6 text-sm">
+                        These keywords from the job description could not be naturally integrated into your existing experience. Try to explicitly add these terms into your skills or bullet points if applicable to your actual experience.
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {missingKeywords.map((keyword, idx) => (
+                          <motion.span
+                            key={idx}
+                            initial={{ opacity: 0, scale: 0.8 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            transition={{ delay: idx * 0.05 }}
+                            className="px-4 py-2 bg-error/10 text-error rounded-full text-sm font-medium border border-error/20"
+                          >
+                            {keyword}
+                          </motion.span>
+                        ))}
+                      </div>
+                    </>
+                  )}
                 </div>
               </motion.div>
             )}

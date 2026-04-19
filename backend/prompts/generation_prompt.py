@@ -317,7 +317,6 @@ Check 1 — MISSING KEYWORDS COVERAGE CHECK:
   For each keyword in that list, ask yourself:
   - Is this keyword now present somewhere in my JSON output (projects, experience, or technical_skills)?
   - If NOT → you MUST go back and insert it where it fits most naturally before finalizing.
-  - If it genuinely cannot be inserted without sounding fake (e.g., a completely unrelated domain tool) → log it in "changes" as uncoverable.
 
 Check 2 — MATCHED KEYWORDS PRESENCE CHECK:
   The JOB_DESCRIPTION keywords that were already matched should still be present in the output.

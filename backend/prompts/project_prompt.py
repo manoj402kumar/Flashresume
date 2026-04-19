@@ -61,7 +61,7 @@ CRITICAL RULES:
 - Look in ENTIRE resume, not just "PROJECTS" section
 - Be generous in matching - if 50%+ tech overlap, it's relevant
 - Suggested project name MUST be a creative product name (2-3 words max), NOT a tech stack description
-- Suggested project description MUST explain what the app DOES for users, NOT what technologies it uses
+- Suggested project description MUST explain what the app DOES for users.
 
 Full Resume Text:
 {resume_text}
