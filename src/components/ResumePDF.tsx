@@ -10,6 +10,7 @@ import {
 import type { TemplateV1 } from "@/lib/api";
 
 // Using built-in standard 14 PostScript font (Times-Roman) for 100% reliability and ATS compatibility.
+// This natively maps to Times New Roman without embedding external TTF files, guaranteeing perfect text extraction.
 
 // FlashResume Template v1 Styles
 const styles = StyleSheet.create({
