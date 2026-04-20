@@ -1,0 +1,286 @@
+"use client";
+
+import { useEffect, useRef, useState } from "react";
+import { motion } from "motion/react";
+import {
+  LayoutDashboard, Users, IndianRupee, Download,
+  Cpu, Filter, Star, Zap, ExternalLink, Menu, X,
+  Server, Clock,
+} from "lucide-react";
+import KPICards from "./components/KPICards";
+import LLMPanel from "./components/LLMPanel";
+import DownloadChart from "./components/DownloadChart";
+import RevenuePanel from "./components/RevenuePanel";
+import FunnelChart from "./components/FunnelChart";
+import FeedbackPanel from "./components/FeedbackPanel";
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+
+const NAV_ITEMS = [
+  { id: "overview",   label: "Overview",    icon: LayoutDashboard },
+  { id: "revenue",    label: "Revenue",     icon: IndianRupee },
+  { id: "downloads",  label: "Downloads",   icon: Download },
+  { id: "llm",        label: "LLM Usage",   icon: Cpu },
+  { id: "funnel",     label: "Conversion",  icon: Filter },
+  { id: "feedback",   label: "Feedback",    icon: Star },
+];
+
+function Sidebar({
+  active,
+  onSelect,
+  open,
+  onClose,
+}: {
+  active: string;
+  onSelect: (id: string) => void;
+  open: boolean;
+  onClose: () => void;
+}) {
+  return (
+    <>
+      {/* Mobile overlay */}
+      {open && (
+        <div
+          className="fixed inset-0 bg-black/40 z-30 md:hidden"
+          onClick={onClose}
+        />
+      )}
+
+      <aside
+        className={`fixed top-0 left-0 h-full w-64 z-40 flex flex-col transition-transform duration-300
+          bg-[#0b1e19] text-white
+          ${open ? "translate-x-0" : "-translate-x-full"} md:translate-x-0`}
+      >
+        {/* Logo */}
+        <div className="px-6 pt-7 pb-6 border-b border-white/10">
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-[#006859] to-[#12f8d7] flex items-center justify-center">
+                  <Zap className="w-4 h-4 text-white fill-white" />
+                </div>
+                <span className="font-headline font-extrabold text-lg tracking-tight text-white">
+                  Flashresume
+                </span>
+              </div>
+              <div className="text-[10px] text-white/40 font-bold uppercase tracking-widest mt-1 ml-9">
+                Admin Dashboard
+              </div>
+            </div>
+            <button onClick={onClose} className="md:hidden text-white/50 hover:text-white">
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+
+        {/* Navigation */}
+        <nav className="flex-1 px-3 py-5 space-y-1 overflow-y-auto">
+          {NAV_ITEMS.map((item) => {
+            const Icon = item.icon;
+            const isActive = active === item.id;
+            return (
+              <button
+                key={item.id}
+                onClick={() => { onSelect(item.id); onClose(); }}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all text-left ${
+                  isActive
+                    ? "bg-gradient-to-r from-[#006859] to-[#0d9e84] text-white shadow-lg shadow-[#006859]/30"
+                    : "text-white/50 hover:text-white hover:bg-white/8"
+                }`}
+              >
+                <Icon className={`w-4 h-4 shrink-0 ${isActive ? "text-[#12f8d7]" : ""}`} />
+                {item.label}
+              </button>
+            );
+          })}
+        </nav>
+
+        {/* Footer links */}
+        <div className="px-6 py-5 border-t border-white/10 space-y-3">
+          <a
+            href="/"
+            target="_blank"
+            className="flex items-center gap-2 text-xs text-white/40 hover:text-white/70 transition-colors font-medium"
+          >
+            <ExternalLink className="w-3.5 h-3.5" /> View Live App
+          </a>
+          <a
+            href="http://localhost:8000/docs"
+            target="_blank"
+            className="flex items-center gap-2 text-xs text-white/40 hover:text-white/70 transition-colors font-medium"
+          >
+            <Server className="w-3.5 h-3.5" /> API Docs (FastAPI)
+          </a>
+        </div>
+      </aside>
+    </>
+  );
+}
+
+function SectionTitle({ title, subtitle }: { title: string; subtitle?: string }) {
+  return (
+    <div className="mb-6">
+      <h2 className="font-headline text-2xl font-bold text-[#2c2f30]">{title}</h2>
+      {subtitle && <p className="text-sm text-[#595c5d] mt-1">{subtitle}</p>}
+    </div>
+  );
+}
+
+export default function AdminPage() {
+  const [activeSection, setActiveSection] = useState("overview");
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [activeSessions, setActiveSessions] = useState(0);
+  const [uptime, setUptime] = useState("—");
+  const [time, setTime] = useState("");
+  const sectionRefs = useRef<Record<string, HTMLElement | null>>({});
+
+  // Live clock
+  useEffect(() => {
+    const tick = () => setTime(new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", second: "2-digit" }));
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  // Fetch queue stats for active sessions
+  useEffect(() => {
+    const fetchQueue = async () => {
+      try {
+        const res = await fetch(`${API_URL}/health/queue`);
+        const json = await res.json();
+        setActiveSessions(json.processing ?? 0);
+      } catch { /* backend offline */ }
+    };
+    fetchQueue();
+    const id = setInterval(fetchQueue, 5000);
+    return () => clearInterval(id);
+  }, []);
+
+  // Fetch uptime
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const res = await fetch(`${API_URL}/admin/stats`);
+        const json = await res.json();
+        const sec = json.uptime_seconds ?? 0;
+        const h = Math.floor(sec / 3600);
+        const m = Math.floor((sec % 3600) / 60);
+        setUptime(`${h}h ${m}m`);
+      } catch { /* offline */ }
+    };
+    fetchStats();
+  }, []);
+
+  // Intersection observer for active section highlight
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((e) => {
+          if (e.isIntersecting) setActiveSection(e.target.id);
+        });
+      },
+      { threshold: 0.35 }
+    );
+    Object.values(sectionRefs.current).forEach((el) => el && observer.observe(el));
+    return () => observer.disconnect();
+  }, []);
+
+  const scrollTo = (id: string) => {
+    sectionRefs.current[id]?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
+  const setRef = (id: string) => (el: HTMLElement | null) => {
+    sectionRefs.current[id] = el;
+  };
+
+  return (
+    <div className="min-h-screen bg-[#f5f6f7] font-sans flex">
+      <Sidebar
+        active={activeSection}
+        onSelect={scrollTo}
+        open={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+      />
+
+      {/* Main content */}
+      <div className="flex-1 md:ml-64 flex flex-col min-h-screen">
+        {/* Top bar */}
+        <header className="sticky top-0 z-20 bg-white/80 backdrop-blur-xl border-b border-[#eff1f2] px-6 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setSidebarOpen(true)}
+              className="md:hidden p-2 rounded-xl hover:bg-[#eff1f2] text-[#595c5d]"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
+            <div>
+              <h1 className="font-headline font-bold text-[#2c2f30] text-base leading-tight">
+                Admin Dashboard
+              </h1>
+              <p className="text-xs text-[#595c5d] font-medium">
+                Server uptime: {uptime}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 text-xs font-bold text-[#006859] bg-[#12f8d7]/15 px-3 py-1.5 rounded-full">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#006859] opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-[#006859]" />
+              </span>
+              Live
+            </div>
+            <div className="flex items-center gap-1.5 text-xs font-mono text-[#595c5d] bg-[#eff1f2] px-3 py-1.5 rounded-full">
+              <Clock className="w-3.5 h-3.5" />
+              {time}
+            </div>
+          </div>
+        </header>
+
+        {/* Page body */}
+        <main className="flex-1 px-6 py-8 space-y-14 max-w-7xl w-full mx-auto">
+
+          {/* ── Overview ─────────────────────────────────────────── */}
+          <section id="overview" ref={setRef("overview")}>
+            <SectionTitle
+              title="Overview"
+              subtitle="Platform health at a glance"
+            />
+            <KPICards activeSessions={activeSessions} />
+          </section>
+
+          {/* ── Revenue ──────────────────────────────────────────── */}
+          <section id="revenue" ref={setRef("revenue")}>
+            <RevenuePanel />
+          </section>
+
+          {/* ── Downloads ─────────────────────────────────────────── */}
+          <section id="downloads" ref={setRef("downloads")}>
+            <DownloadChart />
+          </section>
+
+          {/* ── LLM Usage ────────────────────────────────────────── */}
+          <section id="llm" ref={setRef("llm")}>
+            <LLMPanel />
+          </section>
+
+          {/* ── Conversion Funnel ─────────────────────────────────── */}
+          <section id="funnel" ref={setRef("funnel")}>
+            <FunnelChart />
+          </section>
+
+          {/* ── Feedback ─────────────────────────────────────────── */}
+          <section id="feedback" ref={setRef("feedback")}>
+            <FeedbackPanel />
+          </section>
+
+        </main>
+
+        {/* Footer */}
+        <footer className="text-center text-xs text-[#595c5d]/60 py-5 border-t border-[#eff1f2]">
+          FlashResume Admin · No auth required for local dev · Build in production security before deploying
+        </footer>
+      </div>
+    </div>
+  );
+}

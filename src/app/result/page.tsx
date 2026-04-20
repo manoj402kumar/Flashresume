@@ -21,7 +21,8 @@ import {
   GraduationCap,
   Code,
   Award,
-  FolderGit2
+  FolderGit2,
+  GripVertical
 } from "lucide-react";
 import type { TemplateV1 } from "@/lib/api";
 import {
@@ -129,6 +130,15 @@ function cleanDisplayUrl(val: string | undefined | null, fallback: string): stri
   return val.replace(/^https?:\/\//i, "");
 }
 
+const SECTION_LABELS: Record<string, { label: string; icon: React.ReactNode }> = {
+  summary: { label: "Summary", icon: <Zap className="w-4 h-4 text-primary" /> },
+  education: { label: "Education", icon: <GraduationCap className="w-4 h-4 text-secondary-container" /> },
+  experience: { label: "Experience", icon: <Briefcase className="w-4 h-4 text-tertiary-container" /> },
+  projects: { label: "Projects", icon: <FolderGit2 className="w-4 h-4 text-primary" /> },
+  skills: { label: "Technical Skills", icon: <Code className="w-4 h-4 text-secondary" /> },
+  certifications: { label: "Certifications", icon: <Award className="w-4 h-4 text-secondary-container" /> }
+};
+
 export default function ResultPage() {
   const router = useRouter();
   const [resume, setResume] = useState<TemplateV1 | null>(null);
@@ -142,6 +152,38 @@ export default function ResultPage() {
   const [downloadingPDF, setDownloadingPDF] = useState(false);
   const [missingKeywords, setMissingKeywords] = useState<string[]>([]);
   const [matchedKeywords, setMatchedKeywords] = useState<string[]>([]);
+  // Native HTML5 drag state — simple, fires exactly once on drop
+  const [draggingId, setDraggingId] = useState<string | null>(null);
+  const [dragOverId, setDragOverId] = useState<string | null>(null);
+
+  const handleSectionDragStart = (sectionId: string) => {
+    setDraggingId(sectionId);
+  };
+
+  const handleSectionDragOver = (e: React.DragEvent, sectionId: string) => {
+    e.preventDefault();
+    setDragOverId(sectionId);
+  };
+
+  const handleSectionDrop = (e: React.DragEvent, targetId: string) => {
+    e.preventDefault();
+    if (!draggingId || draggingId === targetId || !resume) return;
+    const currentOrder = resume.section_order || ["summary", "education", "experience", "projects", "skills", "certifications"];
+    const fromIdx = currentOrder.indexOf(draggingId);
+    const toIdx = currentOrder.indexOf(targetId);
+    if (fromIdx === -1 || toIdx === -1) return;
+    const newOrder = [...currentOrder];
+    newOrder.splice(fromIdx, 1);
+    newOrder.splice(toIdx, 0, draggingId);
+    updateResume({ section_order: newOrder });
+    setDraggingId(null);
+    setDragOverId(null);
+  };
+
+  const handleSectionDragEnd = () => {
+    setDraggingId(null);
+    setDragOverId(null);
+  };
 
   useEffect(() => {
     const resumeData = localStorage.getItem("generated_resume");
@@ -171,6 +213,9 @@ export default function ResultPage() {
       } catch(e) {}
     }
 
+    if (!parsed.section_order || parsed.section_order.length === 0) {
+      parsed.section_order = ["summary", "education", "experience", "projects", "skills", "certifications"];
+    }
     setResume(parsed);
     setLoading(false);
   }, [router]);
@@ -440,6 +485,49 @@ export default function ResultPage() {
                 transition={{ duration: 0.3 }}
                 className="w-full max-w-4xl mx-auto space-y-6"
               >
+              
+              {/* Drag Drop Section Reordering */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-surface-container-lowest rounded-[2rem] p-6 shadow-md border border-primary/10"
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-headline font-bold text-on-background text-lg">Reorder Sections</h3>
+                  <span className="text-sm text-on-surface-variant bg-surface-container px-3 py-1 rounded-full">Drag to reorder</span>
+                </div>
+                <div className="space-y-2">
+                  {(resume.section_order || []).map((sectionId) => {
+                    const sectionMeta = SECTION_LABELS[sectionId];
+                    if (!sectionMeta) return null;
+                    const isDragging = draggingId === sectionId;
+                    const isOver = dragOverId === sectionId && !isDragging;
+                    return (
+                      <div
+                        key={sectionId}
+                        draggable
+                        onDragStart={() => handleSectionDragStart(sectionId)}
+                        onDragOver={(e) => handleSectionDragOver(e, sectionId)}
+                        onDrop={(e) => handleSectionDrop(e, sectionId)}
+                        onDragEnd={handleSectionDragEnd}
+                        className={`flex items-center gap-4 px-4 py-3 rounded-xl cursor-grab active:cursor-grabbing border-2 transition-all duration-150 shadow-sm select-none
+                          ${ isDragging ? "opacity-40 scale-95 bg-surface-container border-primary/30" : "bg-surface-container border-transparent hover:border-primary/20" }
+                          ${ isOver ? "border-primary bg-primary/5 scale-[1.02]" : "" }
+                        `}
+                      >
+                        <GripVertical className="text-on-surface-variant/50 w-5 h-5 flex-shrink-0" />
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-lg bg-surface-container-highest flex items-center justify-center">
+                            {sectionMeta.icon}
+                          </div>
+                          <span className="font-semibold text-on-background">{sectionMeta.label}</span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </motion.div>
+
               {/* Heading Section */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
@@ -551,7 +639,7 @@ export default function ResultPage() {
               </motion.div>
 
               {/* Summary Section */}
-              {resume.summary && (
+              {(resume.summary || editMode) && (
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -568,7 +656,7 @@ export default function ResultPage() {
                   
                   {editMode ? (
                     <textarea
-                      value={resume.summary}
+                      value={resume.summary || ''}
                       onChange={(e) => updateResume({ summary: e.target.value })}
                       className="w-full border-2 border-surface-container-high rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary resize-none"
                       rows={3}
@@ -865,7 +953,7 @@ export default function ResultPage() {
                     <div key={idx} className="mb-8 last:mb-0">
                       {editMode ? (
                         <div className="space-y-2 mb-4">
-                          <div className="flex gap-2">
+                          <div className="flex flex-col gap-3">
                             <input
                               type="text"
                               value={proj.title}
@@ -874,31 +962,33 @@ export default function ResultPage() {
                                 newProjects[idx].title = e.target.value;
                                 updateResume({ projects: newProjects });
                               }}
-                              className="flex-[2] font-bold border-2 border-surface-container-high rounded-xl px-4 py-2 focus:ring-2 focus:ring-primary"
+                              className="w-full font-bold border-2 border-surface-container-high rounded-xl px-4 py-2 focus:ring-2 focus:ring-primary"
                               placeholder="Project Title"
                             />
-                            <input
-                              type="text"
-                              value={proj.link || ''}
-                              onChange={(e) => {
-                                const newProjects = [...resume.projects];
-                                newProjects[idx].link = e.target.value;
-                                updateResume({ projects: newProjects });
-                              }}
-                              className="flex-1 text-sm border-2 border-surface-container-high rounded-xl px-4 py-2 focus:ring-2 focus:ring-primary"
-                              placeholder="Display Text (Link/GitHub)"
-                            />
-                            <input
-                              type="url"
-                              value={proj.link_href || ''}
-                              onChange={(e) => {
-                                const newProjects = [...resume.projects];
-                                newProjects[idx].link_href = e.target.value;
-                                updateResume({ projects: newProjects });
-                              }}
-                              className="flex-[1.5] text-sm border-2 border-surface-container-high rounded-xl px-4 py-2 focus:ring-2 focus:ring-primary"
-                              placeholder="Actual Repo URL"
-                            />
+                            <div className="flex gap-2">
+                              <input
+                                type="text"
+                                value={proj.link || ''}
+                                onChange={(e) => {
+                                  const newProjects = [...resume.projects];
+                                  newProjects[idx].link = e.target.value;
+                                  updateResume({ projects: newProjects });
+                                }}
+                                className="flex-[1] text-sm border-2 border-surface-container-high rounded-xl px-4 py-2 focus:ring-2 focus:ring-primary"
+                                placeholder="Display Text (Link/GitHub)"
+                              />
+                              <input
+                                type="url"
+                                value={proj.link_href || ''}
+                                onChange={(e) => {
+                                  const newProjects = [...resume.projects];
+                                  newProjects[idx].link_href = e.target.value;
+                                  updateResume({ projects: newProjects });
+                                }}
+                                className="flex-[2] text-sm border-2 border-surface-container-high rounded-xl px-4 py-2 focus:ring-2 focus:ring-primary"
+                                placeholder="Actual Repo URL"
+                              />
+                            </div>
                           </div>
                           <input
                             type="text"

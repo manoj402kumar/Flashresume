@@ -242,232 +242,241 @@ export default function ResumePDF({ resume, showHighlights = false, matchedKeywo
           </Text>
         </View>
 
-        {/* SUMMARY */}
-        {resume.summary && resume.summary.trim() !== "" && (
-          <View>
-            <Text style={styles.sectionTitle}>SUMMARY</Text>
-            <View style={styles.sectionDivider} />
-            <HighlightedText
-              text={resume.summary}
-              matched={matchedKeywords}
-              missing={missingKeywords}
-              showHighlights={showHighlights}
-              style={styles.summaryText}
-            />
-          </View>
-        )}
-
-        {/* EDUCATION */}
-        {resume.education.length > 0 && (
-          <View>
-            <Text style={styles.sectionTitle}>EDUCATION</Text>
-            <View style={styles.sectionDivider} />
-            {resume.education.map((edu, idx) => (
-              <View key={idx} style={styles.educationItem}>
-                <View style={styles.institutionRow}>
-                  <Text style={styles.institution}>{edu.institution}</Text>
-                  <Text style={styles.duration}>{edu.duration}</Text>
-                </View>
-                <View style={styles.titleRow}>
-                  <Text style={styles.degree}>{edu.degree}{edu.cgpa ? ` | CGPA: ${edu.cgpa}` : ""}</Text>
-                  <Text style={styles.location}>{edu.location}</Text>
-                </View>
-              </View>
-            ))}
-          </View>
-        )}
-
-        {/* EXPERIENCE */}
-        {resume.experience.length > 0 && (
-          <View>
-            <Text style={styles.sectionTitle}>EXPERIENCE</Text>
-            <View style={styles.sectionDivider} />
-            {resume.experience.map((exp, idx) => (
-              <View key={idx} style={styles.experienceItem}>
-                <View style={styles.titleRow}>
-                  <Text style={styles.jobTitle}>{exp.job_title}</Text>
-                  <Text style={styles.duration}>{exp.duration}</Text>
-                </View>
-                <View style={styles.titleRow}>
-                  <Text style={styles.company}>{exp.company}</Text>
-                  <Text style={styles.location}>{exp.location}</Text>
-                </View>
-                <View style={styles.bullets}>
-                  {exp.bullets.map((bullet, bidx) => (
-                    <View key={bidx} style={styles.bullet}>
-                      <Text style={styles.bulletPoint}>•</Text>
-                      <HighlightedText
-                        text={bullet}
-                        matched={matchedKeywords}
-                        missing={missingKeywords}
-                        showHighlights={showHighlights}
-                        style={styles.bulletText}
-                      />
-                    </View>
-                  ))}
-                </View>
-              </View>
-            ))}
-          </View>
-        )}
-
-        {/* PROJECTS */}
-        {resume.projects.length > 0 && (
-          <View>
-            <Text style={styles.sectionTitle}>PROJECTS</Text>
-            <View style={styles.sectionDivider} />
-            {resume.projects.map((proj, idx) => (
-              <View key={idx} style={styles.experienceItem}>
-                <View style={styles.titleRow}>
-                  <View style={{ flexDirection: "row" }}>
-                    <Text style={styles.jobTitle}>{proj.title}</Text>
-                    {proj.tech_stack ? (
-                      <Text style={{ fontSize: 10.5, fontStyle: "italic" }}>
-                        <Text style={{ fontWeight: "normal", fontStyle: "normal" }}> | </Text>
-                        {proj.tech_stack}
-                      </Text>
-                    ) : null}
-                  </View>
-                  <View style={{ flexDirection: "row" }}>
-                    <Text style={styles.duration}>{proj.duration}</Text>
-                    {(proj.link || proj.link_href) ? (
-                      <>
-                        <Text style={{ fontSize: 10.5, marginHorizontal: 4 }}> | </Text>
-                        <Link src={getValidUrl(proj.link_href || proj.link, "github.com/reponame")} style={{ ...styles.link, textDecoration: "underline", fontSize: 10.5 }}>
-                          {proj.link || "Link"}
-                        </Link>
-                      </>
-                    ) : null}
-                  </View>
-                </View>
-                <View style={styles.bullets}>
-                  {proj.bullets.map((bullet, bidx) => (
-                    <View key={bidx} style={styles.bullet}>
-                      <Text style={styles.bulletPoint}>•</Text>
-                      <HighlightedText
-                        text={bullet}
-                        matched={matchedKeywords}
-                        missing={missingKeywords}
-                        showHighlights={showHighlights}
-                        style={styles.bulletText}
-                      />
-                    </View>
-                  ))}
-                </View>
-              </View>
-            ))}
-          </View>
-        )}
-
-        {/* TECHNICAL SKILLS */}
-        <View>
-          <Text style={styles.sectionTitle}>TECHNICAL SKILLS</Text>
-          <View style={styles.sectionDivider} />
-          <View style={styles.skillsContainer}>
-            {resume.technical_skills.languages.length > 0 && (
-              <View style={styles.skillCategory} wrap={false}>
-                <Text style={styles.skillLabel}>Languages:</Text>
-                <HighlightedText
-                  text={resume.technical_skills.languages.join(", ")}
-                  matched={matchedKeywords}
-                  missing={missingKeywords}
-                  showHighlights={showHighlights}
-                  style={styles.skillList}
-                />
-              </View>
-            )}
-            {resume.technical_skills.frameworks.length > 0 && (
-              <View style={styles.skillCategory} wrap={false}>
-                <Text style={styles.skillLabel}>Frameworks & Libraries:</Text>
-                <HighlightedText
-                  text={resume.technical_skills.frameworks.join(", ")}
-                  matched={matchedKeywords}
-                  missing={missingKeywords}
-                  showHighlights={showHighlights}
-                  style={styles.skillList}
-                />
-              </View>
-            )}
-            {resume.technical_skills.databases.length > 0 && (
-              <View style={styles.skillCategory} wrap={false}>
-                <Text style={styles.skillLabel}>Databases:</Text>
-                <HighlightedText
-                  text={resume.technical_skills.databases.join(", ")}
-                  matched={matchedKeywords}
-                  missing={missingKeywords}
-                  showHighlights={showHighlights}
-                  style={styles.skillList}
-                />
-              </View>
-            )}
-            {resume.technical_skills.cloud_services.length > 0 && (
-              <View style={styles.skillCategory} wrap={false}>
-                <Text style={styles.skillLabel}>Cloud Services:</Text>
-                <HighlightedText
-                  text={resume.technical_skills.cloud_services.join(", ")}
-                  matched={matchedKeywords}
-                  missing={missingKeywords}
-                  showHighlights={showHighlights}
-                  style={styles.skillList}
-                />
-              </View>
-            )}
-            {resume.technical_skills.developer_tools.length > 0 && (
-              <View style={styles.skillCategory} wrap={false}>
-                <Text style={styles.skillLabel}>Developer Tools:</Text>
-                <HighlightedText
-                  text={resume.technical_skills.developer_tools.join(", ")}
-                  matched={matchedKeywords}
-                  missing={missingKeywords}
-                  showHighlights={showHighlights}
-                  style={styles.skillList}
-                />
-              </View>
-            )}
-            {resume.technical_skills.miscellaneous && resume.technical_skills.miscellaneous.length > 0 && (
-              <View style={styles.skillCategory} wrap={false}>
-                <Text style={styles.skillLabel}>Miscellaneous:</Text>
-                <HighlightedText
-                  text={resume.technical_skills.miscellaneous.join(", ")}
-                  matched={matchedKeywords}
-                  missing={missingKeywords}
-                  showHighlights={showHighlights}
-                  style={styles.skillList}
-                />
-              </View>
-            )}
-          </View>
-        </View>
-
-        {/* CERTIFICATIONS / ACHIEVEMENTS */}
-        {(() => {
-          const items = [
-            ...(resume.certifications_and_achievements ?? []),
-            ...(resume.certifications ?? []),
-            ...(resume.achievements ?? []),
-          ];
-          // Deduplicate in case backend populates both merged and individual arrays
-          const unique = [...new Set(items)];
-          return unique.length > 0 ? (
-            <View>
-              <Text style={styles.sectionTitle}>CERTIFICATIONS / ACHIEVEMENTS</Text>
-              <View style={styles.sectionDivider} />
-              {unique.map((item, idx) => (
-                <View key={idx} style={styles.achievementItem}>
-                  <Text style={styles.bulletPoint}>•</Text>
+        {/* DYNAMIC SECTIONS */}
+        {(resume.section_order || ["summary", "education", "experience", "projects", "skills", "certifications"]).map((sectionId) => {
+          switch (sectionId) {
+            case "summary":
+              if (!resume.summary || resume.summary.trim() === "") return null;
+              return (
+                <View key="summary" wrap={false}>
+                  <Text style={styles.sectionTitle}>SUMMARY</Text>
+                  <View style={styles.sectionDivider} />
                   <HighlightedText
-                    text={item}
+                    text={resume.summary}
                     matched={matchedKeywords}
                     missing={missingKeywords}
                     showHighlights={showHighlights}
-                    style={styles.bulletText}
+                    style={styles.summaryText}
                   />
                 </View>
-              ))}
-            </View>
-          ) : null;
-        })()}
+              );
+            case "education":
+              if (!resume.education || resume.education.length === 0) return null;
+              return (
+                <View key="education">
+                  <Text style={styles.sectionTitle}>EDUCATION</Text>
+                  <View style={styles.sectionDivider} />
+                  {resume.education.map((edu, idx) => (
+                    <View key={idx} style={styles.educationItem} wrap={false}>
+                      <View style={styles.institutionRow}>
+                        <Text style={styles.institution}>{edu.institution}</Text>
+                        <Text style={styles.duration}>{edu.duration}</Text>
+                      </View>
+                      <View style={styles.titleRow}>
+                        <Text style={styles.degree}>{edu.degree}{edu.cgpa ? ` | CGPA: ${edu.cgpa}` : ""}</Text>
+                        <Text style={styles.location}>{edu.location}</Text>
+                      </View>
+                    </View>
+                  ))}
+                </View>
+              );
+            case "experience":
+              if (!resume.experience || resume.experience.length === 0) return null;
+              return (
+                <View key="experience">
+                  <Text style={styles.sectionTitle}>EXPERIENCE</Text>
+                  <View style={styles.sectionDivider} />
+                  {resume.experience.map((exp, idx) => (
+                    <View key={idx} style={styles.experienceItem} wrap={false}>
+                      <View style={styles.titleRow}>
+                        <Text style={styles.jobTitle}>{exp.job_title}</Text>
+                        <Text style={styles.duration}>{exp.duration}</Text>
+                      </View>
+                      <View style={styles.titleRow}>
+                        <Text style={styles.company}>{exp.company}</Text>
+                        <Text style={styles.location}>{exp.location}</Text>
+                      </View>
+                      <View style={styles.bullets}>
+                        {exp.bullets.map((bullet, bidx) => (
+                          <View key={bidx} style={styles.bullet}>
+                            <Text style={styles.bulletPoint}>•</Text>
+                            <HighlightedText
+                              text={bullet}
+                              matched={matchedKeywords}
+                              missing={missingKeywords}
+                              showHighlights={showHighlights}
+                              style={styles.bulletText}
+                            />
+                          </View>
+                        ))}
+                      </View>
+                    </View>
+                  ))}
+                </View>
+              );
+            case "projects":
+              if (!resume.projects || resume.projects.length === 0) return null;
+              return (
+                <View key="projects">
+                  <Text style={styles.sectionTitle}>PROJECTS</Text>
+                  <View style={styles.sectionDivider} />
+                  {resume.projects.map((proj, idx) => (
+                    <View key={idx} style={styles.experienceItem} wrap={false}>
+                      <View style={styles.titleRow}>
+                        <View style={{ flexDirection: "row" }}>
+                          <Text style={styles.jobTitle}>{proj.title}</Text>
+                          {proj.tech_stack ? (
+                            <Text style={{ fontSize: 10.5, fontStyle: "italic" }}>
+                              <Text style={{ fontWeight: "normal", fontStyle: "normal" }}> | </Text>
+                              {proj.tech_stack}
+                            </Text>
+                          ) : null}
+                        </View>
+                        <View style={{ flexDirection: "row" }}>
+                          <Text style={styles.duration}>{proj.duration}</Text>
+                          {(proj.link || proj.link_href) ? (
+                            <>
+                              <Text style={{ fontSize: 10.5, marginHorizontal: 4 }}> | </Text>
+                              <Link src={getValidUrl(proj.link_href || proj.link, "github.com/reponame")} style={{ ...styles.link, textDecoration: "underline", fontSize: 10.5 }}>
+                                {proj.link || "Link"}
+                              </Link>
+                            </>
+                          ) : null}
+                        </View>
+                      </View>
+                      <View style={styles.bullets}>
+                        {proj.bullets.map((bullet, bidx) => (
+                          <View key={bidx} style={styles.bullet}>
+                            <Text style={styles.bulletPoint}>•</Text>
+                            <HighlightedText
+                              text={bullet}
+                              matched={matchedKeywords}
+                              missing={missingKeywords}
+                              showHighlights={showHighlights}
+                              style={styles.bulletText}
+                            />
+                          </View>
+                        ))}
+                      </View>
+                    </View>
+                  ))}
+                </View>
+              );
+            case "skills":
+              return (
+                <View key="skills" wrap={false}>
+                  <Text style={styles.sectionTitle}>TECHNICAL SKILLS</Text>
+                  <View style={styles.sectionDivider} />
+                  <View style={styles.skillsContainer}>
+                    {resume.technical_skills.languages.length > 0 && (
+                      <View style={styles.skillCategory}>
+                        <Text style={styles.skillLabel}>Languages:</Text>
+                        <HighlightedText
+                          text={resume.technical_skills.languages.join(", ")}
+                          matched={matchedKeywords}
+                          missing={missingKeywords}
+                          showHighlights={showHighlights}
+                          style={styles.skillList}
+                        />
+                      </View>
+                    )}
+                    {resume.technical_skills.frameworks.length > 0 && (
+                      <View style={styles.skillCategory}>
+                        <Text style={styles.skillLabel}>Frameworks & Libraries:</Text>
+                        <HighlightedText
+                          text={resume.technical_skills.frameworks.join(", ")}
+                          matched={matchedKeywords}
+                          missing={missingKeywords}
+                          showHighlights={showHighlights}
+                          style={styles.skillList}
+                        />
+                      </View>
+                    )}
+                    {resume.technical_skills.databases.length > 0 && (
+                      <View style={styles.skillCategory}>
+                        <Text style={styles.skillLabel}>Databases:</Text>
+                        <HighlightedText
+                          text={resume.technical_skills.databases.join(", ")}
+                          matched={matchedKeywords}
+                          missing={missingKeywords}
+                          showHighlights={showHighlights}
+                          style={styles.skillList}
+                        />
+                      </View>
+                    )}
+                    {resume.technical_skills.cloud_services.length > 0 && (
+                      <View style={styles.skillCategory}>
+                        <Text style={styles.skillLabel}>Cloud Services:</Text>
+                        <HighlightedText
+                          text={resume.technical_skills.cloud_services.join(", ")}
+                          matched={matchedKeywords}
+                          missing={missingKeywords}
+                          showHighlights={showHighlights}
+                          style={styles.skillList}
+                        />
+                      </View>
+                    )}
+                    {resume.technical_skills.developer_tools.length > 0 && (
+                      <View style={styles.skillCategory}>
+                        <Text style={styles.skillLabel}>Developer Tools:</Text>
+                        <HighlightedText
+                          text={resume.technical_skills.developer_tools.join(", ")}
+                          matched={matchedKeywords}
+                          missing={missingKeywords}
+                          showHighlights={showHighlights}
+                          style={styles.skillList}
+                        />
+                      </View>
+                    )}
+                    {resume.technical_skills.miscellaneous && resume.technical_skills.miscellaneous.length > 0 && (
+                      <View style={styles.skillCategory}>
+                        <Text style={styles.skillLabel}>Miscellaneous:</Text>
+                        <HighlightedText
+                          text={resume.technical_skills.miscellaneous.join(", ")}
+                          matched={matchedKeywords}
+                          missing={missingKeywords}
+                          showHighlights={showHighlights}
+                          style={styles.skillList}
+                        />
+                      </View>
+                    )}
+                  </View>
+                </View>
+              );
+            case "certifications":
+              const items = [
+                ...(resume.certifications_and_achievements ?? []),
+                ...(resume.certifications ?? []),
+                ...(resume.achievements ?? []),
+              ];
+              const unique = [...new Set(items)];
+              if (unique.length === 0) return null;
+              return (
+                <View key="certifications" wrap={false}>
+                  <Text style={styles.sectionTitle}>CERTIFICATIONS & ACHIEVEMENTS</Text>
+                  <View style={styles.sectionDivider} />
+                  <View style={styles.skillsContainer}>
+                    {unique.map((item, idx) => (
+                      <View key={idx} style={styles.achievementItem}>
+                        <Text style={styles.bulletPoint}>•</Text>
+                        <HighlightedText
+                          text={item}
+                          matched={matchedKeywords}
+                          missing={missingKeywords}
+                          showHighlights={showHighlights}
+                          style={styles.bulletText}
+                        />
+                      </View>
+                    ))}
+                  </View>
+                </View>
+              );
+            default:
+              return null;
+          }
+        })}
       </Page>
     </Document>
   );
 }
+

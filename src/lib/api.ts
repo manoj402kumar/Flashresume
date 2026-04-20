@@ -167,6 +167,7 @@ export interface TemplateV1 {
     miscellaneous: string[];
   };
   changes: string[];
+  section_order?: string[];
   ats_score_before: number;
   ats_score_after: number;
   _model_used?: string;
