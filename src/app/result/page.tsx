@@ -30,6 +30,7 @@ import {
   getHighlightClass,
 } from "@/lib/highlighting";
 import ResumePDF from "@/components/ResumePDF";
+import ResumePDFTemplate2 from "@/components/ResumePDFTemplate2";
 import dynamic from "next/dynamic";
 
 const PDFViewer = dynamic(
@@ -152,6 +153,7 @@ export default function ResultPage() {
   const [downloadingPDF, setDownloadingPDF] = useState(false);
   const [missingKeywords, setMissingKeywords] = useState<string[]>([]);
   const [matchedKeywords, setMatchedKeywords] = useState<string[]>([]);
+  const [selectedTemplate, setSelectedTemplate] = useState<"template1" | "template2">("template1");
   // Native HTML5 drag state — simple, fires exactly once on drop
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [dragOverId, setDragOverId] = useState<string | null>(null);
@@ -249,36 +251,11 @@ export default function ResultPage() {
     if (!resume) return;
     setDownloadingPDF(true);
     try {
-      // Try LaTeX PDF generation first (better quality)
-      try {
-        const response = await fetch('http://localhost:8000/api/generate-pdf-latex', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            resume_data: resume,
-            filename: resume.heading.name.replace(/\s+/g, '_')
-          })
-        });
-        
-        if (response.ok) {
-          const blob = await response.blob();
-          const url = URL.createObjectURL(blob);
-          const link = document.createElement("a");
-          link.href = url;
-          link.download = `${resume.heading.name.replace(/\s+/g, "_")}_Resume.pdf`;
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-          URL.revokeObjectURL(url);
-          return;
-        }
-      } catch (latexError) {
-        console.log('LaTeX PDF generation failed, falling back to React-PDF:', latexError);
-      }
-      
-      // Fallback to React-PDF if LaTeX fails (ensure highlights are strictly DISABLED for downloaded PDF)
+      // Use React-PDF for high-quality, ATS-friendly frontend PDF generation
+      // Ensure highlights are strictly DISABLED for the downloaded PDF
+      const PDFComponent = selectedTemplate === "template1" ? ResumePDF : ResumePDFTemplate2;
       const blob = await pdf(
-        <ResumePDF 
+        <PDFComponent 
           resume={resume} 
           showHighlights={false} 
           matchedKeywords={[]} 
@@ -1511,37 +1488,66 @@ export default function ResultPage() {
 
         {/* Right Column (Live PDF Preview) */}
         <div className="w-full lg:w-[55%] h-[60vh] lg:h-full bg-surface-container-lowest relative flex flex-col">
-          {/* Floating Highlight Toggle */}
-          {(matchedKeywords.length > 0 || missingKeywords.length > 0) && (
-            <div className="absolute top-4 right-4 z-10 flex items-center gap-3 bg-surface/90 backdrop-blur-md px-4 py-2.5 rounded-2xl shadow-lg border border-primary/10">
-              <div className="flex items-center gap-3 font-medium text-xs text-on-surface-variant border-r border-primary/10 pr-3">
-                <span className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 bg-[#fef08a] rounded-sm border border-[#eab308]/30"></div> Matched</span>
-                <span className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 bg-[#bbf7d0] rounded-sm border border-[#22c55e]/30"></div> Added</span>
-              </div>
-              <label className="flex items-center gap-2 cursor-pointer group select-none">
-                <span className="text-xs font-semibold text-on-background group-hover:text-primary transition-colors">Highlights</span>
-                <div className="relative">
-                  <input 
-                    type="checkbox" 
-                    className="sr-only" 
-                    checked={showHighlights}
-                    onChange={(e) => setShowHighlights(e.target.checked)}
-                  />
-                  <div className={`block w-8 h-4 rounded-full transition-colors duration-300 shadow-inner ${showHighlights ? 'bg-primary' : 'bg-surface-container-high'}`}></div>
-                  <div className={`absolute left-0.5 top-0.5 bg-white w-3 h-3 rounded-full transition-transform duration-300 shadow-sm ${showHighlights ? 'transform translate-x-4' : ''}`}></div>
+          {/* Floating Controls Row */}
+          <div className="absolute top-4 right-4 z-10 flex items-center gap-3">
+             {/* Template Selector */}
+             <div className="flex bg-surface/90 backdrop-blur-md rounded-2xl shadow-lg border border-primary/10 overflow-hidden">
+                <button 
+                  onClick={() => setSelectedTemplate("template1")}
+                  className={`px-3 py-2 text-xs font-semibold transition-colors ${selectedTemplate === "template1" ? "bg-primary text-white" : "text-on-surface-variant hover:bg-surface-container"}`}
+                >
+                  Template 1
+                </button>
+                <div className="w-[1px] bg-primary/10"></div>
+                <button 
+                  onClick={() => setSelectedTemplate("template2")}
+                  className={`px-3 py-2 text-xs font-semibold transition-colors ${selectedTemplate === "template2" ? "bg-primary text-white" : "text-on-surface-variant hover:bg-surface-container"}`}
+                >
+                  Template 2
+                </button>
+             </div>
+
+             {/* Highlight Toggle */}
+            {(matchedKeywords.length > 0 || missingKeywords.length > 0) && (
+              <div className="flex items-center gap-3 bg-surface/90 backdrop-blur-md px-4 py-2.5 rounded-2xl shadow-lg border border-primary/10">
+                <div className="flex items-center gap-3 font-medium text-xs text-on-surface-variant border-r border-primary/10 pr-3">
+                  <span className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 bg-[#fef08a] rounded-sm border border-[#eab308]/30"></div> Matched</span>
+                  <span className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 bg-[#bbf7d0] rounded-sm border border-[#22c55e]/30"></div> Added</span>
                 </div>
-              </label>
-            </div>
-          )}
+                <label className="flex items-center gap-2 cursor-pointer group select-none">
+                  <span className="text-xs font-semibold text-on-background group-hover:text-primary transition-colors">Highlights</span>
+                  <div className="relative">
+                    <input 
+                      type="checkbox" 
+                      className="sr-only" 
+                      checked={showHighlights}
+                      onChange={(e) => setShowHighlights(e.target.checked)}
+                    />
+                    <div className={`block w-8 h-4 rounded-full transition-colors duration-300 shadow-inner ${showHighlights ? 'bg-primary' : 'bg-surface-container-high'}`}></div>
+                    <div className={`absolute left-0.5 top-0.5 bg-white w-3 h-3 rounded-full transition-transform duration-300 shadow-sm ${showHighlights ? 'transform translate-x-4' : ''}`}></div>
+                  </div>
+                </label>
+              </div>
+            )}
+          </div>
           
           <div className="flex-1 w-full bg-surface-container-lowest">
-            <PDFViewer key={showHighlights ? "highlight-on" : "highlight-off"} width="100%" height="100%" className="border-none" showToolbar={true}>
-              <ResumePDF 
-                resume={resume} 
-                showHighlights={showHighlights}
-                matchedKeywords={matchedKeywords}
-                missingKeywords={missingKeywords}
-              />
+            <PDFViewer key={`${selectedTemplate}-${showHighlights ? "on" : "off"}`} width="100%" height="100%" className="border-none" showToolbar={true}>
+              {selectedTemplate === "template1" ? (
+                <ResumePDF 
+                  resume={resume} 
+                  showHighlights={showHighlights}
+                  matchedKeywords={matchedKeywords}
+                  missingKeywords={missingKeywords}
+                />
+              ) : (
+                <ResumePDFTemplate2 
+                  resume={resume} 
+                  showHighlights={showHighlights}
+                  matchedKeywords={matchedKeywords}
+                  missingKeywords={missingKeywords}
+                />
+              )}
             </PDFViewer>
           </div>
         </div>

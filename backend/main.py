@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
-from routers import parse, analyze, generate, latex_pdf
+from routers import parse, analyze, generate
 
 load_dotenv()
 
@@ -23,7 +23,6 @@ app.add_middleware(
 app.include_router(parse.router, prefix="/api")
 app.include_router(analyze.router, prefix="/api")
 app.include_router(generate.router, prefix="/api")
-app.include_router(latex_pdf.router)  # LaTeX PDF generation
 
 @app.get("/")
 def root():

@@ -36,14 +36,14 @@ Step 3.5: Work Experience (includes Internships for Freshers)
 - DO NOT alter the user's authentic job title. If RESUME_TEXT has "Software Engineer", keep it exactly as "Software Engineer".
 - Keep ALL bullet points from RESUME_TEXT.
 - PRESERVE strong bullets from RESUME_TEXT verbatim.
-- ENHANCE weak bullets with better sentence framing, better words choice if required following resume writing principles without changing any meaning, data of original bullet points from resume_text and never invent non existing data.
+- ENHANCE weak bullets with better sentence framing, better words choice if required following resume writing principles without changing any meaning, data of original bullet points from resume_text and never invent non existing data or feature.
 
 Step 4: Projects
 - ALWAYS set "link": "Link" as default value for all projects.
 - ONLY include projects that EXIST in RESUME_TEXT.
 - Keep ALL bullet points from RESUME_TEXT.
 - If bullets from RESUME_TEXT are already strong, keep them as-is.
-- ENHANCE weak bullets with better sentence framing, better words choice if required following resume writing principles without changing any meaning, data of original bullet points from resume_text and never invent non existing data.
+- ENHANCE weak bullets with better sentence framing, better words choice if required following resume writing principles without changing any meaning, data of original bullet points from resume_text and never invent non existing data or feature.
 
 Step 5: Skills Optimization (STRICT PRESERVATION)
 Extract and categorize ALL skills ONLY from the dedicated "Skills" section of almost at the bottom of RESUME_TEXT.

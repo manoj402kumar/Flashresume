@@ -4,38 +4,48 @@ import {
   Text,
   View,
   StyleSheet,
-  Font,
   Link,
+  Font,
 } from "@react-pdf/renderer";
 import type { TemplateV1 } from "@/lib/api";
 
-// Using built-in standard 14 PostScript font (Times-Roman) for 100% reliability and ATS compatibility.
-// This natively maps to Times New Roman without embedding external TTF files, guaranteeing perfect text extraction.
+Font.register({
+  family: "Computer Modern",
+  fonts: [
+    { src: "/fonts/cmu-serif-500-roman.ttf" },
+    { src: "/fonts/cmu-serif-700-roman.ttf", fontWeight: "bold" },
+    { src: "/fonts/cmu-serif-500-italic.ttf", fontStyle: "italic" },
+    { src: "/fonts/cmu-serif-700-italic.ttf", fontWeight: "bold", fontStyle: "italic" }
+  ]
+});
 
-// FlashResume Template v1 Styles
+// Template 3: Strict 1:1 mapping of Jake Gutierrez's raw LaTeX code.
+// Base font: 11pt. Small size: 10pt.
+// Margins: 0.5in all around.
+
 const styles = StyleSheet.create({
   page: {
-    padding: "0.75in",
+    padding: "0.5in",
     fontSize: 11,
-    fontFamily: "Times-Roman",
-    lineHeight: 1.15,
+    fontFamily: "Computer Modern",
+    lineHeight: 1.2,
     color: "#000000",
   },
   // Heading Section
   heading: {
-    marginBottom: 0,
+    marginBottom: 8,
     textAlign: "center",
   },
   name: {
-    fontSize: 18,
-    fontWeight: "bold",
-    marginBottom: 6,
-    letterSpacing: 0.5,
+    fontSize: 24, // \Huge at 11pt base
+    textTransform: "uppercase", 
+    fontWeight: "bold", // \textbf
+    marginBottom: 2,
+    letterSpacing: 1, // Mimic \scshape (small caps) visually
   },
   contactInfo: {
-    fontSize: 9.5,
+    fontSize: 10, // \small
     color: "#000",
-    marginBottom: 0,
   },
   link: {
     color: "#000",
@@ -43,109 +53,82 @@ const styles = StyleSheet.create({
   },
   // Section Headers
   sectionTitle: {
-    fontSize: 12,
-    fontWeight: "bold",
-    marginTop: 10,
-    marginBottom: 5,
+    fontSize: 12, // \large at 11pt base
     textTransform: "uppercase",
-    letterSpacing: 0.5,
+    letterSpacing: 1, // Mimic \scshape
+    marginTop: 8,
+    marginBottom: 3,
   },
   sectionDivider: {
-    borderBottom: "0.75pt solid #000",
+    borderBottom: "1pt solid #000", // \titlerule
     marginBottom: 6,
   },
   summaryText: {
-    fontSize: 10.5,
+    fontSize: 10,
     textAlign: "justify",
     marginBottom: 6,
   },
-  // Education
-  educationItem: {
-    marginBottom: 6,
-  },
-  institutionRow: {
+  // Common Row Layouts
+  row: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginBottom: 2,
+    alignItems: "flex-end",
   },
-  degree: {
-    fontSize: 10.5,
-    fontStyle: "italic",
+  // Item block (subheading)
+  itemBlock: {
+    marginBottom: 6, // \vspace{-7pt} simulation 
   },
-  institution: {
-    fontSize: 11,
+  // Text Styles
+  textBold: {
     fontWeight: "bold",
   },
-  duration: {
-    fontSize: 10.5,
+  textItalic: {
     fontStyle: "italic",
   },
-  location: {
-    fontSize: 10.5,
-    color: "#333",
+  textSmall: {
+    fontSize: 10,
   },
-  // Experience & Projects
-  experienceItem: {
-    marginBottom: 8,
+  textSmallItalic: {
+    fontSize: 10,
+    fontStyle: "italic",
   },
-  titleRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 1,
-  },
-  jobTitle: {
-    fontSize: 11,
-    fontWeight: "bold",
-  },
-  company: {
-    fontSize: 10.5,
-    marginBottom: 2,
-  },
+  // Bullets
   bullets: {
     marginTop: 2,
-    paddingLeft: 12,
+    paddingLeft: 12, // leftmargin=0.15in
   },
   bullet: {
-    fontSize: 10,
-    marginBottom: 1.5,
+    fontSize: 10, // \small
+    marginBottom: 1.5, // \vspace{-2pt}
     flexDirection: "row",
     alignItems: "flex-start",
   },
   bulletPoint: {
     width: 8,
     marginRight: 4,
+    fontSize: 8,
   },
   bulletText: {
     flex: 1,
     textAlign: "justify",
-    fontSize: 10.5,
+    fontSize: 10,
   },
   // Technical Skills
   skillsContainer: {
-    marginTop: 4,
+    paddingLeft: 12, // leftmargin=0.15in inside itemize
   },
-  skillCategory: {
-    marginBottom: 3,
+  skillCategoryRow: {
     flexDirection: "row",
+    marginBottom: 1.5,
   },
   skillLabel: {
-    fontSize: 10.5,
-    fontWeight: "bold",
-    width: 130,
-    flexShrink: 0,
+    fontSize: 10, // \small
+    fontWeight: "bold", // \textbf
   },
   skillList: {
-    fontSize: 10.5,
+    fontSize: 10, // \small
     flex: 1,
     textAlign: "justify",
-  },
-  // Achievements
-  achievementItem: {
-    fontSize: 10.5,
-    marginBottom: 2,
-    paddingLeft: 12,
-    flexDirection: "row",
-    alignItems: "flex-start",
   },
 });
 
@@ -220,25 +203,25 @@ function HighlightedText({ text, matched, missing, showHighlights, style }: { te
   );
 }
 
-export default function ResumePDF({ resume, showHighlights = false, matchedKeywords = [], missingKeywords = [] }: ResumePDFProps) {
+export default function ResumePDFTemplate2({ resume, showHighlights = false, matchedKeywords = [], missingKeywords = [] }: ResumePDFProps) {
   return (
     <Document>
-      <Page size="A4" style={styles.page}>
+      <Page size="LETTER" style={styles.page}>
         {/* HEADING */}
         <View style={styles.heading}>
-          <Text style={styles.name}>{resume.heading.name.toUpperCase()}</Text>
+          <Text style={styles.name}>{resume.heading.name}</Text>
           <Text style={styles.contactInfo}>
             {resume.heading.phone}
-            {" • "}
-            <Link src={`mailto:${resume.heading.email}`} style={styles.link}>
+            {" | "}
+            <Link src={`mailto:${resume.heading.email}`} style={{...styles.link, textDecoration: "underline"}}>
               {resume.heading.email}
             </Link>
-            {" • "}
-            <Link src={getValidUrl(resume.heading.linkedin_url, "linkedin.com/in/username")} style={styles.link}>
+            {" | "}
+            <Link src={getValidUrl(resume.heading.linkedin_url, "linkedin.com/in/username")} style={{...styles.link, textDecoration: "underline"}}>
               {cleanDisplayUrl(resume.heading.linkedin_url, "linkedin.com/in/username")}
             </Link>
-            {" • "}
-            <Link src={getValidUrl(resume.heading.github_url, "github.com/username")} style={styles.link}>
+            {" | "}
+            <Link src={getValidUrl(resume.heading.github_url, "github.com/username")} style={{...styles.link, textDecoration: "underline"}}>
               {cleanDisplayUrl(resume.heading.github_url, "github.com/username")}
             </Link>
           </Text>
@@ -251,7 +234,7 @@ export default function ResumePDF({ resume, showHighlights = false, matchedKeywo
               if (!resume.summary || resume.summary.trim() === "") return null;
               return (
                 <View key="summary" wrap={false}>
-                  <Text style={styles.sectionTitle}>SUMMARY</Text>
+                  <Text style={styles.sectionTitle}>Summary</Text>
                   <View style={styles.sectionDivider} />
                   <HighlightedText
                     text={resume.summary}
@@ -266,17 +249,18 @@ export default function ResumePDF({ resume, showHighlights = false, matchedKeywo
               if (!resume.education || resume.education.length === 0) return null;
               return (
                 <View key="education">
-                  <Text style={styles.sectionTitle}>EDUCATION</Text>
+                  <Text style={styles.sectionTitle}>Education</Text>
                   <View style={styles.sectionDivider} />
                   {resume.education.map((edu, idx) => (
-                    <View key={idx} style={styles.educationItem} wrap={false}>
-                      <View style={styles.institutionRow}>
-                        <Text style={styles.institution}>{edu.institution}</Text>
-                        <Text style={styles.location}>{edu.location}</Text>
+                    <View key={idx} style={styles.itemBlock} wrap={false}>
+                      {/* LaTeX: \textbf{#1} & #2 \\ \textit{\small#3} & \textit{\small #4} */}
+                      <View style={styles.row}>
+                        <Text style={styles.textBold}>{edu.institution}</Text>
+                        <Text>{edu.location}</Text>
                       </View>
-                      <View style={styles.titleRow}>
-                        <Text style={styles.degree}>{edu.degree}{edu.cgpa ? ` | CGPA: ${edu.cgpa}` : ""}</Text>
-                        <Text style={styles.duration}>{edu.duration}</Text>
+                      <View style={styles.row}>
+                        <Text style={styles.textSmallItalic}>{edu.degree}{edu.cgpa ? `, CGPA: ${edu.cgpa}` : ""}</Text>
+                        <Text style={styles.textSmallItalic}>{edu.duration}</Text>
                       </View>
                     </View>
                   ))}
@@ -286,17 +270,18 @@ export default function ResumePDF({ resume, showHighlights = false, matchedKeywo
               if (!resume.experience || resume.experience.length === 0) return null;
               return (
                 <View key="experience">
-                  <Text style={styles.sectionTitle}>EXPERIENCE</Text>
+                  <Text style={styles.sectionTitle}>Experience</Text>
                   <View style={styles.sectionDivider} />
                   {resume.experience.map((exp, idx) => (
-                    <View key={idx} style={styles.experienceItem} wrap={false}>
-                      <View style={styles.titleRow}>
-                        <Text style={styles.jobTitle}>{exp.job_title}</Text>
-                        <Text style={{ fontSize: 10.5 }}>{exp.duration}</Text>
+                    <View key={idx} style={styles.itemBlock} wrap={false}>
+                      {/* LaTeX: \textbf{#1} & #2 \\ \textit{\small#3} & \textit{\small #4} */}
+                      <View style={styles.row}>
+                        <Text style={styles.textBold}>{exp.job_title}</Text>
+                        <Text>{exp.duration}</Text>
                       </View>
-                      <View style={styles.titleRow}>
-                        <Text style={{ ...styles.company, fontStyle: "italic" }}>{exp.company}</Text>
-                        <Text style={{ ...styles.location, fontStyle: "italic" }}>{exp.location}</Text>
+                      <View style={styles.row}>
+                        <Text style={styles.textSmallItalic}>{exp.company}</Text>
+                        <Text style={styles.textSmallItalic}>{exp.location}</Text>
                       </View>
                       <View style={styles.bullets}>
                         {exp.bullets.map((bullet, bidx) => {
@@ -323,31 +308,30 @@ export default function ResumePDF({ resume, showHighlights = false, matchedKeywo
               if (!resume.projects || resume.projects.length === 0) return null;
               return (
                 <View key="projects">
-                  <Text style={styles.sectionTitle}>PROJECTS</Text>
+                  <Text style={styles.sectionTitle}>Projects</Text>
                   <View style={styles.sectionDivider} />
                   {resume.projects.map((proj, idx) => (
-                    <View key={idx} style={styles.experienceItem} wrap={false}>
-                      <View style={styles.titleRow}>
-                        <View style={{ flexDirection: "row" }}>
-                          <Text style={styles.jobTitle}>{proj.title}</Text>
+                    <View key={idx} style={styles.itemBlock} wrap={false}>
+                      {/* LaTeX: \small{\textbf{#1} | \emph{#2}} & #3 */}
+                      <View style={styles.row}>
+                        <View style={{ flexDirection: "row", alignItems: "baseline" }}>
+                          <Text style={{ ...styles.textSmall, ...styles.textBold }}>{proj.title}</Text>
                           {proj.tech_stack ? (
-                            <Text style={{ fontSize: 10.5, fontStyle: "italic" }}>
-                              <Text style={{ fontWeight: "normal", fontStyle: "normal" }}> | </Text>
-                              {proj.tech_stack}
+                            <Text style={styles.textSmall}>
+                              <Text> | </Text>
+                              <Text style={styles.textItalic}>{proj.tech_stack}</Text>
+                            </Text>
+                          ) : null}
+                          {(proj.link || proj.link_href) ? (
+                            <Text style={styles.textSmall}>
+                              <Text> | </Text>
+                              <Link src={getValidUrl(proj.link_href || proj.link, "")} style={{ ...styles.link, textDecoration: "underline" }}>
+                                {proj.link || "Link"}
+                              </Link>
                             </Text>
                           ) : null}
                         </View>
-                        <View style={{ flexDirection: "row" }}>
-                          <Text style={styles.duration}>{proj.duration}</Text>
-                          {(proj.link || proj.link_href) ? (
-                            <>
-                              <Text style={{ fontSize: 10.5, marginHorizontal: 4 }}> | </Text>
-                              <Link src={getValidUrl(proj.link_href || proj.link, "github.com/reponame")} style={{ ...styles.link, textDecoration: "underline", fontSize: 10.5 }}>
-                                {proj.link || "Link"}
-                              </Link>
-                            </>
-                          ) : null}
-                        </View>
+                        <Text>{proj.duration}</Text>
                       </View>
                       <View style={styles.bullets}>
                         {proj.bullets.map((bullet, bidx) => {
@@ -373,79 +357,47 @@ export default function ResumePDF({ resume, showHighlights = false, matchedKeywo
             case "skills":
               return (
                 <View key="skills" wrap={false}>
-                  <Text style={styles.sectionTitle}>TECHNICAL SKILLS</Text>
+                  <Text style={styles.sectionTitle}>Technical Skills</Text>
                   <View style={styles.sectionDivider} />
                   <View style={styles.skillsContainer}>
                     {resume.technical_skills.languages.length > 0 && (
-                      <View style={styles.skillCategory}>
-                        <Text style={styles.skillLabel}>Languages:</Text>
-                        <HighlightedText
-                          text={resume.technical_skills.languages.join(", ")}
-                          matched={matchedKeywords}
-                          missing={missingKeywords}
-                          showHighlights={showHighlights}
-                          style={styles.skillList}
-                        />
+                      <View style={styles.skillCategoryRow}>
+                        <Text style={styles.skillLabel}>Languages</Text>
+                        <Text style={styles.skillList}>
+                          {`: ${resume.technical_skills.languages.join(", ")}`}
+                        </Text>
                       </View>
                     )}
                     {resume.technical_skills.frameworks.length > 0 && (
-                      <View style={styles.skillCategory}>
-                        <Text style={styles.skillLabel}>Frameworks & Libraries:</Text>
-                        <HighlightedText
-                          text={resume.technical_skills.frameworks.join(", ")}
-                          matched={matchedKeywords}
-                          missing={missingKeywords}
-                          showHighlights={showHighlights}
-                          style={styles.skillList}
-                        />
-                      </View>
-                    )}
-                    {resume.technical_skills.databases.length > 0 && (
-                      <View style={styles.skillCategory}>
-                        <Text style={styles.skillLabel}>Databases:</Text>
-                        <HighlightedText
-                          text={resume.technical_skills.databases.join(", ")}
-                          matched={matchedKeywords}
-                          missing={missingKeywords}
-                          showHighlights={showHighlights}
-                          style={styles.skillList}
-                        />
-                      </View>
-                    )}
-                    {resume.technical_skills.cloud_services.length > 0 && (
-                      <View style={styles.skillCategory}>
-                        <Text style={styles.skillLabel}>Cloud Services:</Text>
-                        <HighlightedText
-                          text={resume.technical_skills.cloud_services.join(", ")}
-                          matched={matchedKeywords}
-                          missing={missingKeywords}
-                          showHighlights={showHighlights}
-                          style={styles.skillList}
-                        />
+                      <View style={styles.skillCategoryRow}>
+                        <Text style={styles.skillLabel}>Frameworks</Text>
+                        <Text style={styles.skillList}>
+                          {`: ${resume.technical_skills.frameworks.join(", ")}`}
+                        </Text>
                       </View>
                     )}
                     {resume.technical_skills.developer_tools.length > 0 && (
-                      <View style={styles.skillCategory}>
-                        <Text style={styles.skillLabel}>Developer Tools:</Text>
-                        <HighlightedText
-                          text={resume.technical_skills.developer_tools.join(", ")}
-                          matched={matchedKeywords}
-                          missing={missingKeywords}
-                          showHighlights={showHighlights}
-                          style={styles.skillList}
-                        />
+                      <View style={styles.skillCategoryRow}>
+                        <Text style={styles.skillLabel}>Developer Tools</Text>
+                        <Text style={styles.skillList}>
+                          {`: ${resume.technical_skills.developer_tools.join(", ")}`}
+                        </Text>
                       </View>
                     )}
-                    {resume.technical_skills.miscellaneous && resume.technical_skills.miscellaneous.length > 0 && (
-                      <View style={styles.skillCategory}>
-                        <Text style={styles.skillLabel}>Miscellaneous:</Text>
-                        <HighlightedText
-                          text={resume.technical_skills.miscellaneous.join(", ")}
-                          matched={matchedKeywords}
-                          missing={missingKeywords}
-                          showHighlights={showHighlights}
-                          style={styles.skillList}
-                        />
+                    {resume.technical_skills.databases.length > 0 && (
+                      <View style={styles.skillCategoryRow}>
+                        <Text style={styles.skillLabel}>Databases</Text>
+                        <Text style={styles.skillList}>
+                          {`: ${resume.technical_skills.databases.join(", ")}`}
+                        </Text>
+                      </View>
+                    )}
+                    {resume.technical_skills.cloud_services.length > 0 && (
+                      <View style={styles.skillCategoryRow}>
+                        <Text style={styles.skillLabel}>Cloud Services</Text>
+                        <Text style={styles.skillList}>
+                          {`: ${resume.technical_skills.cloud_services.join(", ")}`}
+                        </Text>
                       </View>
                     )}
                   </View>
@@ -461,11 +413,11 @@ export default function ResumePDF({ resume, showHighlights = false, matchedKeywo
               if (unique.length === 0) return null;
               return (
                 <View key="certifications" wrap={false}>
-                  <Text style={styles.sectionTitle}>CERTIFICATIONS & ACHIEVEMENTS</Text>
+                  <Text style={styles.sectionTitle}>Certifications & Achievements</Text>
                   <View style={styles.sectionDivider} />
                   <View style={styles.skillsContainer}>
                     {unique.map((item, idx) => (
-                      <View key={idx} style={styles.achievementItem}>
+                      <View key={idx} style={styles.bullet}>
                         <Text style={styles.bulletPoint}>•</Text>
                         <HighlightedText
                           text={item}
@@ -487,4 +439,3 @@ export default function ResumePDF({ resume, showHighlights = false, matchedKeywo
     </Document>
   );
 }
-
