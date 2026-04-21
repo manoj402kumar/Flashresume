@@ -329,24 +329,26 @@ export default function ResumePDF({ resume, showHighlights = false, matchedKeywo
                     <View key={idx} style={styles.experienceItem} wrap={false}>
                       <View style={styles.titleRow}>
                         <View style={{ flexDirection: "row" }}>
-                          <Text style={styles.jobTitle}>{proj.title}</Text>
-                          {proj.tech_stack ? (
-                            <Text style={{ fontSize: 10.5, fontStyle: "italic" }}>
-                              <Text style={{ fontWeight: "normal", fontStyle: "normal" }}> | </Text>
-                              {proj.tech_stack}
-                            </Text>
-                          ) : null}
+                          <Text style={styles.jobTitle}>
+                            {proj.title}
+                            {proj.tech_stack ? (
+                              <Text style={{ fontSize: 10.5, fontStyle: "italic", fontWeight: "normal" }}>
+                                {" | "}
+                                {proj.tech_stack}
+                              </Text>
+                            ) : null}
+                          </Text>
                         </View>
-                        <View style={{ flexDirection: "row" }}>
-                          <Text style={styles.duration}>{proj.duration}</Text>
+                        <View style={{ flexDirection: "row", alignItems: "baseline" }}>
                           {(proj.link || proj.link_href) ? (
-                            <>
-                              <Text style={{ fontSize: 10.5, marginHorizontal: 4 }}> | </Text>
-                              <Link src={getValidUrl(proj.link_href || proj.link, "github.com/reponame")} style={{ ...styles.link, textDecoration: "underline", fontSize: 10.5 }}>
+                            <Text style={{ fontSize: 10.5 }}>
+                              <Link src={getValidUrl(proj.link_href || proj.link, "")} style={{ ...styles.link, textDecoration: "underline", fontSize: 10.5 }}>
                                 {proj.link || "Link"}
                               </Link>
-                            </>
+                              {proj.duration ? <Text>  •  </Text> : null}
+                            </Text>
                           ) : null}
+                          {proj.duration ? <Text style={{ fontSize: 10.5 }}>{proj.duration}</Text> : null}
                         </View>
                       </View>
                       <View style={styles.bullets}>

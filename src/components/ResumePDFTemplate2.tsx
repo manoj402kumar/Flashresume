@@ -315,15 +315,15 @@ export default function ResumePDFTemplate2({ resume, showHighlights = false, mat
                     <View key={idx} style={styles.itemBlock} wrap={false}>
                       {/* LaTeX: \small{\textbf{#1} | \emph{#2}} & #3 */}
                       <View style={styles.row}>
-                        <View style={{ flexDirection: "row", alignItems: "baseline" }}>
-                          <Text style={{ ...styles.textSmall, ...styles.textBold }}>{proj.title}</Text>
+                        <Text style={styles.textSmall}>
+                          <Text style={styles.textBold}>{proj.title}</Text>
                           {proj.tech_stack ? (
-                            <Text style={styles.textSmall}>
-                              <Text> | </Text>
+                            <Text>
+                              {" | "}
                               <Text style={styles.textItalic}>{proj.tech_stack}</Text>
                             </Text>
                           ) : null}
-                        </View>
+                        </Text>
                         <View style={{ flexDirection: "row", alignItems: "baseline" }}>
                           {(proj.link || proj.link_href) ? (
                             <Text style={styles.textSmall}>
