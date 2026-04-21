@@ -3,7 +3,7 @@ You are optimizing a resume for ATS using the following algorithm:
 
 GOAL: 0% Noise, 100% Signal. Target 1 page resume. Improvise existing resume, NOT rewrite.
 OBJECTIVE: Pass ATS + User can handle actual interview with achievable, provable edits.
-TARGET USERS: B.Tech freshers (0-1 year experience)
+TARGET USERS: All experience levels — Freshers (0-1 year) to Mid/Senior professionals (3+ years)
 
 CORE PRINCIPLE: "If original description is good, keep it. Only enhance what needs enhancement."
 
@@ -45,11 +45,20 @@ REWRITE ONLY if summary has ANY of these issues:
 - First-person: "I am", "My goal is", "I want to"
 - No specific technologies mentioned
 - No alignment with JOB_DESCRIPTION
-- More than 2 lines
-- Mentions "fresher" or "entry-level"
+- More than 3 lines
+- Mentions "fresher" or "entry-level" (when candidate has actual work experience)
 
-Fresher Summary Format (if rewriting):
-"[Current Role] with strong foundation in [Core Tech Stack from RESUME_TEXT], demonstrated through [X projects/internships]"
+Use Step 0 result to determine the correct format:
+
+FRESHER Summary Format (if rewriting):
+"[Target Role] with a strong foundation in [Core Tech Stack from RESUME_TEXT], demonstrated through [X projects/internships]."
+
+EXPERIENCED Summary Format (if rewriting — Junior/Mid/Senior):
+"[Current/Target Role] with [X]+ years of experience in [Core Domain/Tech Stack from RESUME_TEXT]. [One sentence on key achievements, impact, or specialization backed strictly by RESUME_TEXT.]"
+- Highlight years of experience, seniority, domain expertise, and measurable impact.
+- DO NOT use fresher-style phrases like 'strong foundation', 'demonstrated through projects', or 'looking to contribute'.
+- Align with JOB_DESCRIPTION role and keywords.
+- Keep it 2-3 lines, professional, and achievement-oriented.
 
 Step 3: Education
 - Keep as-is, NO changes
@@ -329,7 +338,7 @@ Check 3 — NO FABRICATION CHECK:
 Only proceed to output JSON after passing all three checks.
 
 HEADING FIELD RULES (apply when filling the heading object below):
-- github_url: CRITICAL for freshers — include if 3+ repos or active contributions. Format: "github.com/username" (no https://). Omit if empty profile.
+- github_url: Include if present in RESUME_TEXT and profile has 3+ repos or active contributions. Format: "github.com/username" (no https://). Omit if empty profile.
 - portfolio_url: Optional — include only if deployed portfolio with live projects. Format: "portfolio.com" or "username.github.io". Omit if under construction.
 - linkedin_url: Format: "linkedin.com/in/username" (no https://).
 
@@ -344,7 +353,7 @@ OUTPUT FORMAT (Template v1):
     "github_url": "github.com/username",
     "portfolio_url": "portfolio.com"
   }},
-  "summary": "2-line impactful summary aligned with JOB_DESCRIPTION",
+  "summary": "Freshers: 2-line foundation-focused summary (strong foundation + projects/internships + JD alignment). Experienced: 2-3 line impact-driven summary (years of experience + domain expertise + key achievements from RESUME_TEXT, aligned with JOB_DESCRIPTION).",
   "education": [
     {{
       "institution": "University Name",

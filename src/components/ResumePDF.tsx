@@ -15,7 +15,9 @@ import type { TemplateV1 } from "@/lib/api";
 // FlashResume Template v1 Styles
 const styles = StyleSheet.create({
   page: {
-    padding: "0.75in",
+    paddingTop: "0.5in",
+    paddingBottom: "0.5in",
+    paddingHorizontal: "0.75in",
     fontSize: 11,
     fontFamily: "Times-Roman",
     lineHeight: 1.15,
