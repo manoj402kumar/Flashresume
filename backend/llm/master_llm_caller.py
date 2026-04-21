@@ -13,17 +13,18 @@ ENV_PREFERRED = os.getenv("PREFERRED_LLM", "gemini").lower()
 
 def call_llm(prompt: str, preferred_model: str = None) -> dict:
     """
-    Master LLM caller.
+    Master LLM caller with 4-provider fallback chain.
     preferred_model can be:
       - a provider name: "gemini", "mistral", "groq", or "cerebras"
       - a specific model ID: "mistral-large-latest", "gemini-2.5-flash", etc.
+    Provider order: Gemini -> Mistral -> Groq -> Cerebras (default)
     """
     all_attempts = []
     active_pref = (preferred_model or ENV_PREFERRED).lower()
 
     MISTRAL_PREFIXES   = ("mistral-", "open-mistral-", "ministral-", "codestral-", "pixtral-")
     GEMINI_PREFIXES    = ("gemini-", "gemma-")
-    GROQ_PREFIXES      = ("llama-", "llama3-", "llama3.", "mixtral-", "qwen-", "gemma2-", "deepseek-", "llama-4")
+    GROQ_PREFIXES      = ("llama-", "llama3-", "llama3.", "mixtral-", "qwen-", "gemma2-", "llama-4")
     CEREBRAS_PREFIXES  = ("llama-3.3-70b", "qwen-3-", "llama3.1-", "gpt-oss-")
 
     if any(active_pref.startswith(p) for p in MISTRAL_PREFIXES):
@@ -86,31 +87,4 @@ def call_llm(prompt: str, preferred_model: str = None) -> dict:
     }
 
 
-if __name__ == "__main__":
-    TEST_PROMPT = """
-You are an ATS resume analyzer.
-Return ONLY valid JSON with no extra text.
 
-RESUME: Python developer, 2 years experience, built REST APIs using FastAPI and PostgreSQL.
-JOB DESCRIPTION: Looking for a backend developer with Python, FastAPI, and database experience.
-
-{
-  "ats_score": 85,
-  "matched_skills": ["Python", "FastAPI", "PostgreSQL"],
-  "missing_skills": ["Docker"],
-  "verdict": "Good Match"
-}
-"""
-    chain_order = "mistral -> gemini" if ENV_PREFERRED == "mistral" else "gemini -> mistral"
-    print(f"Active preference: PREFERRED_LLM={ENV_PREFERRED.upper()}")
-    print(f"Chain: {chain_order}\n")
-
-    result = call_llm(TEST_PROMPT)
-    if result["success"]:
-        print(f"[PASS] Provider : {result['provider']}")
-        print(f"       Model    : {result['model']}")
-        print(f"       Speed    : {result['speed']}s")
-        print(f"       Response :\n{result['text']}")
-    else:
-        print("[FAIL] All providers exhausted")
-        print(f"       Attempts : {json.dumps(result['all_attempts'], indent=2)}")

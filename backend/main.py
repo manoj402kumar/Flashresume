@@ -1,3 +1,4 @@
+import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
@@ -7,19 +8,23 @@ load_dotenv()
 
 app = FastAPI(title="FlashResume API", version="1.0.0")
 
+ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+]
+
+FRONTEND_URL = os.getenv("FRONTEND_URL")
+if FRONTEND_URL:
+    ALLOWED_ORIGINS.append(FRONTEND_URL)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",          # local dev (Next.js default)
-        "http://127.0.0.1:3000",          # local dev (alternative)
-        "https://your-app.vercel.app"     # production frontend (update later)
-    ],
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"]
 )
 
-# Register routers
 app.include_router(parse.router, prefix="/api")
 app.include_router(analyze.router, prefix="/api")
 app.include_router(generate.router, prefix="/api")

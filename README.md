@@ -2,7 +2,7 @@
 
 **AI-powered resume optimization for B.Tech freshers**
 
-FlashResume helps students get shortlisted in ATS while ensuring they can confidently handle interviews. Built with Next.js 15 (frontend) and FastAPI (backend).
+FlashResume helps students get shortlisted in ATS while ensuring they can confidently handle interviews. Built with Next.js (frontend) and FastAPI (backend).
 
 ---
 
@@ -27,37 +27,38 @@ API runs on [http://localhost:8000](http://localhost:8000)
 
 ## 📚 Documentation
 
-- **[ALGORITHM_REFERENCE.md](./ALGORITHM_REFERENCE.md)** - Complete algorithm guide (Step 0 → Step 6)
-- **[ARCHITECTURE.md](./ARCHITECTURE.md)** - System architecture & data flow
-- **[CLEANUP_SUMMARY.md](./CLEANUP_SUMMARY.md)** - Recent cleanup & alignment details
+- **[ALGORITHM_REFERENCE.md](./ALGORITHM_REFERENCE.md)** — Complete algorithm guide (Step 0 → Step 6)
+- **[ARCHITECTURE.md](./ARCHITECTURE.md)** — System architecture & data flow
+- **[CLEANUP_SUMMARY.md](./CLEANUP_SUMMARY.md)** — Recent cleanup & alignment details
 
 ---
 
 ## 🎯 Core Features
 
 - **3-Layer PDF Parsing**: pdfplumber → PyMuPDF → Tesseract OCR
-- **2-Layer LLM Fallback**: Gemini → Qwen (99.9% success rate)
-- **Smart Optimization**: Preserves good content, enhances weak content
+- **4-Provider LLM Fallback**: Gemini → Mistral → Groq → Cerebras (99.9% uptime)
+- **Smart ATS Optimization**: Preserves good content, enhances weak content
 - **MAX 2 Projects**: Enforced at prompt + code + schema levels
 - **Authentic Metrics**: Only countable, technical, or measured metrics
-- **LaTeX PDF Generation**: Professional-quality output
+- **2 Resume Templates**: Choose your preferred layout before downloading
 
 ---
 
 ## 🏗️ Tech Stack
 
-**Frontend:**
-- Next.js 15 (App Router)
+### Frontend
+- Next.js 16 + React 19 (App Router)
 - TypeScript
-- Tailwind CSS
+- Tailwind CSS v4
 - Framer Motion
+- @react-pdf/renderer
 
-**Backend:**
-- FastAPI
-- Python 3.10+
-- Google Gemini API
-- OpenRouter (Qwen)
-- LaTeX (pdflatex)
+### Backend
+- FastAPI + Python 3.10+
+- Google Gemini API (`gemini-2.5-flash`)
+- Mistral AI (`mistral-medium-latest`)
+- Groq (`llama-3.3-70b-versatile`)
+- Cerebras (`llama-3.3-70b`)
 
 ---
 
@@ -66,7 +67,15 @@ API runs on [http://localhost:8000](http://localhost:8000)
 ### Backend `.env`
 ```bash
 GEMINI_API_KEY=your_gemini_key
-OPENROUTER_API_KEY=your_openrouter_key
+MISTRAL_API_KEY=your_mistral_key
+GROQ_API_KEY=your_groq_key
+CEREBRAS_API_KEY=your_cerebras_key
+
+# Optional: set preferred LLM provider
+PREFERRED_LLM=gemini
+
+# Set this when deploying frontend to Vercel
+FRONTEND_URL=https://your-app.vercel.app
 ```
 
 ### Frontend `.env.local`
@@ -78,11 +87,25 @@ NEXT_PUBLIC_API_URL=http://localhost:8000
 
 ## 🎨 User Flow
 
-1. **Upload** - Resume (PDF/DOCX/JPG/PNG) + Job Description
-2. **Analyze** - ATS score + matched/missing keywords
-3. **Preview** - See what AI will enhance
-4. **Generate** - AI optimizes resume (15-30s)
-5. **Result** - Download PDF or edit inline
+1. **Upload** — Resume (PDF/DOCX/JPG/PNG) + Job Description
+2. **Analyze** — ATS score + matched/missing keywords
+3. **Select Model** — Choose your preferred AI provider
+4. **Generate** — AI optimizes resume (15–30s)
+5. **Result** — Download PDF (Template 1 or Template 2)
+
+---
+
+## 🔁 LLM Fallback Chain
+
+```
+Request
+  └─► Gemini (gemini-2.5-flash → gemini-2.5-flash-lite → gemma-3-27b)
+        └─► Mistral (mistral-medium → mistral-large → open-mistral-nemo)
+              └─► Groq (llama-3.3-70b → llama-4-scout → qwen-qwq-32b → llama3-8b)
+                    └─► Cerebras (llama-3.3-70b → qwen-3-32b → llama3.1-8b)
+```
+
+Set `PREFERRED_LLM=mistral` (or any provider) in `.env` to change primary order.
 
 ---
 
@@ -91,7 +114,7 @@ NEXT_PUBLIC_API_URL=http://localhost:8000
 1. **Preservation First**: "If original is good, keep it. Only enhance what needs enhancement."
 2. **Authenticity**: Never invent jobs, degrees, or fake metrics
 3. **Interview-Ready**: All claims must be defensible in interviews
-4. **Fresher-Focused**: Optimized for B.Tech students (0-1 year experience)
+4. **Fresher-Focused**: Optimized for B.Tech students (0–1 year experience)
 5. **Quality > Quantity**: MAX 2 projects, target 1-page resume
 
 ---
@@ -105,11 +128,4 @@ NEXT_PUBLIC_API_URL=http://localhost:8000
 
 ## 📄 License
 
-MIT License - See LICENSE file for details
-
----
-
-## 🤝 Contributing
-
-Contributions welcome! Please read the algorithm documentation before making changes to ensure alignment with core principles.
-
+MIT License — See LICENSE file for details
