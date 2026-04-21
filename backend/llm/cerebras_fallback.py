@@ -7,8 +7,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 CEREBRAS_FALLBACK_CHAIN = [
-    "llama-3.3-70b",
-    "qwen-3-32b",
+    "qwen-3-235b",
     "llama3.1-8b",
 ]
 
@@ -78,26 +77,4 @@ def call_cerebras_with_model(prompt: str, preferred_model_id: str) -> dict:
     return _call_cerebras_chain(prompt, [preferred_model_id] + remaining)
 
 
-if __name__ == "__main__":
-    TEST_PROMPT = """
-You are an ATS resume analyzer.
-Return ONLY valid JSON with no extra text:
-{
-  "ats_score": 85,
-  "matched_skills": ["Python", "FastAPI"],
-  "missing_skills": ["Docker"],
-  "verdict": "Good Match"
-}
-"""
-    print("Testing Cerebras fallback chain...")
-    print(f"Chain: {' -> '.join(CEREBRAS_FALLBACK_CHAIN)}\n")
 
-    result = call_cerebras(TEST_PROMPT)
-
-    if result["success"]:
-        print(f"[PASS] Served by : {result['model']}")
-        print(f"       Speed     : {result['speed']}s")
-        print(f"       Response  :\n{result['text']}")
-    else:
-        print("[FAIL] All Cerebras models exhausted")
-        print(f"       Attempts  : {result['attempts']}")

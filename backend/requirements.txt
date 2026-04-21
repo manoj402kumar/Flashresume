@@ -9,6 +9,7 @@ pytesseract
 python-docx
 python-dotenv
 pydantic
+requests
 google-genai>=1.0.0
 mistralai>=1.0.0
 groq>=0.11.0

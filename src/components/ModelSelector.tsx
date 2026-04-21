@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
 
-export type ModelChoice = "gemini" | "mistral" | "groq" | "cerebras";
+export type ModelChoice = "gemini" | "mistral" | "groq" | "cerebras" | "cloudflare";
 
 export interface ModelSelection {
   provider: ModelChoice;
@@ -11,7 +11,7 @@ export interface ModelSelection {
 
 export const DEFAULT_MODEL_SELECTION: ModelSelection = {
   provider: "mistral",
-  model: "mistral-medium-latest",
+  model: "mistral-large-latest",
 };
 
 interface ModelSelectorProps {
@@ -23,15 +23,17 @@ interface ModelSelectorProps {
 const PROVIDER_MODELS = {
   gemini: {
     label: "Gemini",
-    badge: "Google",
+    badge: "Google AI",
     description: "Fast & reliable",
     activeBg: "bg-blue-500/10 border-blue-500/50",
     activeText: "text-blue-400",
     dot: "bg-blue-400",
     models: [
-      { id: "gemini-2.5-flash",                    label: "Gemini 2.5 Flash",      note: "Best quality" },
-      { id: "gemini-2.5-flash-lite-preview-06-17", label: "Gemini 2.5 Flash Lite", note: "Faster"       },
-      { id: "gemma-3-27b-it",                      label: "Gemma 3 27B",           note: "Fallback"     },
+      { id: "gemini-2.5-flash",              label: "Gemini 2.5 Flash",        note: "Best quality" },
+      { id: "gemini-3-flash-preview",        label: "Gemini 3 Flash Preview",  note: "Latest"       },
+      { id: "gemini-2.5-flash-lite",         label: "Gemini 2.5 Flash Lite",   note: "Faster"       },
+      { id: "gemini-3.1-flash-lite-preview", label: "Gemini 3.1 Flash Lite",   note: "Lightest"     },
+      { id: "gemma-3-27b-it",                label: "Gemma 3 27B",             note: "Open source"  },
     ],
     default: "gemini-2.5-flash",
   },
@@ -45,9 +47,12 @@ const PROVIDER_MODELS = {
     models: [
       { id: "mistral-large-latest",  label: "Mistral Large",  note: "Best quality" },
       { id: "mistral-medium-latest", label: "Mistral Medium", note: "Balanced"     },
-      { id: "open-mistral-nemo",     label: "Mistral Nemo",   note: "Fastest"      },
+      { id: "mistral-small-latest",  label: "Mistral Small",  note: "Lighter"      },
+      { id: "ministral-8b-latest",   label: "Ministral 8B",   note: "Fast"         },
+      { id: "open-mistral-nemo",     label: "Mistral Nemo",   note: "Open source"  },
+      { id: "mistral-tiny-latest",   label: "Mistral Tiny",   note: "Fastest"      },
     ],
-    default: "mistral-medium-latest",
+    default: "mistral-large-latest",
   },
   groq: {
     label: "Groq",
@@ -57,26 +62,40 @@ const PROVIDER_MODELS = {
     activeText: "text-red-400",
     dot: "bg-red-400",
     models: [
-      { id: "llama-3.3-70b-versatile",        label: "Llama 3.3 70B", note: "Best quality" },
-      { id: "llama-4-scout-17b-16e-instruct", label: "Llama 4 Scout", note: "Latest model" },
-      { id: "qwen-qwq-32b",                   label: "Qwen QwQ 32B",  note: "Strong JSON"  },
-      { id: "llama3-8b-8192",                 label: "Llama 3 8B",    note: "Fastest"      },
+      { id: "openai/gpt-oss-120b",     label: "GPT OSS 120B",      note: "Best quality" },
+      { id: "llama-3.3-70b-versatile", label: "Llama 3.3 70B",     note: "Reliable"     },
+      { id: "qwen/qwen3-32b",          label: "Qwen 3 32B",         note: "Strong JSON"  },
+      { id: "llama-4-scout-17b",       label: "Llama 4 Scout 17B", note: "Latest"       },
+      { id: "openai/gpt-oss-20b",      label: "GPT OSS 20B",       note: "Balanced"     },
+      { id: "llama-3.1-8b-instant",    label: "Llama 3.1 8B",      note: "Fastest"      },
     ],
-    default: "llama-3.3-70b-versatile",
+    default: "openai/gpt-oss-120b",
   },
   cerebras: {
     label: "Cerebras",
     badge: "Wafer Scale 🧠",
-    description: "1M tokens/day free",
+    description: "Ultra fast inference",
     activeBg: "bg-purple-500/10 border-purple-500/50",
     activeText: "text-purple-400",
     dot: "bg-purple-400",
     models: [
-      { id: "llama-3.3-70b", label: "Llama 3.3 70B", note: "Best quality" },
-      { id: "qwen-3-32b",    label: "Qwen 3 32B",    note: "Strong JSON"  },
-      { id: "llama3.1-8b",   label: "Llama 3.1 8B",  note: "Fastest"      },
+      { id: "qwen-3-235b", label: "Qwen 3 235B",  note: "Best quality" },
+      { id: "llama3.1-8b", label: "Llama 3.1 8B", note: "Fastest"      },
     ],
-    default: "llama-3.3-70b",
+    default: "qwen-3-235b",
+  },
+  cloudflare: {
+    label: "Cloudflare",
+    badge: "Edge AI ☁️",
+    description: "Global edge network",
+    activeBg: "bg-yellow-500/10 border-yellow-500/50",
+    activeText: "text-yellow-400",
+    dot: "bg-yellow-400",
+    models: [
+      { id: "llama-3.1-8b-instruct", label: "Llama 3.1 8B",       note: "Reliable" },
+      { id: "mistral-7b-instruct",   label: "Mistral 7B Instruct", note: "Balanced" },
+    ],
+    default: "llama-3.1-8b-instruct",
   },
 } as const;
 
@@ -104,7 +123,7 @@ export default function ModelSelector({ value, onChange, label }: ModelSelectorP
           {label}
         </label>
       )}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 relative">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3 relative">
         {(Object.keys(PROVIDER_MODELS) as ModelChoice[]).map((providerId) => {
           const provider = PROVIDER_MODELS[providerId];
           const isActive = value.provider === providerId;
@@ -117,8 +136,8 @@ export default function ModelSelector({ value, onChange, label }: ModelSelectorP
                 type="button"
                 onClick={() => handleProviderClick(providerId)}
                 className={`w-full flex-1 flex flex-col justify-center items-start text-left px-4 py-3 rounded-2xl transition-all duration-300 border focus:outline-none focus:ring-2 focus:ring-primary/30
-                  ${isActive 
-                    ? `bg-surface-container-lowest ${provider.activeText.replace('text-', 'border-')}/30 shadow-md transform scale-[1.02] ring-1 ring-inset ${provider.activeText.replace('text-', 'ring-')}/20 text-on-background` 
+                  ${isActive
+                    ? `bg-surface-container-lowest ${provider.activeText.replace('text-', 'border-')}/30 shadow-md transform scale-[1.02] ring-1 ring-inset ${provider.activeText.replace('text-', 'ring-')}/20 text-on-background`
                     : "bg-surface-container-low border-surface-container-high hover:bg-surface-container-low/80 text-on-surface-variant hover:border-on-surface-variant/20"}`}
               >
                 <div className="flex items-center justify-between w-full mb-1">
@@ -129,7 +148,7 @@ export default function ModelSelector({ value, onChange, label }: ModelSelectorP
                     <div className={`w-2 h-2 rounded-full ${provider.dot} animate-pulse shadow-sm`} />
                   )}
                 </div>
-                
+
                 <div className="text-[12px] opacity-80 truncate w-full mb-2">
                   {isActive && selectedModel ? selectedModel.label : provider.description}
                 </div>
@@ -141,7 +160,7 @@ export default function ModelSelector({ value, onChange, label }: ModelSelectorP
                   </span>
                   {isActive && (
                     <div className="flex items-center justify-center bg-surface-container-high rounded-full p-1">
-                       {isOpen ? <ChevronUp className={`w-3.5 h-3.5 ${provider.activeText}`} /> : <ChevronDown className={`w-3.5 h-3.5 ${provider.activeText}`} />}
+                      {isOpen ? <ChevronUp className={`w-3.5 h-3.5 ${provider.activeText}`} /> : <ChevronDown className={`w-3.5 h-3.5 ${provider.activeText}`} />}
                     </div>
                   )}
                 </div>

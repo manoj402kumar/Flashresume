@@ -7,10 +7,12 @@ from dotenv import load_dotenv
 load_dotenv()
 
 GROQ_FALLBACK_CHAIN = [
+    "openai/gpt-oss-120b",
     "llama-3.3-70b-versatile",
-    "llama-4-scout-17b-16e-instruct",
-    "qwen-qwq-32b",
-    "llama3-8b-8192",
+    "qwen/qwen3-32b",
+    "llama-4-scout-17b",
+    "openai/gpt-oss-20b",
+    "llama-3.1-8b-instant",
 ]
 
 client = Groq(api_key=os.getenv("GROQ_API_KEY"))
@@ -79,26 +81,4 @@ def call_groq_with_model(prompt: str, preferred_model_id: str) -> dict:
     return _call_groq_chain(prompt, [preferred_model_id] + remaining)
 
 
-if __name__ == "__main__":
-    TEST_PROMPT = """
-You are an ATS resume analyzer.
-Return ONLY valid JSON with no extra text:
-{
-  "ats_score": 85,
-  "matched_skills": ["Python", "FastAPI"],
-  "missing_skills": ["Docker"],
-  "verdict": "Good Match"
-}
-"""
-    print("Testing Groq fallback chain...")
-    print(f"Chain: {' -> '.join(GROQ_FALLBACK_CHAIN)}\n")
 
-    result = call_groq(TEST_PROMPT)
-
-    if result["success"]:
-        print(f"[PASS] Served by : {result['model']}")
-        print(f"       Speed     : {result['speed']}s")
-        print(f"       Response  :\n{result['text']}")
-    else:
-        print("[FAIL] All Groq models exhausted")
-        print(f"       Attempts  : {result['attempts']}")

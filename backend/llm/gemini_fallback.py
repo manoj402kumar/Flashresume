@@ -9,7 +9,9 @@ load_dotenv()
 
 FALLBACK_CHAIN = [
     "gemini-2.5-flash",
-    "gemini-2.5-flash-lite-preview-06-17",
+    "gemini-3-flash-preview",
+    "gemini-2.5-flash-lite",
+    "gemini-3.1-flash-lite-preview",
     "gemma-3-27b-it",
 ]
 
@@ -65,27 +67,4 @@ def call_gemini_with_model(prompt: str, preferred_model_id: str) -> dict:
     return _call_gemini_chain(prompt, [preferred_model_id] + remaining)
 
 
-if __name__ == "__main__":
-    TEST_PROMPT = """
-    You are an ATS resume analyzer.
-    Return ONLY valid JSON with no extra text:
-    {
-      "ats_score": 85,
-      "matched_skills": ["Python", "FastAPI"],
-      "missing_skills": ["Docker"],
-      "verdict": "Good Match"
-    }
-    """
 
-    print("Testing fallback chain...")
-    print(f"Chain: {' -> '.join(FALLBACK_CHAIN)}\n")
-
-    result = call_gemini(TEST_PROMPT)
-
-    if result["success"]:
-        print(f"[PASS] Served by : {result['model']}")
-        print(f"       Speed     : {result['speed']}s")
-        print(f"       Response  :\n{result['text']}")
-    else:
-        print("[FAIL] All models exhausted")
-        print(f"       Attempts  : {result['attempts']}")

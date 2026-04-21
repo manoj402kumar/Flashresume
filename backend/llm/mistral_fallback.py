@@ -7,9 +7,12 @@ from dotenv import load_dotenv
 load_dotenv()
 
 MISTRAL_FALLBACK_CHAIN = [
-    "mistral-medium-latest",   # Primary - most thorough, best keyword injection
-    "mistral-large-latest",    # Fallback 1 - best ATS improvement
-    "open-mistral-nemo",       # Fallback 2 - fast, decent quality
+    "mistral-large-latest",
+    "mistral-medium-latest",
+    "mistral-small-latest",
+    "ministral-8b-latest",
+    "open-mistral-nemo",
+    "mistral-tiny-latest",
 ]
 
 client = Mistral(api_key=os.getenv("MISTRAL_API_KEY"))
@@ -64,26 +67,4 @@ def call_mistral_with_model(prompt: str, preferred_model_id: str) -> dict:
     return _call_mistral_chain(prompt, [preferred_model_id] + remaining)
 
 
-if __name__ == "__main__":
-    TEST_PROMPT = """
-You are an ATS resume analyzer.
-Return ONLY valid JSON with no extra text:
-{
-  "ats_score": 85,
-  "matched_skills": ["Python", "FastAPI"],
-  "missing_skills": ["Docker"],
-  "verdict": "Good Match"
-}
-"""
-    print("Testing Mistral fallback chain...")
-    print(f"Chain: {' -> '.join(MISTRAL_FALLBACK_CHAIN)}\n")
 
-    result = call_mistral(TEST_PROMPT)
-
-    if result["success"]:
-        print(f"[PASS] Served by : {result['model']}")
-        print(f"       Speed     : {result['speed']}s")
-        print(f"       Response  :\n{result['text']}")
-    else:
-        print("[FAIL] All Mistral models exhausted")
-        print(f"       Attempts  : {result['attempts']}")
