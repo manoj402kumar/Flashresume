@@ -125,7 +125,7 @@ function EditableSkillTags({
 }
 
 // Sanitize LLM garbage values like "LinkedIn Profile", "GitHub Link", placeholder URLs
-const JUNK_PATTERNS = /^(linkedin profile|github link|linkedin|github|link|url|n\/a|none|your.*(url|link|profile|username))$/i;
+const JUNK_PATTERNS = /^(linkedin profile|github link|linkedin\.com\/in\/username|github\.com\/username|linkedin|github|link|url|n\/a|none|your.*(url|link|profile|username))$/i;
 function cleanDisplayUrl(val: string | undefined | null, fallback: string): string {
   if (!val || JUNK_PATTERNS.test(val.trim())) return fallback;
   return val.replace(/^https?:\/\//i, "");
@@ -195,7 +195,7 @@ export default function ResultPage() {
     }
     const parsed = JSON.parse(resumeData);
     // Sanitize junk LLM values on load so edit fields show clean defaults
-    parsed.heading.linkedin_url = cleanDisplayUrl(parsed.heading.linkedin_url, "linkedin.com/in/username");
+    parsed.heading.linkedin_url = cleanDisplayUrl(parsed.heading.linkedin_url, "linkedin");
     parsed.heading.github_url = cleanDisplayUrl(parsed.heading.github_url, "github.com/username");
     // Build hrefs from display text if not already set
     if (!parsed.heading.linkedin_url_href) {
@@ -253,7 +253,9 @@ export default function ResultPage() {
     try {
       // Use React-PDF for high-quality, ATS-friendly frontend PDF generation
       // Ensure highlights are strictly DISABLED for the downloaded PDF
-      const PDFComponent = selectedTemplate === "template1" ? ResumePDF : ResumePDFTemplate2;
+      const PDFComponent = selectedTemplate === "template1" 
+                           ? ResumePDF 
+                           : ResumePDFTemplate2;
       const blob = await pdf(
         <PDFComponent 
           resume={resume} 
@@ -547,10 +549,10 @@ export default function ResultPage() {
                     <p className="text-xs text-on-surface-variant font-semibold uppercase tracking-wide">LinkedIn</p>
                     <input
                       type="text"
-                      value={cleanDisplayUrl(resume.heading.linkedin_url, "linkedin.com/in/username")}
+                      value={cleanDisplayUrl(resume.heading.linkedin_url, "linkedin")}
                       onChange={(e) => updateResume({ heading: { ...resume.heading, linkedin_url: e.target.value } })}
                       className="w-full border-2 border-surface-container-high rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary transition-all"
-                      placeholder="linkedin.com/in/username"
+                      placeholder="linkedin"
                     />
                     <input
                       type="url"
@@ -596,7 +598,7 @@ export default function ResultPage() {
                           rel="noopener noreferrer"
                           className="text-primary hover:underline"
                         >
-                          {cleanDisplayUrl(resume.heading.linkedin_url, "linkedin.com/in/username")}
+                          {cleanDisplayUrl(resume.heading.linkedin_url, "linkedin")}
                         </a>
                       </p>
                       <p className="flex items-center gap-2">

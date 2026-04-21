@@ -149,7 +149,7 @@ const styles = StyleSheet.create({
   },
 });
 
-const JUNK_PATTERNS = /^(linkedin profile|github link|linkedin|github|link|url|n\/a|none|your.*(url|link|profile|username))$/i;
+const JUNK_PATTERNS = /^(linkedin profile|github link|linkedin\.com\/in\/username|github\.com\/username|linkedin|github|link|url|n\/a|none|your.*(url|link|profile|username))$/i;
 function cleanDisplayUrl(val: string | undefined | null, fallback: string): string {
   if (!val || JUNK_PATTERNS.test(val.trim())) return fallback;
   return val.replace(/^https?:\/\//i, "");
@@ -235,7 +235,7 @@ export default function ResumePDF({ resume, showHighlights = false, matchedKeywo
             </Link>
             {" • "}
             <Link src={getValidUrl(resume.heading.linkedin_url, "linkedin.com/in/username")} style={styles.link}>
-              {cleanDisplayUrl(resume.heading.linkedin_url, "linkedin.com/in/username")}
+              {cleanDisplayUrl(resume.heading.linkedin_url, "linkedin")}
             </Link>
             {" • "}
             <Link src={getValidUrl(resume.heading.github_url, "github.com/username")} style={styles.link}>

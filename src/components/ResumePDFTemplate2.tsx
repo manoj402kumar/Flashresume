@@ -25,7 +25,9 @@ Font.register({
 
 const styles = StyleSheet.create({
   page: {
-    padding: "0.5in",
+    paddingTop: "0.5in",
+    paddingBottom: "0.5in",
+    paddingHorizontal: "0.75in", // Increased left/right spacing to standard professional 0.75" width
     fontSize: 11,
     fontFamily: "Computer Modern",
     lineHeight: 1.2,
@@ -38,14 +40,14 @@ const styles = StyleSheet.create({
   },
   name: {
     fontSize: 24, // \Huge at 11pt base
-    textTransform: "uppercase", 
     fontWeight: "bold", // \textbf
-    marginBottom: 2,
-    letterSpacing: 1, // Mimic \scshape (small caps) visually
+    marginBottom: 0,
+    lineHeight: 1,
   },
   contactInfo: {
     fontSize: 10, // \small
     color: "#000",
+    marginTop: 4,
   },
   link: {
     color: "#000",
@@ -55,7 +57,6 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 12, // \large at 11pt base
     textTransform: "uppercase",
-    letterSpacing: 1, // Mimic \scshape
     marginTop: 8,
     marginBottom: 3,
   },
@@ -132,7 +133,7 @@ const styles = StyleSheet.create({
   },
 });
 
-const JUNK_PATTERNS = /^(linkedin profile|github link|linkedin|github|link|url|n\/a|none|your.*(url|link|profile|username))$/i;
+const JUNK_PATTERNS = /^(linkedin profile|github link|linkedin\.com\/in\/username|github\.com\/username|linkedin|github|link|url|n\/a|none|your.*(url|link|profile|username))$/i;
 function cleanDisplayUrl(val: string | undefined | null, fallback: string): string {
   if (!val || JUNK_PATTERNS.test(val.trim())) return fallback;
   return val.replace(/^https?:\/\//i, "");
@@ -206,22 +207,22 @@ function HighlightedText({ text, matched, missing, showHighlights, style }: { te
 export default function ResumePDFTemplate2({ resume, showHighlights = false, matchedKeywords = [], missingKeywords = [] }: ResumePDFProps) {
   return (
     <Document>
-      <Page size="LETTER" style={styles.page}>
+      <Page size={[612.28, 790.87]} style={styles.page}>
         {/* HEADING */}
         <View style={styles.heading}>
           <Text style={styles.name}>{resume.heading.name}</Text>
           <Text style={styles.contactInfo}>
             {resume.heading.phone}
             {" | "}
-            <Link src={`mailto:${resume.heading.email}`} style={{...styles.link, textDecoration: "underline"}}>
+            <Link src={`mailto:${resume.heading.email}`} style={{ ...styles.link, textDecoration: "underline" }}>
               {resume.heading.email}
             </Link>
             {" | "}
-            <Link src={getValidUrl(resume.heading.linkedin_url, "linkedin.com/in/username")} style={{...styles.link, textDecoration: "underline"}}>
-              {cleanDisplayUrl(resume.heading.linkedin_url, "linkedin.com/in/username")}
+            <Link src={getValidUrl(resume.heading.linkedin_url, "linkedin.com/in/username")} style={{ ...styles.link, textDecoration: "underline" }}>
+              {cleanDisplayUrl(resume.heading.linkedin_url, "linkedin")}
             </Link>
             {" | "}
-            <Link src={getValidUrl(resume.heading.github_url, "github.com/username")} style={{...styles.link, textDecoration: "underline"}}>
+            <Link src={getValidUrl(resume.heading.github_url, "github.com/username")} style={{ ...styles.link, textDecoration: "underline" }}>
               {cleanDisplayUrl(resume.heading.github_url, "github.com/username")}
             </Link>
           </Text>
@@ -322,16 +323,18 @@ export default function ResumePDFTemplate2({ resume, showHighlights = false, mat
                               <Text style={styles.textItalic}>{proj.tech_stack}</Text>
                             </Text>
                           ) : null}
+                        </View>
+                        <View style={{ flexDirection: "row", alignItems: "baseline" }}>
                           {(proj.link || proj.link_href) ? (
                             <Text style={styles.textSmall}>
-                              <Text> | </Text>
                               <Link src={getValidUrl(proj.link_href || proj.link, "")} style={{ ...styles.link, textDecoration: "underline" }}>
                                 {proj.link || "Link"}
                               </Link>
+                              {proj.duration ? <Text>  |  </Text> : null}
                             </Text>
                           ) : null}
+                          {proj.duration ? <Text>{proj.duration}</Text> : null}
                         </View>
-                        <Text>{proj.duration}</Text>
                       </View>
                       <View style={styles.bullets}>
                         {proj.bullets.map((bullet, bidx) => {
