@@ -16,7 +16,7 @@ GROQ_PREFIXES       = (
     "openai/gpt-oss-",
     "llama-3.3-",
     "llama-3.1-8b-instant",
-    "llama-4-scout-17b-16e-instruct",
+    "meta-llama/",
     "qwen/qwen3-",
 )
 CEREBRAS_EXACT      = {"qwen-3-235b-a22b", "llama3.1-8b"}

@@ -65,7 +65,7 @@ const PROVIDER_MODELS = {
       { id: "openai/gpt-oss-120b",     label: "GPT OSS 120B",      note: "Best quality" },
       { id: "llama-3.3-70b-versatile", label: "Llama 3.3 70B",     note: "Reliable"     },
       { id: "qwen/qwen3-32b",          label: "Qwen 3 32B",         note: "Strong JSON"  },
-      { id: "llama-4-scout-17b-16e-instruct", label: "Llama 4 Scout 17B", note: "Latest"       },
+      { id: "meta-llama/llama-4-scout-17b-16e-instruct", label: "Llama 4 Scout 17B", note: "Latest"       },
       { id: "openai/gpt-oss-20b",      label: "GPT OSS 20B",       note: "Balanced"     },
       { id: "llama-3.1-8b-instant",    label: "Llama 3.1 8B",      note: "Fastest"      },
     ],
@@ -82,7 +82,7 @@ const PROVIDER_MODELS = {
       { id: "qwen-3-235b-a22b", label: "Qwen 3 235B",  note: "Best quality" },
       { id: "llama3.1-8b", label: "Llama 3.1 8B", note: "Fastest"      },
     ],
-    default: "qwen-3-235b",
+    default: "qwen-3-235b-a22b",
   },
   cloudflare: {
     label: "Cloudflare",

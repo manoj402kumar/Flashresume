@@ -11,13 +11,13 @@ CLOUDFLARE_API_TOKEN  = os.getenv("CLOUDFLARE_API_TOKEN")
 
 CLOUDFLARE_FALLBACK_CHAIN = [
     "@cf/meta/llama-3.1-8b-instruct",
-    "@cf/mistral/mistral-7b-instruct-v0.2",
+    "@cf/mistral/mistral-7b-instruct-v0.1",
 ]
 
 MODEL_MAP = {
     "llama-3.1-8b-instruct":  "@cf/meta/llama-3.1-8b-instruct",
-    "cf-mistral-7b-instruct": "@cf/mistral/mistral-7b-instruct-v0.2",
-    "mistral-7b-instruct":    "@cf/mistral/mistral-7b-instruct-v0.2",
+    "cf-mistral-7b-instruct": "@cf/mistral/mistral-7b-instruct-v0.1",
+    "mistral-7b-instruct":    "@cf/mistral/mistral-7b-instruct-v0.1",
 }
 
 
