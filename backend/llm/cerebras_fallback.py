@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 CEREBRAS_FALLBACK_CHAIN = [
-    "qwen-3-235b-a22b",
+    "qwen-3-235b-a22b-instruct-2507",
     "llama3.1-8b",
 ]
 

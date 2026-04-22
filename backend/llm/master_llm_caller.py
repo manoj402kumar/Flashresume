@@ -19,7 +19,7 @@ GROQ_PREFIXES       = (
     "meta-llama/",
     "qwen/qwen3-",
 )
-CEREBRAS_EXACT      = {"qwen-3-235b-a22b", "llama3.1-8b"}
+CEREBRAS_EXACT      = {"qwen-3-235b-a22b-instruct-2507", "llama3.1-8b"}
 CLOUDFLARE_PREFIXES = ("llama-3.1-8b-instruct", "cf-mistral-7b-instruct")
 
 _DEFAULT_CHAIN = [

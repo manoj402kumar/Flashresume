@@ -79,10 +79,10 @@ const PROVIDER_MODELS = {
     activeText: "text-purple-400",
     dot: "bg-purple-400",
     models: [
-      { id: "qwen-3-235b-a22b", label: "Qwen 3 235B",  note: "Best quality" },
+      { id: "qwen-3-235b-a22b-instruct-2507", label: "Qwen 3 235B",  note: "Best quality" },
       { id: "llama3.1-8b", label: "Llama 3.1 8B", note: "Fastest"      },
     ],
-    default: "qwen-3-235b-a22b",
+    default: "qwen-3-235b-a22b-instruct-2507",
   },
   cloudflare: {
     label: "Cloudflare",
