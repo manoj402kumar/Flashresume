@@ -15,8 +15,9 @@ CLOUDFLARE_FALLBACK_CHAIN = [
 ]
 
 MODEL_MAP = {
-    "llama-3.1-8b-instruct": "@cf/meta/llama-3.1-8b-instruct",
-    "mistral-7b-instruct":   "@cf/mistral/mistral-7b-instruct-v0.2",
+    "llama-3.1-8b-instruct":  "@cf/meta/llama-3.1-8b-instruct",
+    "cf-mistral-7b-instruct": "@cf/mistral/mistral-7b-instruct-v0.2",
+    "mistral-7b-instruct":    "@cf/mistral/mistral-7b-instruct-v0.2",
 }
 
 

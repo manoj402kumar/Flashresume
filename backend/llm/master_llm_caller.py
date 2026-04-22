@@ -12,9 +12,15 @@ ENV_PREFERRED = os.getenv("PREFERRED_LLM", "gemini").lower()
 
 GEMINI_PREFIXES     = ("gemini-", "gemma-")
 MISTRAL_PREFIXES    = ("mistral-", "open-mistral-", "ministral-", "codestral-", "pixtral-")
-GROQ_PREFIXES       = ("llama-3.3-", "llama-3.1-8b-instant", "llama-4-", "openai/gpt-oss-", "qwen/qwen3-")
-CEREBRAS_EXACT      = {"qwen-3-235b", "llama3.1-8b"}
-CLOUDFLARE_PREFIXES = ("llama-3.1-8b-instruct", "mistral-7b-instruct")
+GROQ_PREFIXES       = (
+    "openai/gpt-oss-",
+    "llama-3.3-",
+    "llama-3.1-8b-instant",
+    "llama-4-scout-17b-16e-instruct",
+    "qwen/qwen3-",
+)
+CEREBRAS_EXACT      = {"qwen-3-235b-a22b", "llama3.1-8b"}
+CLOUDFLARE_PREFIXES = ("llama-3.1-8b-instruct", "cf-mistral-7b-instruct")
 
 _DEFAULT_CHAIN = [
     ("gemini",     call_gemini),

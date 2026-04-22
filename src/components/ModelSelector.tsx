@@ -65,7 +65,7 @@ const PROVIDER_MODELS = {
       { id: "openai/gpt-oss-120b",     label: "GPT OSS 120B",      note: "Best quality" },
       { id: "llama-3.3-70b-versatile", label: "Llama 3.3 70B",     note: "Reliable"     },
       { id: "qwen/qwen3-32b",          label: "Qwen 3 32B",         note: "Strong JSON"  },
-      { id: "llama-4-scout-17b",       label: "Llama 4 Scout 17B", note: "Latest"       },
+      { id: "llama-4-scout-17b-16e-instruct", label: "Llama 4 Scout 17B", note: "Latest"       },
       { id: "openai/gpt-oss-20b",      label: "GPT OSS 20B",       note: "Balanced"     },
       { id: "llama-3.1-8b-instant",    label: "Llama 3.1 8B",      note: "Fastest"      },
     ],
@@ -79,7 +79,7 @@ const PROVIDER_MODELS = {
     activeText: "text-purple-400",
     dot: "bg-purple-400",
     models: [
-      { id: "qwen-3-235b", label: "Qwen 3 235B",  note: "Best quality" },
+      { id: "qwen-3-235b-a22b", label: "Qwen 3 235B",  note: "Best quality" },
       { id: "llama3.1-8b", label: "Llama 3.1 8B", note: "Fastest"      },
     ],
     default: "qwen-3-235b",
@@ -93,7 +93,7 @@ const PROVIDER_MODELS = {
     dot: "bg-yellow-400",
     models: [
       { id: "llama-3.1-8b-instruct", label: "Llama 3.1 8B",       note: "Reliable" },
-      { id: "mistral-7b-instruct",   label: "Mistral 7B Instruct", note: "Balanced" },
+      { id: "cf-mistral-7b-instruct",   label: "Mistral 7B Instruct", note: "Balanced" },
     ],
     default: "llama-3.1-8b-instruct",
   },
