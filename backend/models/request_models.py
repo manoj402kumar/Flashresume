@@ -1,10 +1,9 @@
 from pydantic import BaseModel
-from typing import List, Optional
+from typing import List
 
 class AnalyzeRequest(BaseModel):
     resume_text: str
     job_description: str
-    preferred_model: Optional[str] = "mistral-medium-latest"
 
 class GenerateRequest(BaseModel):
     resume_text: str
@@ -13,4 +12,3 @@ class GenerateRequest(BaseModel):
     approved_project: str = ""
     missing_keywords: List[str] = []
     template_id: str = "v1"
-    preferred_model: Optional[str] = "mistral-medium-latest"

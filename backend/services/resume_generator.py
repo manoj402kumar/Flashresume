@@ -2,10 +2,10 @@ import json
 import re
 from prompts.generation_prompt import GENERATION_PROMPT
 from prompts.general_optimization_prompt import GENERAL_OPTIMIZATION_PROMPT
-from llm.master_llm_caller import call_llm
+from llm.master_llm_caller import call_llm_r2
 from templates.template_v1_schema import TemplateV1
 
-def generate_resume(resume_text: str, job_description: str, ats_score_before: int, approved_project: str = "", missing_keywords: list[str] = None, preferred_model: str = None) -> dict:
+def generate_resume(resume_text: str, job_description: str, ats_score_before: int, approved_project: str = "", missing_keywords: list[str] = None) -> dict:
     is_no_jd_mode = not job_description or not job_description.strip()
 
     # Build prompt with approved project ONLY if we are in JD optimization mode
@@ -31,7 +31,7 @@ def generate_resume(resume_text: str, job_description: str, ats_score_before: in
             missing_keywords=", ".join(missing_keywords) if missing_keywords else "None"
         )
 
-    result = call_llm(prompt, preferred_model=preferred_model)
+    result = call_llm_r2(prompt)
     
     # Check if LLM call failed
     if not result["success"]:

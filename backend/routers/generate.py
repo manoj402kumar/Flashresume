@@ -61,7 +61,6 @@ async def generate_resume_endpoint(request: GenerateRequest):
             request.ats_score_before,
             request.approved_project,
             missing_keywords=request.missing_keywords,
-            preferred_model=request.preferred_model
         )
     except ValueError as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -72,7 +71,7 @@ async def generate_resume_endpoint(request: GenerateRequest):
         # Convert structured dict → readable text before scoring
         generated_text = flatten_resume_to_text(generated)
         try:
-            after_analysis = score_resume(generated_text, request.job_description, preferred_model=request.preferred_model)
+            after_analysis = score_resume(generated_text, request.job_description)
             ats_after = after_analysis.get("ats_score", 0)
         except Exception:
             ats_after = 0   # Non-fatal — don't fail the whole request

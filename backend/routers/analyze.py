@@ -23,14 +23,12 @@ async def analyze_resume(request: AnalyzeRequest):
         ats_result = score_resume(
             request.resume_text,
             request.job_description,
-            preferred_model=request.preferred_model
         )
         
         # Step 2: Project Relevance Check
         project_result = check_project_relevance(
             request.resume_text,
             request.job_description,
-            preferred_model=request.preferred_model
         )
         
         # Combine both results into single response

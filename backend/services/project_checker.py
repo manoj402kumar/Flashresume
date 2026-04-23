@@ -1,7 +1,7 @@
 import json
 import re
 from prompts.project_prompt import PROJECT_CHECK_PROMPT
-from llm.master_llm_caller import call_llm
+from llm.master_llm_caller import call_llm_r1
 
 def extract_projects_section(resume_text: str) -> str:
     """
@@ -39,7 +39,7 @@ def extract_projects_section(resume_text: str) -> str:
     
     return "No projects section found in resume."
 
-def check_project_relevance(resume_text: str, job_description: str, preferred_model: str = None) -> dict:
+def check_project_relevance(resume_text: str, job_description: str) -> dict:
     """
     Check if resume projects are relevant to job description.
     Returns project relevance analysis with suggestions if needed.
@@ -51,7 +51,7 @@ def check_project_relevance(resume_text: str, job_description: str, preferred_mo
     )
     
     # Call LLM
-    result = call_llm(prompt, preferred_model=preferred_model)
+    result = call_llm_r1(prompt)
     
     # Check if LLM call failed
     if not result["success"]:
