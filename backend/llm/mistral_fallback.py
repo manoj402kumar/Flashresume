@@ -6,13 +6,21 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-MISTRAL_FALLBACK_CHAIN = [
-    "mistral-large-latest",
-    "mistral-medium-latest",
-    "mistral-small-latest",
-    "ministral-8b-latest",
-    "open-mistral-nemo",
-    "mistral-tiny-latest",
+# Request-1 chain (ATS scoring + project check — fast, good enough accuracy)
+MISTRAL_R1_CHAIN = [
+    "open-mistral-nemo",      # ~4s — fastest, moved up
+    "ministral-8b-latest",    # ~5s
+    "mistral-tiny-latest",    # ~5s
+]
+
+# Request-2 chain (resume generation — quality matters most)
+MISTRAL_R2_CHAIN = [
+    "mistral-large-latest",   # ~6s — best quality
+    "mistral-medium-latest",  # ~7s
+    "mistral-small-latest",   # ~5s
+    "open-mistral-nemo",      # ~4s
+    "ministral-8b-latest",    # ~5s
+    "mistral-tiny-latest",    # ~5s — last resort
 ]
 
 client = Mistral(api_key=os.getenv("MISTRAL_API_KEY"))
@@ -58,13 +66,11 @@ def _call_mistral_chain(prompt: str, chain: list, retries: int = 1) -> dict:
     return {"success": False, "text": None, "model": None, "speed": None, "attempts": attempts}
 
 
-def call_mistral(prompt: str) -> dict:
-    return _call_mistral_chain(prompt, MISTRAL_FALLBACK_CHAIN)
+def call_mistral_r1(prompt: str) -> dict:
+    """Mistral leg for Request-1 (ATS / project analysis)."""
+    return _call_mistral_chain(prompt, MISTRAL_R1_CHAIN)
 
 
-def call_mistral_with_model(prompt: str, preferred_model_id: str) -> dict:
-    remaining = [m for m in MISTRAL_FALLBACK_CHAIN if m != preferred_model_id]
-    return _call_mistral_chain(prompt, [preferred_model_id] + remaining)
-
-
-
+def call_mistral_r2(prompt: str) -> dict:
+    """Mistral leg for Request-2 (resume generation)."""
+    return _call_mistral_chain(prompt, MISTRAL_R2_CHAIN)

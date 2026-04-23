@@ -9,16 +9,11 @@ load_dotenv()
 CLOUDFLARE_ACCOUNT_ID = os.getenv("CLOUDFLARE_ACCOUNT_ID")
 CLOUDFLARE_API_TOKEN  = os.getenv("CLOUDFLARE_API_TOKEN")
 
-CLOUDFLARE_FALLBACK_CHAIN = [
-    "@cf/meta/llama-3.1-8b-instruct",
-    "@cf/mistral/mistral-7b-instruct-v0.1",
+# Cloudflare is the absolute last-resort provider — same chain for R1 and R2
+CLOUDFLARE_CHAIN = [
+    "@cf/meta/llama-3.1-8b-instruct",        # ~5s
+    "@cf/mistral/mistral-7b-instruct-v0.1",  # ~15s
 ]
-
-MODEL_MAP = {
-    "llama-3.1-8b-instruct":  "@cf/meta/llama-3.1-8b-instruct",
-    "cf-mistral-7b-instruct": "@cf/mistral/mistral-7b-instruct-v0.1",
-    "mistral-7b-instruct":    "@cf/mistral/mistral-7b-instruct-v0.1",
-}
 
 
 def _call_cloudflare_chain(prompt: str, chain: list, retries: int = 1) -> dict:
@@ -27,7 +22,10 @@ def _call_cloudflare_chain(prompt: str, chain: list, retries: int = 1) -> dict:
         for attempt in range(retries + 1):
             try:
                 start = time.time()
-                url = f"https://api.cloudflare.com/client/v4/accounts/{CLOUDFLARE_ACCOUNT_ID}/ai/run/{model}"
+                url = (
+                    f"https://api.cloudflare.com/client/v4/accounts/"
+                    f"{CLOUDFLARE_ACCOUNT_ID}/ai/run/{model}"
+                )
                 headers = {
                     "Authorization": f"Bearer {CLOUDFLARE_API_TOKEN}",
                     "Content-Type": "application/json",
@@ -85,11 +83,11 @@ def _call_cloudflare_chain(prompt: str, chain: list, retries: int = 1) -> dict:
     return {"success": False, "text": None, "model": None, "speed": None, "attempts": attempts}
 
 
-def call_cloudflare(prompt: str) -> dict:
-    return _call_cloudflare_chain(prompt, CLOUDFLARE_FALLBACK_CHAIN)
+def call_cloudflare_r1(prompt: str) -> dict:
+    """Cloudflare leg for Request-1 (ATS / project analysis)."""
+    return _call_cloudflare_chain(prompt, CLOUDFLARE_CHAIN)
 
 
-def call_cloudflare_with_model(prompt: str, preferred_model_id: str) -> dict:
-    full_id = MODEL_MAP.get(preferred_model_id, preferred_model_id)
-    remaining = [m for m in CLOUDFLARE_FALLBACK_CHAIN if m != full_id]
-    return _call_cloudflare_chain(prompt, [full_id] + remaining)
+def call_cloudflare_r2(prompt: str) -> dict:
+    """Cloudflare leg for Request-2 (resume generation)."""
+    return _call_cloudflare_chain(prompt, CLOUDFLARE_CHAIN)

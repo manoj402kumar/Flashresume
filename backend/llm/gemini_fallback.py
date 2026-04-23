@@ -7,12 +7,18 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-FALLBACK_CHAIN = [
-    "gemini-2.5-flash",
-    "gemini-3-flash-preview",
-    "gemini-2.5-flash-lite",
-    "gemini-3.1-flash-lite-preview",
-    "gemma-3-27b-it",
+# Request-1 chain (ATS scoring + project check — quality anchor for analysis)
+GEMINI_R1_CHAIN = [
+    "gemma-3-27b-it",                 # ~10s — quality anchor
+    "gemini-2.5-flash-lite",          # ~20s
+    "gemini-3.1-flash-lite-preview",  # ~40s — last resort
+]
+
+# Request-2 chain (resume generation — lite models as deep fallback only)
+GEMINI_R2_CHAIN = [
+    "gemini-2.5-flash-lite",          # ~20s
+    "gemini-3.1-flash-lite-preview",  # ~40s
+    "gemma-3-27b-it",                 # ~10s
 ]
 
 client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
@@ -58,13 +64,11 @@ def _call_gemini_chain(prompt: str, chain: list, retries: int = 1) -> dict:
     return {"success": False, "text": None, "model": None, "speed": None, "attempts": attempts}
 
 
-def call_gemini(prompt: str) -> dict:
-    return _call_gemini_chain(prompt, FALLBACK_CHAIN)
+def call_gemini_r1(prompt: str) -> dict:
+    """Gemini leg for Request-1 (ATS / project analysis)."""
+    return _call_gemini_chain(prompt, GEMINI_R1_CHAIN)
 
 
-def call_gemini_with_model(prompt: str, preferred_model_id: str) -> dict:
-    remaining = [m for m in FALLBACK_CHAIN if m != preferred_model_id]
-    return _call_gemini_chain(prompt, [preferred_model_id] + remaining)
-
-
-
+def call_gemini_r2(prompt: str) -> dict:
+    """Gemini leg for Request-2 (resume generation)."""
+    return _call_gemini_chain(prompt, GEMINI_R2_CHAIN)
