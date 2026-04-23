@@ -80,3 +80,45 @@ def call_groq_r1(prompt: str) -> dict:
 def call_groq_r2(prompt: str) -> dict:
     """Groq leg for Request-2 (resume generation)."""
     return _call_groq_chain(prompt, GROQ_R2_CHAIN)
+
+
+def call_single_groq(model: str, prompt: str) -> dict:
+    """Call exactly one Groq model. Used by master flat chain."""
+    attempts = []
+    retries = 1
+    for attempt in range(retries + 1):
+        try:
+            start = time.time()
+            response = client.chat.completions.create(
+                model=model,
+                messages=[{"role": "user", "content": prompt}],
+                temperature=0.1,
+                max_tokens=4096,
+            )
+            elapsed = round(time.time() - start, 2)
+            text = response.choices[0].message.content.strip()
+            text = re.sub(r'<think>.*?</think>', '', text, flags=re.DOTALL).strip()
+            if text.startswith("```"):
+                text = text.split("```")[1]
+                if text.startswith("json"):
+                    text = text[4:]
+                text = text.strip()
+            match = re.search(r'\{.*\}', text, re.DOTALL)
+            if match:
+                text = match.group(0)
+            return {
+                "success": True, "text": text, "model": model,
+                "speed": elapsed, "attempts": attempts + [{"model": model, "status": "pass"}]
+            }
+        except Exception as e:
+            err = str(e)
+            attempts.append({"model": model, "status": err[:60]})
+            if "429" in err or "404" in err or "model_not_found" in err.lower():
+                break
+            elif "503" in err or "500" in err:
+                if attempt < retries:
+                    time.sleep(2)
+                continue
+            else:
+                break
+    return {"success": False, "text": None, "model": None, "speed": None, "attempts": attempts}
