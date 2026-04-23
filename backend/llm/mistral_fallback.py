@@ -1,7 +1,7 @@
 import os
 import re
 import time
-from mistralai import Mistral
+from mistralai.client import Mistral
 from dotenv import load_dotenv
 
 load_dotenv()
