@@ -17,15 +17,16 @@ _R2_MAX_TOKENS = 3500
 # FLAT R1 CHAIN — ATS scoring + project check
 # (provider_name, model_id, single_caller)
 # ─────────────────────────────────────────────────────────────────────────────
+# Speed-first ordering: fast 4-5s models up front, gemma (~10s) pushed to #7
 _R1_FLAT = [
-    ("gemini",     "gemma-3-27b-it",                        call_single_gemini),     # #1  ~10s — quality anchor
-    ("mistral",    "open-mistral-nemo",                     call_single_mistral),    # #2  ~4s  — fastest
-    ("mistral",    "ministral-8b-latest",                   call_single_mistral),    # #3  ~5s
-    ("mistral",    "mistral-tiny-latest",                   call_single_mistral),    # #4  ~5s
-    ("cloudflare", "@cf/meta/llama-3.1-8b-instruct",       call_single_cloudflare), # #5  ~5s
-    ("groq",       "llama-3.1-8b-instant",                 call_single_groq),       # #6  ~4s
-    ("cerebras",   "llama3.1-8b",                          call_single_cerebras),   # #7  ~5s
-    ("cloudflare", "@cf/mistral/mistral-7b-instruct-v0.1", call_single_cloudflare), # #8  ~15s
+    ("mistral",    "open-mistral-nemo",                     call_single_mistral),    # #1  ~4s  — fastest
+    ("mistral",    "ministral-8b-latest",                   call_single_mistral),    # #2  ~5s
+    ("mistral",    "mistral-tiny-latest",                   call_single_mistral),    # #3  ~5s
+    ("cloudflare", "@cf/meta/llama-3.1-8b-instruct",       call_single_cloudflare), # #4  ~5s
+    ("groq",       "llama-3.1-8b-instant",                 call_single_groq),       # #5  ~4s
+    ("cerebras",   "llama3.1-8b",                          call_single_cerebras),   # #6  ~5s
+    ("gemini",     "gemma-3-27b-it",                        call_single_gemini),     # #7  ~10s — quality anchor
+    ("cloudflare", "@cf/mistral/mistral-7b-instruct-v0.1", call_single_cloudflare), # #8  ~15s — last resort
 ]
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -109,9 +110,9 @@ def _run_flat_chain(prompt: str, flat_chain: list, max_tokens: int) -> dict:
 def call_llm_r1(prompt: str) -> dict:
     """
     Request-1 — ATS scoring + project relevance check.
-    Chain: gemma-3-27b-it → open-mistral-nemo → ministral-8b →
-           mistral-tiny → cf/llama → llama-3.1-8b-instant →
-           cerebras/llama3.1-8b → cf/mistral-7b
+    Chain: open-mistral-nemo → ministral-8b → mistral-tiny →
+           cf/llama → llama-3.1-8b-instant → cerebras/llama3.1-8b →
+           gemma-3-27b-it → cf/mistral-7b
     max_tokens: 800 (small JSON — saves TPM quota)
     """
     return _run_flat_chain(prompt, _R1_FLAT, _R1_MAX_TOKENS)
