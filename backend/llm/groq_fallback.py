@@ -6,86 +6,54 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# Request-1 chain (ATS scoring + project check — fast + accurate enough)
 GROQ_R1_CHAIN = [
-    "llama-3.3-70b-versatile",                       # ~4s
-    "meta-llama/llama-4-scout-17b-16e-instruct",     # ~4s
-    "llama-3.1-8b-instant",                          # ~10s
+    "llama-3.3-70b-versatile",
+    "meta-llama/llama-4-scout-17b-16e-instruct",
+    "llama-3.1-8b-instant",
 ]
 
-# Request-2 chain (resume generation — best quality first)
 GROQ_R2_CHAIN = [
-    "openai/gpt-oss-120b",                           # ~10–30s — best quality
-    "llama-3.3-70b-versatile",                       # ~4s
-    "meta-llama/llama-4-scout-17b-16e-instruct",     # ~4s
-    "openai/gpt-oss-20b",                            # ~40–50s
-    "qwen/qwen3-32b",                                # ~20–40s
-    "llama-3.1-8b-instant",                          # ~10s — last resort
+    "openai/gpt-oss-120b",
+    "llama-3.3-70b-versatile",
+    "meta-llama/llama-4-scout-17b-16e-instruct",
+    "openai/gpt-oss-20b",
+    "qwen/qwen3-32b",
+    "llama-3.1-8b-instant",
 ]
 
 client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
 
-def _call_groq_chain(prompt: str, chain: list, retries: int = 1) -> dict:
+def _extract_text(response) -> str | None:
+    """Safely pull text from Groq response. Returns None on any structural issue."""
+    try:
+        text = response.choices[0].message.content
+        if text is None:
+            return None
+        text = text.strip()
+        if not text:
+            return None
+        text = re.sub(r'<think>.*?</think>', '', text, flags=re.DOTALL).strip()
+        if not text:
+            return None
+        if text.startswith("```"):
+            parts = text.split("```")
+            text = parts[1] if len(parts) > 1 else text
+            if text.startswith("json"):
+                text = text[4:]
+            text = text.strip()
+        match = re.search(r'\{.*\}', text, re.DOTALL)
+        if match:
+            text = match.group(0)
+        if len(text.strip()) < 5:
+            return None
+        return text
+    except (AttributeError, IndexError, TypeError):
+        return None
+
+
+def _call_groq_single(model: str, prompt: str, max_tokens: int, retries: int = 1) -> dict:
     attempts = []
-    for model in chain:
-        for attempt in range(retries + 1):
-            try:
-                start = time.time()
-                response = client.chat.completions.create(
-                    model=model,
-                    messages=[{"role": "user", "content": prompt}],
-                    temperature=0.1,
-                    max_tokens=4096,
-                )
-                elapsed = round(time.time() - start, 2)
-                text = response.choices[0].message.content.strip()
-                text = re.sub(r'<think>.*?</think>', '', text, flags=re.DOTALL).strip()
-                if text.startswith("```"):
-                    text = text.split("```")[1]
-                    if text.startswith("json"):
-                        text = text[4:]
-                    text = text.strip()
-                match = re.search(r'\{.*\}', text, re.DOTALL)
-                if match:
-                    text = match.group(0)
-                return {
-                    "success": True,
-                    "text": text,
-                    "model": model,
-                    "speed": elapsed,
-                    "attempts": attempts + [{"model": model, "status": "pass"}]
-                }
-            except Exception as e:
-                err = str(e)
-                attempts.append({"model": model, "status": err[:60]})
-                if "429" in err:
-                    break
-                elif "404" in err or "model_not_found" in err.lower():
-                    break
-                elif "503" in err or "500" in err:
-                    if attempt < retries:
-                        time.sleep(2)
-                    continue
-                else:
-                    break
-    return {"success": False, "text": None, "model": None, "speed": None, "attempts": attempts}
-
-
-def call_groq_r1(prompt: str) -> dict:
-    """Groq leg for Request-1 (ATS / project analysis)."""
-    return _call_groq_chain(prompt, GROQ_R1_CHAIN)
-
-
-def call_groq_r2(prompt: str) -> dict:
-    """Groq leg for Request-2 (resume generation)."""
-    return _call_groq_chain(prompt, GROQ_R2_CHAIN)
-
-
-def call_single_groq(model: str, prompt: str) -> dict:
-    """Call exactly one Groq model. Used by master flat chain."""
-    attempts = []
-    retries = 1
     for attempt in range(retries + 1):
         try:
             start = time.time()
@@ -93,32 +61,61 @@ def call_single_groq(model: str, prompt: str) -> dict:
                 model=model,
                 messages=[{"role": "user", "content": prompt}],
                 temperature=0.1,
-                max_tokens=4096,
+                max_tokens=max_tokens,
             )
             elapsed = round(time.time() - start, 2)
-            text = response.choices[0].message.content.strip()
-            text = re.sub(r'<think>.*?</think>', '', text, flags=re.DOTALL).strip()
-            if text.startswith("```"):
-                text = text.split("```")[1]
-                if text.startswith("json"):
-                    text = text[4:]
-                text = text.strip()
-            match = re.search(r'\{.*\}', text, re.DOTALL)
-            if match:
-                text = match.group(0)
+            text = _extract_text(response)
+            if text is None:
+                attempts.append({"model": model, "status": "empty_or_null_response"})
+                break
             return {
                 "success": True, "text": text, "model": model,
-                "speed": elapsed, "attempts": attempts + [{"model": model, "status": "pass"}]
+                "speed": elapsed, "attempts": attempts + [{"model": model, "status": "pass"}],
             }
         except Exception as e:
             err = str(e)
-            attempts.append({"model": model, "status": err[:60]})
-            if "429" in err or "404" in err or "model_not_found" in err.lower():
+            attempts.append({"model": model, "status": err[:80]})
+            if any(x in err for x in ["429", "rate_limit", "rate limit"]):
                 break
-            elif "503" in err or "500" in err:
+            if any(x in err for x in ["404", "model_not_found", "does not exist"]):
+                break
+            if any(x in err for x in ["401", "403", "invalid_api_key", "authentication"]):
+                break
+            if "context_length_exceeded" in err or "maximum context" in err.lower():
+                break
+            if any(x in err for x in ["503", "500", "502", "overloaded"]):
                 if attempt < retries:
-                    time.sleep(2)
+                    time.sleep(1)
                 continue
-            else:
-                break
+            if "timeout" in err.lower() or "timed out" in err.lower():
+                if attempt < retries:
+                    time.sleep(1)
+                continue
+            break
     return {"success": False, "text": None, "model": None, "speed": None, "attempts": attempts}
+
+
+def _call_groq_chain(prompt: str, chain: list, max_tokens: int) -> dict:
+    attempts = []
+    for model in chain:
+        result = _call_groq_single(model, prompt, max_tokens)
+        attempts.extend(result.get("attempts", []))
+        if result["success"]:
+            result["attempts"] = attempts
+            return result
+    return {"success": False, "text": None, "model": None, "speed": None, "attempts": attempts}
+
+
+def call_groq_r1(prompt: str) -> dict:
+    """Groq chain for Request-1 — ATS scoring + project analysis."""
+    return _call_groq_chain(prompt, GROQ_R1_CHAIN, max_tokens=800)
+
+
+def call_groq_r2(prompt: str) -> dict:
+    """Groq chain for Request-2 — resume generation."""
+    return _call_groq_chain(prompt, GROQ_R2_CHAIN, max_tokens=3500)
+
+
+def call_single_groq(model: str, prompt: str, max_tokens: int = 3500) -> dict:
+    """Call exactly one Groq model. Used by master flat chain."""
+    return _call_groq_single(model, prompt, max_tokens)
