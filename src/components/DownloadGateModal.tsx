@@ -21,7 +21,7 @@ interface DownloadGateModalProps {
   initialPlan?: "one_time" | "regular" | "student" | null;
 }
 
-type Step = "auth" | "plan" | "processing";
+type Step = "auth" | "plan" | "processing" | "student_upgrade";
 type AuthMode = "login" | "signup" | "student_signup";
 
 const PLANS = [
@@ -69,6 +69,7 @@ export default function DownloadGateModal({
   const [isStudent, setIsStudent] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<string>(initialPlan || "one_time");
   const [studentPlanVisible, setStudentPlanVisible] = useState(false);
+  const [showUpsell, setShowUpsell] = useState(false);
 
   // ── On open: check session and jump to correct step ──────────────────────
   useEffect(() => {
@@ -87,9 +88,13 @@ export default function DownloadGateModal({
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (session?.user) {
         setUser(session.user);
-        await loadUserProfile(session.user.id);
-        // FIX #2: Already logged in → skip auth step entirely
-        setStep("plan");
+        const studentStatus = await loadUserProfile(session.user.id);
+        
+        if (initialPlan === "student" && !studentStatus) {
+          setStep("student_upgrade");
+        } else {
+          setStep("plan");
+        }
       } else {
         setStep("auth");
       }
@@ -110,10 +115,25 @@ export default function DownloadGateModal({
       .select("is_student")
       .eq("id", userId)
       .single();
+      
     if (data?.is_student) {
       setIsStudent(true);
-      setStudentPlanVisible(true); // FIX #1: auto-reveal student plan for verified students
+      setStudentPlanVisible(true);
     }
+    
+    // Check for upsell
+    const { count } = await supabase
+      .from("payments")
+      .select("*", { count: "exact", head: true })
+      .eq("user_id", userId)
+      .eq("plan_type", "one_time")
+      .eq("status", "success");
+      
+    if (count && count >= 2) {
+      setShowUpsell(true);
+    }
+    
+    return !!data?.is_student;
   };
 
   const handleAuth = async (e: React.FormEvent) => {
@@ -126,13 +146,23 @@ export default function DownloadGateModal({
         if (error) throw error;
         if (data.user) {
           setUser(data.user);
-          await loadUserProfile(data.user.id);
-          setStep("plan"); // FIX #2: go straight to plan, no repeated auth
+          const studentStatus = await loadUserProfile(data.user.id);
+          if (selectedPlan === "student" && !studentStatus) {
+            setStep("student_upgrade");
+          } else {
+            setStep("plan");
+          }
         }
       } else {
         const { data, error } = await supabase.auth.signUp({ email, password });
         if (error) throw error;
         if (data.user) {
+          if (!data.session) {
+            setError("Account created! Please check your email to verify your account before paying.");
+            setLoading(false);
+            return;
+          }
+          
           if (authMode === "student_signup") {
             await supabase.from("users").update({
               college_name: collegeName,
@@ -171,6 +201,18 @@ export default function DownloadGateModal({
     if (!user) return;
     setLoading(true);
     setError(null);
+    
+    // Verify session with the server (clears ghost sessions from localStorage)
+    const { data: { user: serverUser }, error: authError } = await supabase.auth.getUser();
+    if (authError || !serverUser) {
+      await supabase.auth.signOut();
+      setUser(null);
+      setError("Session expired or invalid. Please log in again.");
+      setStep("auth");
+      setLoading(false);
+      return;
+    }
+
     setStep("processing");
 
     const planDetails =
@@ -183,7 +225,7 @@ export default function DownloadGateModal({
       const orderRes = await fetch(`${apiUrl}/api/payments/create-order`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ amount: planDetails.amount, plan_type: planDetails.plan_type, user_id: user.id }),
+        body: JSON.stringify({ amount: planDetails.amount, plan_type: planDetails.plan_type, user_id: user.id, email: user.email }),
       });
       if (!orderRes.ok) throw new Error("Failed to create payment order.");
       const orderData = await orderRes.json();
@@ -208,6 +250,7 @@ export default function DownloadGateModal({
               user_id: user.id,
               plan_type: planDetails.plan_type,
               amount: planDetails.amount,
+              session_id: new URLSearchParams(window.location.search).get("session_id") || undefined
             }),
           });
           if (!verifyRes.ok) throw new Error("Payment verification failed.");
@@ -295,7 +338,7 @@ export default function DownloadGateModal({
                         <GraduationCap className="w-5 h-5 text-tertiary" />
                       </div>
                       <div>
-                        <p className="text-sm font-bold text-on-background">🎓 Student? Get ₹79/month instead of ₹149</p>
+                        <p className="text-sm font-bold text-on-background">👉 🎓 Are you a student? Get a special offer</p>
                         <p className="text-xs text-tertiary font-semibold">Sign up with your college details → Claim Offer</p>
                       </div>
                       <ArrowRight className="w-4 h-4 text-tertiary ml-auto flex-shrink-0" />
@@ -390,6 +433,13 @@ export default function DownloadGateModal({
                   </p>
                 )}
 
+                {/* Upsell Logic Banner */}
+                {showUpsell && (
+                  <div className="bg-primary/10 border border-primary/20 p-3 rounded-xl mb-4 text-center">
+                    <p className="text-xs font-bold text-primary">💡 You've spent ₹58 — upgrade to Monthly for ₹149 and save</p>
+                  </div>
+                )}
+
                 {/* Standard plans */}
                 {PLANS.map((plan) => (
                   <div key={plan.id} onClick={() => setSelectedPlan(plan.id)}
@@ -427,9 +477,13 @@ export default function DownloadGateModal({
                 {/* FIX #1: Student plan — always visible, attention-grabbing ── */}
                 <div
                   onClick={() => {
-                    if (!isStudent) {
+                    if (!user) {
                       setStep("auth");
                       setAuthMode("student_signup");
+                      return;
+                    }
+                    if (!isStudent) {
+                      setStep("student_upgrade");
                       return;
                     }
                     setSelectedPlan("student");
@@ -491,6 +545,63 @@ export default function DownloadGateModal({
                   <Loader2 className="w-8 h-8 text-primary animate-spin" />
                 </div>
                 <p className="text-on-surface-variant text-sm">Setting up secure payment...</p>
+              </motion.div>
+            )}
+
+            {/* ── STUDENT UPGRADE STEP ─────────────────────── */}
+            {step === "student_upgrade" && (
+              <motion.div key="student_upgrade" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-4">
+                <div className="bg-tertiary/10 border border-tertiary/20 p-4 rounded-2xl text-center mb-4">
+                  <GraduationCap className="w-8 h-8 text-tertiary mx-auto mb-2" />
+                  <p className="font-bold text-tertiary">This offer is for students.</p>
+                  <p className="text-xs text-on-surface-variant mt-1">Did you sign up as a student? Provide your college details to unlock the ₹79/month plan.</p>
+                </div>
+                
+                <div className="space-y-3">
+                  <div className="relative">
+                    <Building className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-on-surface-variant/50" />
+                    <input type="text" placeholder="College Name" value={collegeName} onChange={e => setCollegeName(e.target.value)}
+                      className="w-full pl-10 pr-4 py-3 bg-surface-container-low border border-surface-container-high rounded-xl focus:ring-2 focus:ring-primary outline-none text-sm" />
+                  </div>
+                  <div className="relative">
+                    <Hash className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-on-surface-variant/50" />
+                    <input type="text" placeholder="Roll Number / Enrollment ID" value={rollNumber} onChange={e => setRollNumber(e.target.value)}
+                      className="w-full pl-10 pr-4 py-3 bg-surface-container-low border border-surface-container-high rounded-xl focus:ring-2 focus:ring-primary outline-none text-sm" />
+                  </div>
+                </div>
+
+                {error && <p className="text-xs text-error bg-error/10 px-3 py-2 rounded-lg text-center">{error}</p>}
+
+                <div className="flex gap-2 pt-2">
+                  <button onClick={() => { setStep("plan"); setSelectedPlan("one_time"); setError(null); }} className="flex-1 py-3 font-bold text-on-surface-variant hover:bg-surface-container-low rounded-xl transition-colors">
+                    Cancel
+                  </button>
+                  <button onClick={async () => {
+                    if (!collegeName || !rollNumber) {
+                      setError("Please fill in both fields");
+                      return;
+                    }
+                    setLoading(true);
+                    setError(null);
+                    try {
+                      await supabase.from("users").update({
+                        college_name: collegeName,
+                        roll_number: rollNumber,
+                        is_student: true,
+                        student_verified_at: new Date().toISOString(),
+                      }).eq("id", user?.id);
+                      setIsStudent(true);
+                      setStudentPlanVisible(true);
+                      setSelectedPlan("student");
+                      setStep("plan");
+                    } catch (e: any) {
+                      setError(e.message);
+                    }
+                    setLoading(false);
+                  }} disabled={loading} className="flex-1 bg-tertiary text-white font-bold py-3 rounded-xl hover:opacity-90 transition-opacity flex justify-center items-center gap-2">
+                    {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Verify Status"}
+                  </button>
+                </div>
               </motion.div>
             )}
 

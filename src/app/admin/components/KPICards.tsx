@@ -78,7 +78,7 @@ function KPICard({ kpi, delay }: { kpi: KPI; delay: number }) {
   );
 }
 
-export default function KPICards({ activeSessions }: { activeSessions: number }) {
+export default function KPICards({ activeSessions, stats }: { activeSessions: number, stats?: { revenue: number, downloads: number, subscribers: number } }) {
   const kpis: KPI[] = [
     {
       label: "Active Sessions",
@@ -91,30 +91,30 @@ export default function KPICards({ activeSessions }: { activeSessions: number })
     },
     {
       label: "Total Revenue",
-      value: 124769,
+      value: stats?.revenue || 0,
       format: "inr",
       icon: <TrendingUp className="w-5 h-5 text-purple-600" />,
       iconBg: "bg-purple-50",
-      delta: "+18% MoM",
+      delta: "All Time",
       deltaPositive: true,
-      note: "Simulated — wire to payment provider",
+      note: "From Razorpay payments",
     },
     {
       label: "Total Downloads",
-      value: 8432,
+      value: stats?.downloads || 0,
       icon: <Download className="w-5 h-5 text-blue-600" />,
       iconBg: "bg-blue-50",
-      delta: "+94 today",
+      delta: "All Time",
       deltaPositive: true,
     },
     {
       label: "Paid Subscribers",
-      value: 431,
+      value: stats?.subscribers || 0,
       icon: <CreditCard className="w-5 h-5 text-amber-600" />,
       iconBg: "bg-amber-50",
-      delta: "+12 this week",
+      delta: "Active",
       deltaPositive: true,
-      note: "Pro + Lifetime combined",
+      note: "Regular + Student",
     },
   ];
 

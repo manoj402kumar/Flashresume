@@ -130,6 +130,7 @@ export default function AdminPage() {
   const [activeSection, setActiveSection] = useState("overview");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeSessions, setActiveSessions] = useState(0);
+  const [stats, setStats] = useState({ revenue: 0, downloads: 0, subscribers: 0 });
   const [uptime, setUptime] = useState("—");
   const [time, setTime] = useState("");
   const sectionRefs = useRef<Record<string, HTMLElement | null>>({});
@@ -166,6 +167,11 @@ export default function AdminPage() {
         const h = Math.floor(sec / 3600);
         const m = Math.floor((sec % 3600) / 60);
         setUptime(`${h}h ${m}m`);
+        setStats({
+          revenue: json.revenue ?? 0,
+          downloads: json.downloads ?? 0,
+          subscribers: json.subscribers ?? 0
+        });
       } catch { /* offline */ }
     };
     fetchStats();
@@ -246,7 +252,7 @@ export default function AdminPage() {
               title="Overview"
               subtitle="Platform health at a glance"
             />
-            <KPICards activeSessions={activeSessions} />
+            <KPICards activeSessions={activeSessions} stats={stats} />
           </section>
 
           {/* ── Revenue ──────────────────────────────────────────── */}

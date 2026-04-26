@@ -1,10 +1,21 @@
+import os
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import JSONResponse
 from models.request_models import GenerateRequest
 from services.resume_generator import generate_resume
 from services.ats_scorer import score_resume
+from supabase import create_client, Client
 
 router = APIRouter()
+
+SUPABASE_URL = os.getenv("SUPABASE_URL", "https://your-project.supabase.co")
+SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY") or os.getenv("SUPABASE_ANON_KEY")
+
+try:
+    supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+except Exception as e:
+    print(f"Supabase init error in generate.py: {e}")
+    supabase = None
 
 def flatten_resume_to_text(resume: dict) -> str:
     """
@@ -81,6 +92,19 @@ async def generate_resume_endpoint(request: GenerateRequest):
     # Step 3: Inject real ATS score and model info into the response
     generated["ats_score_after"] = ats_after
     generated["_model_used"] = model_used
+
+    # Step 4: Save to resume_sessions database table
+    if supabase:
+        try:
+            res = supabase.table("resume_sessions").insert({
+                "resume_text": request.resume_text,
+                "generated_output": generated
+            }).execute()
+            
+            if res.data:
+                generated["session_id"] = res.data[0]["id"]
+        except Exception as e:
+            print(f"Failed to save resume_session: {e}")
 
     # Return Template v1 JSON directly (no wrapper)
     return JSONResponse(content=generated)

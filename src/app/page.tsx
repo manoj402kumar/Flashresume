@@ -545,31 +545,20 @@ export default function App() {
                 Go Pro
               </button>
             </div>
-            {/* Lifetime */}
-            <div className="bg-surface-container-low p-10 rounded-[2rem] flex flex-col border border-transparent">
-              <h3 className="font-headline text-2xl font-bold mb-2">Student</h3>
-              <div className="text-4xl font-black mb-8">
-                ₹79 <span className="text-base font-normal text-on-surface-variant">/mo</span>
+            {/* Student Teaser */}
+            <div className="bg-surface-container-low p-10 rounded-[2rem] flex flex-col border border-transparent justify-center items-center text-center">
+              <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-6">
+                <span className="text-3xl">🎓</span>
               </div>
-              <ul className="space-y-4 mb-10 text-left flex-grow">
-                <li className="flex items-start gap-3 text-on-surface-variant">
-                  <Check className="w-5 h-5 mt-0.5" />
-                  Everything in Pro
-                </li>
-                <li className="flex items-start gap-3 text-on-surface-variant">
-                  <Check className="w-5 h-5 mt-0.5" />
-                  Priority Support
-                </li>
-                <li className="flex items-start gap-3 text-on-surface-variant">
-                  <Check className="w-5 h-5 mt-0.5" />
-                  Early Access to Tools
-                </li>
-              </ul>
+              <h3 className="font-headline text-2xl font-bold mb-4">Student Special Offer Available</h3>
+              <p className="text-on-surface-variant mb-8">
+                Unlock our exclusive student discount and get full access to all premium features at a fraction of the cost.
+              </p>
               <button
                 onClick={() => { setSelectedPricingPlan("student"); setShowDownloadGate(true); }}
-                className="w-full py-4 rounded-xl bg-on-background text-white font-bold hover:opacity-90 transition-opacity"
+                className="w-full py-4 rounded-xl bg-on-background text-white font-bold hover:opacity-90 transition-opacity mt-auto"
               >
-                Get Lifetime
+                Claim Offer
               </button>
             </div>
           </div>

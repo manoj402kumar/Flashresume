@@ -101,15 +101,18 @@ export default function GeneratePage() {
         setProgress(95);
         setStatus("Validating resume structure...");
 
-        // Save generated resume to localStorage
-        localStorage.setItem("generated_resume", JSON.stringify(generatedResume));
-
         setProgress(100);
         setStatus("Done! Your resume is ready!");
 
         // Navigate to result page
         await new Promise((resolve) => setTimeout(resolve, 800));
-        router.push("/result");
+        if (generatedResume.session_id) {
+          router.push(`/result?session_id=${generatedResume.session_id}`);
+        } else {
+          // Fallback if session_id is missing for some reason
+          localStorage.setItem("generated_resume", JSON.stringify(generatedResume));
+          router.push("/result");
+        }
       } catch (err: any) {
         setError(err.message || "Failed to generate resume. Please try again.");
         setStatus("");

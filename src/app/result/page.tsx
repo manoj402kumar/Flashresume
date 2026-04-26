@@ -193,73 +193,103 @@ export default function ResultPage() {
   };
 
   useEffect(() => {
-    const resumeData = localStorage.getItem("generated_resume");
-    if (!resumeData) {
-      router.push("/");
+    const fetchSession = async () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const sessionId = urlParams.get("session_id");
+      
+      let parsed = null;
+
+      if (sessionId) {
+        try {
+          const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+          const res = await fetch(`${apiUrl}/api/sessions/${sessionId}`);
+          if (res.ok) {
+            const data = await res.json();
+            parsed = data.generated_output;
+          }
+        } catch (e) {
+          console.error("Failed to fetch session", e);
+        }
+      }
+      
+      if (!parsed) {
+        const resumeData = localStorage.getItem("generated_resume");
+        if (!resumeData) {
+          router.push("/");
+          return;
+        }
+        parsed = JSON.parse(resumeData);
+      }
+      // Sanitize junk LLM values on load so edit fields show clean defaults
+      parsed.heading.linkedin_url = cleanDisplayUrl(parsed.heading.linkedin_url, "linkedin");
+      parsed.heading.github_url = cleanDisplayUrl(parsed.heading.github_url, "github.com/username");
+      // Build hrefs from display text if not already set
+      if (!parsed.heading.linkedin_url_href) {
+        parsed.heading.linkedin_url_href = `https://${parsed.heading.linkedin_url}`;
+      }
+      if (!parsed.heading.github_url_href) {
+        parsed.heading.github_url_href = `https://${parsed.heading.github_url}`;
+      }
+      
+      // Load analysis keywords for PDF highlighting
+      const analysisData = localStorage.getItem("analysis");
+      if (analysisData) {
+        try {
+          const parsedAnalysis = JSON.parse(analysisData);
+          setMissingKeywords(parsedAnalysis.missing_skills || []);
+          setMatchedKeywords(parsedAnalysis.matched_skills || []);
+        } catch(e) {}
+      }
+
+      if (!parsed.section_order || parsed.section_order.length === 0) {
+        parsed.section_order = ["summary", "education", "experience", "projects", "skills", "certifications"];
+      }
+      setResume(parsed);
+      setLoading(false);
+    };
+    
+    fetchSession();
+  }, [router]);
+
+  const checkAccess = async () => {
+    setCheckingAccess(true);
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user) {
+      setCheckingAccess(false);
       return;
     }
-    const parsed = JSON.parse(resumeData);
-    // Sanitize junk LLM values on load so edit fields show clean defaults
-    parsed.heading.linkedin_url = cleanDisplayUrl(parsed.heading.linkedin_url, "linkedin");
-    parsed.heading.github_url = cleanDisplayUrl(parsed.heading.github_url, "github.com/username");
-    // Build hrefs from display text if not already set
-    if (!parsed.heading.linkedin_url_href) {
-      parsed.heading.linkedin_url_href = `https://${parsed.heading.linkedin_url}`;
-    }
-    if (!parsed.heading.github_url_href) {
-      parsed.heading.github_url_href = `https://${parsed.heading.github_url}`;
-    }
-    
-    // Load analysis keywords for PDF highlighting
-    const analysisData = localStorage.getItem("analysis");
-    if (analysisData) {
-      try {
-        const parsedAnalysis = JSON.parse(analysisData);
-        setMissingKeywords(parsedAnalysis.missing_skills || []);
-        setMatchedKeywords(parsedAnalysis.matched_skills || []);
-      } catch(e) {}
-    }
+    // Check subscriptions table — correct table per schema
+    const { data } = await supabase
+      .from("subscriptions")
+      .select("plan_type, expires_at, is_active")
+      .eq("user_id", session.user.id)
+      .eq("is_active", true)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
 
-    if (!parsed.section_order || parsed.section_order.length === 0) {
-      parsed.section_order = ["summary", "education", "experience", "projects", "skills", "certifications"];
+    if (data) {
+      const hasMonthly =
+        (data.plan_type === "regular" || data.plan_type === "student") &&
+        data.expires_at &&
+        new Date(data.expires_at) > new Date();
+      
+      // one_time: active subscription with no expiry = one download credit
+      const hasOneTime = data.plan_type === "one_time" && data.is_active;
+
+      if (hasMonthly || hasOneTime) {
+        setHasPaidAccess(true);
+      } else {
+        setHasPaidAccess(false);
+      }
+    } else {
+      setHasPaidAccess(false);
     }
-    setResume(parsed);
-    setLoading(false);
-  }, [router]);
+    setCheckingAccess(false);
+  };
 
   // Check if user has already paid — skip gate if yes
   useEffect(() => {
-    const checkAccess = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user) {
-        setCheckingAccess(false);
-        return;
-      }
-      // Check subscriptions table — correct table per schema
-      const { data } = await supabase
-        .from("subscriptions")
-        .select("plan_type, expires_at, is_active")
-        .eq("user_id", session.user.id)
-        .eq("is_active", true)
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      if (data) {
-        const hasMonthly =
-          (data.plan_type === "regular" || data.plan_type === "student") &&
-          data.expires_at &&
-          new Date(data.expires_at) > new Date();
-        
-        // one_time: active subscription with no expiry = one download credit
-        const hasOneTime = data.plan_type === "one_time" && data.is_active;
-
-        if (hasMonthly || hasOneTime) {
-          setHasPaidAccess(true);
-        }
-      }
-      setCheckingAccess(false);
-    };
     checkAccess();
   }, []);
 
@@ -313,6 +343,23 @@ export default function ResultPage() {
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
+      
+      // Deduct credit if applicable
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+        try {
+          await fetch(`${apiUrl}/api/payments/deduct-credit`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ user_id: session.user.id })
+          });
+          // Re-evaluate access silently
+          await checkAccess();
+        } catch (e) {
+          console.error("Failed to deduct credit", e);
+        }
+      }
     } catch (error) {
       console.error("PDF generation failed:", error);
     } finally {
