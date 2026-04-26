@@ -16,10 +16,12 @@ import {
   FileText,
   X
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { parseResume, analyzeResume } from "@/lib/api";
 import DownloadGateModal from "@/components/DownloadGateModal";
+import { supabase } from "@/lib/supabase";
+import { User } from "@supabase/supabase-js";
 
 export default function App() {
   const router = useRouter();
@@ -35,6 +37,17 @@ export default function App() {
   const [parsing, setParsing] = useState(false);
   const [showDownloadGate, setShowDownloadGate] = useState(false);
   const [selectedPricingPlan, setSelectedPricingPlan] = useState<"one_time" | "regular" | "student" | null>(null);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setCurrentUser(session?.user ?? null);
+    });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, session) => {
+      setCurrentUser(session?.user ?? null);
+    });
+    return () => subscription.unsubscribe();
+  }, []);
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
@@ -169,12 +182,39 @@ export default function App() {
             <a href="#pricing" className="text-on-surface-variant hover:text-primary transition-colors font-medium">Pricing</a>
             <a href="#reviews" className="text-on-surface-variant hover:text-primary transition-colors font-medium">Reviews</a>
           </div>
-          <button
-            onClick={() => document.getElementById('file-upload')?.click()}
-            className="flash-gradient text-white font-bold px-6 py-2.5 rounded-full hover:opacity-90 transition-all active:scale-95 shadow-lg shadow-primary/20"
-          >
-            Get Started
-          </button>
+          <div className="flex items-center gap-3">
+            {currentUser ? (
+              <div className="flex items-center gap-3">
+                <span className="hidden md:block text-sm text-on-surface-variant font-medium truncate max-w-[160px]">
+                  {currentUser.email}
+                </span>
+                <button
+                  onClick={async () => {
+                    await supabase.auth.signOut();
+                    setCurrentUser(null);
+                  }}
+                  className="text-sm font-bold px-4 py-2 rounded-full border border-on-surface-variant/20 hover:bg-surface-container-low transition-colors text-on-surface-variant"
+                >
+                  Sign Out
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => { setSelectedPricingPlan(null); setShowDownloadGate(true); }}
+                  className="text-sm font-bold px-4 py-2 rounded-full border border-on-surface-variant/20 hover:bg-surface-container-low transition-colors text-on-surface-variant"
+                >
+                  Log In
+                </button>
+                <button
+                  onClick={() => document.getElementById('file-upload')?.click()}
+                  className="flash-gradient text-white font-bold px-6 py-2.5 rounded-full hover:opacity-90 transition-all active:scale-95 shadow-lg shadow-primary/20"
+                >
+                  Get Started
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </nav>
 
@@ -450,8 +490,10 @@ export default function App() {
           <div className="max-w-6xl mx-auto px-6 grid md:grid-cols-3 gap-8 items-stretch">
             {/* Free */}
             <div className="bg-surface-container-low p-10 rounded-[2rem] flex flex-col border border-transparent">
-              <h3 className="font-headline text-2xl font-bold mb-2">Free</h3>
-              <div className="text-4xl font-black mb-8">₹0 <span className="text-base font-normal text-on-surface-variant">/forever</span></div>
+              <h3 className="font-headline text-2xl font-bold mb-2">Per Resume</h3>
+              <div className="text-4xl font-black mb-8">
+                ₹29 <span className="text-base font-normal text-on-surface-variant">/download</span>
+              </div>
               <ul className="space-y-4 mb-10 text-left flex-grow">
                 <li className="flex items-start gap-3 text-on-surface-variant">
                   <Check className="w-5 h-5 mt-0.5" />
@@ -474,8 +516,10 @@ export default function App() {
               <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-primary text-white px-4 py-1 rounded-full text-xs font-bold uppercase tracking-widest">
                 MOST POPULAR
               </div>
-              <h3 className="font-headline text-2xl font-bold mb-2">Pro</h3>
-              <div className="text-4xl font-black mb-8">₹99 <span className="text-base font-normal text-on-surface-variant">/mo</span></div>
+              <h3 className="font-headline text-2xl font-bold mb-2">Pro Monthly</h3>
+              <div className="text-4xl font-black mb-8">
+                ₹149 <span className="text-base font-normal text-on-surface-variant">/mo</span>
+              </div>
               <ul className="space-y-4 mb-10 text-left flex-grow">
                 <li className="flex items-start gap-3">
                   <CheckCircle2 className="text-primary w-5 h-5 mt-0.5 fill-primary/10" />
@@ -503,8 +547,10 @@ export default function App() {
             </div>
             {/* Lifetime */}
             <div className="bg-surface-container-low p-10 rounded-[2rem] flex flex-col border border-transparent">
-              <h3 className="font-headline text-2xl font-bold mb-2">Lifetime</h3>
-              <div className="text-4xl font-black mb-8">₹999 <span className="text-base font-normal text-on-surface-variant">/once</span></div>
+              <h3 className="font-headline text-2xl font-bold mb-2">Student</h3>
+              <div className="text-4xl font-black mb-8">
+                ₹79 <span className="text-base font-normal text-on-surface-variant">/mo</span>
+              </div>
               <ul className="space-y-4 mb-10 text-left flex-grow">
                 <li className="flex items-start gap-3 text-on-surface-variant">
                   <Check className="w-5 h-5 mt-0.5" />
@@ -520,7 +566,7 @@ export default function App() {
                 </li>
               </ul>
               <button
-                onClick={() => { setSelectedPricingPlan("one_time"); setShowDownloadGate(true); }}
+                onClick={() => { setSelectedPricingPlan("student"); setShowDownloadGate(true); }}
                 className="w-full py-4 rounded-xl bg-on-background text-white font-bold hover:opacity-90 transition-opacity"
               >
                 Get Lifetime
