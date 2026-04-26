@@ -235,21 +235,26 @@ export default function ResultPage() {
         setCheckingAccess(false);
         return;
       }
-      // Check user has an active subscription or a remaining one_time credit
+      // Check subscriptions table — correct table per schema
       const { data } = await supabase
-        .from("users")
-        .select("plan_type, plan_expires_at, one_time_credits")
-        .eq("id", session.user.id)
-        .single();
+        .from("subscriptions")
+        .select("plan_type, expires_at, is_active")
+        .eq("user_id", session.user.id)
+        .eq("is_active", true)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
 
       if (data) {
         const hasMonthly =
           (data.plan_type === "regular" || data.plan_type === "student") &&
-          data.plan_expires_at &&
-          new Date(data.plan_expires_at) > new Date();
-        const hasCredit = data.one_time_credits > 0;
+          data.expires_at &&
+          new Date(data.expires_at) > new Date();
+        
+        // one_time: active subscription with no expiry = one download credit
+        const hasOneTime = data.plan_type === "one_time" && data.is_active;
 
-        if (hasMonthly || hasCredit) {
+        if (hasMonthly || hasOneTime) {
           setHasPaidAccess(true);
         }
       }
