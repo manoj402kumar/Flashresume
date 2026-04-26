@@ -19,6 +19,7 @@ import {
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { parseResume, analyzeResume } from "@/lib/api";
+import DownloadGateModal from "@/components/DownloadGateModal";
 
 export default function App() {
   const router = useRouter();
@@ -32,6 +33,8 @@ export default function App() {
   const [parsedText, setParsedText] = useState("");
   const [showParsedText, setShowParsedText] = useState(false);
   const [parsing, setParsing] = useState(false);
+  const [showDownloadGate, setShowDownloadGate] = useState(false);
+  const [selectedPricingPlan, setSelectedPricingPlan] = useState<"one_time" | "regular" | "student" | null>(null);
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
@@ -459,7 +462,10 @@ export default function App() {
                   Basic ATS Scan
                 </li>
               </ul>
-              <button className="w-full py-4 rounded-xl border border-on-surface-variant/20 font-bold hover:bg-surface-container-high transition-colors">
+              <button
+                onClick={() => { setSelectedPricingPlan("one_time"); setShowDownloadGate(true); }}
+                className="w-full py-4 rounded-xl border border-on-surface-variant/20 font-bold hover:bg-surface-container-high transition-colors"
+              >
                 Start Free
               </button>
             </div>
@@ -488,7 +494,10 @@ export default function App() {
                   PDF Exports
                 </li>
               </ul>
-              <button className="w-full flash-gradient text-white py-4 rounded-xl font-bold hover:opacity-90 transition-opacity">
+              <button
+                onClick={() => { setSelectedPricingPlan("regular"); setShowDownloadGate(true); }}
+                className="w-full flash-gradient text-white py-4 rounded-xl font-bold hover:opacity-90 transition-opacity"
+              >
                 Go Pro
               </button>
             </div>
@@ -510,7 +519,10 @@ export default function App() {
                   Early Access to Tools
                 </li>
               </ul>
-              <button className="w-full py-4 rounded-xl bg-on-background text-white font-bold hover:opacity-90 transition-opacity">
+              <button
+                onClick={() => { setSelectedPricingPlan("one_time"); setShowDownloadGate(true); }}
+                className="w-full py-4 rounded-xl bg-on-background text-white font-bold hover:opacity-90 transition-opacity"
+              >
                 Get Lifetime
               </button>
             </div>
@@ -637,6 +649,16 @@ export default function App() {
           </div>
         </div>
       </footer>
+      {/* Download Gate Modal */}
+      <DownloadGateModal
+        isOpen={showDownloadGate}
+        onClose={() => setShowDownloadGate(false)}
+        onPaymentSuccess={() => {
+          setShowDownloadGate(false);
+          router.push("/result");
+        }}
+        initialPlan={selectedPricingPlan}
+      />
     </div>
   );
 }
