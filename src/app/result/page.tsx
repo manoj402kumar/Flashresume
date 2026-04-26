@@ -32,6 +32,8 @@ import {
 import ResumePDF from "@/components/ResumePDF";
 import ResumePDFTemplate2 from "@/components/ResumePDFTemplate2";
 import dynamic from "next/dynamic";
+import DownloadGateModal from "@/components/DownloadGateModal";
+import { supabase } from "@/lib/supabase";
 
 const PDFViewer = dynamic(
   () => import("@react-pdf/renderer").then((mod) => mod.PDFViewer),
@@ -157,6 +159,9 @@ export default function ResultPage() {
   // Native HTML5 drag state — simple, fires exactly once on drop
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [dragOverId, setDragOverId] = useState<string | null>(null);
+  const [showDownloadGate, setShowDownloadGate] = useState(false);
+  const [hasPaidAccess, setHasPaidAccess] = useState(false);
+  const [checkingAccess, setCheckingAccess] = useState(true);
 
   const handleSectionDragStart = (sectionId: string) => {
     setDraggingId(sectionId);
@@ -221,6 +226,37 @@ export default function ResultPage() {
     setResume(parsed);
     setLoading(false);
   }, [router]);
+
+  // Check if user has already paid — skip gate if yes
+  useEffect(() => {
+    const checkAccess = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) {
+        setCheckingAccess(false);
+        return;
+      }
+      // Check user has an active subscription or a remaining one_time credit
+      const { data } = await supabase
+        .from("users")
+        .select("plan_type, plan_expires_at, one_time_credits")
+        .eq("id", session.user.id)
+        .single();
+
+      if (data) {
+        const hasMonthly =
+          (data.plan_type === "regular" || data.plan_type === "student") &&
+          data.plan_expires_at &&
+          new Date(data.plan_expires_at) > new Date();
+        const hasCredit = data.one_time_credits > 0;
+
+        if (hasMonthly || hasCredit) {
+          setHasPaidAccess(true);
+        }
+      }
+      setCheckingAccess(false);
+    };
+    checkAccess();
+  }, []);
 
   const handleCopyJSON = () => {
     if (resume) {
@@ -348,23 +384,40 @@ export default function ResultPage() {
             </button>
 
             <button
-              onClick={handleDownloadPDF}
-              disabled={downloadingPDF}
+              onClick={() => {
+                if (hasPaidAccess) {
+                  handleDownloadPDF();   // already paid → download directly
+                } else {
+                  setShowDownloadGate(true);  // not paid → show gate
+                }
+              }}
+              disabled={downloadingPDF || checkingAccess}
               className={`flex items-center gap-2 px-4 py-1.5 sm:px-5 sm:py-2 rounded-xl text-sm font-bold text-white transition-all shadow-sm ${
-                downloadingPDF
+                downloadingPDF || checkingAccess
                   ? "bg-surface-container-high cursor-not-allowed"
-                  : "bg-primary hover:bg-primary/90"
+                  : hasPaidAccess
+                    ? "bg-primary hover:bg-primary/90"
+                    : "bg-gradient-to-r from-primary to-secondary hover:opacity-90"
               }`}
             >
-              {downloadingPDF ? (
+              {checkingAccess ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                </>
+              ) : downloadingPDF ? (
                 <>
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
                   <span className="hidden sm:inline">Wait...</span>
                 </>
-              ) : (
+              ) : hasPaidAccess ? (
                 <>
                   <Download className="w-4 h-4" />
                   <span className="hidden sm:inline">Download</span>
+                </>
+              ) : (
+                <>
+                  <Download className="w-4 h-4" />
+                  <span className="hidden sm:inline">Download PDF</span>
                 </>
               )}
             </button>
@@ -1554,7 +1607,19 @@ export default function ResultPage() {
           </div>
         </div>
 
+        </div>
       </div>
+      {/* Download Gate Modal */}
+      <DownloadGateModal
+        isOpen={showDownloadGate}
+        onClose={() => setShowDownloadGate(false)}
+        onPaymentSuccess={() => {
+          setHasPaidAccess(true);      // unlock for this session
+          setShowDownloadGate(false);
+          handleDownloadPDF();          // trigger download immediately after payment
+        }}
+        initialPlan={null}
+      />
     </div>
   );
 }
