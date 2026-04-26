@@ -1611,8 +1611,6 @@ export default function ResultPage() {
             </PDFViewer>
           </div>
         </div>
-
-        </div>
       </div>
       {/* Download Gate Modal */}
       <DownloadGateModal
