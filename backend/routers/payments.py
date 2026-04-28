@@ -103,12 +103,25 @@ async def verify_payment(body: VerifyRequest):
                 "razorpay_payment_id": body.razorpay_payment_id
             }).eq("razorpay_order_id", body.razorpay_order_id).execute()
             
-            # 2. Insert or Update Subscription
+            # 2. Add Credits and Subscription Record
+            PLAN_CREDITS = {
+                "pay_per_use": 10,
+                "regular": 300,
+                "student": 300,
+            }
+            credits_to_add = PLAN_CREDITS.get(body.plan_type, 0)
+            
+            # Atomically add credits
+            supabase.rpc("add_credits", {
+                "p_user_id": body.user_id,
+                "p_amount": credits_to_add,
+                "p_plan_type": body.plan_type,
+                "p_payment_id": body.razorpay_payment_id
+            }).execute()
+
             expires_at = None
-            if body.plan_type == "regular":
-                expires_at = (datetime.utcnow() + timedelta(days=30)).isoformat()
-            elif body.plan_type == "student":
-                expires_at = (datetime.utcnow() + timedelta(days=180)).isoformat()
+            if body.plan_type in ["regular", "student"]:
+                expires_at = (datetime.utcnow() + timedelta(days=60)).isoformat()
             
             supabase.table("subscriptions").update({"is_active": False}).eq("user_id", body.user_id).execute()
             
@@ -116,6 +129,7 @@ async def verify_payment(body: VerifyRequest):
                 "user_id": body.user_id,
                 "plan_type": body.plan_type,
                 "is_active": True,
+                "credits_granted": credits_to_add
             }
             if expires_at:
                 sub_data["expires_at"] = expires_at
@@ -146,6 +160,7 @@ async def verify_payment(body: VerifyRequest):
 
 class DeductRequest(BaseModel):
     user_id: str
+    session_id: str | None = None
 
 @router.post("/payments/deduct-credit")
 async def deduct_credit(body: DeductRequest):
@@ -153,22 +168,17 @@ async def deduct_credit(body: DeductRequest):
         raise HTTPException(status_code=500, detail="Database not configured")
         
     try:
-        # Find active one_time subscription
-        response = supabase.table("subscriptions")\
-            .select("id")\
-            .eq("user_id", body.user_id)\
-            .eq("plan_type", "one_time")\
-            .eq("is_active", True)\
-            .order("created_at", desc=True)\
-            .limit(1)\
-            .execute()
-            
-        if response.data and len(response.data) > 0:
-            sub_id = response.data[0]["id"]
-            # Set to inactive
-            supabase.table("subscriptions").update({"is_active": False}).eq("id", sub_id).execute()
-            return {"status": "success", "message": "Credit deducted"}
+        result = supabase.rpc("deduct_credits", {
+            "p_user_id": body.user_id,
+            "p_amount": 10,
+            "p_session_id": body.session_id
+        }).execute()
+        
+        if result.data and len(result.data) > 0 and result.data[0]["success"]:
+            return {"status": "success", "new_balance": result.data[0]["new_balance"]}
         else:
-            return {"status": "error", "message": "No active one_time credit found"}
+            raise HTTPException(status_code=402, detail="Insufficient credits")
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

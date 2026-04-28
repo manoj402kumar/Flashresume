@@ -18,7 +18,7 @@ interface DownloadGateModalProps {
   onClose: () => void;
   onPaymentSuccess: () => void;
   /** Pre-selected plan from homepage — skips plan step if provided */
-  initialPlan?: "one_time" | "regular" | "student" | null;
+  initialPlan?: "pay_per_use" | "regular" | "student" | null;
 }
 
 type Step = "auth" | "plan" | "processing" | "student_upgrade";
@@ -26,28 +26,28 @@ type AuthMode = "login" | "signup" | "student_signup";
 
 const PLANS = [
   {
-    id: "one_time",
-    name: "One-Time Resume",
+    id: "pay_per_use",
+    name: "Pay Per Use",
     price: 29,
     priceDisplay: "₹29",
-    period: "one-time",
-    description: "Pay per resume download",
+    period: "per use",
+    description: "10 credits (1 resume download)",
     icon: <Download className="w-5 h-5" />,
     badge: null as string | null,
     borderClass: "border-surface-container-high",
-    features: ["1 Resume Download", "LaTeX PDF Quality", "ATS Score Report"],
+    features: ["10 Credits", "LaTeX PDF Quality", "ATS Score Report"],
   },
   {
     id: "regular",
-    name: "Monthly Plan",
-    price: 149,
-    priceDisplay: "₹149",
-    period: "/month",
-    description: "Unlimited downloads for 30 days",
+    name: "Regular Plan",
+    price: 199,
+    priceDisplay: "₹199",
+    period: "60 days",
+    description: "300 credits for 60 days",
     icon: <Crown className="w-5 h-5 text-amber-400" />,
     badge: "BEST VALUE",
     borderClass: "border-primary",
-    features: ["Unlimited Downloads", "30-Day Access", "Priority Processing", "Resume History"],
+    features: ["300 Credits", "60-Day Access", "Priority Processing", "Resume History"],
   },
 ];
 
@@ -67,9 +67,10 @@ export default function DownloadGateModal({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isStudent, setIsStudent] = useState(false);
-  const [selectedPlan, setSelectedPlan] = useState<string>(initialPlan || "one_time");
+  const [selectedPlan, setSelectedPlan] = useState<string>(initialPlan || "pay_per_use");
   const [studentPlanVisible, setStudentPlanVisible] = useState(false);
   const [showUpsell, setShowUpsell] = useState(false);
+  const [credits, setCredits] = useState<number | null>(null);
 
   // ── On open: check session and jump to correct step ──────────────────────
   useEffect(() => {
@@ -82,7 +83,7 @@ export default function DownloadGateModal({
     setCollegeName("");
     setRollNumber("");
     setAuthMode("login");
-    setSelectedPlan(initialPlan || "one_time");
+    setSelectedPlan(initialPlan || "pay_per_use");
     setStudentPlanVisible(false);
 
     supabase.auth.getSession().then(async ({ data: { session } }) => {
@@ -112,13 +113,16 @@ export default function DownloadGateModal({
   const loadUserProfile = async (userId: string) => {
     const { data } = await supabase
       .from("users")
-      .select("is_student")
+      .select("is_student, credits_balance")
       .eq("id", userId)
       .single();
       
-    if (data?.is_student) {
-      setIsStudent(true);
-      setStudentPlanVisible(true);
+    if (data) {
+      if (data?.is_student) {
+        setIsStudent(true);
+        setStudentPlanVisible(true);
+      }
+      setCredits(data.credits_balance);
     }
     
     // Check for upsell
@@ -126,7 +130,7 @@ export default function DownloadGateModal({
       .from("payments")
       .select("*", { count: "exact", head: true })
       .eq("user_id", userId)
-      .eq("plan_type", "one_time")
+      .eq("plan_type", "pay_per_use")
       .eq("status", "success");
       
     if (count && count >= 2) {
@@ -216,9 +220,9 @@ export default function DownloadGateModal({
     setStep("processing");
 
     const planDetails =
-      selectedPlan === "student"  ? { amount: 79,  plan_type: "student"  } :
-      selectedPlan === "regular"  ? { amount: 149, plan_type: "regular"  } :
-                                    { amount: 29,  plan_type: "one_time" };
+      selectedPlan === "student"  ? { amount: 99,  plan_type: "student"  } :
+      selectedPlan === "regular"  ? { amount: 199, plan_type: "regular"  } :
+                                    { amount: 29,  plan_type: "pay_per_use" };
 
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
@@ -350,7 +354,7 @@ export default function DownloadGateModal({
                 {authMode === "student_signup" && (
                   <div className="p-3 rounded-xl bg-tertiary/10 border border-tertiary/30 flex items-center gap-2">
                     <Sparkles className="w-4 h-4 text-tertiary" />
-                    <p className="text-xs font-bold text-tertiary">Student signup — you'll get ₹79/month pricing!</p>
+                    <p className="text-xs font-bold text-tertiary">Student signup — you'll get ₹99/60 days pricing!</p>
                   </div>
                 )}
 
@@ -433,10 +437,17 @@ export default function DownloadGateModal({
                   </p>
                 )}
 
+                {/* Credits Message */}
+                {user && credits !== null && credits < 10 && (
+                  <div className="bg-primary/10 border border-primary/20 p-3 rounded-xl mb-4 text-center">
+                    <p className="text-sm font-bold text-primary">You have {credits} credits — need 10 to download</p>
+                  </div>
+                )}
+
                 {/* Upsell Logic Banner */}
                 {showUpsell && (
                   <div className="bg-primary/10 border border-primary/20 p-3 rounded-xl mb-4 text-center">
-                    <p className="text-xs font-bold text-primary">💡 You've spent ₹58 — upgrade to Monthly for ₹149 and save</p>
+                    <p className="text-xs font-bold text-primary">💡 You've spent ₹58 — upgrade to Regular for ₹199 and save</p>
                   </div>
                 )}
 
@@ -509,19 +520,19 @@ export default function DownloadGateModal({
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-0.5">
                         <h4 className="font-bold text-sm text-on-background">🎓 Student Plan</h4>
-                        <span className="text-[10px] font-black bg-tertiary/20 text-tertiary px-2 py-0.5 rounded-full">₹79/mo</span>
+                        <span className="text-[10px] font-black bg-tertiary/20 text-tertiary px-2 py-0.5 rounded-full">₹99/60d</span>
                       </div>
-                      <p className="text-xs text-on-surface-variant">6-month access · Unlimited downloads</p>
+                      <p className="text-xs text-on-surface-variant">60-day access · 300 credits</p>
                       {!isStudent && (
                         <p className="text-xs text-tertiary font-semibold mt-1">Sign up with college ID to unlock →</p>
                       )}
                       {isStudent && (
-                        <p className="text-xs text-tertiary font-semibold mt-1">✓ You're eligible! Save ₹70/month</p>
+                        <p className="text-xs text-tertiary font-semibold mt-1">✓ You're eligible! Save ₹100</p>
                       )}
                     </div>
                     <div className="text-right self-center">
-                      <p className="font-black text-xl text-tertiary">₹79</p>
-                      <p className="text-[10px] text-on-surface-variant">/month</p>
+                      <p className="font-black text-xl text-tertiary">₹99</p>
+                      <p className="text-[10px] text-on-surface-variant">/60 days</p>
                     </div>
                   </div>
                 </div>
@@ -554,7 +565,7 @@ export default function DownloadGateModal({
                 <div className="bg-tertiary/10 border border-tertiary/20 p-4 rounded-2xl text-center mb-4">
                   <GraduationCap className="w-8 h-8 text-tertiary mx-auto mb-2" />
                   <p className="font-bold text-tertiary">This offer is for students.</p>
-                  <p className="text-xs text-on-surface-variant mt-1">Did you sign up as a student? Provide your college details to unlock the ₹79/month plan.</p>
+                  <p className="text-xs text-on-surface-variant mt-1">Did you sign up as a student? Provide your college details to unlock the ₹99 plan.</p>
                 </div>
                 
                 <div className="space-y-3">
@@ -573,7 +584,7 @@ export default function DownloadGateModal({
                 {error && <p className="text-xs text-error bg-error/10 px-3 py-2 rounded-lg text-center">{error}</p>}
 
                 <div className="flex gap-2 pt-2">
-                  <button onClick={() => { setStep("plan"); setSelectedPlan("one_time"); setError(null); }} className="flex-1 py-3 font-bold text-on-surface-variant hover:bg-surface-container-low rounded-xl transition-colors">
+                  <button onClick={() => { setStep("plan"); setSelectedPlan("pay_per_use"); setError(null); }} className="flex-1 py-3 font-bold text-on-surface-variant hover:bg-surface-container-low rounded-xl transition-colors">
                     Cancel
                   </button>
                   <button onClick={async () => {

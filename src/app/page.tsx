@@ -22,6 +22,7 @@ import { parseResume, analyzeResume } from "@/lib/api";
 import DownloadGateModal from "@/components/DownloadGateModal";
 import { supabase } from "@/lib/supabase";
 import { User } from "@supabase/supabase-js";
+import CreditBadge from "@/components/CreditBadge";
 
 export default function App() {
   const router = useRouter();
@@ -36,7 +37,7 @@ export default function App() {
   const [showParsedText, setShowParsedText] = useState(false);
   const [parsing, setParsing] = useState(false);
   const [showDownloadGate, setShowDownloadGate] = useState(false);
-  const [selectedPricingPlan, setSelectedPricingPlan] = useState<"one_time" | "regular" | "student" | null>(null);
+  const [selectedPricingPlan, setSelectedPricingPlan] = useState<"pay_per_use" | "regular" | "student" | null>(null);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
 
   useEffect(() => {
@@ -185,6 +186,7 @@ export default function App() {
           <div className="flex items-center gap-3">
             {currentUser ? (
               <div className="flex items-center gap-3">
+                <CreditBadge onTopUpClick={() => { setSelectedPricingPlan(null); setShowDownloadGate(true); }} />
                 <span className="hidden md:block text-sm text-on-surface-variant font-medium truncate max-w-[160px]">
                   {currentUser.email}
                 </span>
@@ -482,87 +484,89 @@ export default function App() {
         </section>
 
         {/* Pricing Section */}
-        <section id="pricing" className="bg-surface py-32">
-          <div className="max-w-7xl mx-auto px-6 text-center mb-20">
-            <h2 className="font-headline text-4xl md:text-5xl font-bold text-on-background mb-4">Invest in yourself</h2>
-            <p className="text-on-surface-variant text-lg">Premium features, student-friendly pricing.</p>
-          </div>
-          <div className="max-w-6xl mx-auto px-6 grid md:grid-cols-3 gap-8 items-stretch">
-            {/* Free */}
-            <div className="bg-surface-container-low p-10 rounded-[2rem] flex flex-col border border-transparent">
-              <h3 className="font-headline text-2xl font-bold mb-2">Per Resume</h3>
-              <div className="text-4xl font-black mb-8">
-                ₹29 <span className="text-base font-normal text-on-surface-variant">/download</span>
-              </div>
-              <ul className="space-y-4 mb-10 text-left flex-grow">
-                <li className="flex items-start gap-3 text-on-surface-variant">
-                  <Check className="w-5 h-5 mt-0.5" />
-                  1 Resume Template
-                </li>
-                <li className="flex items-start gap-3 text-on-surface-variant">
-                  <Check className="w-5 h-5 mt-0.5" />
-                  Basic ATS Scan
-                </li>
-              </ul>
-              <button
-                onClick={() => { setSelectedPricingPlan("one_time"); setShowDownloadGate(true); }}
-                className="w-full py-4 rounded-xl border border-on-surface-variant/20 font-bold hover:bg-surface-container-high transition-colors"
-              >
-                Start Free
-              </button>
+        {currentUser && (
+          <section id="pricing" className="bg-surface py-32">
+            <div className="max-w-7xl mx-auto px-6 text-center mb-20">
+              <h2 className="font-headline text-4xl md:text-5xl font-bold text-on-background mb-4">Invest in yourself</h2>
+              <p className="text-on-surface-variant text-lg">Premium features, student-friendly pricing.</p>
             </div>
-            {/* Pro */}
-            <div className="bg-surface-container-lowest p-10 rounded-[2rem] flex flex-col relative border-2 border-primary-container shadow-2xl shadow-primary/10 scale-105 z-10">
-              <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-primary text-white px-4 py-1 rounded-full text-xs font-bold uppercase tracking-widest">
-                MOST POPULAR
+            <div className="max-w-6xl mx-auto px-6 grid md:grid-cols-3 gap-8 items-stretch">
+              {/* Free */}
+              <div className="bg-surface-container-low p-10 rounded-[2rem] flex flex-col border border-transparent">
+                <h3 className="font-headline text-2xl font-bold mb-2">Per Resume</h3>
+                <div className="text-4xl font-black mb-8">
+                  ₹29 <span className="text-base font-normal text-on-surface-variant">/download</span>
+                </div>
+                <ul className="space-y-4 mb-10 text-left flex-grow">
+                  <li className="flex items-start gap-3 text-on-surface-variant">
+                    <Check className="w-5 h-5 mt-0.5" />
+                    1 Resume Template
+                  </li>
+                  <li className="flex items-start gap-3 text-on-surface-variant">
+                    <Check className="w-5 h-5 mt-0.5" />
+                    Basic ATS Scan
+                  </li>
+                </ul>
+                <button
+                  onClick={() => { setSelectedPricingPlan("pay_per_use"); setShowDownloadGate(true); }}
+                  className="w-full py-4 rounded-xl border border-on-surface-variant/20 font-bold hover:bg-surface-container-high transition-colors"
+                >
+                  Start Free
+                </button>
               </div>
-              <h3 className="font-headline text-2xl font-bold mb-2">Pro Monthly</h3>
-              <div className="text-4xl font-black mb-8">
-                ₹149 <span className="text-base font-normal text-on-surface-variant">/mo</span>
+              {/* Pro */}
+              <div className="bg-surface-container-lowest p-10 rounded-[2rem] flex flex-col relative border-2 border-primary-container shadow-2xl shadow-primary/10 scale-105 z-10">
+                <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-primary text-white px-4 py-1 rounded-full text-xs font-bold uppercase tracking-widest">
+                  MOST POPULAR
+                </div>
+                <h3 className="font-headline text-2xl font-bold mb-2">Pro Monthly</h3>
+                <div className="text-4xl font-black mb-8">
+                  ₹199 <span className="text-base font-normal text-on-surface-variant">/60 days</span>
+                </div>
+                <ul className="space-y-4 mb-10 text-left flex-grow">
+                  <li className="flex items-start gap-3">
+                    <CheckCircle2 className="text-primary w-5 h-5 mt-0.5 fill-primary/10" />
+                    Unlimited Resumes
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <CheckCircle2 className="text-primary w-5 h-5 mt-0.5 fill-primary/10" />
+                    AI Tailoring per Job
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <CheckCircle2 className="text-primary w-5 h-5 mt-0.5 fill-primary/10" />
+                    Premium Templates
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <CheckCircle2 className="text-primary w-5 h-5 mt-0.5 fill-primary/10" />
+                    PDF Exports
+                  </li>
+                </ul>
+                <button
+                  onClick={() => { setSelectedPricingPlan("regular"); setShowDownloadGate(true); }}
+                  className="w-full flash-gradient text-white py-4 rounded-xl font-bold hover:opacity-90 transition-opacity"
+                >
+                  Go Pro
+                </button>
               </div>
-              <ul className="space-y-4 mb-10 text-left flex-grow">
-                <li className="flex items-start gap-3">
-                  <CheckCircle2 className="text-primary w-5 h-5 mt-0.5 fill-primary/10" />
-                  Unlimited Resumes
-                </li>
-                <li className="flex items-start gap-3">
-                  <CheckCircle2 className="text-primary w-5 h-5 mt-0.5 fill-primary/10" />
-                  AI Tailoring per Job
-                </li>
-                <li className="flex items-start gap-3">
-                  <CheckCircle2 className="text-primary w-5 h-5 mt-0.5 fill-primary/10" />
-                  Premium Templates
-                </li>
-                <li className="flex items-start gap-3">
-                  <CheckCircle2 className="text-primary w-5 h-5 mt-0.5 fill-primary/10" />
-                  PDF Exports
-                </li>
-              </ul>
-              <button
-                onClick={() => { setSelectedPricingPlan("regular"); setShowDownloadGate(true); }}
-                className="w-full flash-gradient text-white py-4 rounded-xl font-bold hover:opacity-90 transition-opacity"
-              >
-                Go Pro
-              </button>
+              {/* Student Teaser */}
+              <div className="bg-surface-container-low p-10 rounded-[2rem] flex flex-col border border-transparent justify-center items-center text-center">
+                <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-6">
+                  <span className="text-3xl">🎓</span>
+                </div>
+                <h3 className="font-headline text-2xl font-bold mb-4">Student Special Offer Available</h3>
+                <p className="text-on-surface-variant mb-8">
+                  Unlock our exclusive student discount and get full access to all premium features at a fraction of the cost.
+                </p>
+                <button
+                  onClick={() => { setSelectedPricingPlan("student"); setShowDownloadGate(true); }}
+                  className="w-full py-4 rounded-xl bg-on-background text-white font-bold hover:opacity-90 transition-opacity mt-auto"
+                >
+                  Claim Offer
+                </button>
+              </div>
             </div>
-            {/* Student Teaser */}
-            <div className="bg-surface-container-low p-10 rounded-[2rem] flex flex-col border border-transparent justify-center items-center text-center">
-              <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-6">
-                <span className="text-3xl">🎓</span>
-              </div>
-              <h3 className="font-headline text-2xl font-bold mb-4">Student Special Offer Available</h3>
-              <p className="text-on-surface-variant mb-8">
-                Unlock our exclusive student discount and get full access to all premium features at a fraction of the cost.
-              </p>
-              <button
-                onClick={() => { setSelectedPricingPlan("student"); setShowDownloadGate(true); }}
-                className="w-full py-4 rounded-xl bg-on-background text-white font-bold hover:opacity-90 transition-opacity mt-auto"
-              >
-                Claim Offer
-              </button>
-            </div>
-          </div>
-        </section>
+          </section>
+        )}
 
         {/* Reviews Section */}
         <section id="reviews" className="py-32">

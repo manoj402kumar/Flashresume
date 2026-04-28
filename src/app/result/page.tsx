@@ -33,6 +33,7 @@ import ResumePDF from "@/components/ResumePDF";
 import ResumePDFTemplate2 from "@/components/ResumePDFTemplate2";
 import dynamic from "next/dynamic";
 import DownloadGateModal from "@/components/DownloadGateModal";
+import CreditBadge from "@/components/CreditBadge";
 import { supabase } from "@/lib/supabase";
 
 const PDFViewer = dynamic(
@@ -255,33 +256,18 @@ export default function ResultPage() {
     setCheckingAccess(true);
     const { data: { session } } = await supabase.auth.getSession();
     if (!session?.user) {
+      setHasPaidAccess(false);
       setCheckingAccess(false);
       return;
     }
-    // Check subscriptions table — correct table per schema
     const { data } = await supabase
-      .from("subscriptions")
-      .select("plan_type, expires_at, is_active")
-      .eq("user_id", session.user.id)
-      .eq("is_active", true)
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
+      .from("users")
+      .select("credits_balance")
+      .eq("id", session.user.id)
+      .single();
 
-    if (data) {
-      const hasMonthly =
-        (data.plan_type === "regular" || data.plan_type === "student") &&
-        data.expires_at &&
-        new Date(data.expires_at) > new Date();
-      
-      // one_time: active subscription with no expiry = one download credit
-      const hasOneTime = data.plan_type === "one_time" && data.is_active;
-
-      if (hasMonthly || hasOneTime) {
-        setHasPaidAccess(true);
-      } else {
-        setHasPaidAccess(false);
-      }
+    if (data && data.credits_balance >= 10) {
+      setHasPaidAccess(true);
     } else {
       setHasPaidAccess(false);
     }
@@ -321,6 +307,41 @@ export default function ResultPage() {
   const handleDownloadPDF = async () => {
     if (!resume) return;
     setDownloadingPDF(true);
+    
+    // Deduct credit first
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user) {
+      setShowDownloadGate(true);
+      setDownloadingPDF(false);
+      return;
+    }
+
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+    try {
+      const res = await fetch(`${apiUrl}/api/payments/deduct-credit`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          user_id: session.user.id,
+          session_id: new URLSearchParams(window.location.search).get("session_id") || undefined
+        })
+      });
+      
+      if (!res.ok) {
+        setShowDownloadGate(true);
+        setDownloadingPDF(false);
+        return;
+      }
+      
+      // Re-evaluate access silently
+      await checkAccess();
+    } catch (e) {
+      console.error("Failed to deduct credit", e);
+      setShowDownloadGate(true);
+      setDownloadingPDF(false);
+      return;
+    }
+
     try {
       // Use React-PDF for high-quality, ATS-friendly frontend PDF generation
       // Ensure highlights are strictly DISABLED for the downloaded PDF
@@ -343,23 +364,6 @@ export default function ResultPage() {
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
-      
-      // Deduct credit if applicable
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-        try {
-          await fetch(`${apiUrl}/api/payments/deduct-credit`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ user_id: session.user.id })
-          });
-          // Re-evaluate access silently
-          await checkAccess();
-        } catch (e) {
-          console.error("Failed to deduct credit", e);
-        }
-      }
     } catch (error) {
       console.error("PDF generation failed:", error);
     } finally {
@@ -403,6 +407,7 @@ export default function ResultPage() {
           </div>
 
           <div className="flex items-center gap-2 sm:gap-4">
+            <CreditBadge onTopUpClick={() => setShowDownloadGate(true)} />
             <AnimatePresence>
               {hasUnsavedChanges && (
                 <motion.button
