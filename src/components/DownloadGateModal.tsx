@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { User } from "@supabase/supabase-js";
+import StudentVerificationModal from "./StudentVerificationModal";
 
 declare global {
   interface Window { Razorpay: any; }
@@ -69,6 +70,7 @@ export default function DownloadGateModal({
   const [isStudent, setIsStudent] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<string>(initialPlan || "pay_per_use");
   const [studentPlanVisible, setStudentPlanVisible] = useState(false);
+  const [showVerificationModal, setShowVerificationModal] = useState(false);
   const [showUpsell, setShowUpsell] = useState(false);
   const [credits, setCredits] = useState<number | null>(null);
 
@@ -223,6 +225,16 @@ export default function DownloadGateModal({
       selectedPlan === "student" ? { amount: 99, plan_type: "student" } :
         selectedPlan === "regular" ? { amount: 199, plan_type: "regular" } :
           { amount: 29, plan_type: "pay_per_use" };
+
+    if (planDetails.plan_type === "student") {
+      const { data: userData } = await supabase.from("users").select("student_verified").eq("id", serverUser.id).single();
+      if (!userData?.student_verified) {
+        setShowVerificationModal(true);
+        setLoading(false);
+        setStep("plan");
+        return;
+      }
+    }
 
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
@@ -616,6 +628,14 @@ export default function DownloadGateModal({
           </AnimatePresence>
         </div>
       </motion.div>
+      <StudentVerificationModal 
+        isOpen={showVerificationModal} 
+        onClose={() => setShowVerificationModal(false)} 
+        onSuccess={() => {
+          setShowVerificationModal(false);
+          handleProceedToPayment();
+        }} 
+      />
     </div>
   );
 }

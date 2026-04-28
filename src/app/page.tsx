@@ -23,6 +23,7 @@ import DownloadGateModal from "@/components/DownloadGateModal";
 import { supabase } from "@/lib/supabase";
 import { User } from "@supabase/supabase-js";
 import CreditBadge from "@/components/CreditBadge";
+import AccountSection from "@/components/AccountSection";
 
 export default function App() {
   const router = useRouter();
@@ -180,7 +181,9 @@ export default function App() {
           </div>
           <div className="hidden md:flex items-center gap-8">
             <a href="#process" className="text-on-surface-variant hover:text-primary transition-colors font-medium">Process</a>
-            <a href="#pricing" className="text-on-surface-variant hover:text-primary transition-colors font-medium">Pricing</a>
+            {currentUser && (
+              <a href="#pricing" className="text-on-surface-variant hover:text-primary transition-colors font-medium">Pricing</a>
+            )}
             <a href="#reviews" className="text-on-surface-variant hover:text-primary transition-colors font-medium">Reviews</a>
           </div>
           <div className="flex items-center gap-3">
@@ -586,6 +589,10 @@ export default function App() {
               </div>
             </div>
           </section>
+        )}
+
+        {currentUser && (
+          <AccountSection onTopUpClick={() => { setSelectedPricingPlan(null); setShowDownloadGate(true); }} />
         )}
 
         {/* Reviews Section */}
