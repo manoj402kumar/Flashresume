@@ -288,7 +288,12 @@ export default function ResultPage() {
   };
 
   const handleStartOver = () => {
-    localStorage.clear();
+    localStorage.removeItem("generated_resume");
+    localStorage.removeItem("resume_text");
+    localStorage.removeItem("job_description");
+    localStorage.removeItem("analysis");
+    localStorage.removeItem("no_jd_mode");
+    localStorage.removeItem("approved_project");
     router.push("/");
   };
 

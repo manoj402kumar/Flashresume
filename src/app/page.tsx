@@ -500,7 +500,7 @@ export default function App() {
                 <ul className="space-y-4 mb-10 text-left flex-grow">
                   <li className="flex items-start gap-3 text-on-surface-variant">
                     <Check className="w-5 h-5 mt-0.5" />
-                    1 Resume Template
+                    30 Credits (3 downloads)
                   </li>
                   <li className="flex items-start gap-3 text-on-surface-variant">
                     <Check className="w-5 h-5 mt-0.5" />
@@ -514,54 +514,74 @@ export default function App() {
                   Start Free
                 </button>
               </div>
-              {/* Pro */}
+
+              {/* Student */}
               <div className="bg-surface-container-lowest p-10 rounded-[2rem] flex flex-col relative border-2 border-primary-container shadow-2xl shadow-primary/10 scale-105 z-10">
                 <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-primary text-white px-4 py-1 rounded-full text-xs font-bold uppercase tracking-widest">
                   MOST POPULAR
                 </div>
+                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+                  <span className="text-2xl">🎓</span>
+                </div>
+                <h3 className="font-headline text-2xl font-bold mb-2">Student Plan</h3>
+                <div className="text-4xl font-black mb-8">
+                  ₹99 <span className="text-base font-normal text-on-surface-variant">/60 days</span>
+                </div>
+                <ul className="space-y-4 mb-10 text-left flex-grow">
+                  <li className="flex items-start gap-3">
+                    <CheckCircle2 className="text-primary w-5 h-5 mt-0.5 fill-primary/10" />
+                    300 Credits
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <CheckCircle2 className="text-primary w-5 h-5 mt-0.5 fill-primary/10" />
+                    60-Day Access
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <CheckCircle2 className="text-primary w-5 h-5 mt-0.5 fill-primary/10" />
+                    All Templates
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <CheckCircle2 className="text-primary w-5 h-5 mt-0.5 fill-primary/10" />
+                    Priority Support
+                  </li>
+                </ul>
+                <button
+                  onClick={() => { setSelectedPricingPlan("student"); setShowDownloadGate(true); }}
+                  className="w-full flash-gradient text-white py-4 rounded-xl font-bold hover:opacity-90 transition-opacity"
+                >
+                  Claim Student Offer
+                </button>
+              </div>
+
+              {/* Pro Monthly */}
+              <div className="bg-surface-container-low p-10 rounded-[2rem] flex flex-col border border-transparent">
                 <h3 className="font-headline text-2xl font-bold mb-2">Pro Monthly</h3>
                 <div className="text-4xl font-black mb-8">
                   ₹199 <span className="text-base font-normal text-on-surface-variant">/60 days</span>
                 </div>
                 <ul className="space-y-4 mb-10 text-left flex-grow">
-                  <li className="flex items-start gap-3">
+                  <li className="flex items-start gap-3 text-on-surface-variant">
                     <CheckCircle2 className="text-primary w-5 h-5 mt-0.5 fill-primary/10" />
                     Unlimited Resumes
                   </li>
-                  <li className="flex items-start gap-3">
+                  <li className="flex items-start gap-3 text-on-surface-variant">
                     <CheckCircle2 className="text-primary w-5 h-5 mt-0.5 fill-primary/10" />
                     AI Tailoring per Job
                   </li>
-                  <li className="flex items-start gap-3">
+                  <li className="flex items-start gap-3 text-on-surface-variant">
                     <CheckCircle2 className="text-primary w-5 h-5 mt-0.5 fill-primary/10" />
                     Premium Templates
                   </li>
-                  <li className="flex items-start gap-3">
+                  <li className="flex items-start gap-3 text-on-surface-variant">
                     <CheckCircle2 className="text-primary w-5 h-5 mt-0.5 fill-primary/10" />
                     PDF Exports
                   </li>
                 </ul>
                 <button
                   onClick={() => { setSelectedPricingPlan("regular"); setShowDownloadGate(true); }}
-                  className="w-full flash-gradient text-white py-4 rounded-xl font-bold hover:opacity-90 transition-opacity"
+                  className="w-full py-4 rounded-xl border border-on-surface-variant/20 font-bold hover:bg-surface-container-high transition-colors"
                 >
                   Go Pro
-                </button>
-              </div>
-              {/* Student Teaser */}
-              <div className="bg-surface-container-low p-10 rounded-[2rem] flex flex-col border border-transparent justify-center items-center text-center">
-                <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-6">
-                  <span className="text-3xl">🎓</span>
-                </div>
-                <h3 className="font-headline text-2xl font-bold mb-4">Student Special Offer Available</h3>
-                <p className="text-on-surface-variant mb-8">
-                  Unlock our exclusive student discount and get full access to all premium features at a fraction of the cost.
-                </p>
-                <button
-                  onClick={() => { setSelectedPricingPlan("student"); setShowDownloadGate(true); }}
-                  className="w-full py-4 rounded-xl bg-on-background text-white font-bold hover:opacity-90 transition-opacity mt-auto"
-                >
-                  Claim Offer
                 </button>
               </div>
             </div>

@@ -105,7 +105,7 @@ async def verify_payment(body: VerifyRequest):
             
             # 2. Add Credits and Subscription Record
             PLAN_CREDITS = {
-                "pay_per_use": 10,
+                "pay_per_use": 30,
                 "regular": 300,
                 "student": 300,
             }

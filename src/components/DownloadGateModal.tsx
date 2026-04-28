@@ -31,11 +31,11 @@ const PLANS = [
     price: 29,
     priceDisplay: "₹29",
     period: "per use",
-    description: "10 credits (1 resume download)",
+    description: "30 credits (3 resume downloads)",
     icon: <Download className="w-5 h-5" />,
     badge: null as string | null,
     borderClass: "border-surface-container-high",
-    features: ["10 Credits", "LaTeX PDF Quality", "ATS Score Report"],
+    features: ["30 Credits", "LaTeX PDF Quality", "ATS Score Report"],
   },
   {
     id: "regular",
