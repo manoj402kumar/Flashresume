@@ -371,6 +371,36 @@ export default function ResultPage() {
     }
   };
 
+  const handleDownloadPDFDirect = async () => {
+    if (!resume) return;
+    setDownloadingPDF(true);
+    try {
+      const PDFComponent = selectedTemplate === "template1" 
+                           ? ResumePDF 
+                           : ResumePDFTemplate2;
+      const blob = await pdf(
+        <PDFComponent 
+          resume={resume} 
+          showHighlights={false} 
+          matchedKeywords={[]} 
+          missingKeywords={[]} 
+        />
+      ).toBlob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `${resume.heading.name.replace(/\s+/g, "_")}_Resume.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("PDF generation failed:", error);
+    } finally {
+      setDownloadingPDF(false);
+    }
+  };
+
   if (loading || !resume) {
     return (
       <div suppressHydrationWarning className="min-h-screen bg-surface flex items-center justify-center">
@@ -1671,7 +1701,7 @@ export default function ResultPage() {
         onPaymentSuccess={() => {
           setHasPaidAccess(true);      // unlock for this session
           setShowDownloadGate(false);
-          handleDownloadPDF();          // trigger download immediately after payment
+          handleDownloadPDFDirect();          // trigger download immediately after payment
         }}
         initialPlan={null}
       />

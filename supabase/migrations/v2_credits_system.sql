@@ -81,3 +81,6 @@ BEGIN
   RETURN QUERY SELECT TRUE, (current_balance + p_amount)::INTEGER;
 END;
 $$;
+
+-- Phase 6: Enable Realtime on users table (Required for CreditBadge live updates)
+ALTER PUBLICATION supabase_realtime ADD TABLE public.users;
