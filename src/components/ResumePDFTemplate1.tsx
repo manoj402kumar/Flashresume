@@ -222,7 +222,7 @@ function HighlightedText({ text, matched, missing, showHighlights, style }: { te
   );
 }
 
-export default function ResumePDF({ resume, showHighlights = false, matchedKeywords = [], missingKeywords = [] }: ResumePDFProps) {
+export default function ResumePDFTemplate1({ resume, showHighlights = false, matchedKeywords = [], missingKeywords = [] }: ResumePDFProps) {
   return (
     <Document>
       <Page size="A4" style={styles.page}>

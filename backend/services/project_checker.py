@@ -1,7 +1,7 @@
 import json
 import re
 from prompts.project_prompt import PROJECT_CHECK_PROMPT
-from llm.master_llm_caller import call_llm_r1
+from llm.master_llm_caller import call_llm_r2
 
 def extract_projects_section(resume_text: str) -> str:
     """
@@ -51,7 +51,7 @@ def check_project_relevance(resume_text: str, job_description: str) -> dict:
     )
     
     # Call LLM
-    result = call_llm_r1(prompt)
+    result = call_llm_r2(prompt)
     
     # Check if LLM call failed
     if not result["success"]:
@@ -99,12 +99,14 @@ def check_project_relevance(resume_text: str, job_description: str) -> dict:
     if "relevant_projects" in data and len(data["relevant_projects"]) > 2:
         data["relevant_projects"] = data["relevant_projects"][:2]
     
-    # VALIDATION: Ensure suggested_project is object or null (not array)
-    if "suggested_project" in data:
+    # VALIDATION: Ensure suggested_project is object or null (not array or string)
+    if "suggested_project" in data and data["suggested_project"] is not None:
         if isinstance(data["suggested_project"], list):
-            if len(data["suggested_project"]) > 0:
+            if len(data["suggested_project"]) > 0 and isinstance(data["suggested_project"][0], dict):
                 data["suggested_project"] = data["suggested_project"][0]
             else:
                 data["suggested_project"] = None
+        elif not isinstance(data["suggested_project"], dict):
+            data["suggested_project"] = None
     
     return data

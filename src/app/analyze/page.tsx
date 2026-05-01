@@ -194,7 +194,7 @@ export default function AnalyzePage() {
 
         {/* Project Approval (if needed) */}
         {/* ONLY show if: requires_consent is true AND suggested_project exists AND has NO relevant projects */}
-        {analysis.requires_consent && analysis.suggested_project && (
+        {analysis.requires_consent && analysis.suggested_project && !analysis.has_relevant_projects && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}

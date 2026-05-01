@@ -168,6 +168,12 @@ export interface TemplateV1 {
   };
   changes: string[];
   section_order?: string[];
+  custom_sections?: Array<{
+    id: string;
+    heading: string;
+    items?: any[];
+    bullets?: Array<string | { text: string; url?: string }>;
+  }>;
   ats_score_before: number;
   ats_score_after: number;
   _model_used?: string;

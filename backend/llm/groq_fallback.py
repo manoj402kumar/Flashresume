@@ -8,17 +8,15 @@ load_dotenv()
 
 GROQ_R1_CHAIN = [
     "llama-3.3-70b-versatile",
-    "meta-llama/llama-4-scout-17b-16e-instruct",
-    "llama-3.1-8b-instant",
+    "mixtral-8x7b-32768",
+    "llama3-8b-8192",
 ]
 
 GROQ_R2_CHAIN = [
-    "openai/gpt-oss-120b",
     "llama-3.3-70b-versatile",
-    "meta-llama/llama-4-scout-17b-16e-instruct",
-    "openai/gpt-oss-20b",
-    "qwen/qwen3-32b",
-    "llama-3.1-8b-instant",
+    "deepseek-r1-distill-llama-70b",
+    "mixtral-8x7b-32768",
+    "llama3-8b-8192",
 ]
 
 client = Groq(api_key=os.getenv("GROQ_API_KEY"))
@@ -108,7 +106,7 @@ def _call_groq_chain(prompt: str, chain: list, max_tokens: int) -> dict:
 
 def call_groq_r1(prompt: str) -> dict:
     """Groq chain for Request-1 — ATS scoring + project analysis."""
-    return _call_groq_chain(prompt, GROQ_R1_CHAIN, max_tokens=800)
+    return _call_groq_chain(prompt, GROQ_R1_CHAIN, max_tokens=1500)
 
 
 def call_groq_r2(prompt: str) -> dict:

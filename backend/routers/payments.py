@@ -105,9 +105,9 @@ async def verify_payment(body: VerifyRequest):
             
             # 2. Add Credits and Subscription Record
             PLAN_CREDITS = {
-                "pay_per_use": 30,
+                "pay_per_use": 20,
                 "regular": 300,
-                "student": 300,
+                "student": 400,
             }
             credits_to_add = PLAN_CREDITS.get(body.plan_type, 0)
             
@@ -120,9 +120,10 @@ async def verify_payment(body: VerifyRequest):
             }).execute()
 
             expires_at = None
-            if body.plan_type in ["regular", "student"]:
+            if body.plan_type == "regular":
                 expires_at = (datetime.utcnow() + timedelta(days=60)).isoformat()
-            
+            elif body.plan_type == "student":
+                expires_at = (datetime.utcnow() + timedelta(days=90)).isoformat()
             supabase.table("subscriptions").update({"is_active": False}).eq("user_id", body.user_id).execute()
             
             sub_data = {
@@ -182,3 +183,18 @@ async def deduct_credit(body: DeductRequest):
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+class StudentVerifyRequest(BaseModel):
+    email: str
+
+@router.post("/payments/verify-student")
+async def verify_student(body: StudentVerifyRequest):
+    email = body.email.strip().lower()
+    personal_domains = ["@gmail.com", "@yahoo.com", "@outlook.com", "@hotmail.com", "@icloud.com"]
+    is_valid = True
+    for domain in personal_domains:
+        if email.endswith(domain):
+            is_valid = False
+            break
+            
+    return {"status": "success", "verified": is_valid}

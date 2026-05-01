@@ -8,15 +8,15 @@ from dotenv import load_dotenv
 load_dotenv()
 
 GEMINI_R1_CHAIN = [
-    "gemma-3-27b-it",                 # ~10s — quality anchor
+    "gemini-2.5-flash",               # Fast and high quality
     "gemini-2.5-flash-lite",          # ~20s
-    "gemini-3.1-flash-lite-preview",  # ~40s — last resort (preview model, may change)
+    "gemma-3-27b-it",                 # ~10s — fallback
 ]
 
 GEMINI_R2_CHAIN = [
+    "gemini-2.5-pro",                 # High quality logic
+    "gemini-2.5-flash",               # Fast and high quality
     "gemini-2.5-flash-lite",          # ~20s
-    "gemini-3.1-flash-lite-preview",  # ~40s — preview model
-    "gemma-3-27b-it",                 # ~10s
 ]
 
 client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
@@ -117,7 +117,7 @@ def _call_gemini_chain(prompt: str, chain: list, max_tokens: int) -> dict:
 
 def call_gemini_r1(prompt: str) -> dict:
     """Gemini chain for Request-1 — ATS scoring + project analysis."""
-    return _call_gemini_chain(prompt, GEMINI_R1_CHAIN, max_tokens=800)
+    return _call_gemini_chain(prompt, GEMINI_R1_CHAIN, max_tokens=1500)
 
 
 def call_gemini_r2(prompt: str) -> dict:

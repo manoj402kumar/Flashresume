@@ -50,7 +50,7 @@ export default function CreditBadge({ onTopUpClick }: CreditBadgeProps) {
 
     // Subscribe to realtime updates
     const channel = supabase
-      .channel(`public:users:id=eq.${user.id}`)
+      .channel(`badge_credits_${user.id}`)
       .on(
         "postgres_changes",
         {

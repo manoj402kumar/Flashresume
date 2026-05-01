@@ -105,7 +105,7 @@ function Sidebar({
             <ExternalLink className="w-3.5 h-3.5" /> View Live App
           </a>
           <a
-            href="http://localhost:8000/docs"
+            href={`${API_URL}/docs`}
             target="_blank"
             className="flex items-center gap-2 text-xs text-white/40 hover:text-white/70 transition-colors font-medium"
           >

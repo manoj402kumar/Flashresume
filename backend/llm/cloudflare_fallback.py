@@ -126,7 +126,7 @@ def _call_cloudflare_chain(prompt: str, chain: list, max_tokens: int) -> dict:
 
 def call_cloudflare_r1(prompt: str) -> dict:
     """Cloudflare chain for Request-1 — ATS scoring + project analysis."""
-    return _call_cloudflare_chain(prompt, CLOUDFLARE_CHAIN, max_tokens=800)
+    return _call_cloudflare_chain(prompt, CLOUDFLARE_CHAIN, max_tokens=1500)
 
 
 def call_cloudflare_r2(prompt: str) -> dict:

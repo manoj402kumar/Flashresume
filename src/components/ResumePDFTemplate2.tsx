@@ -210,7 +210,7 @@ export default function ResumePDFTemplate2({ resume, showHighlights = false, mat
       <Page size={[612.28, 790.87]} style={styles.page}>
         {/* HEADING */}
         <View style={styles.heading}>
-          <Text style={styles.name}>{resume.heading.name}</Text>
+          <Text style={styles.name}>{resume.heading.name.toLowerCase().replace(/\b\w/g, c => c.toUpperCase())}</Text>
           <Text style={styles.contactInfo}>
             {resume.heading.phone}
             {" | "}

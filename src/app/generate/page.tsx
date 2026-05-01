@@ -79,7 +79,7 @@ export default function GeneratePage() {
         // Call the generation API
         const generatedResume = await generateResume({
           resume_text: resumeText,
-          job_description: jobDescription,
+          job_description: jobDescription || "",
           ats_score_before: analysis.ats_score,
           approved_project: approvedProject ? `${approvedProject.title} | Tech Stack: ${approvedProject.tech_stack} | Description: ${approvedProject.description}` : undefined,
           missing_keywords: analysis.missing_skills || [],
@@ -106,8 +106,8 @@ export default function GeneratePage() {
 
         // Navigate to result page
         await new Promise((resolve) => setTimeout(resolve, 800));
-        if (generatedResume.session_id) {
-          router.push(`/result?session_id=${generatedResume.session_id}`);
+        if ((generatedResume as any).session_id) {
+          router.push(`/result?session_id=${(generatedResume as any).session_id}`);
         } else {
           // Fallback if session_id is missing for some reason
           localStorage.setItem("generated_resume", JSON.stringify(generatedResume));

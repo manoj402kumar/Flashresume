@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "motion/react";
+import { motion, AnimatePresence } from "motion/react";
 import {
   ArrowRight,
   Bolt,
@@ -14,12 +14,14 @@ import {
   AlertTriangle,
   Wand2,
   FileText,
-  X
+  X,
+  User as UserIcon,
+  Loader2
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { parseResume, analyzeResume } from "@/lib/api";
-import DownloadGateModal from "@/components/DownloadGateModal";
+import PricingPopup from "@/components/PricingPopup";
 import { supabase } from "@/lib/supabase";
 import { User } from "@supabase/supabase-js";
 import CreditBadge from "@/components/CreditBadge";
@@ -40,6 +42,9 @@ export default function App() {
   const [showDownloadGate, setShowDownloadGate] = useState(false);
   const [selectedPricingPlan, setSelectedPricingPlan] = useState<"pay_per_use" | "regular" | "student" | null>(null);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [showAccountDropdown, setShowAccountDropdown] = useState(false);
+  const [credits, setCredits] = useState<number>(0);
+  const [subscriptionData, setSubscriptionData] = useState<any>(null);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -50,6 +55,29 @@ export default function App() {
     });
     return () => subscription.unsubscribe();
   }, []);
+
+  useEffect(() => {
+    if (!currentUser) return;
+
+    const fetchAccountData = async () => {
+      const { data: userData } = await supabase.from("users").select("credits_balance").eq("id", currentUser.id).single();
+      if (userData) setCredits(userData.credits_balance);
+
+      const { data: subData } = await supabase.from("subscriptions").select("*").eq("user_id", currentUser.id).eq("is_active", true).order("created_at", { ascending: false }).limit(1).maybeSingle();
+      setSubscriptionData(subData);
+    };
+
+    fetchAccountData();
+
+    // Subscribe to credit updates
+    const channel = supabase.channel(`page_credits_${currentUser.id}`)
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'users', filter: `id=eq.${currentUser.id}` }, (payload) => {
+        setCredits(payload.new.credits_balance);
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [currentUser]);
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
@@ -190,18 +218,78 @@ export default function App() {
             {currentUser ? (
               <div className="flex items-center gap-3">
                 <CreditBadge onTopUpClick={() => { setSelectedPricingPlan(null); setShowDownloadGate(true); }} />
-                <span className="hidden md:block text-sm text-on-surface-variant font-medium truncate max-w-[160px]">
-                  {currentUser.email}
-                </span>
-                <button
-                  onClick={async () => {
-                    await supabase.auth.signOut();
-                    setCurrentUser(null);
-                  }}
-                  className="text-sm font-bold px-4 py-2 rounded-full border border-on-surface-variant/20 hover:bg-surface-container-low transition-colors text-on-surface-variant"
-                >
-                  Sign Out
-                </button>
+
+                {/* Account Dropdown */}
+                <div className="relative">
+                  <button
+                    onClick={() => setShowAccountDropdown(!showAccountDropdown)}
+                    className="w-10 h-10 rounded-xl bg-surface-container-low hover:bg-surface-container-high transition-colors flex items-center justify-center relative shadow-sm"
+                  >
+                    <UserIcon className="w-5 h-5 text-on-surface-variant" />
+                    {credits < 10 && <span className="absolute top-0 right-0 w-3 h-3 bg-error rounded-full border-2 border-surface"></span>}
+                  </button>
+
+                  <AnimatePresence>
+                    {showAccountDropdown && (
+                      <>
+                        <div className="fixed inset-0 z-40" onClick={() => setShowAccountDropdown(false)}></div>
+                        <motion.div
+                          initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                          animate={{ opacity: 1, y: 0, scale: 1 }}
+                          exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                          className="absolute right-0 mt-3 w-72 bg-surface-container-lowest border border-surface-container-high rounded-2xl shadow-2xl overflow-hidden z-50"
+                        >
+                          <div className="p-4 border-b border-surface-container-low bg-surface-container-lowest">
+                            <p className="text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1">Account</p>
+                            <p className="text-sm text-on-background truncate font-medium">{currentUser.email}</p>
+                          </div>
+
+                          <div className="p-4 space-y-4">
+                            <div className="flex justify-between items-center bg-primary/10 px-3 py-2 rounded-xl border border-primary/20">
+                              <span className="text-sm font-semibold text-primary">Credits</span>
+                              <span className="text-lg font-black text-primary">{credits}</span>
+                            </div>
+
+                            {subscriptionData && (
+                              <div className="space-y-1">
+                                <p className="text-xs font-bold text-on-surface-variant">Active Plan</p>
+                                <p className="text-sm text-on-background capitalize">{subscriptionData.plan_type.replace('_', ' ')}</p>
+                                {subscriptionData.expires_at && (
+                                  <p className="text-xs text-on-surface-variant">
+                                    Expires: {new Date(subscriptionData.expires_at).toLocaleDateString()}
+                                  </p>
+                                )}
+                              </div>
+                            )}
+
+                            <div className="pt-2 space-y-2">
+                              <button
+                                onClick={() => {
+                                  setShowAccountDropdown(false);
+                                  setShowDownloadGate(true);
+                                }}
+                                className="w-full py-2.5 bg-surface-container-low hover:bg-surface-container-high text-on-background text-sm font-bold rounded-xl transition-colors"
+                              >
+                                Buy More Credits
+                              </button>
+
+                              <button
+                                onClick={async () => {
+                                  await supabase.auth.signOut();
+                                  setCurrentUser(null);
+                                  setShowAccountDropdown(false);
+                                }}
+                                className="w-full py-2.5 text-error text-sm font-bold rounded-xl hover:bg-error/10 transition-colors border border-error/20"
+                              >
+                                Sign Out
+                              </button>
+                            </div>
+                          </div>
+                        </motion.div>
+                      </>
+                    )}
+                  </AnimatePresence>
+                </div>
               </div>
             ) : (
               <div className="flex items-center gap-2">
@@ -591,9 +679,7 @@ export default function App() {
           </section>
         )}
 
-        {currentUser && (
-          <AccountSection onTopUpClick={() => { setSelectedPricingPlan(null); setShowDownloadGate(true); }} />
-        )}
+
 
         {/* Reviews Section */}
         <section id="reviews" className="py-32">
@@ -715,11 +801,11 @@ export default function App() {
           </div>
         </div>
       </footer>
-      {/* Download Gate Modal */}
-      <DownloadGateModal
+      {/* Pricing Popup Modal */}
+      <PricingPopup
         isOpen={showDownloadGate}
         onClose={() => setShowDownloadGate(false)}
-        onPaymentSuccess={() => {
+        onSuccess={() => {
           setShowDownloadGate(false);
           router.push("/result");
         }}
