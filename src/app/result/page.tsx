@@ -46,18 +46,21 @@ import ResumePDFTemplate2 from "@/components/ResumePDFTemplate2";
 import dynamic from "next/dynamic";
 import PricingPopup from "@/components/PricingPopup";
 import { supabase } from "@/lib/supabase";
+import { Document as ReactPDFDocument, Page as ReactPDFPage, pdfjs } from 'react-pdf';
+
+pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
 const PDFViewer = dynamic(
   () => import("@react-pdf/renderer").then((mod) => mod.PDFViewer),
   { ssr: false }
 );
 
-// Mobile PDF preview: generates a blob URL from the PDF document
-// and shows it in an <object> tag which works on all mobile browsers
 function MobilePDFPreview({ children }: { children: React.ReactElement }) {
   const [blobUrl, setBlobUrl] = useState<string | null>(null);
+  const [windowWidth, setWindowWidth] = useState(300);
 
   useEffect(() => {
+    setWindowWidth(window.innerWidth);
     let url: string;
     pdf(children as any).toBlob().then((blob) => {
       url = URL.createObjectURL(blob);
@@ -76,25 +79,20 @@ function MobilePDFPreview({ children }: { children: React.ReactElement }) {
   }
 
   return (
-    <object
-      data={blobUrl}
-      type="application/pdf"
-      width="100%"
-      height="100%"
-      className="rounded-sm"
-    >
-      {/* Fallback for browsers that truly cannot embed PDFs */}
-      <div className="w-full h-full flex flex-col items-center justify-center gap-4 bg-surface-container-low rounded-sm p-6 text-center min-h-[300px]">
-        <p className="text-on-surface-variant text-sm font-medium">Your browser cannot preview PDFs inline.</p>
-        <a
-          href={blobUrl}
-          download="resume_preview.pdf"
-          className="flash-gradient text-white font-bold px-6 py-2.5 rounded-full text-sm hover:opacity-90 transition-opacity"
-        >
-          Open PDF
-        </a>
-      </div>
-    </object>
+    <div className="w-full h-full overflow-hidden flex justify-center bg-white rounded-sm">
+      <ReactPDFDocument 
+        file={blobUrl} 
+        loading={<div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary my-10" />}
+        error={<div className="p-4 text-center text-error">Failed to load PDF preview.</div>}
+      >
+        <ReactPDFPage 
+          pageNumber={1} 
+          renderTextLayer={false} 
+          renderAnnotationLayer={false} 
+          width={Math.min(windowWidth - 32, 400)} 
+        />
+      </ReactPDFDocument>
+    </div>
   );
 }
 
