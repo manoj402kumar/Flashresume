@@ -15,7 +15,13 @@ ALLOWED_ORIGINS = [
 
 FRONTEND_URL = os.getenv("FRONTEND_URL")
 if FRONTEND_URL:
-    ALLOWED_ORIGINS.append(FRONTEND_URL)
+    for url in FRONTEND_URL.split(","):
+        clean_url = url.strip()
+        if clean_url:
+            ALLOWED_ORIGINS.append(clean_url)
+            # Auto-add www. version if it's a root domain
+            if clean_url.startswith("https://") and "www." not in clean_url:
+                ALLOWED_ORIGINS.append(clean_url.replace("https://", "https://www."))
 
 app.add_middleware(
     CORSMiddleware,
