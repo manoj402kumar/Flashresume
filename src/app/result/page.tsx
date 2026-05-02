@@ -52,6 +52,52 @@ const PDFViewer = dynamic(
   { ssr: false }
 );
 
+// Mobile PDF preview: generates a blob URL from the PDF document
+// and shows it in an <object> tag which works on all mobile browsers
+function MobilePDFPreview({ children }: { children: React.ReactElement }) {
+  const [blobUrl, setBlobUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    let url: string;
+    pdf(children).toBlob().then((blob) => {
+      url = URL.createObjectURL(blob);
+      setBlobUrl(url);
+    }).catch(console.error);
+    return () => { if (url) URL.revokeObjectURL(url); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  if (!blobUrl) {
+    return (
+      <div className="w-full h-full flex items-center justify-center min-h-[300px]">
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary" />
+      </div>
+    );
+  }
+
+  return (
+    <object
+      data={blobUrl}
+      type="application/pdf"
+      width="100%"
+      height="100%"
+      className="rounded-sm"
+    >
+      {/* Fallback for browsers that truly cannot embed PDFs */}
+      <div className="w-full h-full flex flex-col items-center justify-center gap-4 bg-surface-container-low rounded-sm p-6 text-center min-h-[300px]">
+        <p className="text-on-surface-variant text-sm font-medium">Your browser cannot preview PDFs inline.</p>
+        <a
+          href={blobUrl}
+          download="resume_preview.pdf"
+          className="flash-gradient text-white font-bold px-6 py-2.5 rounded-full text-sm hover:opacity-90 transition-opacity"
+        >
+          Open PDF
+        </a>
+      </div>
+    </object>
+  );
+}
+
 // Helper component for editable skill tags
 function EditableSkillTags({
   skills,
@@ -632,13 +678,13 @@ export default function ResultPage() {
                       aspectRatio: selectedTemplate === "template1" ? "1 / 1.414" : "1 / 1.2916" 
                     }}
                   >
-                    <PDFViewer key={`mobile-${selectedTemplate}-${showHighlights ? "on" : "off"}-${(resume.section_order || []).join('-')}`} width="100%" height="100%" className="border-none rounded-sm" showToolbar={false}>
+                    <MobilePDFPreview key={`mobile-${selectedTemplate}-${showHighlights ? "on" : "off"}-${(resume.section_order || []).join('-')}`}>
                       {selectedTemplate === "template1" ? (
-                        <ResumePDFTemplate1 resume={resume} showHighlights={showHighlights} matchedKeywords={matchedKeywords} missingKeywords={missingKeywords} />
+                        <ResumePDFTemplate1 resume={resume} showHighlights={false} matchedKeywords={[]} missingKeywords={[]} />
                       ) : (
-                        <ResumePDFTemplate2 resume={resume} showHighlights={showHighlights} matchedKeywords={matchedKeywords} missingKeywords={missingKeywords} />
+                        <ResumePDFTemplate2 resume={resume} showHighlights={false} matchedKeywords={[]} missingKeywords={[]} />
                       )}
-                    </PDFViewer>
+                    </MobilePDFPreview>
                   </div>
                 </div>
               </div>
