@@ -10,8 +10,8 @@ load_dotenv()
 # R1 (ATS score JSON + project check): response is small ~200–600 tokens
 # R2 (full resume JSON): response is large ~2500–3200 tokens
 # Tight limits save TPM quota on rate-limited providers (Groq 8K TPM)
-_R1_MAX_TOKENS = 1500
-_R2_MAX_TOKENS = 3500
+_R1_MAX_TOKENS = 2500
+_R2_MAX_TOKENS = 4500
 
 # ─────────────────────────────────────────────────────────────────────────────
 # FLAT R1 CHAIN — ATS scoring + project check
