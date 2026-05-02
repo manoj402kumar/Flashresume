@@ -5,7 +5,7 @@ from models.response_models import ParseResponse
 router = APIRouter()
 
 @router.post("/parse", response_model=ParseResponse)
-async def parse_resume(file: UploadFile = File(...)):
+def parse_resume(file: UploadFile = File(...)):
     """
     Parse resume from multiple formats: PDF, DOCX, JPG, PNG.
     
@@ -31,7 +31,7 @@ async def parse_resume(file: UploadFile = File(...)):
         )
     
     # Read file bytes
-    file_bytes = await file.read()
+    file_bytes = file.file.read()
     
     # Guard against empty files
     if len(file_bytes) < 100:

@@ -7,7 +7,7 @@ from services.project_checker import check_project_relevance
 router = APIRouter()
 
 @router.post("/analyze", response_model=CombinedAnalysisResponse)
-async def analyze_resume(request: AnalyzeRequest):
+def analyze_resume(request: AnalyzeRequest):
     """
     Combined endpoint: Analyze resume against JD for ATS score AND check project relevance.
     

@@ -63,7 +63,7 @@ def flatten_resume_to_text(resume: dict) -> str:
 
 
 @router.post("/generate")
-async def generate_resume_endpoint(request: GenerateRequest):
+def generate_resume_endpoint(request: GenerateRequest):
     # Step 1: Generate the rewritten resume with Template v1 validation
     try:
         generated, model_used = generate_resume(

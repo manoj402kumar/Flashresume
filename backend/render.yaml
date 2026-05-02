@@ -1,10 +1,9 @@
 services:
   - type: web
     name: flashresume-backend
-    runtime: python
+    env: docker
+    dockerfilePath: ./Dockerfile
     rootDir: backend
-    buildCommand: apt-get install -y poppler-utils && pip install -r requirements.txt
-    startCommand: uvicorn main:app --host 0.0.0.0 --port 10000
     envVars:
       - key: PORT
-        value: 10000
+        value: 8000
