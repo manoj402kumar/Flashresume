@@ -7,13 +7,13 @@ from dotenv import load_dotenv
 load_dotenv()
 
 CEREBRAS_R1_CHAIN = [
-    "llama3.1-70b",
-    "llama3.1-8b",
+    "qwen-3-235b-a22b-instruct-2507",  # ~2-3s at 1400 t/s — elite + fast
+    "llama3.1-8b",                     # ~5s — fallback
 ]
 
 CEREBRAS_R2_CHAIN = [
-    "llama3.1-70b",
-    "llama3.1-8b",
+    "qwen-3-235b-a22b-instruct-2507",  # ~2-3s — elite quality
+    "llama3.1-8b",                     # ~5s — fallback
 ]
 
 client = Cerebras(api_key=os.getenv("CEREBRAS_API_KEY"))
@@ -103,7 +103,7 @@ def _call_cerebras_chain(prompt: str, chain: list, max_tokens: int) -> dict:
 
 def call_cerebras_r1(prompt: str) -> dict:
     """Cerebras chain for Request-1 — ATS scoring + project analysis."""
-    return _call_cerebras_chain(prompt, CEREBRAS_R1_CHAIN, max_tokens=1500)
+    return _call_cerebras_chain(prompt, CEREBRAS_R1_CHAIN, max_tokens=800)
 
 
 def call_cerebras_r2(prompt: str) -> dict:

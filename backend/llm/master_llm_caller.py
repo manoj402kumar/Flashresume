@@ -17,14 +17,16 @@ _R2_MAX_TOKENS = 4500
 # FLAT R1 CHAIN — ATS scoring + project check
 # (provider_name, model_id, single_caller)
 # ─────────────────────────────────────────────────────────────────────────────
+# Speed-first ordering: fast 4-5s models up front, gemma (~10s) pushed to #7
 _R1_FLAT = [
-    ("gemini",     "gemini-2.5-flash",                      call_single_gemini),     # #1 Generous rate limit, great JSON
-    ("groq",       "mixtral-8x7b-32768",                    call_single_groq),       # #2 Fast, competent at logic
-    ("cerebras",   "llama3.1-8b",                           call_single_cerebras),   # #3 Uncapped/High RPM, blazing fast
-    ("mistral",    "open-mistral-nemo",                     call_single_mistral),    # #4 Cheap mistral tier
-    ("cloudflare", "@cf/meta/llama-3.1-8b-instruct",        call_single_cloudflare), # #5 
-    ("groq",       "llama3-8b-8192",                        call_single_groq),       # #6
-    ("gemini",     "gemini-2.5-flash-lite",                 call_single_gemini),     # #7 Last resort
+    ("mistral",    "open-mistral-nemo",                     call_single_mistral),    # #1  ~4s  — fastest
+    ("mistral",    "ministral-8b-latest",                   call_single_mistral),    # #2  ~5s
+    ("mistral",    "mistral-tiny-latest",                   call_single_mistral),    # #3  ~5s
+    ("cloudflare", "@cf/meta/llama-3.1-8b-instruct",       call_single_cloudflare), # #4  ~5s
+    ("groq",       "llama-3.1-8b-instant",                 call_single_groq),       # #5  ~4s
+    ("cerebras",   "llama3.1-8b",                          call_single_cerebras),   # #6  ~5s
+    ("gemini",     "gemma-3-27b-it",                        call_single_gemini),     # #7  ~10s — quality anchor
+    ("cloudflare", "@cf/mistral/mistral-7b-instruct-v0.1", call_single_cloudflare), # #8  ~15s — last resort
 ]
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -32,13 +34,17 @@ _R1_FLAT = [
 # (provider_name, model_id, single_caller)
 # ─────────────────────────────────────────────────────────────────────────────
 _R2_FLAT = [
-    ("groq",       "llama-3.3-70b-versatile",               call_single_groq),       # #1
-    ("mistral",    "mistral-large-latest",                  call_single_mistral),    # #2
-    ("cerebras",   "llama3.1-70b",                          call_single_cerebras),   # #3
-    ("gemini",     "gemini-2.5-pro",                        call_single_gemini),     # #4
-    ("groq",       "deepseek-r1-distill-llama-70b",         call_single_groq),       # #5
-    ("mistral",    "mistral-medium-latest",                 call_single_mistral),    # #6
-    ("gemini",     "gemini-2.5-flash",                      call_single_gemini),     # #7
+    ("groq",       "openai/gpt-oss-120b",                        call_single_groq),       # #1  ~5-15s  — best quality (8K TPM, 1K RPD free)
+    ("cerebras",   "qwen-3-235b-a22b-instruct-2507",             call_single_cerebras),   # #2  ~2-3s   — elite + very fast at 1400 t/s
+    ("mistral",    "mistral-large-latest",                       call_single_mistral),    # #3  ~6s
+    ("mistral",    "mistral-medium-latest",                      call_single_mistral),    # #4  ~7s
+    ("groq",       "llama-3.3-70b-versatile",                   call_single_groq),       # #5  ~4s
+    ("mistral",    "mistral-small-latest",                       call_single_mistral),    # #6  ~5s
+    ("groq",       "meta-llama/llama-4-scout-17b-16e-instruct", call_single_groq),       # #7  ~4s
+    ("groq",       "openai/gpt-oss-20b",                        call_single_groq),       # #8  ~4-8s
+    ("gemini",     "gemini-2.5-flash-lite",                     call_single_gemini),     # #9  ~20s
+    ("groq",       "qwen/qwen3-32b",                            call_single_groq),       # #10 ~20-40s
+    ("gemini",     "gemini-3.1-flash-lite-preview",             call_single_gemini),     # #11 ~40s — last resort (preview model)
 ]
 
 # Rate-limit signal strings — used to detect 429-type failures across all providers
@@ -107,7 +113,7 @@ def call_llm_r1(prompt: str) -> dict:
     Chain: open-mistral-nemo → ministral-8b → mistral-tiny →
            cf/llama → llama-3.1-8b-instant → cerebras/llama3.1-8b →
            gemma-3-27b-it → cf/mistral-7b
-    max_tokens: 800 (small JSON — saves TPM quota)
+    max_tokens: 2500 (small JSON — saves TPM quota)
     """
     return _run_flat_chain(prompt, _R1_FLAT, _R1_MAX_TOKENS)
 
@@ -118,6 +124,6 @@ def call_llm_r2(prompt: str) -> dict:
     Chain: gpt-oss-120b → qwen-3-235b → mistral-large → mistral-medium →
            llama-3.3-70b → mistral-small → llama-4-scout → gpt-oss-20b →
            gemini-2.5-flash-lite → qwen3-32b → gemini-3.1-flash-lite-preview
-    max_tokens: 3500 (full resume JSON)
+    max_tokens: 4500 (full resume JSON)
     """
     return _run_flat_chain(prompt, _R2_FLAT, _R2_MAX_TOKENS)
