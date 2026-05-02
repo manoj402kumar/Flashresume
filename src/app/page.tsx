@@ -203,8 +203,8 @@ export default function App() {
     <div className="min-h-screen font-sans" suppressHydrationWarning>
       {/* TopNavBar */}
       <nav className="fixed top-0 w-full z-50 glass-header border-b border-surface-container-low">
-        <div className="flex justify-between items-center max-w-7xl mx-auto px-6 py-4 w-full">
-          <div className="text-2xl font-extrabold tracking-tighter text-on-background font-headline">
+        <div className="flex justify-between items-center max-w-7xl mx-auto px-4 sm:px-6 py-3 sm:py-4 w-full">
+          <div className="text-xl sm:text-2xl font-extrabold tracking-tighter text-on-background font-headline shrink-0">
             Flashresume
           </div>
           <div className="hidden md:flex items-center gap-8">
@@ -214,18 +214,18 @@ export default function App() {
             )}
             <a href="#reviews" className="text-on-surface-variant hover:text-primary transition-colors font-medium">Reviews</a>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
             {currentUser ? (
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 sm:gap-3">
                 <CreditBadge onTopUpClick={() => { setSelectedPricingPlan(null); setShowDownloadGate(true); }} />
 
                 {/* Account Dropdown */}
                 <div className="relative">
                   <button
                     onClick={() => setShowAccountDropdown(!showAccountDropdown)}
-                    className="w-10 h-10 rounded-xl bg-surface-container-low hover:bg-surface-container-high transition-colors flex items-center justify-center relative shadow-sm"
+                    className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-surface-container-low hover:bg-surface-container-high transition-colors flex items-center justify-center relative shadow-sm"
                   >
-                    <UserIcon className="w-5 h-5 text-on-surface-variant" />
+                    <UserIcon className="w-4 h-4 sm:w-5 sm:h-5 text-on-surface-variant" />
                     {credits < 10 && <span className="absolute top-0 right-0 w-3 h-3 bg-error rounded-full border-2 border-surface"></span>}
                   </button>
 
@@ -295,13 +295,13 @@ export default function App() {
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => { setSelectedPricingPlan(null); setShowDownloadGate(true); }}
-                  className="text-sm font-bold px-4 py-2 rounded-full border border-on-surface-variant/20 hover:bg-surface-container-low transition-colors text-on-surface-variant"
+                  className="text-xs sm:text-sm font-bold px-3 sm:px-4 py-2 rounded-full border border-on-surface-variant/20 hover:bg-surface-container-low transition-colors text-on-surface-variant whitespace-nowrap"
                 >
                   Log In
                 </button>
                 <button
                   onClick={() => document.getElementById('file-upload')?.click()}
-                  className="flash-gradient text-white font-bold px-6 py-2.5 rounded-full hover:opacity-90 transition-all active:scale-95 shadow-lg shadow-primary/20"
+                  className="flash-gradient text-white font-bold text-xs sm:text-sm px-4 sm:px-6 py-2 sm:py-2.5 rounded-full hover:opacity-90 transition-all active:scale-95 shadow-lg shadow-primary/20 whitespace-nowrap"
                 >
                   Get Started
                 </button>
@@ -310,6 +310,7 @@ export default function App() {
           </div>
         </div>
       </nav>
+
 
       <main className="pt-24">
         {/* Hero Section */}
