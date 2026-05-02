@@ -59,7 +59,7 @@ function MobilePDFPreview({ children }: { children: React.ReactElement }) {
 
   useEffect(() => {
     let url: string;
-    pdf(children).toBlob().then((blob) => {
+    pdf(children as any).toBlob().then((blob) => {
       url = URL.createObjectURL(blob);
       setBlobUrl(url);
     }).catch(console.error);

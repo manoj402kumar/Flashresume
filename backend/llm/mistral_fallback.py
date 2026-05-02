@@ -7,9 +7,9 @@ from dotenv import load_dotenv
 load_dotenv()
 
 MISTRAL_R1_CHAIN = [
-    "mistral-large-latest",   # ~6s — best quality
-    "mistral-medium-latest",
-    "open-mistral-nemo",      # ~4s — fastest fallback
+    "open-mistral-nemo",      # ~4s — fastest
+    "ministral-8b-latest",    # ~5s
+    "mistral-tiny-latest",    # ~5s
 ]
 
 MISTRAL_R2_CHAIN = [
@@ -108,7 +108,7 @@ def _call_mistral_chain(prompt: str, chain: list, max_tokens: int) -> dict:
 
 def call_mistral_r1(prompt: str) -> dict:
     """Mistral chain for Request-1 — ATS scoring + project analysis."""
-    return _call_mistral_chain(prompt, MISTRAL_R1_CHAIN, max_tokens=1500)
+    return _call_mistral_chain(prompt, MISTRAL_R1_CHAIN, max_tokens=800)
 
 
 def call_mistral_r2(prompt: str) -> dict:
