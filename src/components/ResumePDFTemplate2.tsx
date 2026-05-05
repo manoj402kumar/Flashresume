@@ -373,17 +373,9 @@ export default function ResumePDFTemplate2({ resume, showHighlights = false, mat
                     )}
                     {resume.technical_skills.frameworks.length > 0 && (
                       <View style={styles.skillCategoryRow}>
-                        <Text style={styles.skillLabel}>Frameworks</Text>
+                        <Text style={styles.skillLabel}>Frameworks & Libraries</Text>
                         <Text style={styles.skillList}>
                           {`: ${resume.technical_skills.frameworks.join(", ")}`}
-                        </Text>
-                      </View>
-                    )}
-                    {resume.technical_skills.developer_tools.length > 0 && (
-                      <View style={styles.skillCategoryRow}>
-                        <Text style={styles.skillLabel}>Developer Tools</Text>
-                        <Text style={styles.skillList}>
-                          {`: ${resume.technical_skills.developer_tools.join(", ")}`}
                         </Text>
                       </View>
                     )}
@@ -400,6 +392,22 @@ export default function ResumePDFTemplate2({ resume, showHighlights = false, mat
                         <Text style={styles.skillLabel}>Cloud Services</Text>
                         <Text style={styles.skillList}>
                           {`: ${resume.technical_skills.cloud_services.join(", ")}`}
+                        </Text>
+                      </View>
+                    )}
+                    {resume.technical_skills.developer_tools.length > 0 && (
+                      <View style={styles.skillCategoryRow}>
+                        <Text style={styles.skillLabel}>Developer Tools</Text>
+                        <Text style={styles.skillList}>
+                          {`: ${resume.technical_skills.developer_tools.join(", ")}`}
+                        </Text>
+                      </View>
+                    )}
+                    {resume.technical_skills.miscellaneous && resume.technical_skills.miscellaneous.length > 0 && (
+                      <View style={styles.skillCategoryRow}>
+                        <Text style={styles.skillLabel}>Miscellaneous</Text>
+                        <Text style={styles.skillList}>
+                          {`: ${resume.technical_skills.miscellaneous.join(", ")}`}
                         </Text>
                       </View>
                     )}
