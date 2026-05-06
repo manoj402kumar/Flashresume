@@ -12,3 +12,4 @@ class GenerateRequest(BaseModel):
     approved_project: str = ""
     missing_keywords: List[str] = []
     template_id: str = "v1"
+    no_ai_changes: bool = False

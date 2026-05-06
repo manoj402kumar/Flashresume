@@ -77,6 +77,7 @@ export default function GeneratePage() {
         setStatus("AI is optimizing your resume...");
         
         // Call the generation API
+        const noAiChanges = localStorage.getItem("no_ai_changes") === "true";
         const generatedResume = await generateResume({
           resume_text: resumeText,
           job_description: jobDescription || "",
@@ -84,6 +85,7 @@ export default function GeneratePage() {
           approved_project: approvedProject ? `${approvedProject.title} | Tech Stack: ${approvedProject.tech_stack} | Description: ${approvedProject.description}` : undefined,
           missing_keywords: analysis.missing_skills || [],
           preferred_model: preferredModel,
+          no_ai_changes: noAiChanges,
         });
 
         // Step 3: Applying improvements

@@ -45,6 +45,7 @@ export default function App() {
   const [showAccountDropdown, setShowAccountDropdown] = useState(false);
   const [credits, setCredits] = useState<number>(0);
   const [subscriptionData, setSubscriptionData] = useState<any>(null);
+  const [noAiChanges, setNoAiChanges] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -170,6 +171,7 @@ export default function App() {
       localStorage.setItem("job_description", jobDescription);
       // Clear any leaked state from previous runs
       localStorage.removeItem("approved_project");
+      localStorage.setItem("no_ai_changes", noAiChanges ? "true" : "false");
 
       if (hasJD) {
         // Normal flow: analyze against JD, show analysis page
@@ -420,6 +422,21 @@ export default function App() {
                     placeholder="Paste the job description here..."
                   />
                 </div>
+                
+                <div className="pt-2 pb-1">
+                  <label className="flex items-center gap-3 cursor-pointer p-3 bg-surface-container-lowest rounded-xl hover:bg-surface-container-low transition-colors border border-surface-container-high hover:border-primary/30">
+                    <input
+                      type="checkbox"
+                      checked={noAiChanges}
+                      onChange={(e) => setNoAiChanges(e.target.checked)}
+                      className="w-5 h-5 rounded border-2 border-on-surface-variant/30 text-primary focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-surface-container-lowest transition-all"
+                    />
+                    <span className="text-sm font-medium text-on-background flex-1">
+                      Don't change anything in input resume (Manual edit later)
+                    </span>
+                  </label>
+                </div>
+
                 {error && (
                   <div className="text-error text-sm font-medium flex items-center gap-2">
                     <AlertTriangle className="w-4 h-4" />

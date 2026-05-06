@@ -72,6 +72,7 @@ def generate_resume_endpoint(request: GenerateRequest):
             request.ats_score_before,
             request.approved_project,
             missing_keywords=request.missing_keywords,
+            no_ai_changes=request.no_ai_changes,
         )
     except ValueError as e:
         raise HTTPException(status_code=500, detail=str(e))

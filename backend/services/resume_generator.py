@@ -2,21 +2,27 @@ import json
 import re
 from prompts.generation_prompt import GENERATION_PROMPT
 from prompts.general_optimization_prompt import GENERAL_OPTIMIZATION_PROMPT
+from prompts.format_only_prompt import FORMAT_ONLY_PROMPT
 from llm.master_llm_caller import call_llm_r2
 from templates.template_v1_schema import TemplateV1
 
-def generate_resume(resume_text: str, job_description: str, ats_score_before: int, approved_project: str = "", missing_keywords: list[str] = None) -> dict:
+def generate_resume(resume_text: str, job_description: str, ats_score_before: int, approved_project: str = "", missing_keywords: list[str] = None, no_ai_changes: bool = False) -> dict:
     is_no_jd_mode = not job_description or not job_description.strip()
 
     # Build prompt with approved project ONLY if we are in JD optimization mode
-    if approved_project and not is_no_jd_mode:
+    if approved_project and not is_no_jd_mode and not no_ai_changes:
         # Add approved project instruction to resume text
         resume_text_with_project = f"{resume_text}\n\n[APPROVED NEW PROJECT TO ADD]:\n{approved_project}\n\nIMPORTANT: Include this approved project in the final resume. This project was suggested and approved by the user to improve JD relevance."
     else:
         resume_text_with_project = resume_text
     
-    # Route to correct prompt based on JD presence
-    if is_no_jd_mode:
+    # Route to correct prompt based on JD presence and flags
+    if no_ai_changes:
+        prompt = FORMAT_ONLY_PROMPT.format(
+            resume_text=resume_text_with_project,
+            ats_score_before=ats_score_before
+        )
+    elif is_no_jd_mode:
         # General formatting mode (No JD) - 100% strict preservation
         prompt = GENERAL_OPTIMIZATION_PROMPT.format(
             resume_text=resume_text_with_project,
