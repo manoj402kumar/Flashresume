@@ -338,7 +338,8 @@ export default function ResultPage() {
     checkAccess();
   }, []);
 
-  const handleCopyJSON = () => {
+  // JSON copy removed
+  const handleCopyJSON_UNUSED = () => {
     if (resume) {
       navigator.clipboard.writeText(JSON.stringify(resume, null, 2));
       setCopied(true);
@@ -347,7 +348,11 @@ export default function ResultPage() {
   };
 
   const handleStartOver = () => {
-    localStorage.clear();
+    // Only clear resume workflow keys — do NOT clear auth session
+    ["resume_text", "job_description", "analysis", "generated_resume",
+      "no_jd_mode", "no_ai_changes", "approved_project", "preferred_model"].forEach(
+      (key) => localStorage.removeItem(key)
+    );
     router.push("/");
   };
 
@@ -464,13 +469,7 @@ export default function ResultPage() {
               )}
             </AnimatePresence>
 
-            <button
-              onClick={handleCopyJSON}
-              className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-xl text-sm font-semibold text-on-surface-variant bg-surface-container-low hover:bg-surface-container-high transition-colors"
-            >
-              <Copy className="w-4 h-4" />
-              {copied ? "Copied" : "JSON"}
-            </button>
+
 
             <button
               onClick={handleStartOver}

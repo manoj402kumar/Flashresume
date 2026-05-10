@@ -1,5 +1,5 @@
 GENERATION_PROMPT = """
-You are optimizing a resume for ATS using the following algorithm:
+Act as ATS Resume Expert and implement below algorithm in order to optimize RESUME_TEXT with respect to JOB_DESCRIPTION.
 
 GOAL: 0% Noise, 100% Signal. Target 1 page resume. Improvise existing resume, NOT rewrite.
 OBJECTIVE: Pass ATS + User can handle actual interview with achievable, provable edits.
@@ -429,3 +429,4 @@ ATS Score Before:
 MISSING KEYWORDS TO INJECT:
 {missing_keywords}
 """
+

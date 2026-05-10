@@ -15,6 +15,7 @@ interface PricingPopupProps {
   onClose: () => void;
   onSuccess: () => void;
   initialPlan?: string | null;
+  directPay?: boolean; // skip plan selection, go straight to payment
 }
 
 const GoogleIcon = () => (
@@ -26,7 +27,7 @@ const GoogleIcon = () => (
   </svg>
 );
 
-type Step = "auth" | "plan" | "student_verify" | "processing";
+type Step = "initializing" | "auth" | "plan" | "student_verify" | "processing";
 type AuthMode = "login" | "signup";
 
 const PLANS = [
@@ -56,8 +57,8 @@ const PLANS = [
   },
 ];
 
-export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan }: PricingPopupProps) {
-  const [step, setStep] = useState<Step>("auth");
+export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, directPay = false }: PricingPopupProps) {
+  const [step, setStep] = useState<Step>("initializing");
   const [authMode, setAuthMode] = useState<AuthMode>("login");
   const [user, setUser] = useState<User | null>(null);
 
@@ -80,6 +81,7 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan }
   useEffect(() => {
     if (isOpen) {
       setError(null);
+      setStep("initializing"); // Show loading spinner while checking session
       if (initialPlan) setSelectedPlan(initialPlan);
       checkUserSession();
     }
@@ -103,9 +105,17 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan }
     const { data: { session } } = await supabase.auth.getSession();
     if (session?.user) {
       setUser(session.user);
-      const { data } = await supabase.from("users").select("is_student, student_verified_at").eq("id", session.user.id).single();
+      const { data } = await supabase.from("users").select("is_student, student_verified_at, credits_balance").eq("id", session.user.id).single();
       applyStudentStatus(data);
-      setStep("plan");
+      if (directPay && initialPlan) {
+        // Skip plan selection — go straight to payment
+        setStep("processing");
+        setTimeout(() => handleProceedToPayment(initialPlan), 100);
+      } else if (data && data.credits_balance >= 10) {
+        onSuccess();
+      } else {
+        setStep("plan");
+      }
     } else {
       setStep("auth");
     }
@@ -121,12 +131,25 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan }
         if (error) throw error;
         if (data.user) {
           setUser(data.user);
-          const { data: uData } = await supabase.from("users").select("is_student, student_verified_at").eq("id", data.user.id).single();
+          const { data: uData } = await supabase.from("users").select("is_student, student_verified_at, credits_balance").eq("id", data.user.id).single();
           applyStudentStatus(uData);
-          setStep("plan");
+          if (directPay && initialPlan) {
+            setStep("processing");
+            setTimeout(() => handleProceedToPayment(initialPlan), 100);
+          } else if (uData && uData.credits_balance >= 10) {
+            onSuccess();
+          } else {
+            setStep("plan");
+          }
         }
       } else {
-        const { data, error } = await supabase.auth.signUp({ email, password });
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            emailRedirectTo: `${window.location.origin}${window.location.pathname}${window.location.search}`
+          }
+        });
         if (error) throw error;
         if (data.user) {
           if (!data.session) {
@@ -152,7 +175,7 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan }
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/result`
+          redirectTo: `${window.location.origin}${window.location.pathname}${window.location.search}`
         }
       });
       if (error) throw error;
@@ -283,15 +306,22 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan }
 
         <div className="px-6 pt-6 pb-3 border-b border-surface-container-low text-center">
           <h2 className="text-2xl font-headline font-bold text-on-background">
-            {step === "auth" ? "Login / Signup" : step === "processing" ? "Processing..." : step === "student_verify" ? "Student Verification" : "Invest in Your Career"}
+            {step === "initializing" ? "Loading..." : step === "auth" ? "Login / Signup" : step === "processing" ? "Processing..." : step === "student_verify" ? "Student Verification" : "Invest in Your Career"}
           </h2>
           <p className="text-sm text-on-surface-variant mt-1 max-w-lg mx-auto">
-            {step === "auth" ? "Access your account to download." : step === "processing" ? "Securely setting up Razorpay..." : step === "student_verify" ? "Verify to unlock the ₹99 plan." : "Increase the probability of getting shortlisted"}
+            {step === "initializing" ? "Please wait a moment." : step === "auth" ? "Access your account to download." : step === "processing" ? "Securely setting up Razorpay..." : step === "student_verify" ? "Verify to unlock the ₹99 plan." : "Increase the probability of getting shortlisted"}
           </p>
         </div>
 
         <div className="p-6">
           <AnimatePresence mode="wait">
+
+            {/* INITIALIZING STEP */}
+            {step === "initializing" && (
+              <motion.div key="initializing" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="py-12 flex flex-col items-center justify-center">
+                <Loader2 className="w-8 h-8 animate-spin text-primary mb-4" />
+              </motion.div>
+            )}
 
             {/* AUTH STEP */}
             {step === "auth" && (

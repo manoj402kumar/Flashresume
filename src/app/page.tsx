@@ -30,6 +30,7 @@ import { supabase } from "@/lib/supabase";
 import { User } from "@supabase/supabase-js";
 import CreditBadge from "@/components/CreditBadge";
 import AccountSection from "@/components/AccountSection";
+import LiveDemoSection from "@/components/LiveDemoSection";
 
 export default function App() {
   const router = useRouter();
@@ -49,7 +50,7 @@ export default function App() {
   const [showAccountDropdown, setShowAccountDropdown] = useState(false);
   const [credits, setCredits] = useState<number>(0);
   const [subscriptionData, setSubscriptionData] = useState<any>(null);
-  const [optimizeMode, setOptimizeMode] = useState<"jd" | "no_jd" | "manual" | null>(null);
+  const [optimizeMode, setOptimizeMode] = useState<"jd" | "no_jd" | "manual" | null>("jd");
   const [showModeDropdown, setShowModeDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -438,121 +439,55 @@ export default function App() {
                     First time? View Gold Standard Template
                   </a>
                 </div>
-                {/* ── Optimize Mode Dropdown ── */}
-                <div className="space-y-2" ref={dropdownRef}>
-                  <p className="font-sans text-xs font-semibold uppercase tracking-wider text-on-surface-variant ml-1">Optimization Mode</p>
-                  <div className="relative">
-                    {/* Trigger button */}
-                    <button
-                      type="button"
-                      onClick={() => setShowModeDropdown((v) => !v)}
-                      className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl border-2 text-left transition-all duration-200 ${optimizeMode
-                        ? "border-primary bg-primary/5"
-                        : "border-surface-container-high bg-surface-container-low hover:border-primary/40"
-                        }`}
-                    >
-                      <span className={`shrink-0 w-8 h-8 rounded-lg flex items-center justify-center ${
-                        optimizeMode === "jd" ? "bg-primary/15 text-primary"
-                        : optimizeMode === "no_jd" ? "bg-secondary/15 text-secondary"
-                        : optimizeMode === "manual" ? "bg-tertiary/15 text-tertiary"
-                        : "bg-surface-container-high text-on-surface-variant"
-                      }`}>
-                        {optimizeMode === "jd" ? <Crosshair className="w-4 h-4" />
-                          : optimizeMode === "no_jd" ? <Sparkles className="w-4 h-4" />
-                          : optimizeMode === "manual" ? <PenLine className="w-4 h-4" />
-                          : <SlidersHorizontal className="w-4 h-4" />}
-                      </span>
-                      <span className="flex-1 min-w-0">
-                        <span className={`block text-sm font-bold leading-tight ${optimizeMode ? "text-primary" : "text-on-surface-variant"
-                          }`}>
-                          {optimizeMode === "jd" ? "Optimize for JD"
-                            : optimizeMode === "no_jd" ? "Optimize (No JD)"
-                              : optimizeMode === "manual" ? "Don't change anything"
-                                : "Select an option"}
-                        </span>
-                        {optimizeMode && (
-                          <span className="block text-xs text-on-surface-variant mt-0.5 leading-snug">
-                            {optimizeMode === "jd" ? "Tailor your resume to a specific job description"
-                              : optimizeMode === "no_jd" ? "Optimize existing resume (No JD)"
-                                : "Keep resume as-is — I'll edit it myself"}
-                          </span>
-                        )}
-                      </span>
-                      <motion.span
-                        animate={{ rotate: showModeDropdown ? 180 : 0 }}
-                        transition={{ duration: 0.2 }}
-                        className="shrink-0 text-on-surface-variant"
-                      >
-                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                          <path d="M4 6l4 4 4-4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
-                      </motion.span>
-                    </button>
-
-                    {/* Dropdown panel */}
-                    <AnimatePresence>
-                      {showModeDropdown && (
-                        <motion.div
-                          initial={{ opacity: 0, y: -6, scale: 0.98 }}
-                          animate={{ opacity: 1, y: 0, scale: 1 }}
-                          exit={{ opacity: 0, y: -6, scale: 0.98 }}
-                          transition={{ duration: 0.18 }}
-                          className="absolute left-0 right-0 top-[calc(100%+6px)] z-30 bg-surface-container-lowest border border-surface-container-high rounded-2xl shadow-2xl shadow-primary/10 overflow-hidden"
+                {/* ── Optimize Mode Selection ── */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-4 bg-surface-container-low rounded-2xl p-1.5 sm:pl-5">
+                  <p className="font-sans text-[11px] font-bold uppercase tracking-wider text-on-surface-variant pl-2 sm:pl-0 pt-2 sm:pt-0">
+                    Select an option
+                  </p>
+                  <div className="flex w-full sm:w-auto gap-1">
+                    {([
+                      {
+                        id: "jd" as const,
+                        activeCls: "bg-surface-container-lowest text-primary shadow-sm border border-surface-container-highest",
+                        radioBorder: "border-primary",
+                        radioDot: "bg-primary",
+                        label: "With JD",
+                      },
+                      {
+                        id: "no_jd" as const,
+                        activeCls: "bg-surface-container-lowest text-primary shadow-sm border border-surface-container-highest",
+                        radioBorder: "border-primary",
+                        radioDot: "bg-primary",
+                        label: "No JD",
+                      },
+                      {
+                        id: "manual" as const,
+                        activeCls: "bg-surface-container-lowest text-primary shadow-sm border border-surface-container-highest",
+                        radioBorder: "border-primary",
+                        radioDot: "bg-primary",
+                        label: "Nochange",
+                      }
+                    ] as const).map((opt) => {
+                      const isActive = optimizeMode === opt.id;
+                      return (
+                        <button
+                          key={opt.id}
+                          type="button"
+                          onClick={() => setOptimizeMode(opt.id)}
+                          className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl transition-all duration-200 border border-transparent ${isActive
+                            ? opt.activeCls
+                            : "text-on-surface-variant hover:bg-surface-container-high hover:text-on-background"
+                            }`}
                         >
-                          {([
-                            {
-                              id: "jd" as const,
-                              Icon: Crosshair,
-                              iconCls: "bg-primary/15 text-primary",
-                              label: "Optimize for JD",
-                              desc: "Tailor your resume to a specific job description"
-                            },
-                            {
-                              id: "no_jd" as const,
-                              Icon: Sparkles,
-                              iconCls: "bg-secondary/15 text-secondary",
-                              label: "Optimize (No JD)",
-                              desc: "Optimize existing resume (No JD)"
-                            },
-                            {
-                              id: "manual" as const,
-                              Icon: PenLine,
-                              iconCls: "bg-tertiary/15 text-tertiary",
-                              label: "Don't change anything",
-                              desc: "Keep resume as-is — I'll edit it myself"
-                            }
-                          ] as const).map((opt, idx, arr) => {
-                            const isActive = optimizeMode === opt.id;
-                            const IconCmp = opt.Icon;
-                            return (
-                              <button
-                                key={opt.id}
-                                type="button"
-                                onClick={() => { setOptimizeMode(opt.id); setShowModeDropdown(false); }}
-                                className={`w-full flex items-center gap-3 px-4 py-3.5 text-left transition-all duration-150 ${isActive
-                                  ? "bg-primary/8 text-primary"
-                                  : "hover:bg-surface-container-low text-on-background"
-                                  } ${idx < arr.length - 1 ? "border-b border-surface-container-low" : ""}`}
-                              >
-                                <span className={`shrink-0 w-8 h-8 rounded-lg flex items-center justify-center ${isActive ? opt.iconCls : "bg-surface-container-high text-on-surface-variant"}`}>
-                                  <IconCmp className="w-4 h-4" />
-                                </span>
-                                <span className="flex-1 min-w-0">
-                                  <span className={`block text-sm font-bold leading-tight ${isActive ? "text-primary" : "text-on-background"
-                                    }`}>{opt.label}</span>
-                                  <span className="block text-xs text-on-surface-variant mt-0.5">{opt.desc}</span>
-                                </span>
-                                {isActive && (
-                                  <span className="shrink-0 w-4 h-4 rounded-full bg-primary flex items-center justify-center">
-                                    <span className="w-1.5 h-1.5 rounded-full bg-white"></span>
-                                  </span>
-                                )}
-                              </button>
-                            );
-                          })}
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
+                          <div className={`w-3.5 h-3.5 rounded-full border-[1.5px] flex items-center justify-center transition-colors ${isActive ? opt.radioBorder : "border-on-surface-variant/60"}`}>
+                            {isActive && <div className={`w-1.5 h-1.5 rounded-full ${opt.radioDot}`} />}
+                          </div>
+                          <span className="text-xs font-bold whitespace-nowrap">
+                            {opt.label}
+                          </span>
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
 
@@ -563,7 +498,7 @@ export default function App() {
                     animate={{ opacity: 1, height: "auto" }}
                     exit={{ opacity: 0, height: 0 }}
                     transition={{ duration: 0.25 }}
-                    className="space-y-2 overflow-hidden"
+                    className="space-y-2 overflow-hidden pt-2"
                   >
                     <label className="font-sans text-xs font-semibold uppercase tracking-wider text-on-surface-variant ml-1">
                       PASTE JOB DESCRIPTION
@@ -599,7 +534,7 @@ export default function App() {
                   className="w-full bg-on-background text-white py-4 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-primary transition-colors group disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Bolt className="text-primary-container w-5 h-5 fill-primary-container" />
-                  {loading ? "Processing..." : !optimizeMode ? "Select a mode first" : optimizeMode === "jd" ? "Optimize for JD" : optimizeMode === "no_jd" ? "Optimize Resume" : "Continue to Editor"}
+                  {loading ? "Processing..." : !optimizeMode ? "Select an option first" : optimizeMode === "jd" ? "Optimize for JD" : optimizeMode === "no_jd" ? "Optimize Resume" : "Continue to Editor"}
                 </button>
               </div>
             </div>
@@ -609,49 +544,9 @@ export default function App() {
           </motion.div>
         </section>
 
-        {/* How It Works */}
-        <section id="process" className="bg-surface-container-low py-32">
-          <div className="max-w-7xl mx-auto px-6">
-            <div className="mb-20">
-              <h2 className="font-headline text-4xl md:text-5xl font-bold text-on-background mb-4">Three steps. Zero effort.</h2>
-              <p className="text-on-surface-variant text-lg">Eliminate the headache of updating your resume manually everytime for every JD.</p>
-            </div>
-            <div className="grid md:grid-cols-3 gap-8">
-              {[
-                {
-                  icon: <Upload className="text-primary w-8 h-8" />,
-                  title: "Upload",
-                  desc: "Throw in your old resume and the job description you want. Our AI reads between the lines.",
-                  bgColor: "bg-primary-container/20"
-                },
-                {
-                  icon: <Wand2 className="text-secondary-container w-8 h-8" />,
-                  title: "Refine",
-                  desc: "Flashresume optimizes keywords, layout, and phrasing to beat the ATS bots instantly.",
-                  bgColor: "bg-secondary-container/20"
-                },
-                {
-                  icon: <Rocket className="text-tertiary-container w-8 h-8" />,
-                  title: "Deploy",
-                  desc: "Download a pixel-perfect, editorial-grade PDF that recruiters actually want to read.",
-                  bgColor: "bg-tertiary-container/20"
-                }
-              ].map((step, idx) => (
-                <motion.div
-                  key={idx}
-                  whileHover={{ y: -8 }}
-                  className="bg-surface-container-lowest p-10 rounded-[2rem] transition-all duration-300 shadow-sm hover:shadow-xl hover:shadow-primary/5"
-                >
-                  <div className={`w-16 h-16 rounded-2xl ${step.bgColor} flex items-center justify-center mb-8`}>
-                    {step.icon}
-                  </div>
-                  <h3 className="font-headline text-2xl font-bold mb-4">{step.title}</h3>
-                  <p className="text-on-surface-variant leading-relaxed">{step.desc}</p>
-                </motion.div>
-              ))}
-            </div>
-          </div>
-        </section>
+
+        {/* Live Demo Section */}
+        <LiveDemoSection />
 
         {/* ATS Demo Section */}
         <section className="py-32 overflow-hidden">
@@ -740,97 +635,101 @@ export default function App() {
               <p className="text-on-surface-variant text-lg">Premium features, student-friendly pricing.</p>
             </div>
             <div className="max-w-6xl mx-auto px-6 grid md:grid-cols-3 gap-8 items-stretch">
-              {/* Free */}
-              <div className="bg-surface-container-low p-10 rounded-[2rem] flex flex-col border border-transparent">
-                <h3 className="font-headline text-2xl font-bold mb-2">Per Resume</h3>
-                <div className="text-4xl font-black mb-8">
-                  ₹29 <span className="text-base font-normal text-on-surface-variant">/download</span>
+              {/* One-Time */}
+              <div className="bg-surface-container-low p-10 rounded-[2rem] flex flex-col border border-surface-container-high">
+                <div className="w-10 h-10 rounded-xl bg-surface-container-high flex items-center justify-center mb-4">
+                  <CheckCircle2 className="w-5 h-5 text-on-surface-variant" />
                 </div>
-                <ul className="space-y-4 mb-10 text-left flex-grow">
-                  <li className="flex items-start gap-3 text-on-surface-variant">
-                    <Check className="w-5 h-5 mt-0.5" />
-                    30 Credits (3 downloads)
+                <h3 className="font-headline text-2xl font-bold mb-1">One-Time</h3>
+                <p className="text-sm text-on-surface-variant mb-4">2 resume downloads</p>
+                <div className="text-4xl font-black mb-1">₹29</div>
+                <p className="text-sm text-on-surface-variant mb-8">20 Credits</p>
+                <ul className="space-y-3 mb-10 text-left flex-grow">
+                  <li className="flex items-center gap-3 text-on-surface-variant">
+                    <CheckCircle2 className="text-primary w-4 h-4 flex-shrink-0" />
+                    20 Credits
                   </li>
-                  <li className="flex items-start gap-3 text-on-surface-variant">
-                    <Check className="w-5 h-5 mt-0.5" />
-                    Basic ATS Scan
+                  <li className="flex items-center gap-3 text-on-surface-variant">
+                    <CheckCircle2 className="text-primary w-4 h-4 flex-shrink-0" />
+                    Best plan to verify
                   </li>
                 </ul>
                 <button
                   onClick={() => { setSelectedPricingPlan("pay_per_use"); setShowDownloadGate(true); }}
                   className="w-full py-4 rounded-xl border border-on-surface-variant/20 font-bold hover:bg-surface-container-high transition-colors"
                 >
-                  Start Free
+                  Get Started
                 </button>
               </div>
 
-              {/* Student */}
-              <div className="bg-surface-container-lowest p-10 rounded-[2rem] flex flex-col relative border-2 border-primary-container shadow-2xl shadow-primary/10 scale-105 z-10">
-                <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-primary text-white px-4 py-1 rounded-full text-xs font-bold uppercase tracking-widest">
-                  MOST POPULAR
+              {/* Most Popular — BEST VALUE */}
+              <div className="bg-surface-container-lowest p-10 rounded-[2rem] flex flex-col relative border-2 border-primary shadow-2xl shadow-primary/10 scale-105 z-10">
+                <div className="absolute -top-4 left-1/2 -translate-x-1/2 flash-gradient text-white px-4 py-1 rounded-full text-xs font-black uppercase tracking-widest whitespace-nowrap">
+                  BEST VALUE
                 </div>
-                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-                  <span className="text-2xl">🎓</span>
+                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
+                  <Star className="w-5 h-5 text-primary fill-primary/30" />
                 </div>
-                <h3 className="font-headline text-2xl font-bold mb-2">Student Plan</h3>
-                <div className="text-4xl font-black mb-8">
-                  ₹99 <span className="text-base font-normal text-on-surface-variant">/60 days</span>
-                </div>
-                <ul className="space-y-4 mb-10 text-left flex-grow">
-                  <li className="flex items-start gap-3">
-                    <CheckCircle2 className="text-primary w-5 h-5 mt-0.5 fill-primary/10" />
+                <h3 className="font-headline text-2xl font-bold mb-1">Most Popular</h3>
+                <p className="text-sm text-on-surface-variant mb-4">300 Credits (30 Resumes)</p>
+                <div className="text-4xl font-black mb-1">₹199</div>
+                <p className="text-sm text-on-surface-variant mb-8">/2 Months</p>
+                <ul className="space-y-3 mb-10 text-left flex-grow">
+                  <li className="flex items-center gap-3">
+                    <CheckCircle2 className="text-primary w-4 h-4 flex-shrink-0" />
                     300 Credits
                   </li>
-                  <li className="flex items-start gap-3">
-                    <CheckCircle2 className="text-primary w-5 h-5 mt-0.5 fill-primary/10" />
-                    60-Day Access
+                  <li className="flex items-center gap-3">
+                    <CheckCircle2 className="text-primary w-4 h-4 flex-shrink-0" />
+                    Valid for 2 Months
                   </li>
-                  <li className="flex items-start gap-3">
-                    <CheckCircle2 className="text-primary w-5 h-5 mt-0.5 fill-primary/10" />
-                    All Templates
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <CheckCircle2 className="text-primary w-5 h-5 mt-0.5 fill-primary/10" />
-                    Priority Support
-                  </li>
-                </ul>
-                <button
-                  onClick={() => { setSelectedPricingPlan("student"); setShowDownloadGate(true); }}
-                  className="w-full flash-gradient text-white py-4 rounded-xl font-bold hover:opacity-90 transition-opacity"
-                >
-                  Claim Student Offer
-                </button>
-              </div>
-
-              {/* Pro Monthly */}
-              <div className="bg-surface-container-low p-10 rounded-[2rem] flex flex-col border border-transparent">
-                <h3 className="font-headline text-2xl font-bold mb-2">Pro Monthly</h3>
-                <div className="text-4xl font-black mb-8">
-                  ₹199 <span className="text-base font-normal text-on-surface-variant">/60 days</span>
-                </div>
-                <ul className="space-y-4 mb-10 text-left flex-grow">
-                  <li className="flex items-start gap-3 text-on-surface-variant">
-                    <CheckCircle2 className="text-primary w-5 h-5 mt-0.5 fill-primary/10" />
-                    Unlimited Resumes
-                  </li>
-                  <li className="flex items-start gap-3 text-on-surface-variant">
-                    <CheckCircle2 className="text-primary w-5 h-5 mt-0.5 fill-primary/10" />
-                    AI Tailoring per Job
-                  </li>
-                  <li className="flex items-start gap-3 text-on-surface-variant">
-                    <CheckCircle2 className="text-primary w-5 h-5 mt-0.5 fill-primary/10" />
-                    Premium Templates
-                  </li>
-                  <li className="flex items-start gap-3 text-on-surface-variant">
-                    <CheckCircle2 className="text-primary w-5 h-5 mt-0.5 fill-primary/10" />
-                    PDF Exports
+                  <li className="flex items-center gap-3">
+                    <CheckCircle2 className="text-primary w-4 h-4 flex-shrink-0" />
+                    All Premium Features
                   </li>
                 </ul>
                 <button
                   onClick={() => { setSelectedPricingPlan("regular"); setShowDownloadGate(true); }}
-                  className="w-full py-4 rounded-xl border border-on-surface-variant/20 font-bold hover:bg-surface-container-high transition-colors"
+                  className="w-full flash-gradient text-white py-4 rounded-xl font-bold hover:opacity-90 transition-opacity"
                 >
-                  Go Pro
+                  Pay & Continue →
+                </button>
+              </div>
+
+              {/* Student Plan — STUDENT OFFER */}
+              <div className="bg-surface-container-low p-10 rounded-[2rem] flex flex-col relative border-2 border-amber-400/60">
+                <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-gradient-to-r from-orange-500 to-amber-500 text-white px-4 py-1 rounded-full text-xs font-black uppercase tracking-widest whitespace-nowrap shadow-md shadow-orange-500/30">
+                  STUDENT OFFER
+                </div>
+                <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center mb-4">
+                  <Verified className="w-5 h-5 text-amber-500" />
+                </div>
+                <h3 className="font-headline text-2xl font-bold mb-1">Student Plan</h3>
+                <p className="text-sm text-on-surface-variant mb-4">400 Credits (40 Resumes)</p>
+                <div className="text-4xl font-black mb-1">₹99</div>
+                <p className="text-sm text-on-surface-variant mb-8">/3 months</p>
+                <ul className="space-y-3 mb-10 text-left flex-grow">
+                  <li className="flex items-center gap-3 text-on-surface-variant">
+                    <CheckCircle2 className="text-primary w-4 h-4 flex-shrink-0" />
+                    400 Credits
+                  </li>
+                  <li className="flex items-center gap-3 text-on-surface-variant">
+                    <CheckCircle2 className="text-primary w-4 h-4 flex-shrink-0" />
+                    Valid for 3 Months
+                  </li>
+                  <li className="flex items-center gap-3 text-on-surface-variant">
+                    <CheckCircle2 className="text-primary w-4 h-4 flex-shrink-0" />
+                    All Premium Features
+                  </li>
+                  <li className="flex items-center gap-3 text-amber-600 font-bold text-sm">
+                    ✓ Verified Student
+                  </li>
+                </ul>
+                <button
+                  onClick={() => { setSelectedPricingPlan("student"); setShowDownloadGate(true); }}
+                  className="w-full py-4 rounded-xl border-2 border-amber-400 bg-amber-50 text-amber-700 font-bold hover:bg-amber-100 transition-colors"
+                >
+                  Claim Student Offer
                 </button>
               </div>
             </div>
@@ -968,6 +867,7 @@ export default function App() {
           router.push("/result");
         }}
         initialPlan={selectedPricingPlan}
+        directPay={true}
       />
     </div>
   );
