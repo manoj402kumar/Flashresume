@@ -196,7 +196,8 @@ function HighlightedText({ text, matched, missing, showHighlights, style }: { te
         const type = wordTypes.get(part.toLowerCase());
         if (type) {
           const bgColor = type === "matched" ? "#fef08a" : "#bbf7d0";
-          return <Text key={i} style={{ backgroundColor: bgColor }}>{part}</Text>;
+          const textColor = type === "matched" ? "#854d0e" : "#166534"; // Dark Amber and Dark Green for visibility if bg drops
+          return <Text key={i} style={{ backgroundColor: bgColor, color: textColor, fontWeight: "bold" }}>{part}</Text>;
         }
         return <Text key={i}>{part}</Text>;
       })}
