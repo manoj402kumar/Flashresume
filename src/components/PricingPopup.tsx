@@ -16,6 +16,9 @@ interface PricingPopupProps {
   onSuccess: () => void;
   initialPlan?: string | null;
   directPay?: boolean; // skip plan selection, go straight to payment
+  forcePlanSelect?: boolean; // always show plan cards (e.g. Buy More Credits)
+  prefetchedUser?: User | null; // pre-loaded user to skip session fetch
+  prefetchedCredits?: number; // pre-loaded credit balance
 }
 
 const GoogleIcon = () => (
@@ -57,7 +60,7 @@ const PLANS = [
   },
 ];
 
-export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, directPay = false }: PricingPopupProps) {
+export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, directPay = false, forcePlanSelect = false, prefetchedUser, prefetchedCredits }: PricingPopupProps) {
   const [step, setStep] = useState<Step>("initializing");
   const [authMode, setAuthMode] = useState<AuthMode>("login");
   const [user, setUser] = useState<User | null>(null);
@@ -71,6 +74,10 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
   const [collegeName, setCollegeName] = useState("");
   const [rollNumber, setRollNumber] = useState("");
   const [studentEmail, setStudentEmail] = useState("");
+  // OTP state
+  const [otpSent, setOtpSent] = useState(false);
+  const [otpValue, setOtpValue] = useState("");
+  const [otpVerified, setOtpVerified] = useState(false);
 
   // UI State
   const [loading, setLoading] = useState(false);
@@ -102,6 +109,21 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
   };
 
   const checkUserSession = async () => {
+    // Fast path: use pre-loaded user data if provided (avoids 2 extra network calls)
+    if (prefetchedUser) {
+      setUser(prefetchedUser);
+      const credits = prefetchedCredits ?? 0;
+      if (directPay && initialPlan) {
+        setStep("processing");
+        setTimeout(() => handleProceedToPayment(initialPlan), 100);
+      } else if (!forcePlanSelect && credits >= 10) {
+        onSuccess();
+      } else {
+        setStep("plan");
+      }
+      return;
+    }
+    // Standard path: fetch session from Supabase
     const { data: { session } } = await supabase.auth.getSession();
     if (session?.user) {
       setUser(session.user);
@@ -111,7 +133,8 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
         // Skip plan selection — go straight to payment
         setStep("processing");
         setTimeout(() => handleProceedToPayment(initialPlan), 100);
-      } else if (data && data.credits_balance >= 10) {
+      } else if (!forcePlanSelect && data && data.credits_balance >= 10) {
+        // Auto-pass only when used as a download gate (not Buy More Credits)
         onSuccess();
       } else {
         setStep("plan");
@@ -162,7 +185,32 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
         }
       }
     } catch (err: any) {
-      setError(err.message || "Authentication failed");
+      const msg: string = err.message || "";
+      if (msg.includes("Invalid login credentials") || msg.includes("invalid_credentials")) {
+        // Check if the email exists in our users table to give a specific message
+        try {
+          const { data: existingUser } = await supabase
+            .from("users")
+            .select("id")
+            .eq("email", email.trim().toLowerCase())
+            .maybeSingle();
+          if (existingUser) {
+            setError("Incorrect password. Please try again or reset your password.");
+          } else {
+            setError("No account found with this email. Please sign up to get started.");
+          }
+        } catch {
+          setError("Incorrect email or password. Please try again.");
+        }
+      } else if (msg.includes("Email not confirmed")) {
+        setError("Please verify your email first. Check your inbox for the confirmation link.");
+      } else if (msg.includes("User already registered")) {
+        setError("An account with this email already exists. Try logging in instead.");
+      } else if (msg.includes("Password should be")) {
+        setError("Password must be at least 6 characters.");
+      } else {
+        setError(msg || "Authentication failed. Please try again.");
+      }
     } finally {
       setLoading(false);
     }
@@ -186,47 +234,82 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
     }
   };
 
+  const sendOtp = async () => {
+    if (!studentEmail.trim()) { setError("Please enter your email."); return; }
+    setLoading(true);
+    setError(null);
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+      const res = await fetch(`${apiUrl}/api/payments/send-otp`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: studentEmail.trim().toLowerCase() })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || "Failed to send OTP.");
+      setOtpSent(true);
+    } catch (e: any) {
+      setError(e.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const verifyOtp = async () => {
+    if (otpValue.length !== 6) { setError("Enter the 6-digit code."); return; }
+    setLoading(true);
+    setError(null);
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+      const res = await fetch(`${apiUrl}/api/payments/verify-otp`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: studentEmail.trim().toLowerCase(), otp: otpValue })
+      });
+      const data = await res.json();
+      if (!res.ok || !data.verified) throw new Error(data.detail || "Invalid or expired OTP.");
+      // OTP verified — mark student and go to payment
+      await supabase.from("users").update({
+        is_student: true,
+        student_verified_at: new Date().toISOString()
+      }).eq("id", user?.id);
+      setIsStudent(true);
+      setSelectedPlan("student");
+      handleProceedToPayment("student", true); // pass alreadyVerified=true to skip stale state check
+    } catch (e: any) {
+      setError(e.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const verifyStudent = async () => {
     setLoading(true);
     setError(null);
     try {
-      if (studentMethod === "email") {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-        const res = await fetch(`${apiUrl}/api/payments/verify-student`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email: studentEmail })
-        });
-        const data = await res.json();
-        if (!data.verified) throw new Error("Personal emails are not accepted. Please use your institutional email.");
-      } else {
-        if (collegeName.trim().length < 3 || rollNumber.trim().length < 3) {
-          throw new Error("Please provide valid college details.");
-        }
+      if (collegeName.trim().length < 3 || rollNumber.trim().length < 3) {
+        throw new Error("Please provide valid college details.");
       }
-
       await supabase.from("users").update({
         is_student: true,
         college_name: collegeName,
         roll_number: rollNumber,
         student_verified_at: new Date().toISOString()
       }).eq("id", user?.id);
-
       setIsStudent(true);
       setSelectedPlan("student");
-      // Go directly to payment after verification
-      handleProceedToPayment("student");
+      handleProceedToPayment("student", true); // skip stale state check, go directly to Razorpay
     } catch (e: any) {
       setError(e.message);
       setLoading(false);
     }
   };
 
-  const handleProceedToPayment = async (overridePlan?: string) => {
+  const handleProceedToPayment = async (overridePlan?: string, alreadyVerified = false) => {
     if (!user) return;
     const planToBuy = overridePlan || selectedPlan;
 
-    if (planToBuy === "student" && !isStudent) {
+    if (planToBuy === "student" && !isStudent && !alreadyVerified) {
       setStep("student_verify");
       return;
     }
@@ -440,7 +523,11 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
                 <div className="flex justify-center mt-5">
                   <button onClick={() => handleProceedToPayment()} disabled={loading}
                     className="w-full max-w-sm bg-primary text-white font-bold py-3.5 rounded-2xl hover:opacity-90 transition-opacity flex justify-center items-center gap-2 shadow-lg shadow-primary/20">
-                    {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <>Pay & Continue <ArrowRight className="w-4 h-4" /></>}
+                    {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : (
+                      selectedPlan === "student" && isStudent
+                        ? <>✓ Already Verified — Pay ₹99 <ArrowRight className="w-4 h-4" /></>
+                        : <>Pay & Continue <ArrowRight className="w-4 h-4" /></>
+                    )}
                   </button>
                 </div>
               </motion.div>
@@ -459,23 +546,44 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
                 </div>
 
                 {studentMethod === "email" ? (
-                  <div className="space-y-2">
-                    <input type="email" placeholder="Student Email (.edu or .ac.in)" value={studentEmail} 
-                      onChange={e => {
-                        const val = e.target.value;
-                        setStudentEmail(val);
-                        const lowerVal = val.toLowerCase();
-                        if (lowerVal.includes('@')) {
-                          if (lowerVal.endsWith('@gmail.com') || lowerVal.endsWith('@yahoo.com') || lowerVal.endsWith('@outlook.com') || lowerVal.endsWith('@hotmail.com')) {
-                            setError("Personal emails are not accepted. Please use your institutional email.");
-                          } else {
-                            setError(null);
-                          }
-                        } else {
-                          setError(null);
-                        }
-                      }}
-                      className="w-full px-4 py-3 bg-surface-container-low border border-surface-container-high rounded-xl outline-none text-sm focus:ring-2 focus:ring-tertiary" />
+                  <div className="space-y-3">
+                    <div className="flex gap-2">
+                      <input
+                        type="email"
+                        placeholder="Enter your email"
+                        value={studentEmail}
+                        onChange={e => { setStudentEmail(e.target.value); setOtpSent(false); setOtpValue(""); setError(null); }}
+                        disabled={otpSent}
+                        className="flex-1 px-4 py-3 bg-surface-container-low border border-surface-container-high rounded-xl outline-none text-sm focus:ring-2 focus:ring-primary disabled:opacity-60"
+                      />
+                      <button
+                        type="button"
+                        onClick={sendOtp}
+                        disabled={loading || otpSent}
+                        className="px-4 py-3 bg-primary text-white text-sm font-bold rounded-xl hover:opacity-90 transition-opacity disabled:opacity-50 whitespace-nowrap"
+                      >
+                        {loading && !otpSent ? <Loader2 className="w-4 h-4 animate-spin" /> : otpSent ? "Sent ✓" : "Send OTP"}
+                      </button>
+                    </div>
+                    {otpSent && (
+                      <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} className="space-y-2">
+                        <p className="text-xs text-on-surface-variant text-center">Enter the 6-digit code sent to <strong>{studentEmail}</strong></p>
+                        <input
+                          type="text"
+                          inputMode="numeric"
+                          maxLength={6}
+                          placeholder="_ _ _ _ _ _"
+                          value={otpValue}
+                          onChange={e => { setOtpValue(e.target.value.replace(/\D/g, "")); setError(null); }}
+                          className="w-full px-4 py-3 bg-surface-container-low border-2 border-primary rounded-xl outline-none text-sm text-center tracking-[0.5em] font-bold focus:ring-2 focus:ring-primary"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => { setOtpSent(false); setOtpValue(""); }}
+                          className="text-xs text-on-surface-variant hover:text-primary underline w-full text-center"
+                        >Change email / Resend</button>
+                      </motion.div>
+                    )}
                   </div>
                 ) : (
                   <div className="space-y-3">
@@ -489,9 +597,13 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
                 {error && <p className="text-xs text-error text-center bg-error/10 py-2 rounded">{error}</p>}
 
                 <div className="flex gap-2">
-                  <button onClick={() => { setStep("plan"); setError(null); }} className="flex-1 py-3 font-bold text-on-surface-variant hover:bg-surface-container-low rounded-xl transition-colors">Back</button>
-                  <button onClick={verifyStudent} disabled={loading} className="flex-1 bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-md shadow-orange-500/30 font-bold py-3 rounded-xl hover:opacity-90 transition-opacity flex justify-center items-center">
-                    {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Claim student offer"}
+                  <button onClick={() => { setStep("plan"); setError(null); setOtpSent(false); setOtpValue(""); }} className="flex-1 py-3 font-bold text-on-surface-variant hover:bg-surface-container-low rounded-xl transition-colors">Back</button>
+                  <button
+                    onClick={studentMethod === "email" ? (otpSent ? verifyOtp : sendOtp) : verifyStudent}
+                    disabled={loading || (studentMethod === "email" && otpSent && otpValue.length !== 6)}
+                    className="flex-1 bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-md shadow-orange-500/30 font-bold py-3 rounded-xl hover:opacity-90 transition-opacity flex justify-center items-center"
+                  >
+                    {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : studentMethod === "email" ? (otpSent ? "Claim Student Offer →" : "Send OTP") : "Claim Student Offer →"}
                   </button>
                 </div>
               </motion.div>

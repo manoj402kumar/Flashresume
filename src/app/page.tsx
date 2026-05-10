@@ -46,6 +46,7 @@ export default function App() {
   const [parsing, setParsing] = useState(false);
   const [showDownloadGate, setShowDownloadGate] = useState(false);
   const [selectedPricingPlan, setSelectedPricingPlan] = useState<"pay_per_use" | "regular" | "student" | null>(null);
+  const [showLoginOnly, setShowLoginOnly] = useState(false);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [showAccountDropdown, setShowAccountDropdown] = useState(false);
   const [credits, setCredits] = useState<number>(0);
@@ -324,7 +325,7 @@ export default function App() {
             ) : (
               <div className="flex items-center gap-2">
                 <button
-                  onClick={() => { setSelectedPricingPlan(null); setShowDownloadGate(true); }}
+                  onClick={() => setShowLoginOnly(true)}
                   className="text-xs sm:text-sm font-bold px-3 sm:px-4 py-2 rounded-full border border-on-surface-variant/20 hover:bg-surface-container-low transition-colors text-on-surface-variant whitespace-nowrap"
                 >
                   Log In
@@ -867,7 +868,19 @@ export default function App() {
           router.push("/result");
         }}
         initialPlan={selectedPricingPlan}
-        directPay={true}
+        directPay={!!selectedPricingPlan}
+        prefetchedUser={currentUser}
+        prefetchedCredits={credits}
+      />
+      {/* Login-only popup — no pricing, no redirect */}
+      <PricingPopup
+        isOpen={showLoginOnly}
+        onClose={() => setShowLoginOnly(false)}
+        onSuccess={() => setShowLoginOnly(false)}
+        directPay={false}
+        forcePlanSelect={false}
+        prefetchedUser={currentUser}
+        prefetchedCredits={credits}
       />
     </div>
   );

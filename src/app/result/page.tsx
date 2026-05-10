@@ -171,12 +171,13 @@ export default function ResultPage() {
   const [downloadingPDF, setDownloadingPDF] = useState(false);
   const [missingKeywords, setMissingKeywords] = useState<string[]>([]);
   const [matchedKeywords, setMatchedKeywords] = useState<string[]>([]);
-  const [selectedTemplate, setSelectedTemplate] = useState<"templateLetter" | "templateA4">("templateA4");
+  const [selectedTemplate, setSelectedTemplate] = useState<"templateLetter" | "templateA4">("templateLetter");
   const [noJdMode, setNoJdMode] = useState(false);
   // Section drag-and-drop: track insertion gap index for reliable ordering
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [insertionIndex, setInsertionIndex] = useState<number | null>(null);
   const [showPricingPopup, setShowPricingPopup] = useState(false);
+  const [pricingTrigger, setPricingTrigger] = useState<"download" | "buy_more">("download");
   const [hasPaidAccess, setHasPaidAccess] = useState(false);
   const [checkingAccess, setCheckingAccess] = useState(true);
   const [userEmail, setUserEmail] = useState<string>("");
@@ -484,6 +485,7 @@ export default function ResultPage() {
                 if (hasPaidAccess) {
                   handleDownloadPDF();
                 } else {
+                  setPricingTrigger("download");
                   setShowPricingPopup(true);
                 }
               }}
@@ -562,6 +564,7 @@ export default function ResultPage() {
                         <button
                           onClick={() => {
                             setShowAccountDropdown(false);
+                            setPricingTrigger("buy_more");
                             setShowPricingPopup(true);
                           }}
                           className="w-full py-2.5 bg-surface-container-low hover:bg-surface-container-high text-on-background text-sm font-bold rounded-xl transition-colors"
@@ -2192,10 +2195,13 @@ export default function ResultPage() {
       <PricingPopup
         isOpen={showPricingPopup}
         onClose={() => setShowPricingPopup(false)}
+        forcePlanSelect={pricingTrigger === "buy_more"}
         onSuccess={() => {
           checkAccess();
           setShowPricingPopup(false);
-          handleDownloadPDF();
+          if (pricingTrigger === "download") {
+            handleDownloadPDF();
+          }
         }}
       />
     </div>

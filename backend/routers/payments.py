@@ -2,9 +2,13 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 import razorpay
 import os
+import random
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 from dotenv import load_dotenv
 from supabase import create_client, Client
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 load_dotenv()
 
@@ -189,12 +193,104 @@ class StudentVerifyRequest(BaseModel):
 
 @router.post("/payments/verify-student")
 async def verify_student(body: StudentVerifyRequest):
+    # Open to all emails - OTP flow is the real verification gate
+    return {"status": "success", "verified": True}
+
+# ── OTP Routes ──────────────────────────────────────────────
+
+BREVO_SMTP_HOST = "smtp-relay.brevo.com"
+BREVO_SMTP_PORT = 587
+BREVO_SMTP_USER = os.getenv("BREVO_SMTP_USER")   # e.g. 980780001@smtp-brevo.com
+BREVO_SMTP_PASS = os.getenv("BREVO_SMTP_PASS")   # The SMTP key value from Brevo
+BREVO_FROM_EMAIL = os.getenv("BREVO_FROM_EMAIL", "support@flashresume.in")
+BREVO_FROM_NAME = os.getenv("BREVO_FROM_NAME", "Flashresume")
+
+class SendOtpRequest(BaseModel):
+    email: str
+
+@router.post("/payments/send-otp")
+async def send_otp(body: SendOtpRequest):
+    if not supabase:
+        raise HTTPException(status_code=500, detail="Database not configured")
+    if not BREVO_SMTP_USER or not BREVO_SMTP_PASS:
+        raise HTTPException(status_code=500, detail="SMTP not configured")
+    
     email = body.email.strip().lower()
-    personal_domains = ["@gmail.com", "@yahoo.com", "@outlook.com", "@hotmail.com", "@icloud.com"]
-    is_valid = True
-    for domain in personal_domains:
-        if email.endswith(domain):
-            is_valid = False
-            break
-            
-    return {"status": "success", "verified": is_valid}
+    otp_code = str(random.randint(100000, 999999))
+    expires_at = (datetime.now(timezone.utc) + timedelta(minutes=10)).isoformat()
+    
+    # Upsert OTP into a simple table (create this in Supabase if it doesn't exist)
+    try:
+        supabase.table("otp_verifications").upsert({
+            "email": email,
+            "otp": otp_code,
+            "expires_at": expires_at,
+            "verified": False
+        }, on_conflict="email").execute()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"DB error: {str(e)}")
+    
+    # Send email via Brevo SMTP
+    try:
+        msg = MIMEMultipart("alternative")
+        msg["Subject"] = "Your Flashresume Verification Code"
+        msg["From"] = f"{BREVO_FROM_NAME} <{BREVO_FROM_EMAIL}>"
+        msg["To"] = email
+        
+        html_body = f"""
+        <div style="font-family: Inter, sans-serif; max-width: 480px; margin: 0 auto; padding: 32px;">
+          <h2 style="color: #006859; font-size: 24px; margin-bottom: 8px;">Your Verification Code</h2>
+          <p style="color: #595c5d; font-size: 14px;">Use this code to unlock the Student Plan on Flashresume:</p>
+          <div style="background: #f5f6f7; border-radius: 16px; padding: 32px; text-align: center; margin: 24px 0;">
+            <span style="font-size: 40px; font-weight: 900; letter-spacing: 12px; color: #006859;">{otp_code}</span>
+          </div>
+          <p style="color: #595c5d; font-size: 12px;">This code expires in <strong>10 minutes</strong>. Do not share it with anyone.</p>
+          <hr style="border: none; border-top: 1px solid #eff1f2; margin: 24px 0;" />
+          <p style="color: #595c5d; font-size: 11px;">Flashresume &mdash; AI-Powered Resume Optimization</p>
+        </div>
+        """
+        msg.attach(MIMEText(html_body, "html"))
+        
+        with smtplib.SMTP(BREVO_SMTP_HOST, BREVO_SMTP_PORT) as server:
+            server.starttls()
+            server.login(BREVO_SMTP_USER, BREVO_SMTP_PASS)
+            server.sendmail(BREVO_FROM_EMAIL, email, msg.as_string())
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to send email: {str(e)}")
+    
+    return {"status": "ok", "message": "OTP sent"}
+
+
+class VerifyOtpRequest(BaseModel):
+    email: str
+    otp: str
+
+@router.post("/payments/verify-otp")
+async def verify_otp(body: VerifyOtpRequest):
+    if not supabase:
+        raise HTTPException(status_code=500, detail="Database not configured")
+    
+    email = body.email.strip().lower()
+    now = datetime.now(timezone.utc).isoformat()
+    
+    try:
+        result = supabase.table("otp_verifications") \
+            .select("otp, expires_at, verified") \
+            .eq("email", email).single().execute()
+    except Exception:
+        raise HTTPException(status_code=400, detail="No OTP found for this email. Please request a new one.")
+    
+    record = result.data
+    if not record:
+        raise HTTPException(status_code=400, detail="No OTP found. Please request a new one.")
+    if record["verified"]:
+        raise HTTPException(status_code=400, detail="OTP already used. Please request a new one.")
+    if record["expires_at"] < now:
+        raise HTTPException(status_code=400, detail="OTP expired. Please request a new one.")
+    if record["otp"] != body.otp.strip():
+        raise HTTPException(status_code=400, detail="Incorrect OTP. Please try again.")
+    
+    # Mark as verified
+    supabase.table("otp_verifications").update({"verified": True}).eq("email", email).execute()
+    
+    return {"status": "ok", "verified": True}
