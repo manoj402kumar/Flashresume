@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 
 const STEPS = [
-  { id: 0, label: "Upload Resume", icon: Upload, color: "text-primary" },
+  { id: 0, label: "Upload Resume & JD", icon: Upload, color: "text-primary" },
   { id: 1, label: "AI Optimizing", icon: Sparkles, color: "text-secondary-container" },
   { id: 2, label: "ATS Ready", icon: FileCheck2, color: "text-tertiary" },
 ];
@@ -241,7 +241,7 @@ function StepResult({ active }: { active: boolean }) {
               className={`text-[9px] sm:text-[10px] font-bold px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full border ${kw.matched
                 ? "bg-primary/10 border-primary/30 text-primary"
                 : "bg-error/10 border-error/20 text-error line-through"
-              }`}
+                }`}
             >
               {kw.matched && <CheckCircle2 className="inline w-2 h-2 sm:w-2.5 sm:h-2.5 mr-0.5 mb-0.5" />}
               {kw.word}
@@ -314,9 +314,9 @@ export default function LiveDemoSection() {
                     className={`flex-1 flex flex-col items-center gap-1.5 py-3 px-2 rounded-2xl border-2 transition-all duration-300 ${isActive
                       ? "bg-primary/5 border-primary/30 shadow-md"
                       : isDone
-                      ? "bg-surface-container-low border-primary/10 opacity-60"
-                      : "bg-surface-container-low border-transparent opacity-40"
-                    }`}
+                        ? "bg-surface-container-low border-primary/10 opacity-60"
+                        : "bg-surface-container-low border-transparent opacity-40"
+                      }`}
                   >
                     <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${isActive ? "bg-primary/15" : "bg-surface-container-high"}`}>
                       {isDone
@@ -347,9 +347,9 @@ export default function LiveDemoSection() {
                     className={`flex items-center gap-5 p-5 rounded-2xl text-left transition-all duration-300 border-2 ${isActive
                       ? "bg-primary/5 border-primary/30 shadow-lg"
                       : isDone
-                      ? "bg-surface-container-low border-primary/10 opacity-70"
-                      : "bg-surface-container-low border-transparent opacity-50"
-                    }`}
+                        ? "bg-surface-container-low border-primary/10 opacity-70"
+                        : "bg-surface-container-low border-transparent opacity-50"
+                      }`}
                   >
                     <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 transition-colors ${isActive ? "bg-primary/15" : isDone ? "bg-primary/5" : "bg-surface-container-high"}`}>
                       {isDone ? (
