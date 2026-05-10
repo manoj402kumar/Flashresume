@@ -41,8 +41,8 @@ import {
   isBulletEnhanced,
   getHighlightClass,
 } from "@/lib/highlighting";
-import ResumePDFTemplate1 from "@/components/ResumePDFTemplate1";
-import ResumePDFTemplate2 from "@/components/ResumePDFTemplate2";
+import ResumePDFTemplateLetter from "@/components/ResumePDFTemplateLetter";
+import ResumePDFTemplateA4 from "@/components/ResumePDFTemplateA4";
 import dynamic from "next/dynamic";
 import PricingPopup from "@/components/PricingPopup";
 import { supabase } from "@/lib/supabase";
@@ -171,7 +171,7 @@ export default function ResultPage() {
   const [downloadingPDF, setDownloadingPDF] = useState(false);
   const [missingKeywords, setMissingKeywords] = useState<string[]>([]);
   const [matchedKeywords, setMatchedKeywords] = useState<string[]>([]);
-  const [selectedTemplate, setSelectedTemplate] = useState<"template1" | "template2">("template2");
+  const [selectedTemplate, setSelectedTemplate] = useState<"templateLetter" | "templateA4">("templateA4");
   const [noJdMode, setNoJdMode] = useState(false);
   // Section drag-and-drop: track insertion gap index for reliable ordering
   const [draggingId, setDraggingId] = useState<string | null>(null);
@@ -369,9 +369,9 @@ export default function ResultPage() {
     try {
       // Use React-PDF for high-quality, ATS-friendly frontend PDF generation
       // Ensure highlights are strictly DISABLED for the downloaded PDF
-      const PDFComponent = selectedTemplate === "template1"
-        ? ResumePDFTemplate1
-        : ResumePDFTemplate2;
+      const PDFComponent = selectedTemplate === "templateLetter"
+        ? ResumePDFTemplateLetter
+        : ResumePDFTemplateA4;
       const blob = await pdf(
         <PDFComponent
           resume={resume}
@@ -621,9 +621,9 @@ export default function ResultPage() {
                 {/* Template + Highlight controls */}
                 <div className="w-full flex justify-end px-4 pt-4 pb-4">
                   <div className="flex bg-surface/90 backdrop-blur-md rounded-xl shadow-lg border border-primary/20 overflow-hidden">
-                    <button onClick={() => setSelectedTemplate("template2")} className={`px-3 py-2 text-[11px] font-bold transition-colors ${selectedTemplate === "template2" ? "bg-primary text-white" : "text-on-surface-variant hover:bg-surface-container"}`}>T1</button>
+                    <button onClick={() => setSelectedTemplate("templateLetter")} className={`px-3 py-2 text-[11px] font-bold transition-colors ${selectedTemplate === "templateLetter" ? "bg-primary text-white" : "text-on-surface-variant hover:bg-surface-container"}`}>Template 1</button>
                     <div className="w-[1px] bg-primary/20"></div>
-                    <button onClick={() => setSelectedTemplate("template1")} className={`px-3 py-2 text-[11px] font-bold transition-colors ${selectedTemplate === "template1" ? "bg-primary text-white" : "text-on-surface-variant hover:bg-surface-container"}`}>T2</button>
+                    <button onClick={() => setSelectedTemplate("templateA4")} className={`px-3 py-2 text-[11px] font-bold transition-colors ${selectedTemplate === "templateA4" ? "bg-primary text-white" : "text-on-surface-variant hover:bg-surface-container"}`}>Template 2</button>
                   </div>
                 </div>
 
@@ -632,15 +632,15 @@ export default function ResultPage() {
                     className="relative bg-white shadow-2xl rounded-sm ring-1 ring-white/20 transition-all duration-300" 
                     style={{ 
                       width: "100%", 
-                      maxWidth: selectedTemplate === "template1" ? "calc((85vh - 6rem) * 0.707)" : "calc((85vh - 6rem) * 0.774)", 
-                      aspectRatio: selectedTemplate === "template1" ? "1 / 1.414" : "1 / 1.2916" 
+                      maxWidth: selectedTemplate === "templateLetter" ? "calc((85vh - 6rem) * 0.707)" : "calc((85vh - 6rem) * 0.774)", 
+                      aspectRatio: selectedTemplate === "templateLetter" ? "1 / 1.414" : "1 / 1.2916" 
                     }}
                   >
                     <MobilePDFPreview key={`mobile-${selectedTemplate}-${showHighlights ? "on" : "off"}-${(resume.section_order || []).join('-')}`}>
-                      {selectedTemplate === "template1" ? (
-                        <ResumePDFTemplate1 resume={resume} showHighlights={false} matchedKeywords={[]} missingKeywords={[]} />
+                      {selectedTemplate === "templateLetter" ? (
+                        <ResumePDFTemplateLetter resume={resume} showHighlights={false} matchedKeywords={[]} missingKeywords={[]} />
                       ) : (
-                        <ResumePDFTemplate2 resume={resume} showHighlights={false} matchedKeywords={[]} missingKeywords={[]} />
+                        <ResumePDFTemplateA4 resume={resume} showHighlights={false} matchedKeywords={[]} missingKeywords={[]} />
                       )}
                     </MobilePDFPreview>
                   </div>
@@ -2131,15 +2131,15 @@ export default function ResultPage() {
             {/* Template Selector */}
             <div className="flex bg-surface/90 backdrop-blur-md rounded-2xl shadow-lg border border-primary/10 overflow-hidden">
               <button
-                onClick={() => setSelectedTemplate("template2")}
-                className={`px-3 py-2 text-xs font-semibold transition-colors ${selectedTemplate === "template2" ? "bg-primary text-white" : "text-on-surface-variant hover:bg-surface-container"}`}
+                onClick={() => setSelectedTemplate("templateLetter")}
+                className={`px-3 py-2 text-xs font-semibold transition-colors ${selectedTemplate === "templateLetter" ? "bg-primary text-white" : "text-on-surface-variant hover:bg-surface-container"}`}
               >
                 Template 1
               </button>
               <div className="w-[1px] bg-primary/10"></div>
               <button
-                onClick={() => setSelectedTemplate("template1")}
-                className={`px-3 py-2 text-xs font-semibold transition-colors ${selectedTemplate === "template1" ? "bg-primary text-white" : "text-on-surface-variant hover:bg-surface-container"}`}
+                onClick={() => setSelectedTemplate("templateA4")}
+                className={`px-3 py-2 text-xs font-semibold transition-colors ${selectedTemplate === "templateA4" ? "bg-primary text-white" : "text-on-surface-variant hover:bg-surface-container"}`}
               >
                 Template 2
               </button>
@@ -2171,15 +2171,15 @@ export default function ResultPage() {
 
           <div className="flex-1 w-full bg-surface-container-lowest">
             <PDFViewer key={`${selectedTemplate}-${showHighlights ? "on" : "off"}-${(resume.section_order || []).join('-')}`} width="100%" height="100%" className="border-none" showToolbar={false}>
-              {selectedTemplate === "template1" ? (
-                <ResumePDFTemplate1
+              {selectedTemplate === "templateLetter" ? (
+                <ResumePDFTemplateLetter
                   resume={resume}
                   showHighlights={showHighlights}
                   matchedKeywords={matchedKeywords}
                   missingKeywords={missingKeywords}
                 />
               ) : (
-                <ResumePDFTemplate2
+                <ResumePDFTemplateA4
                   resume={resume}
                   showHighlights={showHighlights}
                   matchedKeywords={matchedKeywords}

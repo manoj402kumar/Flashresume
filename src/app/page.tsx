@@ -16,9 +16,13 @@ import {
   FileText,
   X,
   User as UserIcon,
-  Loader2
+  Loader2,
+  Crosshair,
+  Sparkles,
+  PenLine,
+  SlidersHorizontal
 } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { parseResume, analyzeResume } from "@/lib/api";
 import PricingPopup from "@/components/PricingPopup";
@@ -45,7 +49,9 @@ export default function App() {
   const [showAccountDropdown, setShowAccountDropdown] = useState(false);
   const [credits, setCredits] = useState<number>(0);
   const [subscriptionData, setSubscriptionData] = useState<any>(null);
-  const [noAiChanges, setNoAiChanges] = useState(false);
+  const [optimizeMode, setOptimizeMode] = useState<"jd" | "no_jd" | "manual" | null>(null);
+  const [showModeDropdown, setShowModeDropdown] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -55,6 +61,17 @@ export default function App() {
       setCurrentUser(session?.user ?? null);
     });
     return () => subscription.unsubscribe();
+  }, []);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setShowModeDropdown(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
   }, []);
 
   useEffect(() => {
@@ -155,8 +172,7 @@ export default function App() {
     setLoading(true);
     setError("");
 
-    const hasJD = jobDescription.trim().length > 0;
-    // Clear stale no_jd_mode flag from any previous session
+    // Clear stale flags from any previous session
     localStorage.removeItem("no_jd_mode");
 
     try {
@@ -168,18 +184,29 @@ export default function App() {
       }
 
       localStorage.setItem("resume_text", finalResumeText);
-      localStorage.setItem("job_description", jobDescription);
+      localStorage.setItem("job_description", optimizeMode === "jd" ? jobDescription : "");
       // Clear any leaked state from previous runs
       localStorage.removeItem("approved_project");
-      localStorage.setItem("no_ai_changes", noAiChanges ? "true" : "false");
+      localStorage.setItem("no_ai_changes", optimizeMode === "manual" ? "true" : "false");
 
-      if (hasJD) {
-        // Normal flow: analyze against JD, show analysis page
+      if (!optimizeMode) {
+        setError("Please select an optimization mode.");
+        setLoading(false);
+        return;
+      }
+
+      if (optimizeMode === "jd") {
+        // Optimize for JD: validate JD present, analyze against it
+        if (!jobDescription.trim()) {
+          setError("Please paste a job description to optimize for.");
+          setLoading(false);
+          return;
+        }
         const analysisResult = await analyzeResume(finalResumeText, jobDescription);
         localStorage.setItem("analysis", JSON.stringify(analysisResult));
         router.push("/analyze");
       } else {
-        // No-JD mode: skip analysis entirely, go straight to preview
+        // No-JD mode or Manual: skip analysis, go straight to preview
         const dummyAnalysis = {
           ats_score: 0,
           matched_skills: [],
@@ -411,31 +438,144 @@ export default function App() {
                     First time? View Gold Standard Template
                   </a>
                 </div>
-                <div className="space-y-2">
-                  <label className="font-sans text-xs font-semibold uppercase tracking-wider text-on-surface-variant ml-1">
-                    PASTE JOB DESCRIPTION
-                  </label>
-                  <textarea
-                    value={jobDescription}
-                    onChange={(e) => setJobDescription(e.target.value)}
-                    className="w-full px-6 py-4 rounded-xl bg-surface-container-low border-none focus:ring-2 focus:ring-primary-container transition-all placeholder:text-on-surface-variant/50 min-h-[120px] resize-none"
-                    placeholder="Paste the job description here..."
-                  />
+                {/* ── Optimize Mode Dropdown ── */}
+                <div className="space-y-2" ref={dropdownRef}>
+                  <p className="font-sans text-xs font-semibold uppercase tracking-wider text-on-surface-variant ml-1">Optimization Mode</p>
+                  <div className="relative">
+                    {/* Trigger button */}
+                    <button
+                      type="button"
+                      onClick={() => setShowModeDropdown((v) => !v)}
+                      className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl border-2 text-left transition-all duration-200 ${optimizeMode
+                        ? "border-primary bg-primary/5"
+                        : "border-surface-container-high bg-surface-container-low hover:border-primary/40"
+                        }`}
+                    >
+                      <span className={`shrink-0 w-8 h-8 rounded-lg flex items-center justify-center ${
+                        optimizeMode === "jd" ? "bg-primary/15 text-primary"
+                        : optimizeMode === "no_jd" ? "bg-secondary/15 text-secondary"
+                        : optimizeMode === "manual" ? "bg-tertiary/15 text-tertiary"
+                        : "bg-surface-container-high text-on-surface-variant"
+                      }`}>
+                        {optimizeMode === "jd" ? <Crosshair className="w-4 h-4" />
+                          : optimizeMode === "no_jd" ? <Sparkles className="w-4 h-4" />
+                          : optimizeMode === "manual" ? <PenLine className="w-4 h-4" />
+                          : <SlidersHorizontal className="w-4 h-4" />}
+                      </span>
+                      <span className="flex-1 min-w-0">
+                        <span className={`block text-sm font-bold leading-tight ${optimizeMode ? "text-primary" : "text-on-surface-variant"
+                          }`}>
+                          {optimizeMode === "jd" ? "Optimize for JD"
+                            : optimizeMode === "no_jd" ? "Optimize (No JD)"
+                              : optimizeMode === "manual" ? "Don't change anything"
+                                : "Select an option"}
+                        </span>
+                        {optimizeMode && (
+                          <span className="block text-xs text-on-surface-variant mt-0.5 leading-snug">
+                            {optimizeMode === "jd" ? "Tailor your resume to a specific job description"
+                              : optimizeMode === "no_jd" ? "Optimize existing resume (No JD)"
+                                : "Keep resume as-is — I'll edit it myself"}
+                          </span>
+                        )}
+                      </span>
+                      <motion.span
+                        animate={{ rotate: showModeDropdown ? 180 : 0 }}
+                        transition={{ duration: 0.2 }}
+                        className="shrink-0 text-on-surface-variant"
+                      >
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                          <path d="M4 6l4 4 4-4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      </motion.span>
+                    </button>
+
+                    {/* Dropdown panel */}
+                    <AnimatePresence>
+                      {showModeDropdown && (
+                        <motion.div
+                          initial={{ opacity: 0, y: -6, scale: 0.98 }}
+                          animate={{ opacity: 1, y: 0, scale: 1 }}
+                          exit={{ opacity: 0, y: -6, scale: 0.98 }}
+                          transition={{ duration: 0.18 }}
+                          className="absolute left-0 right-0 top-[calc(100%+6px)] z-30 bg-surface-container-lowest border border-surface-container-high rounded-2xl shadow-2xl shadow-primary/10 overflow-hidden"
+                        >
+                          {([
+                            {
+                              id: "jd" as const,
+                              Icon: Crosshair,
+                              iconCls: "bg-primary/15 text-primary",
+                              label: "Optimize for JD",
+                              desc: "Tailor your resume to a specific job description"
+                            },
+                            {
+                              id: "no_jd" as const,
+                              Icon: Sparkles,
+                              iconCls: "bg-secondary/15 text-secondary",
+                              label: "Optimize (No JD)",
+                              desc: "Optimize existing resume (No JD)"
+                            },
+                            {
+                              id: "manual" as const,
+                              Icon: PenLine,
+                              iconCls: "bg-tertiary/15 text-tertiary",
+                              label: "Don't change anything",
+                              desc: "Keep resume as-is — I'll edit it myself"
+                            }
+                          ] as const).map((opt, idx, arr) => {
+                            const isActive = optimizeMode === opt.id;
+                            const IconCmp = opt.Icon;
+                            return (
+                              <button
+                                key={opt.id}
+                                type="button"
+                                onClick={() => { setOptimizeMode(opt.id); setShowModeDropdown(false); }}
+                                className={`w-full flex items-center gap-3 px-4 py-3.5 text-left transition-all duration-150 ${isActive
+                                  ? "bg-primary/8 text-primary"
+                                  : "hover:bg-surface-container-low text-on-background"
+                                  } ${idx < arr.length - 1 ? "border-b border-surface-container-low" : ""}`}
+                              >
+                                <span className={`shrink-0 w-8 h-8 rounded-lg flex items-center justify-center ${isActive ? opt.iconCls : "bg-surface-container-high text-on-surface-variant"}`}>
+                                  <IconCmp className="w-4 h-4" />
+                                </span>
+                                <span className="flex-1 min-w-0">
+                                  <span className={`block text-sm font-bold leading-tight ${isActive ? "text-primary" : "text-on-background"
+                                    }`}>{opt.label}</span>
+                                  <span className="block text-xs text-on-surface-variant mt-0.5">{opt.desc}</span>
+                                </span>
+                                {isActive && (
+                                  <span className="shrink-0 w-4 h-4 rounded-full bg-primary flex items-center justify-center">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-white"></span>
+                                  </span>
+                                )}
+                              </button>
+                            );
+                          })}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
                 </div>
-                
-                <div className="pt-2 pb-1">
-                  <label className="flex items-center gap-3 cursor-pointer p-3 bg-surface-container-lowest rounded-xl hover:bg-surface-container-low transition-colors border border-surface-container-high hover:border-primary/30">
-                    <input
-                      type="checkbox"
-                      checked={noAiChanges}
-                      onChange={(e) => setNoAiChanges(e.target.checked)}
-                      className="w-5 h-5 rounded border-2 border-on-surface-variant/30 text-primary focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-surface-container-lowest transition-all"
+
+                {/* JD textarea — only shown in JD mode */}
+                {optimizeMode === "jd" && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.25 }}
+                    className="space-y-2 overflow-hidden"
+                  >
+                    <label className="font-sans text-xs font-semibold uppercase tracking-wider text-on-surface-variant ml-1">
+                      PASTE JOB DESCRIPTION
+                    </label>
+                    <textarea
+                      value={jobDescription}
+                      onChange={(e) => setJobDescription(e.target.value)}
+                      className="w-full px-6 py-4 rounded-xl bg-surface-container-low border-none focus:ring-2 focus:ring-primary-container transition-all placeholder:text-on-surface-variant/50 min-h-[120px] resize-none"
+                      placeholder="Paste the job description here..."
                     />
-                    <span className="text-sm font-medium text-on-background flex-1">
-                      Don't change anything in input resume (Manual edit later)
-                    </span>
-                  </label>
-                </div>
+                  </motion.div>
+                )}
 
                 {error && (
                   <div className="text-error text-sm font-medium flex items-center gap-2">
@@ -459,7 +599,7 @@ export default function App() {
                   className="w-full bg-on-background text-white py-4 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-primary transition-colors group disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Bolt className="text-primary-container w-5 h-5 fill-primary-container" />
-                  {loading ? "Processing..." : jobDescription.trim() ? "Generate" : "Optimize Resume"}
+                  {loading ? "Processing..." : !optimizeMode ? "Select a mode first" : optimizeMode === "jd" ? "Optimize for JD" : optimizeMode === "no_jd" ? "Optimize Resume" : "Continue to Editor"}
                 </button>
               </div>
             </div>

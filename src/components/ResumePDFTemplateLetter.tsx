@@ -204,7 +204,7 @@ function HighlightedText({ text, matched, missing, showHighlights, style }: { te
   );
 }
 
-export default function ResumePDFTemplate2({ resume, showHighlights = false, matchedKeywords = [], missingKeywords = [] }: ResumePDFProps) {
+export default function ResumePDFTemplateLetter({ resume, showHighlights = false, matchedKeywords = [], missingKeywords = [] }: ResumePDFProps) {
   return (
     <Document>
       <Page size={[612.28, 790.87]} style={styles.page}>
@@ -366,49 +366,73 @@ export default function ResumePDFTemplate2({ resume, showHighlights = false, mat
                     {resume.technical_skills.languages.length > 0 && (
                       <View style={styles.skillCategoryRow}>
                         <Text style={styles.skillLabel}>Languages</Text>
-                        <Text style={styles.skillList}>
-                          {`: ${resume.technical_skills.languages.join(", ")}`}
-                        </Text>
+                        <HighlightedText
+                          text={`: ${resume.technical_skills.languages.join(", ")}`}
+                          matched={matchedKeywords}
+                          missing={missingKeywords}
+                          showHighlights={showHighlights}
+                          style={styles.skillList}
+                        />
                       </View>
                     )}
                     {resume.technical_skills.frameworks.length > 0 && (
                       <View style={styles.skillCategoryRow}>
                         <Text style={styles.skillLabel}>Frameworks & Libraries</Text>
-                        <Text style={styles.skillList}>
-                          {`: ${resume.technical_skills.frameworks.join(", ")}`}
-                        </Text>
+                        <HighlightedText
+                          text={`: ${resume.technical_skills.frameworks.join(", ")}`}
+                          matched={matchedKeywords}
+                          missing={missingKeywords}
+                          showHighlights={showHighlights}
+                          style={styles.skillList}
+                        />
                       </View>
                     )}
                     {resume.technical_skills.databases.length > 0 && (
                       <View style={styles.skillCategoryRow}>
                         <Text style={styles.skillLabel}>Databases</Text>
-                        <Text style={styles.skillList}>
-                          {`: ${resume.technical_skills.databases.join(", ")}`}
-                        </Text>
+                        <HighlightedText
+                          text={`: ${resume.technical_skills.databases.join(", ")}`}
+                          matched={matchedKeywords}
+                          missing={missingKeywords}
+                          showHighlights={showHighlights}
+                          style={styles.skillList}
+                        />
                       </View>
                     )}
                     {resume.technical_skills.cloud_services.length > 0 && (
                       <View style={styles.skillCategoryRow}>
                         <Text style={styles.skillLabel}>Cloud Services</Text>
-                        <Text style={styles.skillList}>
-                          {`: ${resume.technical_skills.cloud_services.join(", ")}`}
-                        </Text>
+                        <HighlightedText
+                          text={`: ${resume.technical_skills.cloud_services.join(", ")}`}
+                          matched={matchedKeywords}
+                          missing={missingKeywords}
+                          showHighlights={showHighlights}
+                          style={styles.skillList}
+                        />
                       </View>
                     )}
                     {resume.technical_skills.developer_tools.length > 0 && (
                       <View style={styles.skillCategoryRow}>
                         <Text style={styles.skillLabel}>Developer Tools</Text>
-                        <Text style={styles.skillList}>
-                          {`: ${resume.technical_skills.developer_tools.join(", ")}`}
-                        </Text>
+                        <HighlightedText
+                          text={`: ${resume.technical_skills.developer_tools.join(", ")}`}
+                          matched={matchedKeywords}
+                          missing={missingKeywords}
+                          showHighlights={showHighlights}
+                          style={styles.skillList}
+                        />
                       </View>
                     )}
                     {resume.technical_skills.miscellaneous && resume.technical_skills.miscellaneous.length > 0 && (
                       <View style={styles.skillCategoryRow}>
                         <Text style={styles.skillLabel}>Miscellaneous</Text>
-                        <Text style={styles.skillList}>
-                          {`: ${resume.technical_skills.miscellaneous.join(", ")}`}
-                        </Text>
+                        <HighlightedText
+                          text={`: ${resume.technical_skills.miscellaneous.join(", ")}`}
+                          matched={matchedKeywords}
+                          missing={missingKeywords}
+                          showHighlights={showHighlights}
+                          style={styles.skillList}
+                        />
                       </View>
                     )}
                   </View>
