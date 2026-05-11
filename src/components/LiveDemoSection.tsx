@@ -297,7 +297,7 @@ export default function LiveDemoSection() {
         </motion.div>
 
         {/* Mobile: Demo first, then steps. Desktop: Steps left, Demo right */}
-        <div className="flex flex-col-reverse lg:grid lg:grid-cols-[1fr_1.6fr] gap-8 sm:gap-12 items-start">
+        <div className="flex flex-col-reverse lg:grid lg:grid-cols-[1fr_1.6fr] gap-8 sm:gap-12 lg:items-start">
 
           {/* Step Navigator */}
           <div className="flex flex-col gap-3 sm:gap-4">
@@ -384,7 +384,7 @@ export default function LiveDemoSection() {
               />
             </div>
             <p className="text-xs text-on-surface-variant text-center">
-              {autoPlay ? "Auto-playing" : "Tap any step"} · Step {activeStep + 1} of 3
+              · Step {activeStep + 1} of 3
             </p>
           </div>
 
