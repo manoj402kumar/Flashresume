@@ -288,10 +288,10 @@ export default function LiveDemoSection() {
           viewport={{ once: true }}
           className="mb-10 sm:mb-16"
         >
-          <h2 className="font-headline text-3xl sm:text-4xl md:text-5xl font-bold text-on-background mb-4 leading-tight">
+          <h2 className="font-headline text-3xl sm:text-4xl md:text-5xl font-bold text-on-background mb-4 leading-tight text-center">
             Three steps. Zero effort.
           </h2>
-          <p className="text-on-surface-variant text-base sm:text-lg sm:whitespace-nowrap">
+          <p className="text-on-surface-variant text-base sm:text-lg sm:whitespace-nowrap text-center">
             Eliminate the headache of updating your resume manually everytime for every JD.
           </p>
         </motion.div>

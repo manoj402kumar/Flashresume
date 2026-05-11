@@ -158,14 +158,14 @@ const SECTION_LABELS: Record<string, { label: string; icon: React.ReactNode }> =
   certifications: { label: "Certifications", icon: <Award className="w-4 h-4 text-secondary-container" /> }
 };
 
-export default function ResultPage() {
+export default function ScratchPage() {
   const router = useRouter();
   const [resume, setResume] = useState<TemplateV1 | null>(null);
   const [loading, setLoading] = useState(true);
   const [showChanges, setShowChanges] = useState(false);
   const [showMissedKeywords, setShowMissedKeywords] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [editMode, setEditMode] = useState(false);
+  const [editMode, setEditMode] = useState(true);
   const [openEditSection, setOpenEditSection] = useState<string>("contact");
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [showHighlights, setShowHighlights] = useState(true);
@@ -235,67 +235,57 @@ export default function ResultPage() {
     setInsertionIndex(null);
   };
 
+  // ── Scratch mode: load a blank template immediately ──
   useEffect(() => {
-    const fetchSession = async () => {
-      const urlParams = new URLSearchParams(window.location.search);
-      const sessionId = urlParams.get("session_id");
-      if (sessionId) setSessionGuid(sessionId);
-
-      let parsed = null;
-
-      if (sessionId) {
-        try {
-          const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-          const res = await fetch(`${apiUrl}/api/sessions/${sessionId}`);
-          if (res.ok) {
-            const data = await res.json();
-            parsed = data.generated_output;
-          }
-        } catch (e) {
-          console.error("Failed to fetch session", e);
-        }
-      }
-
-      if (!parsed) {
-        const resumeData = localStorage.getItem("generated_resume");
-        if (!resumeData) {
-          router.push("/");
-          return;
-        }
-        parsed = JSON.parse(resumeData);
-      }
-      // Sanitize junk LLM values on load so edit fields show clean defaults
-      parsed.heading.linkedin_url = cleanDisplayUrl(parsed.heading.linkedin_url, "linkedin");
-      parsed.heading.github_url = cleanDisplayUrl(parsed.heading.github_url, "github.com/username");
-      // Build hrefs from display text if not already set
-      if (!parsed.heading.linkedin_url_href) {
-        parsed.heading.linkedin_url_href = `https://${parsed.heading.linkedin_url}`;
-      }
-      if (!parsed.heading.github_url_href) {
-        parsed.heading.github_url_href = `https://${parsed.heading.github_url}`;
-      }
-
-      // Load analysis keywords for PDF highlighting
-      const analysisData = localStorage.getItem("analysis");
-      if (analysisData) {
-        try {
-          const parsedAnalysis = JSON.parse(analysisData);
-          setMissingKeywords(parsedAnalysis.missing_skills || []);
-          setMatchedKeywords(parsedAnalysis.matched_skills || []);
-        } catch (e) { }
-      }
-
-      setNoJdMode(localStorage.getItem("no_jd_mode") === "true");
-
-      if (!parsed.section_order || parsed.section_order.length === 0) {
-        parsed.section_order = ["summary", "education", "experience", "projects", "skills", "certifications"];
-      }
-      setResume(parsed);
-      setLoading(false);
+    const blankResume: TemplateV1 = {
+      template_id: "v1",
+      heading: {
+        name: "Your Full Name",
+        phone: "+91-XXXXXXXXXX",
+        email: "youremail@example.com",
+        linkedin_url: "linkedin.com/in/username",
+        github_url: "github.com/username",
+        portfolio_url: "",
+        linkedin_url_href: "https://linkedin.com/in/username",
+        github_url_href: "https://github.com/username",
+      },
+      summary: "Write a short 2-3 line professional summary about yourself here.",
+      education: [
+        {
+          institution: "Your University Name",
+          location: "City, State",
+          degree: "B.Tech Computer Science",
+          duration: "Aug 2022 – May 2026",
+          cgpa: "8.5/10",
+        },
+      ],
+      experience: [],
+      projects: [
+        {
+          title: "My First Project",
+          tech_stack: "React, Node.js, MongoDB",
+          link: "Link",
+          bullets: ["Describe what you built and what problem it solved."],
+        },
+      ],
+      certifications_and_achievements: [],
+      technical_skills: {
+        languages: ["Python", "JavaScript"],
+        frameworks: ["React", "Node.js"],
+        databases: ["MongoDB"],
+        cloud_services: [],
+        developer_tools: ["Git", "VS Code"],
+        miscellaneous: [],
+      },
+      section_order: ["summary", "education", "experience", "projects", "skills", "certifications"],
+      changes: [],
+      ats_score_before: 0,
+      ats_score_after: 0,
     };
-
-    fetchSession();
-  }, [router]);
+    setResume(blankResume);
+    setNoJdMode(true);
+    setLoading(false);
+  }, []);
 
   const checkAccess = async () => {
     setCheckingAccess(true);
@@ -472,9 +462,9 @@ export default function ResultPage() {
               <FileText className="w-5 h-5 text-primary" />
             </div>
             <div>
-              <h1 className="font-headline text-lg font-bold text-on-background leading-tight">Your Resume</h1>
+              <h1 className="font-headline text-lg font-bold text-on-background leading-tight">Build From Scratch</h1>
               <p className="text-xs text-on-surface-variant leading-tight flex items-center gap-1">
-                <Sparkles className="w-3 h-3 text-primary" /> AI-Optimized
+                <FileText className="w-3 h-3 text-primary" /> Blank template — fill in your details
               </p>
             </div>
           </div>
@@ -688,44 +678,11 @@ export default function ResultPage() {
 
           {/* Segmented Toggles inside Sticky Top */}
           <div className="flex-shrink-0 bg-surface/95 backdrop-blur-md p-4 border-b border-surface-container-low flex flex-col gap-3 py-4 sticky top-0 z-20">
-            <div className="flex bg-surface-container-lowest p-1 rounded-[1.25rem] border border-surface-container-low shadow-inner">
-              <button
-                onClick={() => { setEditMode(true); setShowChanges(false); setShowMissedKeywords(false); }}
-                className={`flex-1 py-2 px-2 text-sm font-semibold transition-all rounded-xl flex items-center justify-center gap-2 ${editMode
-                    ? "bg-primary text-white shadow-md relative"
-                    : "text-on-surface-variant hover:text-on-background hover:bg-surface-container"
-                  }`}
-              >
-                <Edit3 className={`w-4 h-4 ${editMode ? 'text-white' : 'text-on-surface-variant'}`} />
-                Edit Form
-                {hasUnsavedChanges && !editMode && (
-                  <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
-                )}
-              </button>
-              <button
-                onClick={() => { setShowChanges(true); setEditMode(false); setShowMissedKeywords(false); }}
-                className={`flex-1 py-2 px-2 text-sm font-semibold transition-all rounded-xl flex items-center justify-center gap-2 ${showChanges
-                    ? "bg-secondary-container text-secondary-container-on shadow-md text-secondary"
-                    : "text-on-surface-variant hover:text-on-background hover:bg-surface-container"
-                  }`}
-              >
-                <Sparkles className={`w-4 h-4 ${showChanges ? 'text-secondary' : 'text-on-surface-variant'}`} />
-                AI Changes
-              </button>
-              {!noJdMode && (
-                <button
-                  onClick={() => { setShowMissedKeywords(true); setEditMode(false); setShowChanges(false); }}
-                  className={`flex-1 py-2 px-2 text-sm font-semibold transition-all rounded-xl flex items-center justify-center gap-2 ${showMissedKeywords
-                      ? "bg-error text-white shadow-md relative"
-                      : "text-on-surface-variant hover:text-on-background hover:bg-surface-container"
-                    }`}
-                >
-                  <Zap className={`w-4 h-4 ${showMissedKeywords ? 'text-white' : 'text-on-surface-variant'}`} />
-                  Missed Keywords
-                  {missingKeywords.length > 0 && !showMissedKeywords && (
-                    <span className="absolute top-2 right-2 flex min-w-[16px] h-4 items-center justify-center rounded-full bg-error px-1 text-[10px] font-bold text-white shadow-[0_0_0_2px_#fff]">{missingKeywords.length}</span>
-                  )}
-                </button>
+            <div className="flex items-center gap-2 px-2 py-1">
+              <Edit3 className="w-5 h-5 text-on-surface-variant" />
+              <h2 className="text-base font-bold text-on-background">Edit Form</h2>
+              {hasUnsavedChanges && (
+                <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse ml-2" title="Unsaved changes"></span>
               )}
             </div>
 
@@ -771,6 +728,40 @@ export default function ResultPage() {
 
           {/* Scrollable Panel Content */}
           <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:px-8 lg:py-6 pb-24 hide-scrollbar">
+
+            {/* ── Inspiration Banner ── */}
+            <motion.div
+              initial={{ opacity: 0, y: -12, backgroundPosition: "0% 50%" }}
+              animate={{ opacity: 1, y: 0, backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"] }}
+              transition={{ 
+                opacity: { duration: 0.5 },
+                y: { duration: 0.5 },
+                backgroundPosition: { duration: 10, ease: "easeInOut", repeat: Infinity }
+              }}
+              className="mb-6 rounded-2xl overflow-hidden shadow-lg relative"
+              style={{ 
+                backgroundImage: "linear-gradient(270deg, #006859 0%, #0a9e83 40%, #12f8d7 60%, #006859 100%)",
+                backgroundSize: "200% 200%"
+              }}
+            >
+              <div className="px-5 py-4 flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                <div className="flex-1">
+                  <p className="text-xs font-bold tracking-widest uppercase text-white/70 mb-0.5">First time here?</p>
+                  <p className="text-sm font-semibold text-white leading-snug">
+                    Not sure where to start? View our Gold Standard resume for inspiration — see the format, style and content level we recommend.
+                  </p>
+                </div>
+                <a
+                  href="/reference_Resume.pdf"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-shrink-0 flex items-center gap-2 bg-white text-primary font-bold px-5 py-2.5 rounded-xl text-sm hover:shadow-xl hover:scale-105 active:scale-95 transition-all shadow-md whitespace-nowrap"
+                >
+                  <FileText className="w-4 h-4" />
+                  Take Inspiration Resume
+                </a>
+              </div>
+            </motion.div>
             <AnimatePresence mode="wait">
               {editMode && (
                 <motion.div

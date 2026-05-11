@@ -331,7 +331,7 @@ export default function App() {
                   Log In
                 </button>
                 <button
-                  onClick={() => document.getElementById('file-upload')?.click()}
+                  onClick={() => document.getElementById('upload-card')?.scrollIntoView({ behavior: 'smooth', block: 'center' })}
                   className="flash-gradient text-white font-bold text-xs sm:text-sm px-4 sm:px-6 py-2 sm:py-2.5 rounded-full hover:opacity-90 transition-all active:scale-95 shadow-lg shadow-primary/20 whitespace-nowrap"
                 >
                   Get Started
@@ -367,7 +367,7 @@ export default function App() {
             transition={{ duration: 0.6, delay: 0.2 }}
             className="w-full max-w-2xl relative mx-auto"
           >
-            <div className="bg-surface-container-lowest rounded-[2rem] p-8 shadow-2xl shadow-primary/5 border border-primary/5">
+            <div id="upload-card" className="bg-surface-container-lowest rounded-[2rem] p-8 shadow-2xl shadow-primary/5 border border-primary/5">
               <div className="space-y-6">
                 <div className="flex gap-2 p-1.5 bg-surface-container-low rounded-xl">
                   <button
@@ -431,13 +431,11 @@ export default function App() {
                 )}
                 <div className="flex justify-end mt-1">
                   <a
-                    href="/reference_Resume.pdf"
-                    target="_blank"
-                    rel="noopener noreferrer"
+                    href="/scratch"
                     className="text-xs font-semibold text-tertiary hover:text-tertiary-container transition-colors flex items-center gap-1.5"
                   >
                     <FileText className="w-3.5 h-3.5" />
-                    First time? View Gold Standard Template
+                    No old resume?
                   </a>
                 </div>
                 {/* ── Optimize Mode Selection ── */}
@@ -802,7 +800,7 @@ export default function App() {
                 Stop sending basic resumes, send top 1% resume that recruiters care.
               </p>
               <button
-                onClick={() => document.getElementById('file-upload')?.click()}
+                onClick={() => document.getElementById('upload-card')?.scrollIntoView({ behavior: 'smooth', block: 'center' })}
                 className="bg-white text-primary text-xl font-bold px-12 py-5 rounded-full hover:shadow-2xl transition-all active:scale-95"
               >
                 Try Free Now
