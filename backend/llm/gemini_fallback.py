@@ -8,13 +8,15 @@ from dotenv import load_dotenv
 load_dotenv()
 
 GEMINI_R1_CHAIN = [
-    "gemini-2.5-flash-lite",          # ~20s — R1 emergency last resort
-    "gemini-3.1-flash-lite-preview",  # ~40s — absolute last resort (preview model)
+    "gemma-3-27b-it",                 # ~10s — quality anchor
+    "gemini-2.5-flash-lite",          # ~20s
+    "gemini-3.1-flash-lite-preview",  # ~40s — last resort (preview model, may change)
 ]
 
 GEMINI_R2_CHAIN = [
     "gemini-2.5-flash-lite",          # ~20s
-    "gemini-3.1-flash-lite-preview",  # ~40s — preview model, last resort
+    "gemini-3.1-flash-lite-preview",  # ~40s — preview model
+    "gemma-3-27b-it",                 # ~10s
 ]
 
 client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))

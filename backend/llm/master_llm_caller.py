@@ -6,7 +6,6 @@ from .mistral_fallback    import call_mistral_r1,    call_mistral_r2,    call_si
 from .groq_fallback       import call_groq_r1,       call_groq_r2,       call_single_groq
 from .cerebras_fallback   import call_cerebras_r1,   call_cerebras_r2,   call_single_cerebras
 from .cloudflare_fallback import call_cloudflare_r1, call_cloudflare_r2, call_single_cloudflare
-from .nvidia_fallback     import call_nvidia_r1,     call_nvidia_r2,     call_single_nvidia
 
 load_dotenv()
 
@@ -19,68 +18,45 @@ except Exception:
 
 # R1 (ATS score JSON + project check): response is small ~200–600 tokens
 # R2 (full resume JSON): response is large ~2500–3200 tokens
+# Tight limits save TPM quota on rate-limited providers (Groq 8K TPM)
 _R1_MAX_TOKENS = 2500
 _R2_MAX_TOKENS = 4500
 
 # ─────────────────────────────────────────────────────────────────────────────
-# FLAT R1 CHAIN — ATS scoring + project relevance check (12 models)
-#
-# Strategy: Quality-first — R1's real problem is hallucination from small
-# models. NVIDIA NIM large models (#1–#8) fix this. Each NVIDIA model gets
-# a UNIQUE sub-provider tag (nvidia_1 … nvidia_8) so a 429 on one model
-# does NOT skip the other 7 — they have independent 40 RPM buckets.
-# Groq and Gemini act as final safety nets.
+# FLAT R1 CHAIN — ATS scoring + project check
+# (provider_name, model_id, single_caller)
 # ─────────────────────────────────────────────────────────────────────────────
+# Speed-first ordering: fast 4-5s models up front, gemma (~10s) pushed to #7
 _R1_FLAT = [
-    # ── NVIDIA NIM (8 models, each independently skippable) ──
-    ("nvidia_1", "mistralai/mistral-large-3-675b-instruct-2512", call_single_nvidia),  # #1  ~6-8s  — 675B MoE, best instruction follower
-    ("nvidia_2", "upstage/solar-10.7b-instruct",                  call_single_nvidia),  # #2  ~3-4s  — NLP specialist, ATS-tailor-made
-    ("nvidia_3", "meta/llama-4-maverick-17b-128e-instruct",       call_single_nvidia),  # #3  ~4-5s  — Llama 4 MoE 128 experts
-    ("nvidia_4", "mistralai/mistral-nemo-12b-instruct",           call_single_nvidia),  # #4  ~5-7s  — strong instruction + function calling
-    ("nvidia_5", "bytedance-research/seed-oss-36b-instruct",      call_single_nvidia),  # #5  ~4-5s  — 36B long-context clean JSON
-    ("nvidia_6", "stepfun-ai/step-3.5-flash",                     call_single_nvidia),  # #6  ~4-5s  — 200B sparse MoE fast reasoning
-    ("nvidia_7", "microsoft/phi-4-multimodal-instruct",           call_single_nvidia),  # #7  ~3-4s  — high-quality reasoning
-    ("nvidia_8", "nvidia/nemotron-mini-4b-instruct",              call_single_nvidia),  # #8  ~2-3s  — 4B RAG+function-call optimized
-    # ── Cross-provider safety nets ──
-    ("mistral",  "mistral-large-latest",                          call_single_mistral), # #9  ~6s    — proven battle-tested JSON
-    ("groq",     "llama-3.3-70b-versatile",                       call_single_groq),    # #10 ~4s    — 70B, fast, reliable fallback
-    ("mistral",  "open-mistral-nemo",                             call_single_mistral), # #11 ~4s    — speed fallback
-    ("gemini",   "gemini-2.5-flash-lite",                         call_single_gemini),  # #12 ~20s   — high quota emergency last resort
+    ("mistral",    "open-mistral-nemo",                     call_single_mistral),    # #1  ~4s  — fastest
+    ("mistral",    "ministral-8b-latest",                   call_single_mistral),    # #2  ~5s
+    ("mistral",    "mistral-tiny-latest",                   call_single_mistral),    # #3  ~5s
+    ("cloudflare", "@cf/meta/llama-3.1-8b-instruct",       call_single_cloudflare), # #4  ~5s
+    ("groq",       "llama-3.1-8b-instant",                 call_single_groq),       # #5  ~4s
+    ("cerebras",   "llama3.1-8b",                          call_single_cerebras),   # #6  ~5s
+    ("gemini",     "gemma-3-27b-it",                        call_single_gemini),     # #7  ~10s — quality anchor
+    ("cloudflare", "@cf/mistral/mistral-7b-instruct-v0.1", call_single_cloudflare), # #8  ~15s — last resort
 ]
 
 # ─────────────────────────────────────────────────────────────────────────────
-# FLAT R2 CHAIN — resume generation (17 models)
-#
-# Strategy: Size + quality first. Cerebras Qwen3-235B leads at 1400 t/s.
-# NVIDIA NIM large models next. Then proven Groq/Mistral fallbacks.
-# Provider diversity across all 17 slots prevents single-provider outage
-# from killing the entire chain.
+# FLAT R2 CHAIN — resume generation
+# (provider_name, model_id, single_caller)
 # ─────────────────────────────────────────────────────────────────────────────
 _R2_FLAT = [
-    # ── Tier 1: Elite quality + speed ──
-    ("cerebras",  "qwen-3-235b-a22b-instruct-2507",                      call_single_cerebras),  # #1  ~2-3s   — 235B at 1400 t/s, fastest elite
-    ("nvidia_1",  "mistralai/mistral-large-3-675b-instruct-2512",        call_single_nvidia),    # #2  ~6-8s   — 675B MoE, best quality fallback
-    ("nvidia_2",  "minimax/minimax-m2.7",                                 call_single_nvidia),    # #3  ~6-8s   — 230B structured tasks + reasoning
-    ("groq",      "openai/gpt-oss-120b",                                  call_single_groq),      # #4  ~5-15s  — 120B MoE, tight quota worth trying early
-    ("nvidia_3",  "qwen/qwen3-coder-480b-a35b-instruct",                  call_single_nvidia),    # #5  ~7-10s  — 480B MoE massive structured output
-    # ── Tier 2: Large proven models ──
-    ("mistral",   "mistral-large-latest",                                 call_single_mistral),   # #6  ~6s     — proven strong JSON resume output
-    ("groq",      "llama-3.3-70b-versatile",                              call_single_groq),      # #7  ~4s     — 70B via Groq, excellent JSON generation
-    ("nvidia_4",  "mistralai/mistral-nemo-12b-instruct",                  call_single_nvidia),    # #8  ~5-7s   — ~123B agentic structured generation
-    ("nvidia_5",  "abacusai/dracarys-llama-3.1-70b-instruct",             call_single_nvidia),    # #9  ~5-7s   — 70B fine-tuned for generation
-    ("mistral",   "mistral-medium-latest",                                call_single_mistral),   # #10 ~7s     — solid structured output
-    # ── Tier 3: Mid-range reliable fallbacks ──
-    ("groq",      "meta-llama/llama-4-scout-17b-16e-instruct",           call_single_groq),      # #11 ~4s     — 16-expert MoE, fast
-    ("groq",      "openai/gpt-oss-20b",                                   call_single_groq),      # #12 ~4-8s   — compact 20B MoE reasoning
-    ("mistral",   "mistral-small-latest",                                 call_single_mistral),   # #13 ~5s     — decent fallback, lighter quota
-    ("nvidia_6",  "stepfun-ai/step-3.5-flash",                            call_single_nvidia),    # #14 ~5-7s   — 200B sparse MoE, handles long output
-    # ── Tier 4: Slow but high-quota last resorts ──
-    ("groq",      "qwen/qwen3-32b",                                       call_single_groq),      # #15 ~20-40s — Qwen3-32B thinking mode, slow
-    ("gemini",    "gemini-2.5-flash-lite",                                call_single_gemini),    # #16 ~20s    — generous quota, reliable slow fallback
-    ("gemini",    "gemini-3.1-flash-lite-preview",                        call_single_gemini),    # #17 ~40s    — absolute last resort, preview/unstable
+    ("groq",       "openai/gpt-oss-120b",                        call_single_groq),       # #1  ~5-15s  — best quality (8K TPM, 1K RPD free)
+    ("cerebras",   "qwen-3-235b-a22b-instruct-2507",             call_single_cerebras),   # #2  ~2-3s   — elite + very fast at 1400 t/s
+    ("mistral",    "mistral-large-latest",                       call_single_mistral),    # #3  ~6s
+    ("mistral",    "mistral-medium-latest",                      call_single_mistral),    # #4  ~7s
+    ("groq",       "llama-3.3-70b-versatile",                   call_single_groq),       # #5  ~4s
+    ("mistral",    "mistral-small-latest",                       call_single_mistral),    # #6  ~5s
+    ("groq",       "meta-llama/llama-4-scout-17b-16e-instruct", call_single_groq),       # #7  ~4s
+    ("groq",       "openai/gpt-oss-20b",                        call_single_groq),       # #8  ~4-8s
+    ("gemini",     "gemini-2.5-flash-lite",                     call_single_gemini),     # #9  ~20s
+    ("groq",       "qwen/qwen3-32b",                            call_single_groq),       # #10 ~20-40s
+    ("gemini",     "gemini-3.1-flash-lite-preview",             call_single_gemini),     # #11 ~40s — last resort (preview model)
 ]
 
-# Rate-limit signal strings
+# Rate-limit signal strings — used to detect 429-type failures across all providers
 _RATE_LIMIT_SIGNALS = (
     "429", "rate_limit", "rate limit", "too many requests",
     "RESOURCE_EXHAUSTED", "quota", "rate limited",
@@ -88,7 +64,7 @@ _RATE_LIMIT_SIGNALS = (
 
 
 def _is_rate_limited(attempts: list) -> bool:
-    """Return True if the last attempt was a rate-limit signal."""
+    """Return True if the last attempt in a failed result was a rate-limit signal."""
     if not attempts:
         return False
     last_status = str(attempts[-1].get("status", "")).lower()
@@ -100,9 +76,8 @@ def _run_flat_chain(prompt: str, flat_chain: list, max_tokens: int) -> dict:
     Walk a flat ordered list of (provider, model, caller) tuples.
     - Each model is tried individually — no full-provider batching.
     - Stops at first success.
-    - Tracks 429'd providers and skips all their subsequent models.
-    - NVIDIA models use unique tags (nvidia_1 … nvidia_8) so each model
-      is independently skippable — a 429 on one does not block the others.
+    - Tracks 429'd providers and skips all their subsequent models
+      (avoids wasting calls when an entire provider is rate-limited).
     """
     all_attempts = []
     rate_limited_providers: set = set()
@@ -143,13 +118,11 @@ def _run_flat_chain(prompt: str, flat_chain: list, max_tokens: int) -> dict:
 
 def call_llm_r1(prompt: str) -> dict:
     """
-    Request-1 — ATS scoring + project relevance check. (12 models)
-    Chain: mistral-large-3-675b → solar-10.7b → llama-4-maverick →
-           mistral-nemo → seed-oss-36b → step-3.5-flash →
-           phi-4-multimodal → nemotron-mini-4b →
-           mistral-large-latest → llama-3.3-70b →
-           open-mistral-nemo → gemini-2.5-flash-lite
-    max_tokens: 2500
+    Request-1 — ATS scoring + project relevance check.
+    Chain: open-mistral-nemo → ministral-8b → mistral-tiny →
+           cf/llama → llama-3.1-8b-instant → cerebras/llama3.1-8b →
+           gemma-3-27b-it → cf/mistral-7b
+    max_tokens: 2500 (small JSON — saves TPM quota)
     """
     result = _run_flat_chain(prompt, _R1_FLAT, _R1_MAX_TOKENS)
     if supabase and result.get("provider"):
@@ -168,14 +141,11 @@ def call_llm_r1(prompt: str) -> dict:
 
 def call_llm_r2(prompt: str) -> dict:
     """
-    Request-2 — resume generation. (17 models)
-    Chain: qwen-3-235b → mistral-large-3-675b → minimax-m2.7 →
-           gpt-oss-120b → qwen3-coder-480b → mistral-large →
-           llama-3.3-70b → mistral-nemo → dracarys-70b →
-           mistral-medium → llama-4-scout → gpt-oss-20b →
-           mistral-small → step-3.5-flash → qwen3-32b →
-           gemini-2.5-flash-lite → gemini-3.1-flash-lite-preview
-    max_tokens: 4500
+    Request-2 — resume generation.
+    Chain: gpt-oss-120b → qwen-3-235b → mistral-large → mistral-medium →
+           llama-3.3-70b → mistral-small → llama-4-scout → gpt-oss-20b →
+           gemini-2.5-flash-lite → qwen3-32b → gemini-3.1-flash-lite-preview
+    max_tokens: 4500 (full resume JSON)
     """
     result = _run_flat_chain(prompt, _R2_FLAT, _R2_MAX_TOKENS)
     if supabase and result.get("provider"):
