@@ -1,303 +1,380 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "motion/react";
-import { 
-  Sparkles, 
-  Zap, 
-  CheckCircle2, 
-  AlertCircle,
-  RefreshCw,
-  ArrowLeft,
-  Wand2,
-  FileText,
-  Brain,
-  Rocket
-} from "lucide-react";
+import { AlertCircle, RefreshCw, ArrowLeft } from "lucide-react";
 import { generateResume } from "@/lib/api";
+
+const TIPS = [
+  "Tailoring skills to each job description can boost your ATS score by up to 40%.",
+  "Quantified achievements (e.g., 'Reduced load time by 30%') stand out to recruiters.",
+  "Using the exact keywords from the job posting helps you pass automated filters.",
+  "A clean, one-page resume is preferred by 95% of hiring managers.",
+  "Action verbs like 'Developed', 'Implemented', and 'Optimized' carry more weight.",
+];
 
 export default function GeneratePage() {
   const router = useRouter();
-  const [status, setStatus] = useState("Preparing your resume...");
   const [error, setError] = useState("");
   const [progress, setProgress] = useState(0);
-  const [currentStep, setCurrentStep] = useState(0);
   const [timeLeft, setTimeLeft] = useState(60);
+  const [tipIndex, setTipIndex] = useState(0);
+  const [tipVisible, setTipVisible] = useState(true);
+  const tipTimer = useRef<NodeJS.Timeout | null>(null);
 
+  // Countdown
   useEffect(() => {
     if (progress === 100 || error) return;
-    const interval = setInterval(() => {
-      setTimeLeft((prev) => (prev > 0 ? prev - 1 : 0));
-    }, 1000);
-    return () => clearInterval(interval);
+    const t = setInterval(() => setTimeLeft((p) => (p > 0 ? p - 1 : 0)), 1000);
+    return () => clearInterval(t);
   }, [progress, error]);
 
-  const steps = [
-    { icon: FileText, label: "Analyzing content", color: "text-primary" },
-    { icon: Brain, label: "AI optimization", color: "text-secondary-container" },
-    { icon: Wand2, label: "Applying improvements", color: "text-tertiary-container" },
-    { icon: Rocket, label: "Finalizing resume", color: "text-primary" },
-  ];
+  // Tips rotation
+  useEffect(() => {
+    tipTimer.current = setInterval(() => {
+      setTipVisible(false);
+      setTimeout(() => { setTipIndex((p) => (p + 1) % TIPS.length); setTipVisible(true); }, 350);
+    }, 5000);
+    return () => { if (tipTimer.current) clearInterval(tipTimer.current); };
+  }, []);
 
   useEffect(() => {
     const generate = async () => {
       try {
-        // Load all required data from localStorage
         const resumeText = localStorage.getItem("resume_text");
         const jobDescription = localStorage.getItem("job_description");
         const analysisData = localStorage.getItem("analysis");
         const approvedProjectData = localStorage.getItem("approved_project");
 
-        // Validation — job_description is optional (no-JD mode), only resumeText and analysis are required
-        if (!resumeText || analysisData === null) {
-          router.push("/");
-          return;
-        }
+        if (!resumeText || analysisData === null) { router.push("/"); return; }
 
         const analysis = JSON.parse(analysisData);
-        const approvedProject = approvedProjectData 
-          ? JSON.parse(approvedProjectData) 
-          : null;
+        const approvedProject = approvedProjectData ? JSON.parse(approvedProjectData) : null;
         const preferredModel = localStorage.getItem("preferred_model") || undefined;
 
-        // Step 1: Analyzing content
-        setCurrentStep(0);
         setProgress(10);
-        setStatus("Analyzing your resume content...");
-        await new Promise((resolve) => setTimeout(resolve, 800));
-        
+        await new Promise((r) => setTimeout(r, 800));
         setProgress(25);
-        setStatus("Sending to AI engine...");
-        await new Promise((resolve) => setTimeout(resolve, 400));
-
-        // Step 2: AI optimization
-        setCurrentStep(1);
+        await new Promise((r) => setTimeout(r, 400));
         setProgress(35);
-        setStatus("AI is optimizing your resume...");
-        
-        // Call the generation API
+
         const noAiChanges = localStorage.getItem("no_ai_changes") === "true";
         const generatedResume = await generateResume({
           resume_text: resumeText,
           job_description: jobDescription || "",
           ats_score_before: analysis.ats_score,
-          approved_project: approvedProject ? `${approvedProject.title} | Tech Stack: ${approvedProject.tech_stack} | Description: ${approvedProject.description}` : undefined,
+          approved_project: approvedProject
+            ? `${approvedProject.title} | Tech Stack: ${approvedProject.tech_stack} | Description: ${approvedProject.description}`
+            : undefined,
           missing_keywords: analysis.missing_skills || [],
           preferred_model: preferredModel,
           no_ai_changes: noAiChanges,
         });
 
-        // Step 3: Applying improvements
-        setCurrentStep(2);
         setProgress(70);
-        setStatus("Applying approved improvements...");
-        await new Promise((resolve) => setTimeout(resolve, 600));
-
+        await new Promise((r) => setTimeout(r, 600));
         setProgress(85);
-        setStatus("Enhancing keywords and formatting...");
-        await new Promise((resolve) => setTimeout(resolve, 400));
-
-        // Step 4: Finalizing
-        setCurrentStep(3);
-        setProgress(95);
-        setStatus("Validating resume structure...");
-
+        await new Promise((r) => setTimeout(r, 400));
         setProgress(100);
-        setStatus("Done! Your resume is ready!");
+        await new Promise((r) => setTimeout(r, 800));
 
-        // Navigate to result page
-        await new Promise((resolve) => setTimeout(resolve, 800));
         if ((generatedResume as any).session_id) {
           router.push(`/result?session_id=${(generatedResume as any).session_id}`);
         } else {
-          // Fallback if session_id is missing for some reason
           localStorage.setItem("generated_resume", JSON.stringify(generatedResume));
           router.push("/result");
         }
       } catch (err: any) {
         setError(err.message || "Failed to generate resume. Please try again.");
-        setStatus("");
         setProgress(0);
       }
     };
-
     generate();
   }, [router]);
 
+  const RADIUS = 46;
+  const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
+  const strokeDashoffset = CIRCUMFERENCE * (1 - timeLeft / 60);
+
   return (
-    <div className="min-h-screen bg-surface flex items-center justify-center px-4 font-sans">
-      <div className="max-w-2xl w-full">
+    <div
+      className="min-h-screen flex items-center justify-center px-4 py-10 font-sans"
+      style={{ background: "linear-gradient(160deg, #003d34 0%, #006859 50%, #0a9e83 100%)" }}
+    >
+      {/* Ambient background blobs */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden" aria-hidden="true">
+        <motion.div
+          animate={{ scale: [1, 1.2, 1], opacity: [0.15, 0.25, 0.15] }}
+          transition={{ duration: 9, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute -top-48 -left-48 w-[550px] h-[550px] rounded-full"
+          style={{ background: "radial-gradient(circle, #12f8d7 0%, transparent 70%)" }}
+        />
+        <motion.div
+          animate={{ scale: [1, 1.15, 1], opacity: [0.1, 0.18, 0.1] }}
+          transition={{ duration: 11, repeat: Infinity, ease: "easeInOut", delay: 4 }}
+          className="absolute -bottom-48 -right-48 w-[600px] h-[600px] rounded-full"
+          style={{ background: "radial-gradient(circle, #09c4fd 0%, transparent 70%)" }}
+        />
+      </div>
+
+      <div className="relative z-10 w-full max-w-[340px]">
         <AnimatePresence mode="wait">
           {!error ? (
             <motion.div
               key="loading"
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              transition={{ duration: 0.5 }}
+              initial={{ opacity: 0, y: 28 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.55, ease: [0.25, 0.46, 0.45, 0.94] }}
             >
-              {/* Main Loading Card */}
-              <div className="bg-surface-container-lowest rounded-[3rem] shadow-2xl shadow-primary/10 p-12 border border-primary/5 relative overflow-hidden">
-                {/* Decorative blur orbs */}
-                <div className="absolute -top-20 -right-20 w-64 h-64 bg-primary-container/20 blur-3xl rounded-full animate-pulse"></div>
-                <div className="absolute -bottom-20 -left-20 w-64 h-64 bg-secondary-container/10 blur-3xl rounded-full animate-pulse" style={{ animationDelay: '1s' }}></div>
-                
-                <div className="relative z-10">
-                  {/* Animated Icon */}
-                  <div className="flex justify-center mb-8">
-                    <div className="relative">
-                      {/* Outer spinning ring */}
-                      <motion.div
-                        animate={{ rotate: 360 }}
-                        transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
-                        className="w-32 h-32 rounded-full border-4 border-transparent border-t-primary border-r-primary"
+              {/* ── WHITE PAPER CARD ── */}
+              <div
+                className="relative overflow-hidden"
+                style={{
+                  background: "#ffffff",
+                  borderRadius: "12px",
+                  boxShadow:
+                    "0 2px 4px rgba(0,0,0,0.06), 0 8px 24px rgba(0,0,0,0.12), 0 32px 64px rgba(0,0,0,0.2)",
+                  /* subtle paper edge shadow */
+                  border: "1px solid rgba(0,0,0,0.06)",
+                }}
+              >
+                {/* ── SCANNER BEAM ── */}
+                <motion.div
+                  animate={{ y: ["0%", "100%", "0%"] }}
+                  transition={{ duration: 3.2, repeat: Infinity, ease: "easeInOut" }}
+                  className="absolute left-0 right-0 pointer-events-none"
+                  style={{ top: 0, height: "38%", zIndex: 20 }}
+                >
+                  {/* Glowing line at top of beam */}
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      height: "3px",
+                      background: "linear-gradient(90deg, transparent 0%, #12f8d7 20%, #006859 50%, #12f8d7 80%, transparent 100%)",
+                      boxShadow: "0 0 12px 4px rgba(18,248,215,0.6), 0 0 32px 8px rgba(0,104,89,0.3)",
+                    }}
+                  />
+                  {/* Gradient wash below line */}
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: "3px",
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      background: "linear-gradient(180deg, rgba(18,248,215,0.06) 0%, transparent 100%)",
+                    }}
+                  />
+                </motion.div>
+
+                {/* Faint horizontal ruled lines (paper texture) */}
+                <div className="absolute inset-0 pointer-events-none" style={{ zIndex: 0 }}>
+                  {Array.from({ length: 18 }).map((_, i) => (
+                    <div
+                      key={i}
+                      style={{
+                        position: "absolute",
+                        left: 24,
+                        right: 24,
+                        top: `${60 + i * 26}px`,
+                        height: "1px",
+                        background: "rgba(0,0,0,0.05)",
+                      }}
+                    />
+                  ))}
+                  {/* Left margin line */}
+                  <div
+                    style={{
+                      position: "absolute",
+                      left: 52,
+                      top: 52,
+                      bottom: 52,
+                      width: "1px",
+                      background: "rgba(220,100,100,0.18)",
+                    }}
+                  />
+                </div>
+
+                {/* ── CARD CONTENT (above scanner z-index) ── */}
+                <div className="relative px-7 pt-9 pb-8" style={{ zIndex: 30 }}>
+                  {/* Brand label */}
+                  <p
+                    className="text-center text-[10px] font-bold tracking-[0.18em] uppercase mb-1"
+                    style={{ color: "#006859" }}
+                  >
+                    FlashResume.IN
+                  </p>
+
+                  {/* Headline */}
+                  <h1
+                    className="text-center font-bold mb-1 leading-snug"
+                    style={{ fontSize: "1.2rem", color: "#1a1a1a" }}
+                  >
+                    Your resume is getting
+                  </h1>
+
+                  {/* Countdown Ring */}
+                  <div
+                    className="relative mx-auto flex items-center justify-center my-5"
+                    style={{ width: 116, height: 116 }}
+                  >
+                    <svg
+                      width="116"
+                      height="116"
+                      className="absolute inset-0"
+                      style={{ transform: "rotate(-90deg)" }}
+                    >
+                      <circle cx="58" cy="58" r={RADIUS} fill="none" stroke="#e8f5f3" strokeWidth="6" />
+                      <motion.circle
+                        cx="58" cy="58" r={RADIUS}
+                        fill="none"
+                        stroke="url(#scanGrad)"
+                        strokeWidth="6"
+                        strokeLinecap="round"
+                        strokeDasharray={CIRCUMFERENCE}
+                        animate={{ strokeDashoffset }}
+                        transition={{ duration: 1, ease: "linear" }}
                       />
-                      {/* Middle spinning ring */}
-                      <motion.div
-                        animate={{ rotate: -360 }}
-                        transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-                        className="absolute inset-2 rounded-full border-4 border-transparent border-b-secondary-container border-l-secondary-container"
-                      />
-                      {/* Center icon */}
-                      <motion.div
-                        animate={{ 
-                          scale: [1, 1.2, 1],
-                          rotate: [0, 180, 360]
-                        }}
-                        transition={{ 
-                          duration: 2, 
-                          repeat: Infinity,
-                          ease: "easeInOut"
-                        }}
-                        className="absolute inset-0 flex items-center justify-center"
+                      <defs>
+                        <linearGradient id="scanGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                          <stop offset="0%" stopColor="#006859" />
+                          <stop offset="100%" stopColor="#12f8d7" />
+                        </linearGradient>
+                      </defs>
+                    </svg>
+                    <div
+                      className="relative flex flex-col items-center justify-center rounded-full"
+                      style={{
+                        width: 86,
+                        height: 86,
+                        background: "#f7fffe",
+                        border: "2px solid #e0f5f0",
+                      }}
+                    >
+                      <motion.span
+                        key={timeLeft}
+                        initial={{ scale: 0.75, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        transition={{ duration: 0.25 }}
+                        className="font-bold tabular-nums"
+                        style={{ fontSize: "2.4rem", lineHeight: 1, color: "#006859" }}
                       >
-                        <Sparkles className="w-12 h-12 text-primary" />
-                      </motion.div>
+                        {timeLeft}
+                      </motion.span>
+                      <span
+                        className="text-[9px] font-semibold tracking-widest uppercase"
+                        style={{ color: "#0a9e83", marginTop: 1 }}
+                      >
+                        seconds
+                      </span>
                     </div>
                   </div>
 
-                  {/* Status Text */}
-                  <motion.div
-                    key={status}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5 }}
-                    className="text-center mb-8"
+                  {/* Sub-tagline */}
+                  <h2
+                    className="text-center font-semibold mb-5"
+                    style={{ fontSize: "1.05rem", color: "#2c2f30" }}
                   >
-                    <h2 className="font-headline text-3xl md:text-4xl font-bold text-on-background mb-3">
-                      Generating Your Resume
-                    </h2>
-                    <p className="text-lg text-on-surface-variant flex items-center justify-center gap-2">
-                      <Zap className="w-5 h-5 text-primary animate-pulse" />
-                      {status}
-                    </p>
-                  </motion.div>
+                    cooked… grab a coffee ☕
+                  </h2>
 
-                  {/* Progress Bar */}
-                  <div className="mb-6">
-                    <div className="w-full h-4 bg-surface-container-high rounded-full overflow-hidden">
+                  {/* Divider */}
+                  <div style={{ height: 1, background: "#e5e7e7", marginBottom: 16 }} />
+
+                  {/* Progress bar */}
+                  <div className="mb-4">
+                    <div
+                      className="w-full rounded-full overflow-hidden"
+                      style={{ height: 5, background: "#e8f5f3" }}
+                    >
                       <motion.div
                         initial={{ width: 0 }}
                         animate={{ width: `${progress}%` }}
-                        transition={{ duration: 0.5, ease: "easeOut" }}
-                        className="h-full flash-gradient rounded-full relative"
+                        transition={{ duration: 0.6, ease: "easeOut" }}
+                        className="h-full rounded-full relative"
+                        style={{ background: "linear-gradient(90deg, #006859, #12f8d7)" }}
                       >
-                        {/* Shimmer effect */}
                         <motion.div
-                          animate={{ x: ['-100%', '200%'] }}
-                          transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
-                          className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent"
+                          animate={{ x: ["-100%", "200%"] }}
+                          transition={{ duration: 1.8, repeat: Infinity, ease: "linear" }}
+                          className="absolute inset-0"
+                          style={{ background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.5), transparent)" }}
                         />
                       </motion.div>
                     </div>
-                    <div className="flex justify-between items-center mt-3">
-                      <p className="text-sm font-bold text-primary">{progress}% complete</p>
-                      <p className="text-xs text-on-surface-variant">
-                        {timeLeft > 0 ? `Estimated time remaining: ${timeLeft}s` : "Wrapping up..."}
-                      </p>
+                    <div className="flex justify-between mt-1.5">
+                      <span className="text-[11px] font-semibold" style={{ color: "#006859" }}>
+                        {progress}% complete
+                      </span>
+                      <span className="text-[11px]" style={{ color: "#9aa0a0" }}>
+                        {progress < 100 ? "Scanning…" : "Almost done!"}
+                      </span>
                     </div>
                   </div>
 
-                  {/* Step Indicators */}
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8">
-                    {steps.map((step, idx) => {
-                      const StepIcon = step.icon;
-                      const isActive = idx === currentStep;
-                      const isComplete = idx < currentStep;
-                      
-                      return (
-                        <motion.div
-                          key={idx}
-                          initial={{ opacity: 0, y: 20 }}
+                  {/* Divider */}
+                  <div style={{ height: 1, background: "#e5e7e7", marginBottom: 14 }} />
+
+                  {/* Tips */}
+                  <div style={{ minHeight: 68 }} className="flex flex-col items-center justify-center">
+                    <p
+                      className="text-[9px] font-bold tracking-[0.16em] uppercase text-center mb-1.5"
+                      style={{ color: "#006859" }}
+                    >
+                      💡 Did you know?
+                    </p>
+                    <AnimatePresence mode="wait">
+                      {tipVisible && (
+                        <motion.p
+                          key={tipIndex}
+                          initial={{ opacity: 0, y: 6 }}
                           animate={{ opacity: 1, y: 0 }}
-                          transition={{ duration: 0.5, delay: idx * 0.1 }}
-                          className={`relative p-4 rounded-2xl border-2 transition-all duration-500 ${
-                            isActive
-                              ? "bg-primary-container/10 border-primary-container/40 shadow-lg"
-                              : isComplete
-                              ? "bg-primary-container/5 border-primary/20"
-                              : "bg-surface-container-low border-surface-container-high"
-                          }`}
+                          exit={{ opacity: 0, y: -6 }}
+                          transition={{ duration: 0.32 }}
+                          className="text-center text-xs leading-relaxed"
+                          style={{ color: "#595c5d" }}
                         >
-                          {/* Completion badge */}
-                          <AnimatePresence>
-                            {isComplete && (
-                              <motion.div
-                                initial={{ scale: 0 }}
-                                animate={{ scale: 1 }}
-                                exit={{ scale: 0 }}
-                                className="absolute -top-2 -right-2 w-6 h-6 bg-primary rounded-full flex items-center justify-center shadow-lg"
-                              >
-                                <CheckCircle2 className="w-4 h-4 text-white" />
-                              </motion.div>
-                            )}
-                          </AnimatePresence>
-                          
-                          <div className="flex flex-col items-center text-center">
-                            <motion.div
-                              animate={isActive ? { 
-                                scale: [1, 1.2, 1],
-                                rotate: [0, 10, -10, 0]
-                              } : {}}
-                              transition={{ duration: 1, repeat: isActive ? Infinity : 0 }}
-                              className={`w-10 h-10 rounded-xl flex items-center justify-center mb-2 ${
-                                isActive ? "bg-primary-container/20" : "bg-surface-container-high"
-                              }`}
-                            >
-                              <StepIcon className={`w-5 h-5 ${
-                                isActive ? step.color : isComplete ? "text-primary" : "text-on-surface-variant"
-                              }`} />
-                            </motion.div>
-                            <p className={`text-xs font-medium ${
-                              isActive ? "text-on-background" : isComplete ? "text-primary" : "text-on-surface-variant"
-                            }`}>
-                              {step.label}
-                            </p>
-                          </div>
-                        </motion.div>
-                      );
-                    })}
+                          {TIPS[tipIndex]}
+                        </motion.p>
+                      )}
+                    </AnimatePresence>
                   </div>
 
-                  {/* Info Box */}
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5, delay: 0.5 }}
-                    className="mt-8 p-5 bg-tertiary-container/10 border border-tertiary-container/20 rounded-2xl"
-                  >
-                    <div className="flex items-start gap-3">
-                      <Brain className="w-5 h-5 text-tertiary-container flex-shrink-0 mt-0.5" />
-                      <p className="text-sm text-on-surface-variant leading-relaxed">
-                        Our AI is analyzing your resume and applying optimizations to maximize your ATS score.
-                      </p>
-                    </div>
-                  </motion.div>
+                  {/* Tip dots */}
+                  <div className="flex justify-center gap-1.5 mt-3">
+                    {TIPS.map((_, i) => (
+                      <div
+                        key={i}
+                        className="rounded-full transition-all duration-300"
+                        style={{
+                          width: i === tipIndex ? 14 : 5,
+                          height: 5,
+                          background: i === tipIndex ? "#006859" : "#d0dede",
+                        }}
+                      />
+                    ))}
+                  </div>
                 </div>
               </div>
+
+              {/* Bottom footnote */}
+              <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.9 }}
+                className="text-center text-[11px] mt-4"
+                style={{ color: "rgba(255,255,255,0.35)" }}
+              >
+                Powered by FlashResume.in · Do not close this tab
+              </motion.p>
             </motion.div>
           ) : (
+            /* ── ERROR CARD ── */
             <motion.div
               key="error"
               initial={{ opacity: 0, scale: 0.95 }}
@@ -305,48 +382,49 @@ export default function GeneratePage() {
               exit={{ opacity: 0, scale: 0.95 }}
               transition={{ duration: 0.5 }}
             >
-              {/* Error Card */}
-              <div className="bg-surface-container-lowest rounded-[3rem] shadow-2xl shadow-error/10 p-12 border border-error/10 relative overflow-hidden">
-                {/* Decorative blur orb */}
-                <div className="absolute top-0 right-0 w-64 h-64 bg-error/10 blur-3xl rounded-full"></div>
-                
-                <div className="relative z-10 text-center">
-                  {/* Error Icon */}
-                  <motion.div
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    transition={{ type: "spring", duration: 0.6 }}
-                    className="flex justify-center mb-6"
+              <div
+                className="p-10 text-center"
+                style={{
+                  background: "#fff",
+                  borderRadius: 12,
+                  boxShadow: "0 8px 40px rgba(0,0,0,0.18)",
+                  border: "1px solid rgba(179,27,37,0.15)",
+                }}
+              >
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ type: "spring", duration: 0.6 }}
+                  className="flex justify-center mb-5"
+                >
+                  <div
+                    className="w-20 h-20 rounded-full flex items-center justify-center"
+                    style={{ background: "rgba(179,27,37,0.08)" }}
                   >
-                    <div className="w-24 h-24 rounded-full bg-error/10 flex items-center justify-center">
-                      <AlertCircle className="w-12 h-12 text-error" />
-                    </div>
-                  </motion.div>
-
-                  <h2 className="font-headline text-3xl md:text-4xl font-bold text-on-background mb-4">
-                    Generation Failed
-                  </h2>
-                  <p className="text-lg text-on-surface-variant mb-8 max-w-md mx-auto">
-                    {error}
-                  </p>
-
-                  {/* Action Buttons */}
-                  <div className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto">
-                    <button
-                      onClick={() => window.location.reload()}
-                      className="flex-1 py-4 px-6 rounded-xl font-bold text-white flash-gradient hover:opacity-90 transition-all duration-300 shadow-xl shadow-primary/25 active:scale-95 flex items-center justify-center gap-2"
-                    >
-                      <RefreshCw className="w-5 h-5" />
-                      Try Again
-                    </button>
-                    <button
-                      onClick={() => router.push("/")}
-                      className="flex-1 py-4 px-6 rounded-xl font-bold text-on-background bg-surface-container-low border-2 border-surface-container-high hover:bg-surface-container-lowest transition-all duration-300 flex items-center justify-center gap-2"
-                    >
-                      <ArrowLeft className="w-5 h-5" />
-                      Back to Preview
-                    </button>
+                    <AlertCircle className="w-10 h-10" style={{ color: "#b31b25" }} />
                   </div>
+                </motion.div>
+                <h2 className="text-2xl font-bold mb-3" style={{ color: "#1a1a1a" }}>
+                  Generation Failed
+                </h2>
+                <p className="text-sm mb-7 leading-relaxed" style={{ color: "#595c5d" }}>
+                  {error}
+                </p>
+                <div className="flex flex-col gap-3">
+                  <button
+                    onClick={() => window.location.reload()}
+                    className="w-full py-3.5 px-6 rounded-xl font-bold text-white flex items-center justify-center gap-2 hover:opacity-90 active:scale-95 transition-all"
+                    style={{ background: "linear-gradient(135deg, #006859, #12f8d7)" }}
+                  >
+                    <RefreshCw className="w-4 h-4" /> Try Again
+                  </button>
+                  <button
+                    onClick={() => router.push("/")}
+                    className="w-full py-3.5 px-6 rounded-xl font-bold flex items-center justify-center gap-2 hover:opacity-80 active:scale-95 transition-all"
+                    style={{ background: "#f5f6f7", color: "#2c2f30", border: "1px solid #e0e2e3" }}
+                  >
+                    <ArrowLeft className="w-4 h-4" /> Back to Home
+                  </button>
                 </div>
               </div>
             </motion.div>
