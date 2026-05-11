@@ -399,12 +399,12 @@ OUTPUT FORMAT (Template v1):
     "Contributed to 3 open-source projects on GitHub"
   ],
   "technical_skills": {{
-    "languages": ["follow step 5"],
-    "frameworks": ["follow step 5"],
-    "databases": ["follow step5"],
-    "cloud_services": ["follow step5"],
-    "developer_tools": ["follow step5"],
-    "miscellaneous": ["follow step5"]
+    "languages": ["max 8 items", "follow step 5"],
+    "frameworks": ["max 8 items", "follow step 5"],
+    "databases": ["max 8 items", "follow step 5"],
+    "cloud_services": ["max 8 items", "follow step 5"],
+    "developer_tools": ["max 8 items", "follow step 5"],
+    "miscellaneous": ["max 8 items", "follow step 5"]
   }},
   "changes": [
     "Rewrote Summary: [old summary] → [new summary]",
