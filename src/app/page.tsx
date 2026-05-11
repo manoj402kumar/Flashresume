@@ -441,11 +441,11 @@ export default function App() {
                   </a>
                 </div>
                 {/* ── Optimize Mode Selection ── */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-4 bg-surface-container-low rounded-2xl p-1.5 sm:pl-5">
-                  <p className="font-sans text-[11px] font-bold uppercase tracking-wider text-on-surface-variant pl-2 sm:pl-0 pt-2 sm:pt-0">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 bg-surface-container-low rounded-2xl p-2 sm:p-1.5 sm:pl-5">
+                  <p className="font-sans text-[11px] font-bold uppercase tracking-wider text-on-surface-variant pl-2 sm:pl-0 pt-1 sm:pt-0">
                     Select an option
                   </p>
-                  <div className="flex w-full sm:w-auto gap-1">
+                  <div className="grid grid-cols-3 sm:flex w-full sm:w-auto gap-1.5 sm:gap-1">
                     {([
                       {
                         id: "jd" as const,
@@ -466,7 +466,7 @@ export default function App() {
                         activeCls: "bg-surface-container-lowest text-primary shadow-sm border border-surface-container-highest",
                         radioBorder: "border-primary",
                         radioDot: "bg-primary",
-                        label: "Nochange",
+                        label: "No Change",
                       }
                     ] as const).map((opt) => {
                       const isActive = optimizeMode === opt.id;
@@ -475,15 +475,15 @@ export default function App() {
                           key={opt.id}
                           type="button"
                           onClick={() => setOptimizeMode(opt.id)}
-                          className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl transition-all duration-200 border border-transparent ${isActive
+                          className={`flex items-center justify-center gap-1.5 sm:gap-2 px-1 sm:px-3 py-2.5 rounded-xl transition-all duration-200 border border-transparent ${isActive
                             ? opt.activeCls
                             : "text-on-surface-variant hover:bg-surface-container-high hover:text-on-background"
                             }`}
                         >
-                          <div className={`w-3.5 h-3.5 rounded-full border-[1.5px] flex items-center justify-center transition-colors ${isActive ? opt.radioBorder : "border-on-surface-variant/60"}`}>
+                          <div className={`w-3 h-3 sm:w-3.5 sm:h-3.5 rounded-full border-[1.5px] flex-shrink-0 flex items-center justify-center transition-colors ${isActive ? opt.radioBorder : "border-on-surface-variant/60"}`}>
                             {isActive && <div className={`w-1.5 h-1.5 rounded-full ${opt.radioDot}`} />}
                           </div>
-                          <span className="text-xs font-bold whitespace-nowrap">
+                          <span className="text-[10px] sm:text-xs font-bold whitespace-nowrap">
                             {opt.label}
                           </span>
                         </button>
