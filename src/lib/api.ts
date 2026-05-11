@@ -151,7 +151,7 @@ export interface TemplateV1 {
   projects: Array<{
     title: string;
     tech_stack: string;
-    duration: string;
+    duration?: string;
     bullets: string[];
     link?: string;
     link_href?: string;
