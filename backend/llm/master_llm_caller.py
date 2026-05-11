@@ -1,5 +1,6 @@
 import os
 from supabase import create_client, Client
+# pyrefly: ignore [missing-import]
 from dotenv import load_dotenv
 from .gemini_fallback     import call_gemini_r1,     call_gemini_r2,     call_single_gemini
 from .mistral_fallback    import call_mistral_r1,    call_mistral_r2,    call_single_mistral
@@ -28,14 +29,14 @@ _R2_MAX_TOKENS = 4500
 # ─────────────────────────────────────────────────────────────────────────────
 # Speed-first ordering: fast 4-5s models up front, gemma (~10s) pushed to #7
 _R1_FLAT = [
-    ("mistral",    "open-mistral-nemo",                     call_single_mistral),    # #1  ~4s  — fastest
+    ("mistral",    "open-mistral-nemo",                     call_single_mistral),    # #1  ~4s  — fastest 
     ("mistral",    "ministral-8b-latest",                   call_single_mistral),    # #2  ~5s
     ("mistral",    "mistral-tiny-latest",                   call_single_mistral),    # #3  ~5s
     ("cloudflare", "@cf/meta/llama-3.1-8b-instruct",       call_single_cloudflare), # #4  ~5s
     ("groq",       "llama-3.1-8b-instant",                 call_single_groq),       # #5  ~4s
     ("cerebras",   "llama3.1-8b",                          call_single_cerebras),   # #6  ~5s
     ("gemini",     "gemma-3-27b-it",                        call_single_gemini),     # #7  ~10s — quality anchor
-    ("cloudflare", "@cf/mistral/mistral-7b-instruct-v0.1", call_single_cloudflare), # #8  ~15s — last resort
+    ("cloudflare", "@cf/mistral/mistral-7b-instruct-v0.1", call_single_cloudflare), # #8  ~15s — last 
 ]
 
 # ─────────────────────────────────────────────────────────────────────────────
