@@ -204,17 +204,17 @@ Examples: "Java + Spring Boot ecosystem", "Python + Django ecosystem", "Node.js 
 
 Then, for EACH skill in RESUME_TEXT Skills section, apply these rules BY CATEGORY:
 
-LANGUAGES → ALWAYS KEEP (languages are transferable fundamentals, never ecosystem-locked)
-  ✅ Keep Python even if JD is Java-only. Languages show thinking ability, not framework lock-in.
+LANGUAGES → KEEP (up to 7 most relevant)
+  ✅ Keep Python even if JD is Java-only. Drop least relevant if > 7.
 
-DATABASES → ALWAYS KEEP (SQL/NoSQL skills transfer across all ecosystems)
-  ✅ Keep PostgreSQL, MongoDB, Redis regardless of JD ecosystem.
+DATABASES → KEEP (up to 7 most relevant)
+  ✅ Keep PostgreSQL, MongoDB, Redis regardless of JD ecosystem. Drop least relevant if > 7.
 
-CLOUD SERVICES → ALWAYS KEEP (AWS/GCP/Azure are universal)
-  ✅ Keep all cloud skills.
+CLOUD SERVICES → KEEP (up to 7 most relevant)
+  ✅ Keep universal cloud skills. Drop least relevant if > 7.
 
-DEVELOPER TOOLS → ALWAYS KEEP (Git, Docker, Postman, Linux are universal professional tools)
-  ✅ Keep all standard dev tools.
+DEVELOPER TOOLS → KEEP (up to 7 most relevant)
+  ✅ Keep standard dev tools. Drop least relevant if > 7.
 
 FRAMEWORKS & LIBRARIES → FILTER AGGRESSIVELY ⬅️ THIS IS WHERE THE PROBLEM LIVES
   Ask: "Does this framework belong to the SAME ecosystem the JD is asking for?"
@@ -261,7 +261,7 @@ Category Order:
 
 Organization Rules:
 1. Put JOB_DESCRIPTION-matched skills FIRST in each category.
-2. Limit each category to max 8 skills (readability).
+2. Limit each category to max 7 skills (readability).
 
 Step 6: Certifications and Achievements (MERGED)
 
@@ -399,12 +399,12 @@ OUTPUT FORMAT (Template v1):
     "Contributed to 3 open-source projects on GitHub"
   ],
   "technical_skills": {{
-    "languages": ["max 8 items", "follow step 5"],
-    "frameworks": ["max 8 items", "follow step 5"],
-    "databases": ["max 8 items", "follow step 5"],
-    "cloud_services": ["max 8 items", "follow step 5"],
-    "developer_tools": ["max 8 items", "follow step 5"],
-    "miscellaneous": ["max 8 items", "follow step 5"]
+    "languages": ["Skill 1", "Skill 2", "...(STRICT MAX 7 ITEMS)"],
+    "frameworks": ["Skill 1", "Skill 2", "...(STRICT MAX 7 ITEMS)"],
+    "databases": ["Skill 1", "Skill 2", "...(STRICT MAX 7 ITEMS)"],
+    "cloud_services": ["Skill 1", "Skill 2", "...(STRICT MAX 7 ITEMS)"],
+    "developer_tools": ["Skill 1", "Skill 2", "...(STRICT MAX 7 ITEMS)"],
+    "miscellaneous": ["Skill 1", "Skill 2", "...(STRICT MAX 7 ITEMS)"]
   }},
   "changes": [
     "Rewrote Summary: [old summary] → [new summary]",
