@@ -245,7 +245,6 @@ export default function ScratchPage() {
         email: "youremail@example.com",
         linkedin_url: "linkedin.com/in/username",
         github_url: "github.com/username",
-        portfolio_url: "",
         linkedin_url_href: "https://linkedin.com/in/username",
         github_url_href: "https://github.com/username",
       },
