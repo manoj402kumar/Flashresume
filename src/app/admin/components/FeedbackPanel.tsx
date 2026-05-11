@@ -1,9 +1,40 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { motion } from "motion/react";
 import { Star, MessageSquare, Clock } from "lucide-react";
 
+interface Feedback {
+  id: string;
+  rating: number;
+  suggestion: string;
+  created_at: string;
+  users?: { email: string };
+}
+
 export default function FeedbackPanel() {
+  const [feedbacks, setFeedbacks] = useState<Feedback[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchFeedback = async () => {
+      try {
+        const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+        const res = await fetch(`${API}/api/admin/feedback`);
+        const data = await res.json();
+        setFeedbacks(data || []);
+      } catch (e) {
+        console.error(e);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchFeedback();
+  }, []);
+
+  const avgRating = feedbacks.length > 0 ? (feedbacks.reduce((sum, f) => sum + f.rating, 0) / feedbacks.length).toFixed(1) : "—";
+  const fiveStars = feedbacks.length > 0 ? Math.round((feedbacks.filter(f => f.rating === 5).length / feedbacks.length) * 100) + "%" : "—";
+
   return (
     <div className="bg-white rounded-[1.5rem] p-6 border border-[#eff1f2] shadow-sm">
       <div className="flex items-center justify-between mb-6">
@@ -11,58 +42,71 @@ export default function FeedbackPanel() {
           <h2 className="font-headline text-xl font-bold text-[#2c2f30]">User Feedback</h2>
           <p className="text-sm text-[#595c5d]">Ratings, comments & timestamps</p>
         </div>
-        <span className="text-xs font-bold text-[#595c5d] bg-[#eff1f2] px-3 py-1.5 rounded-full">
-          Coming Soon
-        </span>
       </div>
 
-      {/* Skeleton placeholder rows */}
-      <div className="space-y-4">
-        {[...Array(3)].map((_, i) => (
-          <motion.div
-            key={i}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: [0.4, 0.7, 0.4] }}
-            transition={{ duration: 2, delay: i * 0.3, repeat: Infinity }}
-            className="flex items-center gap-4 p-4 rounded-xl bg-[#eff1f2]"
-          >
-            {/* Avatar */}
-            <div className="w-10 h-10 rounded-full bg-[#595c5d]/20 shrink-0" />
-            <div className="flex-1 space-y-2">
-              <div className="h-3 bg-[#595c5d]/20 rounded-full w-1/3" />
-              <div className="h-3 bg-[#595c5d]/10 rounded-full w-3/4" />
-            </div>
-            {/* Stars placeholder */}
-            <div className="flex gap-0.5">
-              {[...Array(5)].map((_, s) => (
-                <div key={s} className="w-3 h-3 rounded-sm bg-[#595c5d]/20" />
-              ))}
-            </div>
-          </motion.div>
-        ))}
-      </div>
-
-      {/* Placeholder message */}
-      <div className="mt-8 text-center py-10 border-2 border-dashed border-[#eff1f2] rounded-2xl">
-        <div className="flex justify-center gap-3 mb-4 text-[#595c5d]/40">
-          <Star className="w-7 h-7" />
-          <MessageSquare className="w-7 h-7" />
-          <Clock className="w-7 h-7" />
-        </div>
-        <p className="font-bold text-[#2c2f30] text-lg font-headline">Feedback system not yet live</p>
-        <p className="text-sm text-[#595c5d] mt-2 max-w-sm mx-auto leading-relaxed">
-          Once you add a feedback form to the main app, responses will appear here
-          with ratings, comments, and timestamps — sortable and filterable.
-        </p>
-        <div className="mt-6 grid grid-cols-3 gap-4 max-w-xs mx-auto">
-          {["Avg Rating", "Total Reviews", "5★ Rate"].map((label) => (
-            <div key={label} className="bg-[#eff1f2] rounded-xl p-3 text-center">
-              <div className="text-lg font-bold text-[#595c5d]/40 font-headline">—</div>
-              <div className="text-[10px] text-[#595c5d]/60 font-medium mt-0.5">{label}</div>
-            </div>
+      {loading ? (
+        <div className="space-y-4">
+          {[...Array(3)].map((_, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: [0.4, 0.7, 0.4] }}
+              transition={{ duration: 2, delay: i * 0.3, repeat: Infinity }}
+              className="flex items-center gap-4 p-4 rounded-xl bg-[#eff1f2]"
+            >
+              <div className="w-10 h-10 rounded-full bg-[#595c5d]/20 shrink-0" />
+              <div className="flex-1 space-y-2">
+                <div className="h-3 bg-[#595c5d]/20 rounded-full w-1/3" />
+                <div className="h-3 bg-[#595c5d]/10 rounded-full w-3/4" />
+              </div>
+            </motion.div>
           ))}
         </div>
-      </div>
+      ) : feedbacks.length === 0 ? (
+        <div className="mt-8 text-center py-10 border-2 border-dashed border-[#eff1f2] rounded-2xl">
+          <p className="font-bold text-[#2c2f30] text-lg font-headline">No feedback yet</p>
+          <p className="text-sm text-[#595c5d] mt-2">Users haven't submitted any feedback yet.</p>
+        </div>
+      ) : (
+        <>
+          <div className="mb-6 grid grid-cols-3 gap-4 max-w-sm">
+            <div className="bg-[#eff1f2] rounded-xl p-3 text-center">
+              <div className="text-lg font-bold text-[#006859] font-headline">{avgRating}</div>
+              <div className="text-[10px] text-[#595c5d]/60 font-medium mt-0.5">Avg Rating</div>
+            </div>
+            <div className="bg-[#eff1f2] rounded-xl p-3 text-center">
+              <div className="text-lg font-bold text-[#2c2f30] font-headline">{feedbacks.length}</div>
+              <div className="text-[10px] text-[#595c5d]/60 font-medium mt-0.5">Total Reviews</div>
+            </div>
+            <div className="bg-[#eff1f2] rounded-xl p-3 text-center">
+              <div className="text-lg font-bold text-green-600 font-headline">{fiveStars}</div>
+              <div className="text-[10px] text-[#595c5d]/60 font-medium mt-0.5">5★ Rate</div>
+            </div>
+          </div>
+          <div className="space-y-3 max-h-96 overflow-y-auto pr-2">
+            {feedbacks.map((f, i) => (
+              <motion.div
+                key={f.id}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.05 }}
+                className="p-4 rounded-xl bg-[#fafafa] border border-[#eff1f2]"
+              >
+                <div className="flex justify-between items-start mb-2">
+                  <div className="flex gap-1">
+                    {[...Array(5)].map((_, s) => (
+                      <Star key={s} className={`w-4 h-4 ${s < f.rating ? 'fill-yellow-400 text-yellow-400' : 'text-gray-200'}`} />
+                    ))}
+                  </div>
+                  <span className="text-xs text-gray-400">{new Date(f.created_at).toLocaleDateString()}</span>
+                </div>
+                {f.suggestion && <p className="text-sm text-gray-700 italic">"{f.suggestion}"</p>}
+                <p className="text-xs text-gray-500 mt-2">— {f.users?.email || 'Anonymous'}</p>
+              </motion.div>
+            ))}
+          </div>
+        </>
+      )}
     </div>
   );
 }

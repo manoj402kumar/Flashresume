@@ -42,6 +42,7 @@ import {
   getHighlightClass,
 } from "@/lib/highlighting";
 import ResumePDFTemplateLetter from "@/components/ResumePDFTemplateLetter";
+import FeedbackModal from "@/components/FeedbackModal";
 import ResumePDFTemplateA4 from "@/components/ResumePDFTemplateA4";
 import dynamic from "next/dynamic";
 import PricingPopup from "@/components/PricingPopup";
@@ -185,6 +186,9 @@ export default function ResultPage() {
   const [subscriptionData, setSubscriptionData] = useState<any>(null);
   const [showAccountDropdown, setShowAccountDropdown] = useState(false);
   const [showMobilePreview, setShowMobilePreview] = useState(true);
+  const [showFeedback, setShowFeedback] = useState(false);
+  const [sessionGuid, setSessionGuid] = useState<string>("");
+  const [currentUserId, setCurrentUserId] = useState<string>("");
 
   const handleSectionDragStart = (e: React.DragEvent, sectionId: string) => {
     setDraggingId(sectionId);
@@ -235,6 +239,7 @@ export default function ResultPage() {
     const fetchSession = async () => {
       const urlParams = new URLSearchParams(window.location.search);
       const sessionId = urlParams.get("session_id");
+      if (sessionId) setSessionGuid(sessionId);
 
       let parsed = null;
 
@@ -301,6 +306,7 @@ export default function ResultPage() {
       return;
     }
     setUserEmail(session.user.email || "");
+    setCurrentUserId(session.user.id);
     
     // Check credits balance
     const { data: userData } = await supabase
@@ -409,6 +415,26 @@ export default function ResultPage() {
           await checkAccess();
         } catch (e) {
           console.error("Failed to deduct credit", e);
+        }
+      }
+
+      // Trigger feedback on first download
+      if (sessionGuid && currentUserId) {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+        try {
+          const res = await fetch(`${apiUrl}/api/resume/increment-download`, {
+            method: "POST",
+            body: JSON.stringify({ session_id: sessionGuid }),
+            headers: { "Content-Type": "application/json" }
+          });
+          if (res.ok) {
+            const data = await res.json();
+            if (data.download_count === 1) {
+              setTimeout(() => setShowFeedback(true), 10000);
+            }
+          }
+        } catch (e) {
+          console.error("Feedback trigger failed", e);
         }
       }
     } catch (error) {
@@ -2204,6 +2230,13 @@ export default function ResultPage() {
           }
         }}
       />
+      {showFeedback && (
+        <FeedbackModal
+          userId={currentUserId}
+          sessionId={sessionGuid}
+          onClose={() => setShowFeedback(false)}
+        />
+      )}
     </div>
   );
 }

@@ -157,20 +157,20 @@ export default function AdminPage() {
     return () => clearInterval(id);
   }, []);
 
-  // Fetch uptime
+  // Fetch stats
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const res = await fetch(`${API_URL}/admin/stats`);
+        const res = await fetch(`${API_URL}/api/admin/dashboard-stats`);
         const json = await res.json();
         const sec = json.uptime_seconds ?? 0;
         const h = Math.floor(sec / 3600);
         const m = Math.floor((sec % 3600) / 60);
         setUptime(`${h}h ${m}m`);
         setStats({
-          revenue: json.revenue ?? 0,
-          downloads: json.downloads ?? 0,
-          subscribers: json.subscribers ?? 0
+          revenue: json.total_revenue ?? 0,
+          downloads: json.total_downloads ?? 0,
+          subscribers: json.active_subs ?? 0
         });
       } catch { /* offline */ }
     };

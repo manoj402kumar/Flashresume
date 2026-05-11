@@ -1,3 +1,5 @@
+import os
+from supabase import create_client, Client
 from dotenv import load_dotenv
 from .gemini_fallback     import call_gemini_r1,     call_gemini_r2,     call_single_gemini
 from .mistral_fallback    import call_mistral_r1,    call_mistral_r2,    call_single_mistral
@@ -7,6 +9,13 @@ from .cloudflare_fallback import call_cloudflare_r1, call_cloudflare_r2, call_si
 from .nvidia_fallback     import call_nvidia_r1,     call_nvidia_r2,     call_single_nvidia
 
 load_dotenv()
+
+SUPABASE_URL = os.getenv("SUPABASE_URL", "https://your-project.supabase.co")
+SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY") or os.getenv("SUPABASE_ANON_KEY")
+try:
+    supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+except Exception:
+    supabase = None
 
 # R1 (ATS score JSON + project check): response is small ~200–600 tokens
 # R2 (full resume JSON): response is large ~2500–3200 tokens
@@ -142,7 +151,19 @@ def call_llm_r1(prompt: str) -> dict:
            open-mistral-nemo → gemini-2.5-flash-lite
     max_tokens: 2500
     """
-    return _run_flat_chain(prompt, _R1_FLAT, _R1_MAX_TOKENS)
+    result = _run_flat_chain(prompt, _R1_FLAT, _R1_MAX_TOKENS)
+    if supabase and result.get("provider"):
+        try:
+            supabase.table("llm_usage").insert({
+                "request_type": "r1",
+                "provider": result["provider"],
+                "model": result["model"],
+                "success": result["success"],
+                "speed_secs": result["speed"]
+            }).execute()
+        except Exception:
+            pass
+    return result
 
 
 def call_llm_r2(prompt: str) -> dict:
@@ -156,4 +177,16 @@ def call_llm_r2(prompt: str) -> dict:
            gemini-2.5-flash-lite → gemini-3.1-flash-lite-preview
     max_tokens: 4500
     """
-    return _run_flat_chain(prompt, _R2_FLAT, _R2_MAX_TOKENS)
+    result = _run_flat_chain(prompt, _R2_FLAT, _R2_MAX_TOKENS)
+    if supabase and result.get("provider"):
+        try:
+            supabase.table("llm_usage").insert({
+                "request_type": "r2",
+                "provider": result["provider"],
+                "model": result["model"],
+                "success": result["success"],
+                "speed_secs": result["speed"]
+            }).execute()
+        except Exception:
+            pass
+    return result

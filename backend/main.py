@@ -2,7 +2,7 @@ import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
-from routers import parse, analyze, generate, payments, admin, sessions
+from routers import parse, analyze, generate, payments, admin, sessions, feedback
 
 load_dotenv()
 
@@ -39,6 +39,7 @@ app.include_router(generate.router, prefix="/api")
 app.include_router(payments.router, prefix="/api")
 app.include_router(admin.router, prefix="/api")
 app.include_router(sessions.router, prefix="/api")
+app.include_router(feedback.router, prefix="/api")
 
 @app.get("/")
 def root():
