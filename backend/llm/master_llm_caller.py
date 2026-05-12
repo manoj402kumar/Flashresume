@@ -29,7 +29,7 @@ _R2_MAX_TOKENS = 4500
 # ─────────────────────────────────────────────────────────────────────────────
 # Speed-first ordering: fast 4-5s models up front, gemma (~10s) pushed to #7
 _R1_FLAT = [
-    ("mistral",    "open-mistral-nemo",                     call_single_mistral),    # #1  ~4s  — fastest 
+    ("mistral",    "open-mistral-nemo",                     call_single_mistral),    # #1  ~4s  — fastest among all
     ("mistral",    "ministral-8b-latest",                   call_single_mistral),    # #2  ~5s
     ("mistral",    "mistral-tiny-latest",                   call_single_mistral),    # #3  ~5s
     ("cloudflare", "@cf/meta/llama-3.1-8b-instruct",       call_single_cloudflare), # #4  ~5s
