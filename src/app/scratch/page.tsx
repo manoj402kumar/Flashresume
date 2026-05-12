@@ -662,7 +662,6 @@ export default function ScratchPage() {
                     style={{
                       width: "100%",
                       maxWidth: selectedTemplate === "templateLetter" ? "calc((85vh - 6rem) * 0.707)" : "calc((85vh - 6rem) * 0.774)",
-                      aspectRatio: selectedTemplate === "templateLetter" ? "1 / 1.414" : "1 / 1.2916"
                     }}
                   >
                     <MobilePDFPreview key={`mobile-${selectedTemplate}-${showHighlights ? "on" : "off"}-${(resume.section_order || []).join('-')}`}>

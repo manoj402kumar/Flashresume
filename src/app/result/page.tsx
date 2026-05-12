@@ -667,12 +667,11 @@ export default function ResultPage() {
                 </div>
 
                 <div className="w-full px-4 flex justify-center">
-                  <div 
-                    className="relative bg-white shadow-2xl rounded-sm ring-1 ring-white/20 transition-all duration-300" 
-                    style={{ 
-                      width: "100%", 
-                      maxWidth: selectedTemplate === "templateLetter" ? "calc((85vh - 6rem) * 0.707)" : "calc((85vh - 6rem) * 0.774)", 
-                      aspectRatio: selectedTemplate === "templateLetter" ? "1 / 1.414" : "1 / 1.2916" 
+                  <div
+                    className="relative bg-white shadow-2xl rounded-sm ring-1 ring-white/20 transition-all duration-300"
+                    style={{
+                      width: "100%",
+                      maxWidth: selectedTemplate === "templateLetter" ? "calc((85vh - 6rem) * 0.707)" : "calc((85vh - 6rem) * 0.774)",
                     }}
                   >
                     <MobilePDFPreview key={`mobile-${selectedTemplate}-${showHighlights ? "on" : "off"}-${(resume.section_order || []).join('-')}`}>

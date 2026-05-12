@@ -9,9 +9,10 @@ pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/b
 export default function MobilePDFPreview({ children }: { children: React.ReactElement }) {
   const [blobUrl, setBlobUrl] = useState<string | null>(null);
   const [containerWidth, setContainerWidth] = useState<number>(0);
+  const [numPages, setNumPages] = useState<number>(1);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Measure container width reactively so the PDF page always fills it exactly
+  // Measure container width reactively so each PDF page fills the box exactly
   useEffect(() => {
     if (!containerRef.current) return;
     const observer = new ResizeObserver((entries) => {
@@ -20,14 +21,15 @@ export default function MobilePDFPreview({ children }: { children: React.ReactEl
       }
     });
     observer.observe(containerRef.current);
-    // Set initial width immediately
     setContainerWidth(Math.floor(containerRef.current.getBoundingClientRect().width));
     return () => observer.disconnect();
   }, []);
 
-  // Render PDF blob whenever children (template) changes
+  // Re-render PDF blob whenever the template (children) changes
   useEffect(() => {
     let url: string;
+    setBlobUrl(null);
+    setNumPages(1);
     pdf(children as any).toBlob().then((blob) => {
       url = URL.createObjectURL(blob);
       setBlobUrl(url);
@@ -37,23 +39,28 @@ export default function MobilePDFPreview({ children }: { children: React.ReactEl
   }, []);
 
   return (
-    <div ref={containerRef} className="w-full h-full overflow-hidden flex justify-center bg-white rounded-sm">
+    <div ref={containerRef} className="w-full overflow-hidden bg-white rounded-sm">
       {!blobUrl || containerWidth === 0 ? (
-        <div className="w-full h-full flex items-center justify-center min-h-[300px]">
+        <div className="w-full flex items-center justify-center min-h-[300px]">
           <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary" />
         </div>
       ) : (
         <ReactPDFDocument
           file={blobUrl}
-          loading={<div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary my-10" />}
+          onLoadSuccess={({ numPages: n }) => setNumPages(n)}
+          loading={<div className="flex items-center justify-center min-h-[300px]"><div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary" /></div>}
           error={<div className="p-4 text-center text-error">Failed to load PDF preview.</div>}
         >
-          <ReactPDFPage
-            pageNumber={1}
-            renderTextLayer={false}
-            renderAnnotationLayer={false}
-            width={containerWidth}
-          />
+          {/* Render every page stacked — no content is clipped */}
+          {Array.from({ length: numPages }, (_, i) => (
+            <ReactPDFPage
+              key={i + 1}
+              pageNumber={i + 1}
+              renderTextLayer={false}
+              renderAnnotationLayer={false}
+              width={containerWidth}
+            />
+          ))}
         </ReactPDFDocument>
       )}
     </div>
