@@ -20,7 +20,9 @@ import {
   Crosshair,
   Sparkles,
   PenLine,
-  SlidersHorizontal
+  SlidersHorizontal,
+  GraduationCap,
+  Briefcase
 } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
@@ -570,87 +572,77 @@ export default function App() {
         </section>
 
 
-        {/* Live Demo Section */}
-        <LiveDemoSection />
 
-        {/* ATS Demo Section */}
-        <section className="py-32 overflow-hidden">
-          <div className="max-w-7xl mx-auto px-6 grid lg:grid-cols-2 gap-20 items-center">
+        {/* Use Cases Section */}
+
+        <section className="py-24 overflow-hidden">
+          <div className="max-w-7xl mx-auto px-6">
             <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              whileInView={{ opacity: 1, x: 0 }}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
+              className="mb-16 text-center"
             >
-              <h2 className="font-headline text-4xl md:text-6xl font-bold text-on-background mb-8 leading-tight">See what AI actually fixes.</h2>
-              <p className="text-xl text-on-surface-variant mb-10">Flashresume objective is simple "Build resume that passes ats machine and then human recruiter in actual interview"</p>
-              <ul className="space-y-6">
-                {[
-                  "Action Verb Optimization",
-                  "Quantifiable Achievement Extraction",
-                  "Layout Readability Score"
-                ].map((item, idx) => (
-                  <li key={idx} className="flex items-center gap-4">
-                    <CheckCircle2 className="text-primary-container w-6 h-6 fill-primary-container/20" />
-                    <span className="font-medium">{item}</span>
-                  </li>
-                ))}
-              </ul>
+              <span className="font-sans text-xs font-bold uppercase tracking-widest text-primary mb-3 block">Who is it for?</span>
+              <h2 className="font-headline text-4xl md:text-5xl font-bold text-on-background leading-tight">Use cases</h2>
             </motion.div>
-            <div className="relative">
-              <div className="bg-surface-container-low rounded-[2.5rem] p-8 md:p-12">
-                <div className="space-y-12">
-                  {/* Score 1 */}
-                  <div>
-                    <div className="flex justify-between items-end mb-4">
-                      <div>
-                        <span className="font-sans text-xs font-bold uppercase tracking-widest text-on-surface-variant">BEFORE FLASHRESUME</span>
-                        <h4 className="font-headline text-2xl font-bold">Standard Resume</h4>
-                      </div>
-                      <span className="text-4xl font-black text-error">34%</span>
+
+            <div className="grid md:grid-cols-3 gap-6">
+              {[
+                {
+                  number: "01",
+                  icon: <GraduationCap className="w-6 h-6 text-primary" />,
+                  title: "Freshers",
+                  desc: "Applying on-campus or off-campus on portals and need a resume that beats ATS filters before a human even sees it.",
+                  accent: "from-primary/10 to-primary/5",
+                  border: "border-primary/20",
+                  numColor: "text-primary",
+                },
+                {
+                  number: "02",
+                  icon: <Briefcase className="w-6 h-6 text-secondary" />,
+                  title: "Job Switchers",
+                  desc: "Employees ready to make their next move and want a polished, targeted resume that reflects their real experience.",
+                  accent: "from-secondary/10 to-secondary/5",
+                  border: "border-secondary/20",
+                  numColor: "text-secondary",
+                },
+                {
+                  number: "03",
+                  icon: <PenLine className="w-6 h-6 text-tertiary" />,
+                  title: "First-Time Builders",
+                  desc: "Students who have never written a resume and need a clean starting point — no blank page paralysis.",
+                  accent: "from-tertiary/10 to-tertiary/5",
+                  border: "border-tertiary/20",
+                  numColor: "text-tertiary",
+                },
+              ].map((card, idx) => (
+                <motion.div
+                  key={idx}
+                  initial={{ opacity: 0, y: 24 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.5, delay: idx * 0.12 }}
+                  className={`relative bg-gradient-to-br ${card.accent} border ${card.border} rounded-3xl p-8 flex flex-col gap-5 hover:scale-[1.02] transition-transform duration-300`}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="w-12 h-12 rounded-2xl bg-surface-container-lowest flex items-center justify-center shadow-sm">
+                      {card.icon}
                     </div>
-                    <div className="w-full h-4 bg-surface-container-high rounded-full overflow-hidden">
-                      <motion.div
-                        initial={{ width: 0 }}
-                        whileInView={{ width: "34%" }}
-                        viewport={{ once: true }}
-                        transition={{ duration: 1, ease: "easeOut" }}
-                        className="h-full bg-error rounded-full"
-                      />
-                    </div>
-                    <p className="mt-3 text-sm text-error font-medium flex items-center gap-1">
-                      <AlertTriangle className="w-4 h-4" />
-                      High risk of ATS rejection
-                    </p>
+                    <span className={`font-black text-4xl ${card.numColor} opacity-20 font-headline`}>{card.number}</span>
                   </div>
-                  {/* Score 2 */}
                   <div>
-                    <div className="flex justify-between items-end mb-4">
-                      <div>
-                        <span className="font-sans text-xs font-bold uppercase tracking-widest text-primary">POST OPTIMIZATION</span>
-                        <h4 className="font-headline text-2xl font-bold">Flash Profile</h4>
-                      </div>
-                      <span className="text-4xl font-black text-primary">89%</span>
-                    </div>
-                    <div className="w-full h-4 bg-surface-container-high rounded-full overflow-hidden">
-                      <motion.div
-                        initial={{ width: 0 }}
-                        whileInView={{ width: "89%" }}
-                        viewport={{ once: true }}
-                        transition={{ duration: 1, delay: 0.5, ease: "easeOut" }}
-                        className="h-full flash-gradient rounded-full"
-                      />
-                    </div>
-                    <p className="mt-3 text-sm text-primary font-medium flex items-center gap-1">
-                      <Verified className="w-4 h-4" />
-                      Interview Ready
-                    </p>
+                    <h3 className="font-headline text-2xl font-bold text-on-background mb-2">{card.title}</h3>
+                    <p className="text-on-surface-variant leading-relaxed">{card.desc}</p>
                   </div>
-                </div>
-              </div>
-              <div className="absolute -top-10 -right-10 w-32 h-32 bg-primary-container/30 blur-3xl -z-10"></div>
+                </motion.div>
+              ))}
             </div>
           </div>
         </section>
+
+        {/* Live Demo Section */}
+        <LiveDemoSection />
 
         {/* Pricing Section */}
         {currentUser && (
