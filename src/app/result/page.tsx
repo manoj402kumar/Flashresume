@@ -660,9 +660,9 @@ export default function ResultPage() {
                 {/* Template + Highlight controls */}
                 <div className="w-full flex justify-end px-4 pt-4 pb-4">
                   <div className="flex bg-surface/90 backdrop-blur-md rounded-xl shadow-lg border border-primary/20 overflow-hidden">
-                    <button onClick={() => setSelectedTemplate("templateLetter")} className={`px-3 py-2 text-[11px] font-bold transition-colors ${selectedTemplate === "templateLetter" ? "bg-primary text-white" : "text-on-surface-variant hover:bg-surface-container"}`}>Template 1</button>
+                    <button onClick={() => setSelectedTemplate("templateLetter")} className={`px-3 py-2 text-[11px] font-bold transition-colors ${selectedTemplate === "templateLetter" ? "bg-primary text-white" : "text-on-surface-variant hover:bg-surface-container"}`}>T1</button>
                     <div className="w-[1px] bg-primary/20"></div>
-                    <button onClick={() => setSelectedTemplate("templateA4")} className={`px-3 py-2 text-[11px] font-bold transition-colors ${selectedTemplate === "templateA4" ? "bg-primary text-white" : "text-on-surface-variant hover:bg-surface-container"}`}>Template 2</button>
+                    <button onClick={() => setSelectedTemplate("templateA4")} className={`px-3 py-2 text-[11px] font-bold transition-colors ${selectedTemplate === "templateA4" ? "bg-primary text-white" : "text-on-surface-variant hover:bg-surface-container"}`}>T2</button>
                   </div>
                 </div>
 
