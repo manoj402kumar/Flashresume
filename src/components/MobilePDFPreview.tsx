@@ -53,13 +53,17 @@ export default function MobilePDFPreview({ children }: { children: React.ReactEl
         >
           {/* Render every page stacked — no content is clipped */}
           {Array.from({ length: numPages }, (_, i) => (
-            <ReactPDFPage
-              key={i + 1}
-              pageNumber={i + 1}
-              renderTextLayer={false}
-              renderAnnotationLayer={false}
-              width={containerWidth}
-            />
+            <React.Fragment key={i + 1}>
+              <ReactPDFPage
+                pageNumber={i + 1}
+                renderTextLayer={false}
+                renderAnnotationLayer={false}
+                width={containerWidth}
+              />
+              {i < numPages - 1 && (
+                <div style={{ height: "2px", background: "#000", width: "100%" }} />
+              )}
+            </React.Fragment>
           ))}
         </ReactPDFDocument>
       )}
