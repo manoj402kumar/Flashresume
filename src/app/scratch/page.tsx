@@ -458,13 +458,24 @@ export default function ScratchPage() {
       <header className="flex-shrink-0 z-50 bg-surface border-b border-surface-container-low shadow-sm">
         <div className="w-full px-4 sm:px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-primary-container/20 flex items-center justify-center">
-              <FileText className="w-5 h-5 text-primary" />
-            </div>
+            <a href="/" title="Back to Home" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+              <div className="relative flex items-center justify-center w-9 h-9">
+                <svg viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full drop-shadow-[0_0_6px_rgba(0,210,190,0.45)]">
+                  <path d="M18 2L32 10V26L18 34L4 26V10L18 2Z" fill="url(#hex-grad-scratch)" stroke="rgba(0,210,190,0.3)" strokeWidth="0.8" />
+                  <defs>
+                    <linearGradient id="hex-grad-scratch" x1="4" y1="2" x2="32" y2="34" gradientUnits="userSpaceOnUse">
+                      <stop stopColor="#00D2BE" />
+                      <stop offset="1" stopColor="#00A896" />
+                    </linearGradient>
+                  </defs>
+                  <path d="M20 8L13 20h6l-1 8 8-12h-6l1-8z" fill="white" fillOpacity="0.95" transform="translate(-1.5, 0)" />
+                </svg>
+              </div>
+            </a>
             <div>
               <h1 className="font-headline text-lg font-bold text-on-background leading-tight">Build From Scratch</h1>
               <p className="text-xs text-on-surface-variant leading-tight flex items-center gap-1">
-                <FileText className="w-3 h-3 text-primary" /> Blank template — fill in your details
+                <Sparkles className="w-3 h-3 text-primary" /> Blank template — fill in your details
               </p>
             </div>
           </div>
