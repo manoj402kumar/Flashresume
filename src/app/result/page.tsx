@@ -451,7 +451,16 @@ export default function ResultPage() {
           <div className="relative">
             <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-primary mx-auto mb-6"></div>
             <div className="absolute inset-0 flex items-center justify-center">
-              <Sparkles className="w-8 h-8 text-primary-container animate-pulse" />
+              <svg viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-8 h-8 animate-pulse drop-shadow-[0_0_8px_rgba(0,210,190,0.6)]">
+                <path d="M18 2L32 10V26L18 34L4 26V10L18 2Z" fill="url(#hex-grad-loading)" stroke="rgba(0,210,190,0.3)" strokeWidth="0.8" />
+                <defs>
+                  <linearGradient id="hex-grad-loading" x1="4" y1="2" x2="32" y2="34" gradientUnits="userSpaceOnUse">
+                    <stop stopColor="#00D2BE" />
+                    <stop offset="1" stopColor="#00A896" />
+                  </linearGradient>
+                </defs>
+                <path d="M20 8L13 20h6l-1 8 8-12h-6l1-8z" fill="white" fillOpacity="0.95" transform="translate(-1.5, 0)" />
+              </svg>
             </div>
           </div>
           <p className="text-on-surface-variant font-medium">Loading your resume...</p>
@@ -674,7 +683,10 @@ export default function ResultPage() {
                       maxWidth: selectedTemplate === "templateLetter" ? "calc((85vh - 6rem) * 0.707)" : "calc((85vh - 6rem) * 0.774)",
                     }}
                   >
-                    <MobilePDFPreview key={`mobile-${selectedTemplate}-${showHighlights ? "on" : "off"}-${(resume.section_order || []).join('-')}`}>
+                    <MobilePDFPreview
+                      key={`mobile-${selectedTemplate}`}
+                      refreshKey={JSON.stringify(resume)}
+                    >
                       {selectedTemplate === "templateLetter" ? (
                         <ResumePDFTemplateLetter resume={resume} showHighlights={false} matchedKeywords={[]} missingKeywords={[]} />
                       ) : (
@@ -698,12 +710,12 @@ export default function ResultPage() {
 
           {/* Segmented Toggles inside Sticky Top */}
           <div className="flex-shrink-0 bg-surface/95 backdrop-blur-md p-4 border-b border-surface-container-low flex flex-col gap-3 py-4 sticky top-0 z-20">
-            <div className="flex bg-surface-container-lowest p-1 rounded-[1.25rem] border border-surface-container-low shadow-inner">
+            <div className="flex gap-2">
               <button
                 onClick={() => { setEditMode(true); setShowChanges(false); setShowMissedKeywords(false); }}
-                className={`flex-1 py-2 px-2 text-sm font-semibold transition-all rounded-xl flex items-center justify-center gap-2 ${editMode
-                    ? "bg-primary text-white shadow-md relative"
-                    : "text-on-surface-variant hover:text-on-background hover:bg-surface-container"
+                className={`relative flex-1 py-3 px-3 text-sm font-bold transition-all duration-200 rounded-2xl flex items-center justify-center gap-2 active:scale-95 ${editMode
+                    ? "bg-primary text-white shadow-lg shadow-primary/30 border border-primary"
+                    : "bg-surface-container-low text-on-surface-variant border border-surface-container-high hover:bg-surface-container-high hover:text-on-background"
                   }`}
               >
                 <Edit3 className={`w-4 h-4 ${editMode ? 'text-white' : 'text-on-surface-variant'}`} />
@@ -714,26 +726,26 @@ export default function ResultPage() {
               </button>
               <button
                 onClick={() => { setShowChanges(true); setEditMode(false); setShowMissedKeywords(false); }}
-                className={`flex-1 py-2 px-2 text-sm font-semibold transition-all rounded-xl flex items-center justify-center gap-2 ${showChanges
-                    ? "bg-secondary-container text-secondary-container-on shadow-md text-secondary"
-                    : "text-on-surface-variant hover:text-on-background hover:bg-surface-container"
+                className={`flex-1 py-3 px-3 text-sm font-bold transition-all duration-200 rounded-2xl flex items-center justify-center gap-2 active:scale-95 ${showChanges
+                    ? "bg-secondary text-white shadow-lg shadow-secondary/30 border border-secondary"
+                    : "bg-surface-container-low text-on-surface-variant border border-surface-container-high hover:bg-surface-container-high hover:text-on-background"
                   }`}
               >
-                <Sparkles className={`w-4 h-4 ${showChanges ? 'text-secondary' : 'text-on-surface-variant'}`} />
+                <Sparkles className={`w-4 h-4 ${showChanges ? 'text-white' : 'text-on-surface-variant'}`} />
                 AI Changes
               </button>
               {!noJdMode && (
                 <button
                   onClick={() => { setShowMissedKeywords(true); setEditMode(false); setShowChanges(false); }}
-                  className={`flex-1 py-2 px-2 text-sm font-semibold transition-all rounded-xl flex items-center justify-center gap-2 ${showMissedKeywords
-                      ? "bg-error text-white shadow-md relative"
-                      : "text-on-surface-variant hover:text-on-background hover:bg-surface-container"
+                  className={`relative flex-1 py-3 px-3 text-sm font-bold transition-all duration-200 rounded-2xl flex items-center justify-center gap-2 active:scale-95 ${showMissedKeywords
+                      ? "bg-error text-white shadow-lg shadow-error/30 border border-error"
+                      : "bg-surface-container-low text-on-surface-variant border border-surface-container-high hover:bg-surface-container-high hover:text-on-background"
                     }`}
                 >
                   <Zap className={`w-4 h-4 ${showMissedKeywords ? 'text-white' : 'text-on-surface-variant'}`} />
-                  Missed Keywords
+                  Keywords
                   {missingKeywords.length > 0 && !showMissedKeywords && (
-                    <span className="absolute top-2 right-2 flex min-w-[16px] h-4 items-center justify-center rounded-full bg-error px-1 text-[10px] font-bold text-white shadow-[0_0_0_2px_#fff]">{missingKeywords.length}</span>
+                    <span className="absolute -top-1.5 -right-1.5 flex min-w-[18px] h-[18px] items-center justify-center rounded-full bg-error px-1 text-[10px] font-bold text-white shadow-md ring-2 ring-surface">{missingKeywords.length}</span>
                   )}
                 </button>
               )}

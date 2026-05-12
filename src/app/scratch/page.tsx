@@ -664,7 +664,10 @@ export default function ScratchPage() {
                       maxWidth: selectedTemplate === "templateLetter" ? "calc((85vh - 6rem) * 0.707)" : "calc((85vh - 6rem) * 0.774)",
                     }}
                   >
-                    <MobilePDFPreview key={`mobile-${selectedTemplate}-${showHighlights ? "on" : "off"}-${(resume.section_order || []).join('-')}`}>
+                    <MobilePDFPreview
+                      key={`mobile-${selectedTemplate}`}
+                      refreshKey={JSON.stringify(resume)}
+                    >
                       {selectedTemplate === "templateLetter" ? (
                         <ResumePDFTemplateLetter resume={resume} showHighlights={false} matchedKeywords={[]} missingKeywords={[]} />
                       ) : (
