@@ -9,8 +9,18 @@ import {
 } from "@react-pdf/renderer";
 import type { TemplateV1 } from "@/lib/api";
 
-// Using built-in standard 14 PostScript font (Times-Roman) for 100% reliability and ATS compatibility.
-// This natively maps to Times New Roman without embedding external TTF files, guaranteeing perfect text extraction.
+// Register Times New Roman TTF files so they are embedded in the PDF blob.
+// Using "Times-Roman" (PDF built-in) causes pdfjs to substitute a browser font
+// on mobile, breaking the visual appearance. Embedding the TTF fixes this.
+Font.register({
+  family: "Times New Roman",
+  fonts: [
+    { src: "/fonts/times.ttf" },
+    { src: "/fonts/timesbd.ttf", fontWeight: "bold" },
+    { src: "/fonts/timesi.ttf", fontStyle: "italic" },
+    { src: "/fonts/timesbd.ttf", fontWeight: "bold", fontStyle: "italic" },
+  ],
+});
 
 // FlashResume Template v1 Styles
 const styles = StyleSheet.create({
@@ -19,7 +29,7 @@ const styles = StyleSheet.create({
     paddingBottom: "0.5in",
     paddingHorizontal: "0.75in",
     fontSize: 11,
-    fontFamily: "Times-Roman",
+    fontFamily: "Times New Roman",
     lineHeight: 1.15,
     color: "#000000",
   },
