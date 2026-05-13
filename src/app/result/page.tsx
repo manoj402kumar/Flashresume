@@ -685,12 +685,12 @@ export default function ResultPage() {
                   >
                     <MobilePDFPreview
                       key={`mobile-${selectedTemplate}`}
-                      refreshKey={JSON.stringify(resume)}
+                      refreshKey={JSON.stringify({ resume, showHighlights, matchedKeywords, missingKeywords })}
                     >
                       {selectedTemplate === "templateLetter" ? (
-                        <ResumePDFTemplateLetter resume={resume} showHighlights={false} matchedKeywords={[]} missingKeywords={[]} />
+                        <ResumePDFTemplateLetter resume={resume} showHighlights={showHighlights} matchedKeywords={matchedKeywords} missingKeywords={missingKeywords} />
                       ) : (
-                        <ResumePDFTemplateA4 resume={resume} showHighlights={false} matchedKeywords={[]} missingKeywords={[]} />
+                        <ResumePDFTemplateA4 resume={resume} showHighlights={showHighlights} matchedKeywords={matchedKeywords} missingKeywords={missingKeywords} />
                       )}
                     </MobilePDFPreview>
                   </div>
@@ -2220,7 +2220,7 @@ export default function ResultPage() {
           </div>
 
           <div className="flex-1 w-full bg-surface-container-lowest">
-            <PDFViewer key={`${selectedTemplate}-${showHighlights ? "on" : "off"}-${(resume.section_order || []).join('-')}`} width="100%" height="100%" className="border-none" showToolbar={false}>
+            <PDFViewer key={`${selectedTemplate}-${showHighlights ? "on" : "off"}-${(resume.section_order || []).join('-')}-${(resume.custom_sections || []).map(s => s.heading + (s.bullets || []).map(b => b.text || b).join('')).join('|')}`} width="100%" height="100%" className="border-none" showToolbar={false}>
               {selectedTemplate === "templateLetter" ? (
                 <ResumePDFTemplateLetter
                   resume={resume}
