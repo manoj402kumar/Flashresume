@@ -56,8 +56,17 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
+          options: {
+            emailRedirectTo: `${window.location.origin}${window.location.pathname}${window.location.search}`
+          }
         });
         if (error) throw error;
+        
+        if (data.user?.identities?.length === 0) {
+          setError("An account with this email already exists. Try logging in instead.");
+          setLoading(false);
+          return;
+        }
 
         // If student flow, update user metadata or table directly
         if (mode === "student_signup" && data.user) {
@@ -82,7 +91,12 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
         // We do not close the modal immediately so they see the message.
       }
     } catch (err: any) {
-      setError(err.message || "Authentication failed");
+      const msg: string = err.message || "";
+      if (msg.includes("User already registered")) {
+        setError("An account with this email already exists. Try logging in instead.");
+      } else {
+        setError(msg || "Authentication failed");
+      }
     } finally {
       setLoading(false);
     }

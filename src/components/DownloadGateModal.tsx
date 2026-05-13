@@ -160,8 +160,21 @@ export default function DownloadGateModal({
           }
         }
       } else {
-        const { data, error } = await supabase.auth.signUp({ email, password });
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            emailRedirectTo: `${window.location.origin}${window.location.pathname}${window.location.search}`
+          }
+        });
         if (error) throw error;
+        
+        if (data.user?.identities?.length === 0) {
+          setError("An account with this email already exists. Try logging in instead.");
+          setLoading(false);
+          return;
+        }
+        
         if (data.user) {
           if (!data.session) {
             setError("Account created! Please check your email to verify your account before paying.");
@@ -185,7 +198,12 @@ export default function DownloadGateModal({
         }
       }
     } catch (err: any) {
-      setError(err.message || "Authentication failed. Please try again.");
+      const msg: string = err.message || "";
+      if (msg.includes("User already registered")) {
+        setError("An account with this email already exists. Try logging in instead.");
+      } else {
+        setError(msg || "Authentication failed. Please try again.");
+      }
     } finally {
       setLoading(false);
     }
