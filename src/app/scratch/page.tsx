@@ -2202,7 +2202,7 @@ export default function ScratchPage() {
           </div>
 
           <div className="flex-1 w-full bg-surface-container-lowest">
-            <PDFViewer key={`${selectedTemplate}-${showHighlights ? "on" : "off"}-${(resume.section_order || []).join('-')}-${(resume.custom_sections || []).map(s => s.heading + (s.bullets || []).map(b => b.text || b).join('')).join('|')}`} width="100%" height="100%" className="border-none" showToolbar={false}>
+            <PDFViewer key={`${selectedTemplate}-${showHighlights ? "on" : "off"}-${(resume.section_order || []).join('-')}-${(resume.custom_sections || []).map(s => s.heading + (s.bullets || []).map(b => typeof b === 'string' ? b : b.text || '').join('')).join('|')}`} width="100%" height="100%" className="border-none" showToolbar={false}>
               {selectedTemplate === "templateLetter" ? (
                 <ResumePDFTemplateLetter
                   resume={resume}
