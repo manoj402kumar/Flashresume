@@ -33,6 +33,7 @@ import { User } from "@supabase/supabase-js";
 import CreditBadge from "@/components/CreditBadge";
 import AccountSection from "@/components/AccountSection";
 import LiveDemoSection from "@/components/LiveDemoSection";
+import ModelSelector from "@/components/ModelSelector";
 
 export default function App() {
   const router = useRouter();
@@ -206,7 +207,9 @@ export default function App() {
           setLoading(false);
           return;
         }
-        const analysisResult = await analyzeResume(finalResumeText, jobDescription);
+        // Read R1 model preference (set by the R1 ModelSelector on this page)
+        const r1Model = localStorage.getItem("r1_preferred_model") ?? "";
+        const analysisResult = await analyzeResume(finalResumeText, jobDescription, r1Model);
         localStorage.setItem("analysis", JSON.stringify(analysisResult));
         router.push("/analyze");
       } else {
@@ -441,10 +444,10 @@ export default function App() {
                         }`}
                     >
                       <CloudUpload className="text-primary w-12 h-12 mb-4" />
-                      <span className="font-headline text-on-background font-bold text-center block max-w-[90%] truncate px-2">
+                      <span className="font-headline text-on-background font-bold text-center">
                         {file ? file.name : "Drop your current resume"}
                       </span>
-                      <span className="text-sm text-on-surface-variant mt-2 text-center">PDF, DOCX (Max 10MB)</span>
+                      <span className="text-sm text-on-surface-variant mt-2 text-center">PDF, DOCX, JPG, PNG (Max 10MB)</span>
                     </label>
                   </>
                 ) : (
@@ -478,7 +481,7 @@ export default function App() {
                         activeCls: "bg-surface-container-lowest text-primary shadow-sm border border-surface-container-highest",
                         radioBorder: "border-primary",
                         radioDot: "bg-primary",
-                        label: "JD",
+                        label: "With JD",
                       },
                       {
                         id: "no_jd" as const,
@@ -492,7 +495,7 @@ export default function App() {
                         activeCls: "bg-surface-container-lowest text-primary shadow-sm border border-surface-container-highest",
                         radioBorder: "border-primary",
                         radioDot: "bg-primary",
-                        label: "No Changes",
+                        label: "No Change",
                       }
                     ] as const).map((opt) => {
                       const isActive = optimizeMode === opt.id;
@@ -555,6 +558,24 @@ export default function App() {
                     {parsing ? "Parsing..." : "See Parsed Text"}
                   </button>
                 )}
+
+                {/* ── Model Selectors ── */}
+
+                {/* With JD: R1 selector above the submit button */}
+                {optimizeMode === "jd" && (
+                  <ModelSelector storageKey="r1_preferred_model" label="R1 Model (Analysis)" />
+                )}
+
+                {/* No JD: R2 selector above the submit button */}
+                {optimizeMode === "no_jd" && (
+                  <ModelSelector storageKey="preferred_model" label="R2 Model (Generation)" />
+                )}
+
+                {/* No Change: R2 selector above the submit button */}
+                {optimizeMode === "manual" && (
+                  <ModelSelector storageKey="preferred_model" label="R2 Model (Generation)" />
+                )}
+
                 <button
                   onClick={handleGenerate}
                   disabled={loading}
