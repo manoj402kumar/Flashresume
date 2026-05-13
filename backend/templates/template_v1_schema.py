@@ -31,7 +31,7 @@ class Project(BaseModel):
 
 class TechnicalSkills(BaseModel):
     languages: list[str]
-    frameworks: list[str]
+    frameworks_and_libraries: list[str]
     databases: list[str]
     cloud_services: list[str]
     developer_tools: list[str]
