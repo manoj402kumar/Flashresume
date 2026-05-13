@@ -441,10 +441,10 @@ export default function App() {
                         }`}
                     >
                       <CloudUpload className="text-primary w-12 h-12 mb-4" />
-                      <span className="font-headline text-on-background font-bold text-center">
+                      <span className="font-headline text-on-background font-bold text-center block max-w-[90%] truncate px-2">
                         {file ? file.name : "Drop your current resume"}
                       </span>
-                      <span className="text-sm text-on-surface-variant mt-2 text-center">PDF, DOCX, JPG, PNG (Max 10MB)</span>
+                      <span className="text-sm text-on-surface-variant mt-2 text-center">PDF, DOCX (Max 10MB)</span>
                     </label>
                   </>
                 ) : (
