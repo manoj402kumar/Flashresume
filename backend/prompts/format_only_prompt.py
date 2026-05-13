@@ -59,7 +59,7 @@ OUTPUT FORMAT (Template v1):
   ],
   "technical_skills": {{
     "languages": ["<exact from RESUME_TEXT>"],
-    "frameworks": ["<exact from RESUME_TEXT>"],
+    "frameworks_and_libraries": ["<exact from RESUME_TEXT>"],
     "databases": ["<exact from RESUME_TEXT>"],
     "cloud_services": ["<exact from RESUME_TEXT>"],
     "developer_tools": ["<exact from RESUME_TEXT>"],

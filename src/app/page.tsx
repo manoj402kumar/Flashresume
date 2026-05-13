@@ -478,7 +478,7 @@ export default function App() {
                         activeCls: "bg-surface-container-lowest text-primary shadow-sm border border-surface-container-highest",
                         radioBorder: "border-primary",
                         radioDot: "bg-primary",
-                        label: "With JD",
+                        label: "JD",
                       },
                       {
                         id: "no_jd" as const,
@@ -492,7 +492,7 @@ export default function App() {
                         activeCls: "bg-surface-container-lowest text-primary shadow-sm border border-surface-container-highest",
                         radioBorder: "border-primary",
                         radioDot: "bg-primary",
-                        label: "No Change",
+                        label: "No Changes",
                       }
                     ] as const).map((opt) => {
                       const isActive = optimizeMode === opt.id;

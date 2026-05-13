@@ -27,7 +27,7 @@ const styles = StyleSheet.create({
   page: {
     paddingTop: "0.5in",
     paddingBottom: "0.5in",
-    paddingHorizontal: "0.75in",
+    paddingHorizontal: "0.65in",
     fontSize: 11,
     fontFamily: "Times New Roman",
     lineHeight: 1.15,
@@ -403,11 +403,11 @@ export default function ResumePDFTemplateA4({ resume, showHighlights = false, ma
                         />
                       </View>
                     )}
-                    {resume.technical_skills.frameworks.length > 0 && (
+                    {resume.technical_skills.frameworks_and_libraries.length > 0 && (
                       <View style={styles.skillCategory}>
                         <Text style={styles.skillLabel}>Frameworks & Libraries:</Text>
                         <HighlightedText
-                          text={resume.technical_skills.frameworks.join(", ")}
+                          text={resume.technical_skills.frameworks_and_libraries.join(", ")}
                           matched={matchedKeywords}
                           missing={missingKeywords}
                           showHighlights={showHighlights}

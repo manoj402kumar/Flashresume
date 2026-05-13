@@ -400,7 +400,7 @@ OUTPUT FORMAT (Template v1):
   ],
   "technical_skills": {{
     "languages": ["Skill 1", "Skill 2", "...(STRICT MAX 7 ITEMS)"],
-    "frameworks": ["Skill 1", "Skill 2", "...(STRICT MAX 7 ITEMS)"],
+    "frameworks_and_libraries": ["Skill 1", "Skill 2", "...(STRICT MAX 7 ITEMS)"],
     "databases": ["Skill 1", "Skill 2", "...(STRICT MAX 7 ITEMS)"],
     "cloud_services": ["Skill 1", "Skill 2", "...(STRICT MAX 7 ITEMS)"],
     "developer_tools": ["Skill 1", "Skill 2", "...(STRICT MAX 7 ITEMS)"],

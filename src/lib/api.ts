@@ -161,7 +161,7 @@ export interface TemplateV1 {
   certifications_and_achievements?: string[] | null;
   technical_skills: {
     languages: string[];
-    frameworks: string[];
+    frameworks_and_libraries: string[];
     databases: string[];
     cloud_services: string[];
     developer_tools: string[];

@@ -1786,16 +1786,16 @@ export default function ResultPage() {
                                       />
                                     </div>
                                   )}
-                                  {(editMode || resume.technical_skills.frameworks.length > 0) && (
+                                  {(editMode || resume.technical_skills.frameworks_and_libraries.length > 0) && (
                                     <div>
                                       <p className="font-semibold text-on-background mb-2">Frameworks & Libraries:</p>
                                       <EditableSkillTags
-                                        skills={resume.technical_skills.frameworks}
+                                        skills={resume.technical_skills.frameworks_and_libraries}
                                         onChange={(newSkills) =>
                                           updateResume({
                                             technical_skills: {
                                               ...resume.technical_skills,
-                                              frameworks: newSkills,
+                                              frameworks_and_libraries: newSkills,
                                             },
                                           })
                                         }
