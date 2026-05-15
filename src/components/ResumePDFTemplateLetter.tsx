@@ -468,6 +468,37 @@ export default function ResumePDFTemplateLetter({ resume, showHighlights = false
                 </View>
               );
             default:
+              if (sectionId.startsWith("custom_")) {
+                const customSection = resume.custom_sections?.find(s => s.id === sectionId);
+                if (!customSection || !customSection.bullets || customSection.bullets.length === 0) return null;
+                return (
+                  <View key={sectionId} wrap={false}>
+                    <Text style={styles.sectionTitle}>{customSection.heading}</Text>
+                    <View style={styles.sectionDivider} />
+                    <View style={styles.bullets}>
+                      {customSection.bullets.map((bulletObj, bidx) => {
+                        const text = typeof bulletObj === 'string' ? bulletObj : bulletObj.text;
+                        const url = typeof bulletObj === 'string' ? undefined : bulletObj.url;
+                        if (!text?.trim()) return null;
+                        return (
+                          <View key={bidx} style={styles.bullet}>
+                            <Text style={styles.bulletPoint}>•</Text>
+                            {url ? (
+                              <Text style={{ ...styles.bulletText, textDecoration: 'underline', color: '#000' }}>
+                                <Link src={url.startsWith('http') ? url : `https://${url}`} style={styles.link}>
+                                  {text}
+                                </Link>
+                              </Text>
+                            ) : (
+                              <Text style={styles.bulletText}>{text}</Text>
+                            )}
+                          </View>
+                        );
+                      })}
+                    </View>
+                  </View>
+                );
+              }
               return null;
           }
         })}
