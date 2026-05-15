@@ -21,7 +21,8 @@ MISTRAL_R2_CHAIN = [
     "mistral-tiny-latest",    # ~5s — last resort
 ]
 
-client = Mistral(api_key=os.getenv("MISTRAL_API_KEY"))
+api_key = os.getenv("MISTRAL_API_KEY") or os.getenv("MISTRAL_R1_API_KEY") or os.getenv("MISTRAL_R2_API_KEY")
+client = Mistral(api_key=api_key)
 
 
 def _extract_text(response) -> str | None:

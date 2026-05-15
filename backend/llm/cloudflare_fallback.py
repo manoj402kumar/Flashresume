@@ -6,8 +6,8 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-CLOUDFLARE_ACCOUNT_ID = os.getenv("CLOUDFLARE_ACCOUNT_ID")
-CLOUDFLARE_API_TOKEN  = os.getenv("CLOUDFLARE_API_TOKEN")
+CLOUDFLARE_ACCOUNT_ID = os.getenv("CLOUDFLARE_ACCOUNT_ID") or os.getenv("CLOUDFLARE_R1_ACCOUNT_ID") or os.getenv("CLOUDFLARE_R2_ACCOUNT_ID")
+CLOUDFLARE_API_TOKEN  = os.getenv("CLOUDFLARE_API_TOKEN") or os.getenv("CLOUDFLARE_R1_API_TOKEN") or os.getenv("CLOUDFLARE_R2_API_TOKEN")
 
 CLOUDFLARE_CHAIN = [
     "@cf/meta/llama-3.1-8b-instruct",        # ~5s

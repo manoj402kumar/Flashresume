@@ -21,7 +21,8 @@ GROQ_R2_CHAIN = [
     "llama-3.1-8b-instant",
 ]
 
-client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+api_key = os.getenv("GROQ_API_KEY") or os.getenv("GROQ_R1_API_KEY") or os.getenv("GROQ_R2_API_KEY")
+client = Groq(api_key=api_key)
 
 
 def _extract_text(response) -> str | None:

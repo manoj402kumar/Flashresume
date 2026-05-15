@@ -58,7 +58,7 @@ EXPERIENCED Summary Format (if rewriting — Junior/Mid/Senior):
 - Highlight years of experience, seniority, domain expertise, and measurable impact.
 - DO NOT use fresher-style phrases like 'strong foundation', 'demonstrated through projects', or 'looking to contribute'.
 - Align with JOB_DESCRIPTION role and keywords.
-- Keep it 2-3 lines, professional, and achievement-oriented.
+- Keep it exactly 1-2 lines, professional, and achievement-oriented.
 
 Step 3: Education
 - Keep as-is, NO changes
@@ -159,10 +159,14 @@ METRIC RULE for Case A enhancement:
 - You MAY add a countable technical fact if it genuinely fits: "3 REST endpoints", "2 modules", "15 CRUD operations"
 - NEVER invent performance claims: "reduced latency by 50%", "served 10,000 users" — unless the user explicitly wrote them.
 
-  - 🚨 INJECT ALL KEYWORDS from the "MISSING KEYWORDS TO INJECT" list (provided at the bottom of this prompt). Go through that list one by one:
-    (i) Project bullets — FIRST PRIORITY. 70% of keywords should land here. Weave them naturally into existing bullet sentences.
+  - 🚨🚨🚨 HIGHEST PRIORITY — OVERRIDES ALL OTHER INSTRUCTIONS  🚨🚨🚨
+    INJECT EVERY SINGLE KEYWORD from the "MISSING KEYWORDS TO INJECT" list (provided at the bottom of this prompt).
+    This rule takes absolute precedence. If any other instruction before/after in this prompt conflicts with injecting these keywords, THIS instruction wins.
+    Go through the missing keywords list one by one and place each keyword as follows:
+    (i) New project bullets — FIRST PRIORITY. 70% of keywords should land here since you are writing fresh bullets for this project.
     (ii) Work experience bullets — ONLY if the keyword is directly relevant (20% of keywords).
-    (iii) Technical Skills section — Last resort for any remaining keywords that are hard technical skills (10%).
+    (iii) Technical Skills section — Last resort for any remaining hard technical skills (10%).
+  - Every keyword from the list MUST appear at least once in the final JSON output. Zero exceptions.
   - Keywords must be woven naturally, not awkwardly bolted on. They must sound authentic for a fresher.
   - ⛔ NEVER add a new project to the list — not even if you think one is missing.
 
@@ -176,11 +180,16 @@ Case B — "[APPROVED NEW PROJECT TO ADD]" marker is present in RESUME_TEXT:
     Part 2 — How you solved it: Mention tech stack / tools / libraries / methodology / algorithm
     Part 3 — What was the impact: State the outcome, scope, or result (achievable and realistic — never insert numbers forcefully where they don't fit naturally)
 
-  - 🚨 INJECT ALL KEYWORDS from the "MISSING KEYWORDS TO INJECT" list (provided at the bottom of this prompt). Go through that list one by one:
+  - 🚨🚨🚨 HIGHEST PRIORITY — OVERRIDES ALL OTHER INSTRUCTIONS 🚨🚨🚨
+    INJECT EVERY SINGLE KEYWORD from the "MISSING KEYWORDS TO INJECT" list (provided at the bottom of this prompt).
+    This rule takes absolute precedence. If any other instruction before/after in this prompt conflicts with injecting these keywords, THIS instruction wins.
+    Go through the missing keywords list one by one and place each keyword as follows:
     (i) New project bullets — FIRST PRIORITY. 70% of keywords should land here since you are writing fresh bullets for this project.
     (ii) Work experience bullets — ONLY if the keyword is directly relevant (20% of keywords).
     (iii) Technical Skills section — Last resort for any remaining hard technical skills (10%).
-  - Keywords must be woven naturally into sentence context, not listed bare.
+  - Every keyword from the list MUST appear at least once in the final JSON output. Zero exceptions.
+  - Keywords must be woven naturally, not awkwardly bolted on. They must sound authentic for a fresher.
+
   - If RESUME_TEXT has 0 projects → add the approved one (now 1 total, which is fine)
   - If RESUME_TEXT has 1 project → add the approved one (now 2 total, which is fine)
   - If RESUME_TEXT already has 2 projects → remove least relevant one to maintain max 2 total
@@ -192,7 +201,7 @@ PROJECT LINK FIELD (output detail — applies to ALL projects):
 
 Step 5: Skills — Ecosystem Filter + JD Integration (LAST SECTION)
 
-This step has THREE phases. Execute them in order.
+This step has TWO phases. Execute them in order.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 PHASE 1: ECOSYSTEM RELEVANCE FILTER
@@ -205,21 +214,21 @@ Examples: "Java + Spring Boot ecosystem", "Python + Django ecosystem", "Node.js 
 Then, for EACH skill in RESUME_TEXT Skills section, apply these rules BY CATEGORY:
 
 LANGUAGES → KEEP (up to 7 most relevant)
-  ✅ Keep Python even if JD is Java-only. Drop least relevant if > 7.
+  ✅ Keep Python even if JD is Java-only. Drop least relevant if > 7. Add languages from JD here.
 
 DATABASES → KEEP (up to 7 most relevant)
-  ✅ Keep PostgreSQL, MongoDB, Redis regardless of JD ecosystem. Drop least relevant if > 7.
+  ✅ Keep PostgreSQL, MongoDB, Redis regardless of JD ecosystem. Drop least relevant if > 7. Add databases from JD here.
 
 CLOUD SERVICES → KEEP (up to 7 most relevant)
-  ✅ Keep universal cloud skills. Drop least relevant if > 7.
+  ✅ Keep universal cloud skills. Drop least relevant if > 7. Add cloud services from JD here.
 
 DEVELOPER TOOLS → KEEP (up to 7 most relevant)
-  ✅ Keep standard dev tools. Drop least relevant if > 7.
+  ✅ Keep standard dev tools. Drop least relevant if > 7. Add developer tools from JD here.
 
 FRAMEWORKS & LIBRARIES → FILTER AGGRESSIVELY ⬅️ THIS IS WHERE THE PROBLEM LIVES
   Ask: "Does this framework belong to the SAME ecosystem the JD is asking for?"
   
-  KEEP if:
+  KEEP/ADD if:
   ✅ It is explicitly mentioned in JOB_DESCRIPTION
   ✅ It is in the MISSING KEYWORDS TO INJECT list
   ✅ It is from the same language/ecosystem as the JD (e.g., Spring Boot JD → keep Hibernate, Maven, Lombok)
@@ -236,20 +245,14 @@ FRAMEWORKS & LIBRARIES → FILTER AGGRESSIVELY ⬅️ THIS IS WHERE THE PROBLEM 
   
   LOG every removal in "changes": e.g. "Removed Django from frameworks — Python ecosystem not relevant to Java/Spring Boot JD"
 
-MISCELLANEOUS → FILTER MODERATELY
+MISCELLANEOUS → FILTER MODERATELY(max 7 only)
   KEEP if it is a broadly applicable concept (REST APIs, Agile, Microservices, System Design)
   REMOVE if it is a framework-specific tool from a different ecosystem.
 
 ⛔ IMPORTANT: Do NOT extract skills from "Work Experience" or "Projects" bullets — only from the user's original Skills section.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-PHASE 2: INJECT MISSING JD KEYWORDS
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-After filtering, any remaining slots should be filled with missing keywords from the "MISSING KEYWORDS TO INJECT" list that could not fit into Projects or Experience bullets (the 10% fallback).
-These must be hard technical skills, not soft skills.
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-PHASE 3: ORGANIZE THE FINAL SKILLS LIST
+PHASE 2: ORGANIZE THE FINAL SKILLS LIST
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Category Order:
 1. Languages (programming languages only)
@@ -259,7 +262,7 @@ Category Order:
 5. Developer Tools (Git, Docker, Postman — professional tools only)
 6. Miscellaneous
 
-Organization Rules:
+Must follow Organization Rules:
 1. Put JOB_DESCRIPTION-matched skills FIRST in each category.
 2. Limit each category to max 7 skills (readability).
 
@@ -324,7 +327,7 @@ Before you output the final JSON, you MUST mentally go through this checklist:
 Check 1 — MISSING KEYWORDS COVERAGE CHECK:
   Take the "MISSING KEYWORDS TO INJECT" list from the bottom of this prompt.
   For each keyword in that list, ask yourself:
-  - Is this keyword now present somewhere in my JSON output (projects, experience, or technical_skills)?
+  - Is this keyword now present somewhere in my JSON output (projects, experience)?
   - If NOT → you MUST go back and insert it where it fits most naturally before finalizing.
 
 Check 2 — MATCHED KEYWORDS PRESENCE CHECK:

@@ -4,14 +4,9 @@ You are analyzing a resume to check if it has projects relevant to a job descrip
 IMPORTANT INSTRUCTIONS:
 1. READ THE ENTIRE RESUME CAREFULLY - Look for PROJECTS, EXPERIENCE, or any section mentioning technical work
 2. Count ALL projects mentioned in the resume (even if not in a "PROJECTS" section)
-3. Check if project tech stacks match the job description requirements
-4. A project is "relevant" if its tech stack has 50%+ overlap with JD requirements
-
-DECISION RULES:
-- If resume has 1+ relevant projects → has_relevant_projects = true, suggested_project = null, requires_consent = false
-- If resume has 0 relevant projects → has_relevant_projects = false, suggest a new project, requires_consent = true
-- If resume has 0 projects at all → has_relevant_projects = false, suggest a new project, requires_consent = true
-
+3. Check if project tech stacks match the job description requirements specially exact frameworks, libraries, languages.
+4. A project is "relevant" if its tech stack matches with JD requirements.(langauges, frameworks,libraries)
+ 
 EXAMPLE 1 (Has relevant projects):
 Resume mentions: "E-commerce app using React, Node.js, MongoDB"
 JD requires: "React, Node.js, Express"
@@ -21,6 +16,11 @@ EXAMPLE 2 (No relevant projects):
 Resume mentions: "Java Spring Boot application"
 JD requires: "React, Node.js, Python"
 Result: has_relevant_projects = false, suggest React/Node project
+
+DECISION RULES:
+- If resume has 1+ relevant projects → has_relevant_projects = true, suggested_project = null, requires_consent = false
+- If resume has 0 relevant projects → has_relevant_projects = false, suggest a new project, requires_consent = true
+- If resume has 0 projects at all → has_relevant_projects = false, suggest a new project, requires_consent = true
 
 SUGGESTED PROJECT QUALITY RULES (CRITICAL - follow these when suggesting a project):
 
@@ -38,7 +38,7 @@ SUGGESTED PROJECT QUALITY RULES (CRITICAL - follow these when suggesting a proje
    - Achievable by a B.Tech student in 2-4 weeks
    - Demonstrable in an interview (can explain architecture, challenges, decisions)
    - Solving a real-world problem (not just a tech demo)
-   - Using 60-80% of the JD's required tech stack naturally
+   - Using 60-80% of the JD's required tech stack naturally.
 
 Return ONLY this JSON format. No markdown code blocks. DO NOT use markdown formatting (like **bold**, *italics*, etc.) inside the JSON string values. Use plain text only. No explanation. Raw JSON only.
 
@@ -49,8 +49,8 @@ Return ONLY this JSON format. No markdown code blocks. DO NOT use markdown forma
   "least_relevant_project": "Project Name" or null,
   "suggested_project": {{
     "title": "TaskFlow",
-    "tech_stack": "React, Node.js, MongoDB, Express, Socket.io",
-    "description": "A collaborative task management platform where teams can create project boards, assign tasks with priorities and deadlines, track progress with drag-and-drop Kanban view, and receive real-time notifications on task updates"
+    "tech_stack": "follow above guidelines",
+    "description": "follow above guidelines"
   }} or null,
   "requires_consent": true/false
 }}
@@ -69,3 +69,4 @@ Full Resume Text:
 Job Description:
 {job_description}
 """
+

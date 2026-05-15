@@ -2,9 +2,11 @@ import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
-from routers import parse, analyze, generate, payments, admin, sessions, feedback
 
+# Load environment variables before importing routers that depend on them
 load_dotenv()
+
+from routers import parse, analyze, generate, payments, admin, sessions, feedback
 
 app = FastAPI(title="FlashResume API", version="1.0.0")
 

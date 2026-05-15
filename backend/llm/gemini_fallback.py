@@ -19,7 +19,8 @@ GEMINI_R2_CHAIN = [
     "gemma-3-27b-it",                 # ~10s
 ]
 
-client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
+api_key = os.getenv("GEMINI_API_KEY") or os.getenv("GEMINI_R1_API_KEY") or os.getenv("GEMINI_R2_API_KEY")
+client = genai.Client(api_key=api_key)
 
 
 def _extract_text(response) -> str | None:
