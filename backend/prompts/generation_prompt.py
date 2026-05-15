@@ -306,7 +306,7 @@ RULES (MUST FOLLOW):
 8. Keep dates, companies, institutions exactly as in RESUME_TEXT
 9. Projects: show ONLY projects that exist in RESUME_TEXT (max 2, min 0)
 10. PRESERVE good content from RESUME_TEXT — only enhance weak content
-11. Return ONLY valid JSON. No markdown code blocks. No **bold**, no *italics*, no # headers inside JSON string values. Plain text only. No explanation outside the JSON.
+11. Return ONLY valid JSON. No markdown code blocks. No **bold**, no *italics*, no # headers inside JSON string values. Plain text only. No explanation outside the JSON and inside it.
 12. NEVER output null for string fields (degree, company, job_title, etc.). Use empty string "" if information is missing.
 13. In "changes" field, list EVERY modification with BEFORE → AFTER with text to show the user what exactly changed or updated:
    - "Kept summary as-is (already good)"
