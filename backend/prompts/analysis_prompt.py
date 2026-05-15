@@ -1,6 +1,6 @@
 ANALYSIS_PROMPT = """
 Act as best ATS resume analyzer wrt given job description.
-Analyze this resume against the job description. Calculate ATS score as instructed below.
+Analyze this resume against the job description. Calculate ATS score and missing skills as instructed below.
 
 Return ONLY valid JSON. No markdown code blocks. DO NOT use markdown formatting (like **bold**, *italics*, etc.) inside the JSON string values. Use plain text only. No explanation. Raw JSON only.
 
