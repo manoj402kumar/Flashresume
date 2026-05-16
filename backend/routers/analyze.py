@@ -1,3 +1,4 @@
+import asyncio
 from fastapi import APIRouter, HTTPException
 from models.request_models import AnalyzeRequest
 from models.response_models import CombinedAnalysisResponse
@@ -7,7 +8,7 @@ from services.project_checker import check_project_relevance
 router = APIRouter()
 
 @router.post("/analyze", response_model=CombinedAnalysisResponse)
-def analyze_resume(request: AnalyzeRequest):
+async def analyze_resume(request: AnalyzeRequest):
     """
     Combined endpoint: Analyze resume against JD for ATS score AND check project relevance.
     
@@ -19,17 +20,11 @@ def analyze_resume(request: AnalyzeRequest):
     This replaces the previous separate /analyze and /check-projects endpoints.
     """
     try:
-        # Step 1: ATS Analysis
-        ats_result = score_resume(
-            request.resume_text,
-            request.job_description,
-        )
+        # Step 1: Run ATS Analysis (with preferred model) and Project Relevance Check concurrently
+        ats_task = score_resume(request.resume_text, request.job_description, request.preferred_model or "")
+        project_task = check_project_relevance(request.resume_text, request.job_description, request.preferred_model or "")
         
-        # Step 2: Project Relevance Check
-        project_result = check_project_relevance(
-            request.resume_text,
-            request.job_description,
-        )
+        ats_result, project_result = await asyncio.gather(ats_task, project_task)
         
         # Combine both results into single response
         return CombinedAnalysisResponse(

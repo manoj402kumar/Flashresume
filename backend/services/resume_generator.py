@@ -6,7 +6,7 @@ from prompts.format_only_prompt import FORMAT_ONLY_PROMPT
 from llm.master_llm_caller import call_llm_r2
 from templates.template_v1_schema import TemplateV1
 
-def generate_resume(resume_text: str, job_description: str, ats_score_before: int, approved_project: str = "", missing_keywords: list[str] = None, no_ai_changes: bool = False) -> dict:
+async def generate_resume(resume_text: str, job_description: str, ats_score_before: int, approved_project: str = "", missing_keywords: list[str] = None, no_ai_changes: bool = False, preferred_model: str = "") -> dict:
     is_no_jd_mode = not job_description or not job_description.strip()
 
     # Build prompt with approved project ONLY if we are in JD optimization mode
@@ -37,7 +37,7 @@ def generate_resume(resume_text: str, job_description: str, ats_score_before: in
             missing_keywords=", ".join(missing_keywords) if missing_keywords else "None"
         )
 
-    result = call_llm_r2(prompt)
+    result = await call_llm_r2(prompt, preferred_model)
     
     # Check if LLM call failed
     if not result["success"]:

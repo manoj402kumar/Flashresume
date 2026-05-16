@@ -1,18 +1,29 @@
 import os
 import re
 import time
-import requests
+import httpx
 from dotenv import load_dotenv
 
 load_dotenv()
 
-CLOUDFLARE_ACCOUNT_ID = os.getenv("CLOUDFLARE_ACCOUNT_ID") or os.getenv("CLOUDFLARE_R1_ACCOUNT_ID") or os.getenv("CLOUDFLARE_R2_ACCOUNT_ID")
-CLOUDFLARE_API_TOKEN  = os.getenv("CLOUDFLARE_API_TOKEN") or os.getenv("CLOUDFLARE_R1_API_TOKEN") or os.getenv("CLOUDFLARE_R2_API_TOKEN")
+# -------------------------------------------------------------------
+# Dual-credential architecture (ASYNC):
+#   R1 uses  CLOUDFLARE_R1_ACCOUNT_ID + CLOUDFLARE_R1_API_TOKEN  timeout=30s
+#   R2 uses  CLOUDFLARE_R2_ACCOUNT_ID + CLOUDFLARE_R2_API_TOKEN  timeout=90s
+#
+# Replaced requests.post with httpx.AsyncClient for non-blocking calls.
+# Active Cloudflare model in the 16-model chain:
+#   Rank 11: @cf/meta/llama-3.1-8b-instruct
+# -------------------------------------------------------------------
+_CF_R1_ACCOUNT_ID = os.getenv("CLOUDFLARE_R1_ACCOUNT_ID")
+_CF_R1_API_TOKEN  = os.getenv("CLOUDFLARE_R1_API_TOKEN")
 
-CLOUDFLARE_CHAIN = [
-    "@cf/meta/llama-3.1-8b-instruct",        # ~5s
-    "@cf/mistral/mistral-7b-instruct-v0.1",  # ~15s
-]
+_CF_R2_ACCOUNT_ID = os.getenv("CLOUDFLARE_R2_ACCOUNT_ID")
+_CF_R2_API_TOKEN  = os.getenv("CLOUDFLARE_R2_API_TOKEN")
+
+# R1 timeout (seconds) and R2 timeout (seconds)
+_CF_R1_TIMEOUT = 30
+_CF_R2_TIMEOUT = 90
 
 
 def _extract_text(data: dict) -> str | None:
@@ -46,17 +57,17 @@ def _extract_text(data: dict) -> str | None:
         return None
 
 
-def _call_cloudflare_single(model: str, prompt: str, max_tokens: int, retries: int = 1) -> dict:
+async def _call_cloudflare_single(account_id: str, api_token: str, model: str, prompt: str, max_tokens: int, timeout_secs: int, retries: int = 1) -> dict:
     attempts = []
     for attempt in range(retries + 1):
         try:
             start = time.time()
             url = (
                 f"https://api.cloudflare.com/client/v4/accounts/"
-                f"{CLOUDFLARE_ACCOUNT_ID}/ai/run/{model}"
+                f"{account_id}/ai/run/{model}"
             )
             headers = {
-                "Authorization": f"Bearer {CLOUDFLARE_API_TOKEN}",
+                "Authorization": f"Bearer {api_token}",
                 "Content-Type": "application/json",
             }
             payload = {
@@ -64,7 +75,8 @@ def _call_cloudflare_single(model: str, prompt: str, max_tokens: int, retries: i
                 "temperature": 0.1,
                 "max_tokens": max_tokens,
             }
-            response = requests.post(url, headers=headers, json=payload, timeout=60)
+            async with httpx.AsyncClient(timeout=timeout_secs) as client:
+                response = await client.post(url, headers=headers, json=payload)
             elapsed = round(time.time() - start, 2)
 
             if response.status_code == 429:
@@ -79,7 +91,8 @@ def _call_cloudflare_single(model: str, prompt: str, max_tokens: int, retries: i
             if response.status_code in (500, 502, 503):
                 attempts.append({"model": model, "status": f"{response.status_code} server error"})
                 if attempt < retries:
-                    time.sleep(1)
+                    import asyncio
+                    await asyncio.sleep(1)
                 continue
 
             response.raise_for_status()
@@ -93,47 +106,38 @@ def _call_cloudflare_single(model: str, prompt: str, max_tokens: int, retries: i
                 "speed": elapsed, "attempts": attempts + [{"model": model, "status": "pass"}],
             }
 
-        except requests.exceptions.Timeout:
-            attempts.append({"model": model, "status": "timeout_60s"})
+        except httpx.TimeoutException:
+            attempts.append({"model": model, "status": f"timeout_{timeout_secs}s"})
             if attempt < retries:
-                time.sleep(1)
+                import asyncio
+                await asyncio.sleep(1)
             continue
-        except requests.exceptions.ConnectionError as e:
+        except httpx.ConnectError as e:
             attempts.append({"model": model, "status": f"connection_error:{str(e)[:40]}"})
             if attempt < retries:
-                time.sleep(1)
+                import asyncio
+                await asyncio.sleep(1)
             continue
         except Exception as e:
             attempts.append({"model": model, "status": str(e)[:80]})
             if attempt < retries:
-                time.sleep(1)
+                import asyncio
+                await asyncio.sleep(1)
             else:
                 break
 
     return {"success": False, "text": None, "model": None, "speed": None, "attempts": attempts}
 
 
-def _call_cloudflare_chain(prompt: str, chain: list, max_tokens: int) -> dict:
-    attempts = []
-    for model in chain:
-        result = _call_cloudflare_single(model, prompt, max_tokens)
-        attempts.extend(result.get("attempts", []))
-        if result["success"]:
-            result["attempts"] = attempts
-            return result
-    return {"success": False, "text": None, "model": None, "speed": None, "attempts": attempts}
+async def call_single_cloudflare_r1(model: str, prompt: str, max_tokens: int = 2500) -> dict:
+    """Call exactly one Cloudflare model using R1 credentials (Account 1). R1 timeout=30s."""
+    return await _call_cloudflare_single(
+        _CF_R1_ACCOUNT_ID, _CF_R1_API_TOKEN, model, prompt, max_tokens, _CF_R1_TIMEOUT
+    )
 
 
-def call_cloudflare_r1(prompt: str) -> dict:
-    """Cloudflare chain for Request-1 — ATS scoring + project analysis."""
-    return _call_cloudflare_chain(prompt, CLOUDFLARE_CHAIN, max_tokens=800)
-
-
-def call_cloudflare_r2(prompt: str) -> dict:
-    """Cloudflare chain for Request-2 — resume generation."""
-    return _call_cloudflare_chain(prompt, CLOUDFLARE_CHAIN, max_tokens=3500)
-
-
-def call_single_cloudflare(model: str, prompt: str, max_tokens: int = 3500) -> dict:
-    """Call exactly one Cloudflare model. Used by master flat chain."""
-    return _call_cloudflare_single(model, prompt, max_tokens)
+async def call_single_cloudflare_r2(model: str, prompt: str, max_tokens: int = 4500) -> dict:
+    """Call exactly one Cloudflare model using R2 credentials (Account 2). R2 timeout=90s."""
+    return await _call_cloudflare_single(
+        _CF_R2_ACCOUNT_ID, _CF_R2_API_TOKEN, model, prompt, max_tokens, _CF_R2_TIMEOUT
+    )

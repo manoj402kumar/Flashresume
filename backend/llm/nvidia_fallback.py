@@ -7,12 +7,14 @@ load_dotenv()
 
 # -------------------------------------------------------------------
 # Dual-client architecture — LAZY INITIALIZED (ASYNC):
-#   R1 client  → MISTRAL_R1_API_KEY  (Account / Email 1)  timeout=30s
-#   R2 client  → MISTRAL_R2_API_KEY  (Account / Email 2)  timeout=90s
+#   R1 client  → NVIDIA_R1_API_KEY  (Account / Email 1)  timeout=30s
+#   R2 client  → NVIDIA_R2_API_KEY  (Account / Email 2)  timeout=90s
 #
 # Clients are created on first use, NOT at module import time.
-# Uses AsyncMistral for non-blocking async calls.
+# NVIDIA NIM uses an OpenAI-compatible endpoint — uses AsyncOpenAI.
 # -------------------------------------------------------------------
+_NVIDIA_BASE_URL = "https://integrate.api.nvidia.com/v1"
+
 _client_r1 = None
 _client_r2 = None
 
@@ -20,27 +22,27 @@ _client_r2 = None
 def _get_client_r1():
     global _client_r1
     if _client_r1 is None:
-        from mistralai.client import Mistral
-        api_key = os.getenv("MISTRAL_R1_API_KEY")
+        from openai import AsyncOpenAI
+        api_key = os.getenv("NVIDIA_R1_API_KEY")
         if not api_key:
             return None
-        _client_r1 = Mistral(api_key=api_key, timeout_ms=30000)
+        _client_r1 = AsyncOpenAI(base_url=_NVIDIA_BASE_URL, api_key=api_key, timeout=30)
     return _client_r1
 
 
 def _get_client_r2():
     global _client_r2
     if _client_r2 is None:
-        from mistralai.client import Mistral
-        api_key = os.getenv("MISTRAL_R2_API_KEY")
+        from openai import AsyncOpenAI
+        api_key = os.getenv("NVIDIA_R2_API_KEY")
         if not api_key:
             return None
-        _client_r2 = Mistral(api_key=api_key, timeout_ms=90000)
+        _client_r2 = AsyncOpenAI(base_url=_NVIDIA_BASE_URL, api_key=api_key, timeout=90)
     return _client_r2
 
 
 def _extract_text(response) -> str | None:
-    """Safely pull text from Mistral response. Returns None on any structural issue."""
+    """Safely pull text from NVIDIA NIM response (OpenAI-compatible)."""
     try:
         text = response.choices[0].message.content
         if text is None:
@@ -67,18 +69,18 @@ def _extract_text(response) -> str | None:
         return None
 
 
-async def _call_mistral_single(get_client_fn, model: str, prompt: str, max_tokens: int, retries: int = 1) -> dict:
+async def _call_nvidia_single(get_client_fn, model: str, prompt: str, max_tokens: int, retries: int = 1) -> dict:
     client = get_client_fn()
     if client is None:
         return {
             "success": False, "text": None, "model": None, "speed": None,
-            "attempts": [{"model": model, "status": "skipped — Mistral API key not configured"}],
+            "attempts": [{"model": model, "status": "skipped — NVIDIA API key not configured"}],
         }
     attempts = []
     for attempt in range(retries + 1):
         try:
             start = time.time()
-            response = await client.chat.complete_async(
+            response = await client.chat.completions.create(
                 model=model,
                 messages=[{"role": "user", "content": prompt}],
                 temperature=0.1,
@@ -96,20 +98,20 @@ async def _call_mistral_single(get_client_fn, model: str, prompt: str, max_token
         except Exception as e:
             err = str(e)
             attempts.append({"model": model, "status": err[:80]})
-            if any(x in err for x in ["429", "rate_limit", "rate limit", "too many requests"]):
+            if any(x in err for x in ["429", "rate_limit", "rate limit", "too many requests", "RESOURCE_EXHAUSTED"]):
                 break
             if any(x in err for x in ["404", "model_not_found", "does not exist", "No such model"]):
                 break
-            if any(x in err for x in ["401", "403", "invalid_api_key", "Unauthorized"]):
+            if any(x in err for x in ["401", "403", "invalid_api_key", "Unauthorized", "authentication"]):
                 break
-            if "tokens" in err.lower() and ("exceed" in err.lower() or "limit" in err.lower()):
+            if "context_length_exceeded" in err or "maximum context" in err.lower():
                 break
             if any(x in err for x in ["503", "500", "502", "overloaded", "capacity"]):
                 if attempt < retries:
                     import asyncio
                     await asyncio.sleep(1)
                 continue
-            if "timeout" in err.lower() or "timed out" in err.lower() or "ReadTimeout" in err:
+            if "timeout" in err.lower() or "timed out" in err.lower():
                 if attempt < retries:
                     import asyncio
                     await asyncio.sleep(1)
@@ -118,11 +120,11 @@ async def _call_mistral_single(get_client_fn, model: str, prompt: str, max_token
     return {"success": False, "text": None, "model": None, "speed": None, "attempts": attempts}
 
 
-async def call_single_mistral_r1(model: str, prompt: str, max_tokens: int = 2500) -> dict:
-    """Call exactly one Mistral model using the R1 API key (Account 1). R1 timeout=30s."""
-    return await _call_mistral_single(_get_client_r1, model, prompt, max_tokens)
+async def call_single_nvidia_r1(model: str, prompt: str, max_tokens: int = 2500) -> dict:
+    """Call exactly one NVIDIA NIM model using the R1 API key (Account 1). R1 timeout=30s."""
+    return await _call_nvidia_single(_get_client_r1, model, prompt, max_tokens)
 
 
-async def call_single_mistral_r2(model: str, prompt: str, max_tokens: int = 4500) -> dict:
-    """Call exactly one Mistral model using the R2 API key (Account 2). R2 timeout=90s."""
-    return await _call_mistral_single(_get_client_r2, model, prompt, max_tokens)
+async def call_single_nvidia_r2(model: str, prompt: str, max_tokens: int = 4500) -> dict:
+    """Call exactly one NVIDIA NIM model using the R2 API key (Account 2). R2 timeout=90s."""
+    return await _call_nvidia_single(_get_client_r2, model, prompt, max_tokens)

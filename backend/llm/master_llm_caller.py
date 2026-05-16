@@ -1,12 +1,13 @@
 import os
+import asyncio
 from supabase import create_client, Client
 # pyrefly: ignore [missing-import]
 from dotenv import load_dotenv
-from .gemini_fallback     import call_gemini_r1,     call_gemini_r2,     call_single_gemini
-from .mistral_fallback    import call_mistral_r1,    call_mistral_r2,    call_single_mistral
-from .groq_fallback       import call_groq_r1,       call_groq_r2,       call_single_groq
-from .cerebras_fallback   import call_cerebras_r1,   call_cerebras_r2,   call_single_cerebras
-from .cloudflare_fallback import call_cloudflare_r1, call_cloudflare_r2, call_single_cloudflare
+from .gemini_fallback     import call_single_gemini_r1,     call_single_gemini_r2
+from .mistral_fallback    import call_single_mistral_r1,    call_single_mistral_r2
+from .groq_fallback       import call_single_groq_r1,       call_single_groq_r2
+from .cloudflare_fallback import call_single_cloudflare_r1, call_single_cloudflare_r2
+from .nvidia_fallback     import call_single_nvidia_r1,     call_single_nvidia_r2
 
 load_dotenv()
 
@@ -17,44 +18,90 @@ try:
 except Exception:
     supabase = None
 
-# R1 (ATS score JSON + project check): response is small ~200–600 tokens
-# R2 (full resume JSON): response is large ~2500–3200 tokens
-# Tight limits save TPM quota on rate-limited providers (Groq 8K TPM)
+# R1 (ATS score JSON + project check): response is small ~200-600 tokens
+# R2 (full resume JSON): response is large ~2500-3200 tokens
 _R1_MAX_TOKENS = 2500
 _R2_MAX_TOKENS = 4500
 
-# ─────────────────────────────────────────────────────────────────────────────
-# FLAT R1 CHAIN — ATS scoring + project check
-# (provider_name, model_id, single_caller)
-# ─────────────────────────────────────────────────────────────────────────────
-# Speed-first ordering: fast 4-5s models up front, gemma (~10s) pushed to #7
+# =============================================================================
+# FINAL PRODUCTION RANKING — 16 models, same order for both R1 and R2
+# R1 uses Account/Email 1 API keys (*_R1_API_KEY)  — timeout 30s per model
+# R2 uses Account/Email 2 API keys (*_R2_API_KEY)  — timeout 90s per model
+# Both pipelines are fully independent — no shared keys, no shared quotas.
+# =============================================================================
+#
+# RISK 3 FIX: NVIDIA models are interleaved — no two NVIDIA models are adjacent.
+# A single NVIDIA 429 at rank #1 now leaves 10/16 models intact (was 6/16).
+#
+# Rank | Model                                     | Provider    | R1 time | R2 time
+# -----|-------------------------------------------|-------------|---------|--------
+#   1  | mistralai/mixtral-8x22b-instruct-v0.1     | nvidia      | ~10s    | ~15s
+#   2  | mistral-medium-latest                     | mistral     |  ~7s    | ~15s
+#   3  | meta-llama/llama-4-scout-17b-16e-instruct | groq        |  ~6s    | ~15s
+#   4  | mistral-large-latest                      | mistral     |  ~6s    | ~15s
+#   5  | mistralai/mistral-medium-3.5-128b         | nvidia      |  ~6s    | ~15s
+#   6  | gemini-2.5-flash-lite                     | gemini      |  ~8s    | ~15s   <- moved up from #8
+#   7  | mistralai/mistral-nemotron                | nvidia      |  ~6s    | ~40s
+#   8  | ministral-8b-latest                       | mistral     |  ~6s    | ~20s   <- moved up from #9
+#   9  | meta/llama-3.3-70b-instruct               | nvidia      |  ~8s    | ~40s
+#  10  | llama-3.3-70b-versatile                   | groq        | ~15s    | ~30s   <- moved up from #13
+#  11  | mistralai/ministral-14b-instruct-2512      | nvidia      |  ~8s    | ~70s*
+#  12  | @cf/meta/llama-3.1-8b-instruct            | cloudflare  |  ~8s    | ~35s
+#  13  | mistral-small-latest                      | mistral     |  ~6s    | ~50s
+#  14  | mistralai/mistral-small-4-119b-2603       | nvidia      | ~25s    | ~65s*
+#  15  | mistral-tiny-latest                       | mistral     |  ~5s    | ~15s
+#  16  | open-mistral-nemo                         | mistral     |  ~6s    | ~40s
+#
+# * Ranks 11 and 14 have R2 times that approach the 90s timeout — they will
+#   complete in normal conditions but may timeout under NVIDIA capacity pressure.
+#
+# Provider spread per rank: nvidia(1), mistral(2), groq(3), mistral(4), nvidia(5),
+#   gemini(6), nvidia(7), mistral(8), nvidia(9), groq(10), nvidia(11),
+#   cloudflare(12), mistral(13), nvidia(14), mistral(15), mistral(16)
+# No two NVIDIA slots are consecutive. Worst-case NVIDIA 429 leaves 10/16 active.
+
+# -----------------------------------------------------------------------------
+# R1 FLAT CHAIN — uses R1-dedicated API keys (Account/Email 1) — timeout 30s
+# -----------------------------------------------------------------------------
 _R1_FLAT = [
-    ("mistral",    "open-mistral-nemo",                     call_single_mistral),    # #1  ~4s  — fastest among all
-    ("mistral",    "ministral-8b-latest",                   call_single_mistral),    # #2  ~5s
-    ("mistral",    "mistral-tiny-latest",                   call_single_mistral),    # #3  ~5s
-    ("cloudflare", "@cf/meta/llama-3.1-8b-instruct",       call_single_cloudflare), # #4  ~5s
-    ("groq",       "llama-3.1-8b-instant",                 call_single_groq),       # #5  ~4s
-    ("cerebras",   "llama3.1-8b",                          call_single_cerebras),   # #6  ~5s
-    ("gemini",     "gemma-3-27b-it",                        call_single_gemini),     # #7  ~10s — quality anchor
-    ("cloudflare", "@cf/mistral/mistral-7b-instruct-v0.1", call_single_cloudflare), # #8  ~15s — last 
+    ("nvidia",     "mistralai/mixtral-8x22b-instruct-v0.1",      call_single_nvidia_r1),       # #1
+    ("mistral",    "mistral-medium-latest",                       call_single_mistral_r1),      # #2
+    ("groq",       "meta-llama/llama-4-scout-17b-16e-instruct",  call_single_groq_r1),         # #3
+    ("mistral",    "mistral-large-latest",                        call_single_mistral_r1),      # #4
+    ("nvidia",     "mistralai/mistral-medium-3.5-128b",           call_single_nvidia_r1),       # #5
+    ("gemini",     "gemini-2.5-flash-lite",                      call_single_gemini_r1),       # #6
+    ("nvidia",     "mistralai/mistral-nemotron",                  call_single_nvidia_r1),       # #7
+    ("mistral",    "ministral-8b-latest",                         call_single_mistral_r1),      # #8
+    ("nvidia",     "meta/llama-3.3-70b-instruct",                call_single_nvidia_r1),       # #9
+    ("groq",       "llama-3.3-70b-versatile",                    call_single_groq_r1),         # #10
+    ("nvidia",     "mistralai/ministral-14b-instruct-2512",       call_single_nvidia_r1),       # #11
+    ("cloudflare", "@cf/meta/llama-3.1-8b-instruct",            call_single_cloudflare_r1),   # #12
+    ("mistral",    "mistral-small-latest",                        call_single_mistral_r1),      # #13
+    ("nvidia",     "mistralai/mistral-small-4-119b-2603",        call_single_nvidia_r1),       # #14
+    ("mistral",    "mistral-tiny-latest",                         call_single_mistral_r1),      # #15
+    ("mistral",    "open-mistral-nemo",                           call_single_mistral_r1),      # #16
 ]
 
-# ─────────────────────────────────────────────────────────────────────────────
-# FLAT R2 CHAIN — resume generation
-# (provider_name, model_id, single_caller)
-# ─────────────────────────────────────────────────────────────────────────────
+# -----------------------------------------------------------------------------
+# R2 FLAT CHAIN — uses R2-dedicated API keys (Account/Email 2) — timeout 90s
+# -----------------------------------------------------------------------------
 _R2_FLAT = [
-    ("groq",       "openai/gpt-oss-120b",                        call_single_groq),       # #1  ~5-15s  — best quality (8K TPM, 1K RPD free)
-    ("cerebras",   "qwen-3-235b-a22b-instruct-2507",             call_single_cerebras),   # #2  ~2-3s   — elite + very fast at 1400 t/s
-    ("mistral",    "mistral-large-latest",                       call_single_mistral),    # #3  ~6s
-    ("mistral",    "mistral-medium-latest",                      call_single_mistral),    # #4  ~7s
-    ("groq",       "llama-3.3-70b-versatile",                   call_single_groq),       # #5  ~4s
-    ("mistral",    "mistral-small-latest",                       call_single_mistral),    # #6  ~5s
-    ("groq",       "meta-llama/llama-4-scout-17b-16e-instruct", call_single_groq),       # #7  ~4s
-    ("groq",       "openai/gpt-oss-20b",                        call_single_groq),       # #8  ~4-8s
-    ("gemini",     "gemini-2.5-flash-lite",                     call_single_gemini),     # #9  ~20s
-    ("groq",       "qwen/qwen3-32b",                            call_single_groq),       # #10 ~20-40s
-    ("gemini",     "gemini-3.1-flash-lite-preview",             call_single_gemini),     # #11 ~40s — last resort (preview model)
+    ("nvidia",     "mistralai/mixtral-8x22b-instruct-v0.1",      call_single_nvidia_r2),       # #1
+    ("mistral",    "mistral-medium-latest",                       call_single_mistral_r2),      # #2
+    ("groq",       "meta-llama/llama-4-scout-17b-16e-instruct",  call_single_groq_r2),         # #3
+    ("mistral",    "mistral-large-latest",                        call_single_mistral_r2),      # #4
+    ("nvidia",     "mistralai/mistral-medium-3.5-128b",           call_single_nvidia_r2),       # #5
+    ("gemini",     "gemini-2.5-flash-lite",                      call_single_gemini_r2),       # #6
+    ("nvidia",     "mistralai/mistral-nemotron",                  call_single_nvidia_r2),       # #7
+    ("mistral",    "ministral-8b-latest",                         call_single_mistral_r2),      # #8
+    ("nvidia",     "meta/llama-3.3-70b-instruct",                call_single_nvidia_r2),       # #9
+    ("groq",       "llama-3.3-70b-versatile",                    call_single_groq_r2),         # #10
+    ("nvidia",     "mistralai/ministral-14b-instruct-2512",       call_single_nvidia_r2),       # #11
+    ("cloudflare", "@cf/meta/llama-3.1-8b-instruct",            call_single_cloudflare_r2),   # #12
+    ("mistral",    "mistral-small-latest",                        call_single_mistral_r2),      # #13
+    ("nvidia",     "mistralai/mistral-small-4-119b-2603",        call_single_nvidia_r2),       # #14
+    ("mistral",    "mistral-tiny-latest",                         call_single_mistral_r2),      # #15
+    ("mistral",    "open-mistral-nemo",                           call_single_mistral_r2),      # #16
 ]
 
 # Rate-limit signal strings — used to detect 429-type failures across all providers
@@ -72,10 +119,11 @@ def _is_rate_limited(attempts: list) -> bool:
     return any(sig.lower() in last_status for sig in _RATE_LIMIT_SIGNALS)
 
 
-def _run_flat_chain(prompt: str, flat_chain: list, max_tokens: int) -> dict:
+async def _run_flat_chain(prompt: str, flat_chain: list, max_tokens: int, preferred_model: str = "") -> dict:
     """
-    Walk a flat ordered list of (provider, model, caller) tuples.
-    - Each model is tried individually — no full-provider batching.
+    Async walk of a flat ordered list of (provider, model, async_caller) tuples.
+    - If preferred_model is set, starts from that model in the chain (then falls through).
+    - Each model is awaited individually — no full-provider batching.
     - Stops at first success.
     - Tracks 429'd providers and skips all their subsequent models
       (avoids wasting calls when an entire provider is rate-limited).
@@ -83,7 +131,16 @@ def _run_flat_chain(prompt: str, flat_chain: list, max_tokens: int) -> dict:
     all_attempts = []
     rate_limited_providers: set = set()
 
-    for provider_name, model_id, caller in flat_chain:
+    # Determine starting index: jump to preferred_model if specified
+    start_index = 0
+    if preferred_model:
+        for i, (_, model_id, _) in enumerate(flat_chain):
+            if model_id == preferred_model:
+                start_index = i
+                break
+        # If preferred_model not found, start_index stays 0 (full chain)
+
+    for provider_name, model_id, caller in flat_chain[start_index:]:
         if provider_name in rate_limited_providers:
             all_attempts.append({
                 "model": model_id,
@@ -91,7 +148,7 @@ def _run_flat_chain(prompt: str, flat_chain: list, max_tokens: int) -> dict:
             })
             continue
 
-        result = caller(model_id, prompt, max_tokens)
+        result = await caller(model_id, prompt, max_tokens)
         all_attempts.extend(result.get("attempts", []))
 
         if result["success"]:
@@ -117,19 +174,12 @@ def _run_flat_chain(prompt: str, flat_chain: list, max_tokens: int) -> dict:
     }
 
 
-def call_llm_r1(prompt: str) -> dict:
-    """
-    Request-1 — ATS scoring + project relevance check.
-    Chain: open-mistral-nemo → ministral-8b → mistral-tiny →
-           cf/llama → llama-3.1-8b-instant → cerebras/llama3.1-8b →
-           gemma-3-27b-it → cf/mistral-7b
-    max_tokens: 2500 (small JSON — saves TPM quota)
-    """
-    result = _run_flat_chain(prompt, _R1_FLAT, _R1_MAX_TOKENS)
+def _log_to_supabase(request_type: str, result: dict):
+    """Fire-and-forget Supabase usage log. Errors are silent — never block the response."""
     if supabase and result.get("provider"):
         try:
             supabase.table("llm_usage").insert({
-                "request_type": "r1",
+                "request_type": request_type,
                 "provider": result["provider"],
                 "model": result["model"],
                 "success": result["success"],
@@ -137,27 +187,43 @@ def call_llm_r1(prompt: str) -> dict:
             }).execute()
         except Exception:
             pass
+
+
+async def call_llm_r1(prompt: str, preferred_model: str = "") -> dict:
+    """
+    Request-1 — ATS scoring + project relevance check.
+    Uses R1-dedicated API keys (Account/Email 1). Independent from R2 quota.
+    All callers are async. Timeout per model: 30s.
+    If preferred_model is set, starts the chain from that model.
+    Chain (16 models, interleaved by provider — no two NVIDIA slots adjacent):
+      nvidia/mixtral-8x22b -> mistral-medium -> groq/llama-4-scout ->
+      mistral-large -> nvidia/mistral-medium-3.5 -> gemini-2.5-flash-lite ->
+      nvidia/mistral-nemotron -> ministral-8b -> nvidia/llama-3.3-70b ->
+      groq/llama-3.3-70b -> nvidia/ministral-14b -> cf/llama-3.1-8b ->
+      mistral-small -> nvidia/mistral-small-4 -> mistral-tiny ->
+      open-mistral-nemo
+    max_tokens: 2500
+    """
+    result = await _run_flat_chain(prompt, _R1_FLAT, _R1_MAX_TOKENS, preferred_model)
+    _log_to_supabase("r1", result)
     return result
 
 
-def call_llm_r2(prompt: str) -> dict:
+async def call_llm_r2(prompt: str, preferred_model: str = "") -> dict:
     """
     Request-2 — resume generation.
-    Chain: gpt-oss-120b → qwen-3-235b → mistral-large → mistral-medium →
-           llama-3.3-70b → mistral-small → llama-4-scout → gpt-oss-20b →
-           gemini-2.5-flash-lite → qwen3-32b → gemini-3.1-flash-lite-preview
-    max_tokens: 4500 (full resume JSON)
+    Uses R2-dedicated API keys (Account/Email 2). Independent from R1 quota.
+    All callers are async. Timeout per model: 90s.
+    If preferred_model is set, starts the chain from that model.
+    Chain (16 models, interleaved by provider — no two NVIDIA slots adjacent):
+      nvidia/mixtral-8x22b -> mistral-medium -> groq/llama-4-scout ->
+      mistral-large -> nvidia/mistral-medium-3.5 -> gemini-2.5-flash-lite ->
+      nvidia/mistral-nemotron -> ministral-8b -> nvidia/llama-3.3-70b ->
+      groq/llama-3.3-70b -> nvidia/ministral-14b -> cf/llama-3.1-8b ->
+      mistral-small -> nvidia/mistral-small-4 -> mistral-tiny ->
+      open-mistral-nemo
+    max_tokens: 4500
     """
-    result = _run_flat_chain(prompt, _R2_FLAT, _R2_MAX_TOKENS)
-    if supabase and result.get("provider"):
-        try:
-            supabase.table("llm_usage").insert({
-                "request_type": "r2",
-                "provider": result["provider"],
-                "model": result["model"],
-                "success": result["success"],
-                "speed_secs": result["speed"]
-            }).execute()
-        except Exception:
-            pass
+    result = await _run_flat_chain(prompt, _R2_FLAT, _R2_MAX_TOKENS, preferred_model)
+    _log_to_supabase("r2", result)
     return result

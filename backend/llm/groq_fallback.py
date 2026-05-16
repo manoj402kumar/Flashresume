@@ -1,28 +1,45 @@
 import os
 import re
 import time
-from groq import Groq
 from dotenv import load_dotenv
 
 load_dotenv()
 
-GROQ_R1_CHAIN = [
-    "llama-3.3-70b-versatile",
-    "meta-llama/llama-4-scout-17b-16e-instruct",
-    "llama-3.1-8b-instant",
-]
+# -------------------------------------------------------------------
+# Dual-client architecture — LAZY INITIALIZED (ASYNC):
+#   R1 client  → GROQ_R1_API_KEY  (Account / Email 1)  timeout=30s
+#   R2 client  → GROQ_R2_API_KEY  (Account / Email 2)  timeout=90s
+#
+# Clients are created on first use, NOT at module import time.
+# Uses AsyncGroq for non-blocking async calls.
+# Active Groq models in the 16-model chain:
+#   Rank 3:  meta-llama/llama-4-scout-17b-16e-instruct
+#   Rank 13: llama-3.3-70b-versatile
+# -------------------------------------------------------------------
+_client_r1 = None
+_client_r2 = None
 
-GROQ_R2_CHAIN = [
-    "openai/gpt-oss-120b",
-    "llama-3.3-70b-versatile",
-    "meta-llama/llama-4-scout-17b-16e-instruct",
-    "openai/gpt-oss-20b",
-    "qwen/qwen3-32b",
-    "llama-3.1-8b-instant",
-]
 
-api_key = os.getenv("GROQ_API_KEY") or os.getenv("GROQ_R1_API_KEY") or os.getenv("GROQ_R2_API_KEY")
-client = Groq(api_key=api_key)
+def _get_client_r1():
+    global _client_r1
+    if _client_r1 is None:
+        from groq import AsyncGroq
+        api_key = os.getenv("GROQ_R1_API_KEY")
+        if not api_key:
+            return None
+        _client_r1 = AsyncGroq(api_key=api_key, timeout=30)
+    return _client_r1
+
+
+def _get_client_r2():
+    global _client_r2
+    if _client_r2 is None:
+        from groq import AsyncGroq
+        api_key = os.getenv("GROQ_R2_API_KEY")
+        if not api_key:
+            return None
+        _client_r2 = AsyncGroq(api_key=api_key, timeout=90)
+    return _client_r2
 
 
 def _extract_text(response) -> str | None:
@@ -53,12 +70,18 @@ def _extract_text(response) -> str | None:
         return None
 
 
-def _call_groq_single(model: str, prompt: str, max_tokens: int, retries: int = 1) -> dict:
+async def _call_groq_single(get_client_fn, model: str, prompt: str, max_tokens: int, retries: int = 1) -> dict:
+    client = get_client_fn()
+    if client is None:
+        return {
+            "success": False, "text": None, "model": None, "speed": None,
+            "attempts": [{"model": model, "status": "skipped — Groq API key not configured"}],
+        }
     attempts = []
     for attempt in range(retries + 1):
         try:
             start = time.time()
-            response = client.chat.completions.create(
+            response = await client.chat.completions.create(
                 model=model,
                 messages=[{"role": "user", "content": prompt}],
                 temperature=0.1,
@@ -86,37 +109,23 @@ def _call_groq_single(model: str, prompt: str, max_tokens: int, retries: int = 1
                 break
             if any(x in err for x in ["503", "500", "502", "overloaded"]):
                 if attempt < retries:
-                    time.sleep(1)
+                    import asyncio
+                    await asyncio.sleep(1)
                 continue
             if "timeout" in err.lower() or "timed out" in err.lower():
                 if attempt < retries:
-                    time.sleep(1)
+                    import asyncio
+                    await asyncio.sleep(1)
                 continue
             break
     return {"success": False, "text": None, "model": None, "speed": None, "attempts": attempts}
 
 
-def _call_groq_chain(prompt: str, chain: list, max_tokens: int) -> dict:
-    attempts = []
-    for model in chain:
-        result = _call_groq_single(model, prompt, max_tokens)
-        attempts.extend(result.get("attempts", []))
-        if result["success"]:
-            result["attempts"] = attempts
-            return result
-    return {"success": False, "text": None, "model": None, "speed": None, "attempts": attempts}
+async def call_single_groq_r1(model: str, prompt: str, max_tokens: int = 2500) -> dict:
+    """Call exactly one Groq model using the R1 API key (Account 1). R1 timeout=30s."""
+    return await _call_groq_single(_get_client_r1, model, prompt, max_tokens)
 
 
-def call_groq_r1(prompt: str) -> dict:
-    """Groq chain for Request-1 — ATS scoring + project analysis."""
-    return _call_groq_chain(prompt, GROQ_R1_CHAIN, max_tokens=800)
-
-
-def call_groq_r2(prompt: str) -> dict:
-    """Groq chain for Request-2 — resume generation."""
-    return _call_groq_chain(prompt, GROQ_R2_CHAIN, max_tokens=3500)
-
-
-def call_single_groq(model: str, prompt: str, max_tokens: int = 3500) -> dict:
-    """Call exactly one Groq model. Used by master flat chain."""
-    return _call_groq_single(model, prompt, max_tokens)
+async def call_single_groq_r2(model: str, prompt: str, max_tokens: int = 4500) -> dict:
+    """Call exactly one Groq model using the R2 API key (Account 2). R2 timeout=90s."""
+    return await _call_groq_single(_get_client_r2, model, prompt, max_tokens)

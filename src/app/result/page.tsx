@@ -47,6 +47,7 @@ import ResumePDFTemplateA4 from "@/components/ResumePDFTemplateA4";
 import dynamic from "next/dynamic";
 import PricingPopup from "@/components/PricingPopup";
 import { supabase } from "@/lib/supabase";
+import { MODELS } from "@/components/ModelSelector";
 const MobilePDFPreview = dynamic(
   () => import("@/components/MobilePDFPreview"),
   { ssr: false }
@@ -189,6 +190,7 @@ export default function ResultPage() {
   const [showFeedback, setShowFeedback] = useState(false);
   const [sessionGuid, setSessionGuid] = useState<string>("");
   const [currentUserId, setCurrentUserId] = useState<string>("");
+  const [activeModelName, setActiveModelName] = useState<string>("Auto");
 
   const handleSectionDragStart = (e: React.DragEvent, sectionId: string) => {
     setDraggingId(sectionId);
@@ -290,6 +292,12 @@ export default function ResultPage() {
       if (!parsed.section_order || parsed.section_order.length === 0) {
         parsed.section_order = ["summary", "education", "experience", "projects", "skills", "certifications"];
       }
+
+      // Determine the active R2 model from localStorage
+      const savedModelId = localStorage.getItem("preferred_model") || "";
+      const matchedModel = MODELS.preferred_model.find(m => m.id === savedModelId);
+      setActiveModelName(matchedModel ? matchedModel.name : "Auto");
+
       setResume(parsed);
       setLoading(false);
     };
@@ -494,7 +502,7 @@ export default function ResultPage() {
             <div>
               <h1 className="font-headline text-lg font-bold text-on-background leading-tight">Your Resume</h1>
               <p className="text-xs text-on-surface-variant leading-tight flex items-center gap-1">
-                <Sparkles className="w-3 h-3 text-primary" /> AI-Optimized
+                <Sparkles className="w-3 h-3 text-primary" /> AI-Optimized with {activeModelName}
               </p>
             </div>
           </div>

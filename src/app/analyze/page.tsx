@@ -16,6 +16,7 @@ import {
   Code
 } from "lucide-react";
 import type { CombinedAnalysisResponse } from "@/lib/api";
+import ModelSelector from "@/components/ModelSelector";
 
 export default function AnalyzePage() {
   const router = useRouter();
@@ -292,8 +293,11 @@ export default function AnalyzePage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.6 }}
-          className="flex justify-center"
+          className="flex flex-col items-center gap-6"
         >
+          <div className="w-full max-w-md bg-surface-container-lowest p-6 rounded-2xl shadow-sm border border-surface-container-low">
+            <ModelSelector storageKey="preferred_model" label="R2 Model (Generation)" />
+          </div>
           <button
             onClick={handleProceed}
             className="flash-gradient text-white text-lg font-bold px-12 py-5 rounded-full flex items-center gap-3 hover:opacity-90 transition-all shadow-xl shadow-primary/25 active:scale-95"

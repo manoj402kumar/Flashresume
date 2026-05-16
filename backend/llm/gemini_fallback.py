@@ -1,32 +1,60 @@
 import os
 import re
 import time
-from google import genai
-from google.genai import types
 from dotenv import load_dotenv
 
 load_dotenv()
 
-GEMINI_R1_CHAIN = [
-    "gemma-3-27b-it",                 # ~10s — quality anchor
-    "gemini-2.5-flash-lite",          # ~20s
-    "gemini-3.1-flash-lite-preview",  # ~40s — last resort (preview model, may change)
-]
+# -------------------------------------------------------------------
+# Dual-client architecture — LAZY INITIALIZED (SYNC + THREADPOOL BRIDGE):
+#   R1 client  → GEMINI_R1_API_KEY  (Account / Email 1)  timeout=30s
+#   R2 client  → GEMINI_R2_API_KEY  (Account / Email 2)  timeout=90s
+#
+# NOTE: Gemini SDK async support (AsyncClient) is kept as Phase 2.
+# For now, the sync client runs inside run_in_threadpool so it does
+# NOT block the FastAPI event loop. The public async wrappers
+# (call_single_gemini_r1 / r2) are awaitable and safe to use from
+# async callers.
+# -------------------------------------------------------------------
+_client_r1 = None
+_client_r2 = None
 
-GEMINI_R2_CHAIN = [
-    "gemini-2.5-flash-lite",          # ~20s
-    "gemini-3.1-flash-lite-preview",  # ~40s — preview model
-    "gemma-3-27b-it",                 # ~10s
-]
+_GEMINI_R1_TIMEOUT_MS = 30_000   # 30 seconds in milliseconds (Gemini http_options)
+_GEMINI_R2_TIMEOUT_MS = 90_000   # 90 seconds in milliseconds
 
-api_key = os.getenv("GEMINI_API_KEY") or os.getenv("GEMINI_R1_API_KEY") or os.getenv("GEMINI_R2_API_KEY")
-client = genai.Client(api_key=api_key)
+
+def _get_client_r1():
+    global _client_r1
+    if _client_r1 is None:
+        from google import genai
+        api_key = os.getenv("GEMINI_R1_API_KEY")
+        if not api_key:
+            return None
+        _client_r1 = genai.Client(
+            api_key=api_key,
+            http_options={"timeout": _GEMINI_R1_TIMEOUT_MS},
+        )
+    return _client_r1
+
+
+def _get_client_r2():
+    global _client_r2
+    if _client_r2 is None:
+        from google import genai
+        api_key = os.getenv("GEMINI_R2_API_KEY")
+        if not api_key:
+            return None
+        _client_r2 = genai.Client(
+            api_key=api_key,
+            http_options={"timeout": _GEMINI_R2_TIMEOUT_MS},
+        )
+    return _client_r2
 
 
 def _extract_text(response) -> str | None:
     """
     Safely pull text from Gemini response.
-    Handles: None response, SAFETY/RECITATION finish_reason, empty text, pure <think> output.
+    Handles: None response, SAFETY/RECITATION finish_reason, empty text.
     """
     try:
         candidate = response.candidates[0] if response.candidates else None
@@ -60,7 +88,15 @@ def _extract_text(response) -> str | None:
         return None
 
 
-def _call_gemini_single(model: str, prompt: str, max_tokens: int, retries: int = 1) -> dict:
+def _call_gemini_single_sync(get_client_fn, model: str, prompt: str, max_tokens: int, retries: int = 1) -> dict:
+    """Synchronous inner implementation — called via run_in_threadpool."""
+    from google.genai import types
+    client = get_client_fn()
+    if client is None:
+        return {
+            "success": False, "text": None, "model": None, "speed": None,
+            "attempts": [{"model": model, "status": "skipped — Gemini API key not configured"}],
+        }
     attempts = []
     for attempt in range(retries + 1):
         try:
@@ -105,27 +141,17 @@ def _call_gemini_single(model: str, prompt: str, max_tokens: int, retries: int =
     return {"success": False, "text": None, "model": None, "speed": None, "attempts": attempts}
 
 
-def _call_gemini_chain(prompt: str, chain: list, max_tokens: int) -> dict:
-    attempts = []
-    for model in chain:
-        result = _call_gemini_single(model, prompt, max_tokens)
-        attempts.extend(result.get("attempts", []))
-        if result["success"]:
-            result["attempts"] = attempts
-            return result
-    return {"success": False, "text": None, "model": None, "speed": None, "attempts": attempts}
+async def call_single_gemini_r1(model: str, prompt: str, max_tokens: int = 2500) -> dict:
+    """Async wrapper — runs sync Gemini R1 call in threadpool. R1 timeout=30s."""
+    from fastapi.concurrency import run_in_threadpool
+    return await run_in_threadpool(
+        _call_gemini_single_sync, _get_client_r1, model, prompt, max_tokens
+    )
 
 
-def call_gemini_r1(prompt: str) -> dict:
-    """Gemini chain for Request-1 — ATS scoring + project analysis."""
-    return _call_gemini_chain(prompt, GEMINI_R1_CHAIN, max_tokens=800)
-
-
-def call_gemini_r2(prompt: str) -> dict:
-    """Gemini chain for Request-2 — resume generation."""
-    return _call_gemini_chain(prompt, GEMINI_R2_CHAIN, max_tokens=3500)
-
-
-def call_single_gemini(model: str, prompt: str, max_tokens: int = 3500) -> dict:
-    """Call exactly one Gemini model. Used by master flat chain."""
-    return _call_gemini_single(model, prompt, max_tokens)
+async def call_single_gemini_r2(model: str, prompt: str, max_tokens: int = 4500) -> dict:
+    """Async wrapper — runs sync Gemini R2 call in threadpool. R2 timeout=90s."""
+    from fastapi.concurrency import run_in_threadpool
+    return await run_in_threadpool(
+        _call_gemini_single_sync, _get_client_r2, model, prompt, max_tokens
+    )
