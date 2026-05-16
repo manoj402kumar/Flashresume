@@ -163,9 +163,9 @@ METRIC RULE for Case A enhancement:
     INJECT EVERY SINGLE KEYWORD from the "MISSING KEYWORDS TO INJECT" list (provided at the bottom of this prompt).
     This rule takes absolute precedence. If any other instruction before/after in this prompt conflicts with injecting these keywords, THIS instruction wins.
     Go through the missing keywords list one by one and place each keyword as follows:
-    (i) New project bullets — FIRST PRIORITY. 70% of keywords should land here since you are writing fresh bullets for this project.
-    (ii) Work experience bullets — ONLY if the keyword is directly relevant (20% of keywords).
-    (iii) Technical Skills section — Last resort for any remaining hard technical skills (10%).
+    (i) Existing project bullets — FIRST PRIORITY. Weave (70-90%) of keywords naturally into the enhanced project bullets.
+    (ii) Work experience bullets — ONLY if the keyword is directly relevant to tech stack (20-30% of keywords).
+    (iii) Miscellaneous Skills — Insert max 1-2 broad missing concepts here if applicable. NEVER put languages/frameworks here.
   - Every keyword from the list MUST appear at least once in the final JSON output. Zero exceptions.
   - Keywords must be woven naturally, not awkwardly bolted on. They must sound authentic for a fresher.
   - ⛔ NEVER add a new project to the list — not even if you think one is missing.
@@ -184,9 +184,9 @@ Case B — "[APPROVED NEW PROJECT TO ADD]" marker is present in RESUME_TEXT:
     INJECT EVERY SINGLE KEYWORD from the "MISSING KEYWORDS TO INJECT" list (provided at the bottom of this prompt).
     This rule takes absolute precedence. If any other instruction before/after in this prompt conflicts with injecting these keywords, THIS instruction wins.
     Go through the missing keywords list one by one and place each keyword as follows:
-    (i) New project bullets — FIRST PRIORITY. 70% of keywords should land here since you are writing fresh bullets for this project.
-    (ii) Work experience bullets — ONLY if the keyword is directly relevant (20% of keywords).
-    (iii) Technical Skills section — Last resort for any remaining hard technical skills (10%).
+    (i) New project bullets — FIRST PRIORITY. (70-90%) of keywords should land here since you are writing fresh bullets for this project.
+    (ii) Work experience bullets — ONLY if the keyword is directly relevant tech stack (20-30% of keywords).
+    (iii) Miscellaneous Skills — Insert max 1-2 broad missing concepts here if applicable. NEVER put languages/frameworks here.
   - Every keyword from the list MUST appear at least once in the final JSON output. Zero exceptions.
   - Keywords must be woven naturally, not awkwardly bolted on. They must sound authentic for a fresher.
 
