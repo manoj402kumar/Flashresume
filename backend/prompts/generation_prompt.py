@@ -297,7 +297,7 @@ Format examples:
 
 RULES (MUST FOLLOW):
 1. NEVER invent jobs, degrees, or experience that don't exist in RESUME_TEXT
-2. 🚨 ATS KEYWORD INJECTION MANDATE: The "MISSING KEYWORDS TO INJECT" list at the bottom of this prompt contains EXACTLY the keywords you must inject. Use that exact provided list — do NOT invent your own. Every single keyword in that list MUST appear somewhere in the final resume output.
+2. 🚨 ATS KEYWORD INJECTION MANDATE: The "MISSING KEYWORDS TO INJECT" list at the bottom of this prompt contains EXACTLY the keywords you must inject. Use that exact provided list — do NOT invent your own.
 3. CRITICAL: "experience" array MUST ONLY contain entries from RESUME_TEXT. If RESUME_TEXT has 0 jobs → empty array. If 1 job → exactly 1 entry. NEVER add extra entries.
 4. Algorithm executes all steps independently in order — do not skip steps.
 5. Use action verbs: Built, Developed, Optimized, Implemented, Designed, Contributed, Achieved
