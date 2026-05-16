@@ -31,34 +31,7 @@ Step 0: Determine Candidate Level
 Step 1: Extract resume sections (already done — you have RESUME_TEXT below)
 
 Step 2: Summary Evaluation
-Evaluate the summary in RESUME_TEXT:
-1. Has specific technologies? (React, Node.js, Python)
-2. Mentions projects or experience? (3 projects, internship)
-3. Aligns with JOB_DESCRIPTION? (matches JD role and skills)
-4. Professional tone? (no "I am", no generic phrases)
-5. Concise? (1-2 lines)
-
-KEEP AS-IS if summary has 4+ of above criteria.
-
-REWRITE ONLY if summary has ANY of these issues:
-- Generic phrases: "hardworking", "passionate", "looking for opportunities", "quick learner"
-- First-person: "I am", "My goal is", "I want to"
-- No specific technologies mentioned
-- No alignment with JOB_DESCRIPTION
-- More than 3 lines
-- Mentions "fresher" or "entry-level" (when candidate has actual work experience)
-
-Use Step 0 result to determine the correct format:
-
-FRESHER Summary Format (if rewriting):
-"[Target Role] with a strong foundation in [Core Tech Stack from RESUME_TEXT], demonstrated through [X projects/internships]."
-
-EXPERIENCED Summary Format (if rewriting — Junior/Mid/Senior):
-"[Current/Target Role] with [X]+ years of experience in [Core Domain/Tech Stack from RESUME_TEXT]. [One sentence on key achievements, impact, or specialization backed strictly by RESUME_TEXT.]"
-- Highlight years of experience, seniority, domain expertise, and measurable impact.
-- DO NOT use fresher-style phrases like 'strong foundation', 'demonstrated through projects', or 'looking to contribute'.
-- Align with JOB_DESCRIPTION role and keywords.
-- Keep it exactly 1-2 lines, professional, and achievement-oriented.
+write/rewrite summary telling why the candidate is best fit for the JOB_DESCRIPTION based on RESUME_TEXT projects and experience. Keep it 1-2 lines, professional, and should impress the recruiters.
 
 Step 3: Education
 - Keep as-is, NO changes
@@ -142,7 +115,7 @@ PROJECT SELECTION (when 3+ actual project entries exist):
 2. Keep top 2 most relevant actual entries
 3. Remove all others — do NOT replace removed entries with new invented ones
 
-Case A — RESUME_TEXT has relevant projects (no "[APPROVED NEW PROJECT TO ADD]" marker present):
+Case A — RESUME_TEXT has relevant project(s) (no "[APPROVED NEW PROJECT TO ADD]" marker present):
 
 BULLET EVALUATION — for each project bullet in RESUME_TEXT:
 → KEEP AS-IS if the bullet has: action verb + specific tech + some scope or outcome.
@@ -163,11 +136,11 @@ METRIC RULE for Case A enhancement:
     INJECT EVERY SINGLE KEYWORD from the "MISSING KEYWORDS TO INJECT" list (provided at the bottom of this prompt).
     This rule takes absolute precedence. If any other instruction before/after in this prompt conflicts with injecting these keywords, THIS instruction wins.
     Go through the missing keywords list one by one and place each keyword as follows:
-    (i) Existing project bullets — FIRST PRIORITY. Weave (70-90%) of keywords naturally into the enhanced project bullets.
+    (i) Existing project bullets — FIRST PRIORITY. Weave (70-90%) of keywords naturally into the enhanced project bullets of relavant project only.
     (ii) Work experience bullets — ONLY if the keyword is directly relevant to tech stack (20-30% of keywords).
     (iii) Miscellaneous Skills — Insert max 1-2 broad missing concepts here if applicable. NEVER put languages/frameworks here.
   - Every keyword from the list MUST appear at least once in the final JSON output. Zero exceptions.
-  - Keywords must be woven naturally, not awkwardly bolted on. They must sound authentic for a fresher.
+  - Keywords must be woven naturally, not awkwardly bolted on. They must sound authentic for a fresher. 
   - ⛔ NEVER add a new project to the list — not even if you think one is missing.
 
 Case B — "[APPROVED NEW PROJECT TO ADD]" marker is present in RESUME_TEXT:
@@ -184,7 +157,7 @@ Case B — "[APPROVED NEW PROJECT TO ADD]" marker is present in RESUME_TEXT:
     INJECT EVERY SINGLE KEYWORD from the "MISSING KEYWORDS TO INJECT" list (provided at the bottom of this prompt).
     This rule takes absolute precedence. If any other instruction before/after in this prompt conflicts with injecting these keywords, THIS instruction wins.
     Go through the missing keywords list one by one and place each keyword as follows:
-    (i) New project bullets — FIRST PRIORITY. (70-90%) of keywords should land here since you are writing fresh bullets for this project.
+    (i) New project bullets — FIRST PRIORITY. (70-90%) of keywords should land here since you are writing fresh bullets for this approved project.
     (ii) Work experience bullets — ONLY if the keyword is directly relevant tech stack (20-30% of keywords).
     (iii) Miscellaneous Skills — Insert max 1-2 broad missing concepts here if applicable. NEVER put languages/frameworks here.
   - Every keyword from the list MUST appear at least once in the final JSON output. Zero exceptions.
@@ -213,17 +186,17 @@ Examples: "Java + Spring Boot ecosystem", "Python + Django ecosystem", "Node.js 
 
 Then, for EACH skill in RESUME_TEXT Skills section, apply these rules BY CATEGORY:
 
-LANGUAGES → KEEP (up to 7 most relevant)
-  ✅ Keep Python even if JD is Java-only. Drop least relevant if > 7. Add languages from JD here.
+LANGUAGES → KEEP (up to 5 most relevant)
+  ✅ Keep Python even if JD is Java-only. Drop least relevant if > 5. Add languages from JD here.
 
-DATABASES → KEEP (up to 7 most relevant)
-  ✅ Keep PostgreSQL, MongoDB, Redis regardless of JD ecosystem. Drop least relevant if > 7. Add databases from JD here.
+DATABASES → KEEP (up to 5 most relevant)
+  ✅ Keep PostgreSQL, MongoDB, Redis regardless of JD ecosystem. Drop least relevant if > 5. Add databases from JD here.
 
-CLOUD SERVICES → KEEP (up to 7 most relevant)
-  ✅ Keep universal cloud skills. Drop least relevant if > 7. Add cloud services from JD here.
+CLOUD SERVICES → KEEP (up to 5 most relevant)
+  ✅ Keep universal cloud skills. Drop least relevant if > 5. Add cloud services from JD here.
 
-DEVELOPER TOOLS → KEEP (up to 7 most relevant)
-  ✅ Keep standard dev tools. Drop least relevant if > 7. Add developer tools from JD here.
+DEVELOPER TOOLS → KEEP (up to 5 most relevant)
+  ✅ Keep standard dev tools. Drop least relevant if > 5. Add developer tools from JD here.
 
 FRAMEWORKS & LIBRARIES → FILTER AGGRESSIVELY ⬅️ THIS IS WHERE THE PROBLEM LIVES
   Ask: "Does this framework belong to the SAME ecosystem the JD is asking for?"
@@ -245,7 +218,7 @@ FRAMEWORKS & LIBRARIES → FILTER AGGRESSIVELY ⬅️ THIS IS WHERE THE PROBLEM 
   
   LOG every removal in "changes": e.g. "Removed Django from frameworks — Python ecosystem not relevant to Java/Spring Boot JD"
 
-MISCELLANEOUS → FILTER MODERATELY(max 7 only)
+MISCELLANEOUS → FILTER MODERATELY(max 5 only)
   KEEP if it is a broadly applicable concept (REST APIs, Agile, Microservices, System Design)
   REMOVE if it is a framework-specific tool from a different ecosystem.
 
@@ -264,7 +237,7 @@ Category Order:
 
 Must follow Organization Rules:
 1. Put JOB_DESCRIPTION-matched skills FIRST in each category.
-2. Limit each category to max 7 skills (readability).
+2. Limit each category to max 5 skills (readability).
 
 Step 6: Certifications and Achievements (MERGED)
 
