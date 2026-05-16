@@ -293,10 +293,18 @@ export default function ResultPage() {
         parsed.section_order = ["summary", "education", "experience", "projects", "skills", "certifications"];
       }
 
-      // Determine the active R2 model from localStorage
-      const savedModelId = localStorage.getItem("preferred_model") || "";
-      const matchedModel = MODELS.preferred_model.find(m => m.id === savedModelId);
-      setActiveModelName(matchedModel ? matchedModel.name : "Auto");
+      // Use the actual model returned by the backend API if available
+      let finalModelName = "Auto (Best Quality Available)";
+      if (parsed._model_used) {
+        finalModelName = parsed._model_used;
+      } else {
+        const savedModelId = localStorage.getItem("preferred_model") || "";
+        const matchedModel = MODELS.preferred_model.find(m => m.id === savedModelId);
+        if (matchedModel && matchedModel.id !== "") {
+          finalModelName = matchedModel.name;
+        }
+      }
+      setActiveModelName(finalModelName);
 
       setResume(parsed);
       setLoading(false);
