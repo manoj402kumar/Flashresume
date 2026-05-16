@@ -86,22 +86,22 @@ _R1_FLAT = [
 # R2 FLAT CHAIN — uses R2-dedicated API keys (Account/Email 2) — timeout 90s
 # -----------------------------------------------------------------------------
 _R2_FLAT = [
-    ("nvidia",     "mistralai/mixtral-8x22b-instruct-v0.1",      call_single_nvidia_r2),       # #1
-    ("mistral",    "mistral-medium-latest",                       call_single_mistral_r2),      # #2
-    ("groq",       "meta-llama/llama-4-scout-17b-16e-instruct",  call_single_groq_r2),         # #3
-    ("mistral",    "mistral-large-latest",                        call_single_mistral_r2),      # #4
-    ("nvidia",     "mistralai/mistral-medium-3.5-128b",           call_single_nvidia_r2),       # #5
-    ("gemini",     "gemini-2.5-flash-lite",                      call_single_gemini_r2),       # #6
-    ("nvidia",     "mistralai/mistral-nemotron",                  call_single_nvidia_r2),       # #7
-    ("mistral",    "ministral-8b-latest",                         call_single_mistral_r2),      # #8
-    ("nvidia",     "meta/llama-3.3-70b-instruct",                call_single_nvidia_r2),       # #9
-    ("groq",       "llama-3.3-70b-versatile",                    call_single_groq_r2),         # #10
-    ("nvidia",     "mistralai/ministral-14b-instruct-2512",       call_single_nvidia_r2),       # #11
-    ("cloudflare", "@cf/meta/llama-3.1-8b-instruct",            call_single_cloudflare_r2),   # #12
-    ("mistral",    "mistral-small-latest",                        call_single_mistral_r2),      # #13
-    ("nvidia",     "mistralai/mistral-small-4-119b-2603",        call_single_nvidia_r2),       # #14
-    ("mistral",    "mistral-tiny-latest",                         call_single_mistral_r2),      # #15
-    ("mistral",    "open-mistral-nemo",                           call_single_mistral_r2),      # #16
+    ("mistral",    "mistral-medium-latest",                       call_single_mistral_r2),      # #1
+    ("nvidia",     "mistralai/mistral-nemotron",                  call_single_nvidia_r2),       # #2
+    ("mistral",    "mistral-large-latest",                        call_single_mistral_r2),      # #3
+    ("nvidia",     "mistralai/mistral-medium-3.5-128b",           call_single_nvidia_r2),       # #4
+    ("mistral",    "ministral-8b-latest",                         call_single_mistral_r2),      # #5
+    ("nvidia",     "mistralai/ministral-14b-instruct-2512",       call_single_nvidia_r2),       # #6
+    ("groq",       "llama-3.3-70b-versatile",                    call_single_groq_r2),         # #7
+    ("nvidia",     "mistralai/mixtral-8x22b-instruct-v0.1",      call_single_nvidia_r2),       # #8
+    ("groq",       "meta-llama/llama-4-scout-17b-16e-instruct",  call_single_groq_r2),         # #9
+    ("mistral",    "mistral-small-latest",                        call_single_mistral_r2),      # #10
+    ("nvidia",     "mistralai/mistral-small-4-119b-2603",        call_single_nvidia_r2),       # #11
+    ("mistral",    "mistral-tiny-latest",                         call_single_mistral_r2),      # #12
+    ("mistral",    "open-mistral-nemo",                           call_single_mistral_r2),      # #13
+    ("nvidia",     "meta/llama-3.3-70b-instruct",                call_single_nvidia_r2),       # #14
+    ("cloudflare", "@cf/meta/llama-3.1-8b-instruct",            call_single_cloudflare_r2),   # #15
+    ("gemini",     "gemini-2.5-flash-lite",                      call_single_gemini_r2),       # #16
 ]
 
 # Rate-limit signal strings — used to detect 429-type failures across all providers
@@ -215,13 +215,13 @@ async def call_llm_r2(prompt: str, preferred_model: str = "") -> dict:
     Uses R2-dedicated API keys (Account/Email 2). Independent from R1 quota.
     All callers are async. Timeout per model: 90s.
     If preferred_model is set, starts the chain from that model.
-    Chain (16 models, interleaved by provider — no two NVIDIA slots adjacent):
-      nvidia/mixtral-8x22b -> mistral-medium -> groq/llama-4-scout ->
-      mistral-large -> nvidia/mistral-medium-3.5 -> gemini-2.5-flash-lite ->
-      nvidia/mistral-nemotron -> ministral-8b -> nvidia/llama-3.3-70b ->
-      groq/llama-3.3-70b -> nvidia/ministral-14b -> cf/llama-3.1-8b ->
+    Chain (16 models, interleaved by provider):
+      mistral-medium -> nvidia/mistral-nemotron -> mistral-large ->
+      nvidia/mistral-medium-3.5 -> ministral-8b -> nvidia/ministral-14b ->
+      groq/llama-3.3-70b -> nvidia/mixtral-8x22b -> groq/llama-4-scout ->
       mistral-small -> nvidia/mistral-small-4 -> mistral-tiny ->
-      open-mistral-nemo
+      open-mistral-nemo -> nvidia/llama-3.3-70b -> cf/llama-3.1-8b ->
+      gemini-2.5-flash-lite
     max_tokens: 4500
     """
     result = await _run_flat_chain(prompt, _R2_FLAT, _R2_MAX_TOKENS, preferred_model)
