@@ -136,7 +136,7 @@ METRIC RULE for Case A enhancement:
     INJECT EVERY SINGLE KEYWORD from the "MISSING KEYWORDS TO INJECT" list (provided at the bottom of this prompt).
     This rule takes absolute precedence. If any other instruction before/after in this prompt conflicts with injecting these keywords, THIS instruction wins.
     Go through the missing keywords list one by one and place each keyword as follows:
-    (i) Existing project bullets — FIRST PRIORITY. Weave (70-90%) of keywords naturally into the enhanced project bullets of relavant project only.
+    (i) Existing project bullets — FIRST PRIORITY. Weave (70-90%) of keywords naturally into the enhanced project bullets of relavant project(s) only, for non relavant project if any inject non tech stack missing keywords like securecodingpractices, tools and so on.
     (ii) Work experience bullets — ONLY if the keyword is directly relevant to tech stack (20-30% of keywords).
     (iii) Miscellaneous Skills — Insert max 1-2 broad missing concepts here if applicable. NEVER put languages/frameworks here.
   - Every keyword from the list MUST appear at least once in the final JSON output. Zero exceptions.
