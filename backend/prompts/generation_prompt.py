@@ -375,12 +375,12 @@ OUTPUT FORMAT (Template v1):
     "Contributed to 3 open-source projects on GitHub"
   ],
   "technical_skills": {{
-    "languages": ["Skill 1", "Skill 2", "...(STRICT MAX 7 ITEMS)"],
-    "frameworks_and_libraries": ["Skill 1", "Skill 2", "...(STRICT MAX 7 ITEMS)"],
-    "databases": ["Skill 1", "Skill 2", "...(STRICT MAX 7 ITEMS)"],
-    "cloud_services": ["Skill 1", "Skill 2", "...(STRICT MAX 7 ITEMS)"],
-    "developer_tools": ["Skill 1", "Skill 2", "...(STRICT MAX 7 ITEMS)"],
-    "miscellaneous": ["Skill 1", "Skill 2", "...(STRICT MAX 7 ITEMS)"]
+    "languages": ["Skill 1", "Skill 2", "...(STRICT MAX 5 ITEMS)"],
+    "frameworks_and_libraries": ["Skill 1", "Skill 2", "...(STRICT MAX 5 ITEMS)"],
+    "databases": ["Skill 1", "Skill 2", "...(STRICT MAX 5 ITEMS)"],
+    "cloud_services": ["Skill 1", "Skill 2", "...(STRICT MAX 5 ITEMS)"],
+    "developer_tools": ["Skill 1", "Skill 2", "...(STRICT MAX 5 ITEMS)"],
+    "miscellaneous": ["Skill 1", "Skill 2", "...(STRICT MAX 5 ITEMS)"]
   }},
   "changes": [
     "Rewrote Summary: [old summary] → [new summary]",
