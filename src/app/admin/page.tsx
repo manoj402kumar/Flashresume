@@ -161,7 +161,7 @@ export default function AdminPage() {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const res = await fetch(`${API_URL}/api/admin/dashboard-stats`);
+        const res = await fetch(`${API_URL}/api/admin/stats`);
         const json = await res.json();
         const sec = json.uptime_seconds ?? 0;
         const h = Math.floor(sec / 3600);

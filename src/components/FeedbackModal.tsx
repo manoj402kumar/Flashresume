@@ -14,25 +14,31 @@ export default function FeedbackModal({ userId, sessionId, onClose }: Props) {
   const [suggestion, setSuggestion] = useState("");
   const [submitted, setSubmitted]   = useState(false);
   const [loading, setLoading]       = useState(false);
+  const [error, setError]           = useState("");
 
   const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
   const handleSubmit = async () => {
     if (rating === 0) return;
     setLoading(true);
+    setError("");
     try {
-      await fetch(`${API}/api/feedback/submit`, {
+      const res = await fetch(`${API}/api/feedback/submit`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ user_id: userId, session_id: sessionId, rating, suggestion }),
       });
+      
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.detail || "Failed to submit feedback. Please try again.");
+      }
+      
       setSubmitted(true);
       setTimeout(onClose, 2000); // auto-close after thank you
-    } catch (e) {
+    } catch (e: any) {
       console.error(e);
-      // still close so we don't annoy user
-      setSubmitted(true);
-      setTimeout(onClose, 2000);
+      setError(e.message || "Something went wrong. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -54,7 +60,13 @@ export default function FeedbackModal({ userId, sessionId, onClose }: Props) {
         ) : (
           <>
             <h3 className="font-bold text-lg text-gray-800 mb-1">How was your experience?</h3>
-            <p className="text-sm text-gray-500 mb-5">Takes 10 seconds · Helps us improve</p>
+            <p className="text-sm text-gray-500 mb-4">Takes 10 seconds · Helps us improve</p>
+
+            {error && (
+              <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-600 text-xs rounded-xl font-medium text-center">
+                {error}
+              </div>
+            )}
 
             {/* Star Rating */}
             <div className="flex gap-2 justify-center mb-6">

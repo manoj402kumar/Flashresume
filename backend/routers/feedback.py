@@ -31,7 +31,7 @@ async def submit_feedback(body: FeedbackRequest):
         raise HTTPException(404, "Session not found")
     if session.data["user_id"] != body.user_id:
         raise HTTPException(403, "Not your session")
-    if session.data.get("download_count", 0) != 1:
+    if (session.data.get("download_count") or 0) < 1:
         raise HTTPException(400, "Feedback only accepted after first download")
         
     existing = supabase.table("feedback").select("id").eq("session_id", body.session_id).execute()
@@ -54,23 +54,6 @@ async def get_feedback():
     result = supabase.table("feedback").select("*, users(email)").order("created_at", desc=True).limit(100).execute()
     return result.data
 
-@router.get("/admin/dashboard-stats")
-async def dashboard_stats():
-    if not supabase:
-        return {"total_users": 0, "total_revenue": 0, "total_downloads": 0, "active_subs": 0}
-        
-    users = supabase.table("users").select("id", count="exact").execute()
-    payments = supabase.table("payments").select("amount").eq("status", "success").execute()
-    revenue = sum(p["amount"] for p in payments.data) / 100 if payments.data else 0
-    downloads = supabase.table("resume_downloads").select("id", count="exact").execute()
-    subs = supabase.table("subscriptions").select("id", count="exact").eq("is_active", True).execute()
-    
-    return {
-        "total_users": users.count or 0,
-        "total_revenue": revenue,
-        "total_downloads": downloads.count or 0,
-        "active_subs": subs.count or 0,
-    }
 
 class IncrementDownloadRequest(BaseModel):
     session_id: str
