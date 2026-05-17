@@ -187,21 +187,21 @@ Examples: "Java + Spring Boot ecosystem", "Python + Django ecosystem", "Node.js 
 Then, for EACH skill in RESUME_TEXT Skills section, apply these rules BY CATEGORY:
 
 LANGUAGES → KEEP (up to 5 most relevant)
-  ✅ Keep Python even if JD is Java-only. Drop least relevant if > 5. Add languages from JD here.
+  ✅ Keep Python even if JD is Java-only. Drop least relevant if > 5. Add every language from JD here.
 
 DATABASES → KEEP (up to 5 most relevant)
-  ✅ Keep PostgreSQL, MongoDB, Redis regardless of JD ecosystem. Drop least relevant if > 5. Add databases from JD here.
+  ✅ Keep PostgreSQL, MongoDB, Redis regardless of JD ecosystem. Drop least relevant if > 5. Add every database from JD here.
 
 CLOUD SERVICES → KEEP (up to 5 most relevant)
-  ✅ Keep universal cloud skills. Drop least relevant if > 5. Add cloud services from JD here.
+  ✅ Keep universal cloud skills. Drop least relevant if > 5. Add every cloud service from JD here.
 
 DEVELOPER TOOLS → KEEP (up to 5 most relevant)
-  ✅ Keep standard dev tools. Drop least relevant if > 5. Add developer tools from JD here.
+  ✅ Keep standard dev tools. Drop least relevant if > 5. Add every developer tools from JD here.
 
 FRAMEWORKS & LIBRARIES → FILTER AGGRESSIVELY ⬅️ THIS IS WHERE THE PROBLEM LIVES
   Ask: "Does this framework belong to the SAME ecosystem the JD is asking for?"
   
-  KEEP/ADD if:
+  KEEP if:
   ✅ It is explicitly mentioned in JOB_DESCRIPTION
   ✅ It is in the MISSING KEYWORDS TO INJECT list
   ✅ It is from the same language/ecosystem as the JD (e.g., Spring Boot JD → keep Hibernate, Maven, Lombok)
@@ -215,6 +215,7 @@ FRAMEWORKS & LIBRARIES → FILTER AGGRESSIVELY ⬅️ THIS IS WHERE THE PROBLEM 
      - JD: Node.js/Express → REMOVE: Django, Spring Boot, Laravel
      - JD: React frontend → REMOVE: Angular OR Vue (only keep the one matching JD)
   ❌ It is a framework the JD has no mention of AND it is from a competing ecosystem or different tech stack.
+  Add each and every framework and library from the JD, even if it is not in the user's original Skills section.
   
   LOG every removal in "changes": e.g. "Removed Django from frameworks — Python ecosystem not relevant to Java/Spring Boot JD"
 
@@ -360,6 +361,14 @@ OUTPUT FORMAT (Template v1):
       ]
     }}
   ],
+  "technical_skills": {{
+    "languages": ["Skill 1", "Skill 2", "...(STRICT MAX 5 ITEMS)"],
+    "frameworks_and_libraries": ["Skill 1", "Skill 2", "...(STRICT MAX 5 ITEMS)"],
+    "databases": ["Skill 1", "Skill 2", "...(STRICT MAX 5 ITEMS)"],
+    "cloud_services": ["Skill 1", "Skill 2", "...(STRICT MAX 5 ITEMS)"],
+    "developer_tools": ["Skill 1", "Skill 2", "...(STRICT MAX 5 ITEMS)"],
+    "miscellaneous": ["Skill 1", "Skill 2", "...(STRICT MAX 5 ITEMS)"]
+  }},
   
   CERTIFICATIONS & ACHIEVEMENTS RULES (MANDATORY):
   
@@ -374,14 +383,6 @@ OUTPUT FORMAT (Template v1):
     "Solved 300+ problems on LeetCode (Rating: 1650)",
     "Contributed to 3 open-source projects on GitHub"
   ],
-  "technical_skills": {{
-    "languages": ["Skill 1", "Skill 2", "...(STRICT MAX 5 ITEMS)"],
-    "frameworks_and_libraries": ["Skill 1", "Skill 2", "...(STRICT MAX 5 ITEMS)"],
-    "databases": ["Skill 1", "Skill 2", "...(STRICT MAX 5 ITEMS)"],
-    "cloud_services": ["Skill 1", "Skill 2", "...(STRICT MAX 5 ITEMS)"],
-    "developer_tools": ["Skill 1", "Skill 2", "...(STRICT MAX 5 ITEMS)"],
-    "miscellaneous": ["Skill 1", "Skill 2", "...(STRICT MAX 5 ITEMS)"]
-  }},
   "changes": [
     "Rewrote Summary: [old summary] → [new summary]",
     "Enhanced Project Food Delivery App bullet 1: 'Built app' → 'Developed scalable food delivery platform using React and Node.js serving 500+ users'",
