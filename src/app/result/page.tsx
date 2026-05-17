@@ -440,12 +440,12 @@ export default function ResultPage() {
         try {
           const res = await fetch(`${apiUrl}/api/resume/increment-download`, {
             method: "POST",
-            body: JSON.stringify({ session_id: sessionGuid }),
+            body: JSON.stringify({ session_id: sessionGuid, user_id: currentUserId }),
             headers: { "Content-Type": "application/json" }
           });
           if (res.ok) {
             const data = await res.json();
-            if (data.download_count >= 1) {
+            if ([1, 10, 40].includes(data.global_download_count)) {
               setTimeout(() => setShowFeedback(true), 10000);
             }
           }
