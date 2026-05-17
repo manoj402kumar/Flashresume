@@ -323,17 +323,17 @@ export default function ResultPage() {
     }
     setUserEmail(session.user.email || "");
     setCurrentUserId(session.user.id);
-    
+
     // Check credits balance
     const { data: userData } = await supabase
       .from("users")
       .select("credits_balance")
       .eq("id", session.user.id)
       .single();
-      
+
     const currentCredits = userData?.credits_balance || 0;
     setCredits(currentCredits);
-    
+
     // Check subscription data for Account dropdown
     const { data: subData } = await supabase
       .from("subscriptions")
@@ -343,11 +343,11 @@ export default function ResultPage() {
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle();
-      
+
     if (subData) {
       setSubscriptionData(subData);
     }
-    
+
     if (currentCredits >= 10) {
       setHasPaidAccess(true);
     } else {
@@ -374,8 +374,8 @@ export default function ResultPage() {
     // Only clear resume workflow keys — do NOT clear auth session
     ["resume_text", "job_description", "analysis", "generated_resume",
       "no_jd_mode", "no_ai_changes", "approved_project", "preferred_model"].forEach(
-      (key) => localStorage.removeItem(key)
-    );
+        (key) => localStorage.removeItem(key)
+      );
     router.push("/");
   };
 
@@ -553,10 +553,10 @@ export default function ResultPage() {
               }}
               disabled={downloadingPDF || checkingAccess}
               className={`flex items-center gap-2 px-4 py-1.5 sm:px-5 sm:py-2 rounded-xl text-sm font-bold text-white transition-all shadow-sm ${downloadingPDF || checkingAccess
-                  ? "bg-surface-container-high cursor-not-allowed"
-                  : hasPaidAccess
-                    ? "bg-primary hover:bg-primary/90"
-                    : "bg-gradient-to-r from-primary to-secondary hover:opacity-90"
+                ? "bg-surface-container-high cursor-not-allowed"
+                : hasPaidAccess
+                  ? "bg-primary hover:bg-primary/90"
+                  : "bg-gradient-to-r from-primary to-secondary hover:opacity-90"
                 }`}
             >
               {checkingAccess ? (
@@ -603,14 +603,14 @@ export default function ResultPage() {
                       <p className="text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1">Account</p>
                       <p className="text-sm text-on-background truncate font-medium">{userEmail || "Not logged in"}</p>
                     </div>
-                    
+
                     {userEmail ? (
                       <div className="p-4 space-y-4">
                         <div className="flex justify-between items-center bg-primary/10 px-3 py-2 rounded-xl border border-primary/20">
                           <span className="text-sm font-semibold text-primary">Credits</span>
                           <span className="text-lg font-black text-primary">{credits}</span>
                         </div>
-                        
+
                         {subscriptionData && (
                           <div className="space-y-1">
                             <p className="text-xs font-bold text-on-surface-variant">Active Plan</p>
@@ -622,7 +622,7 @@ export default function ResultPage() {
                             )}
                           </div>
                         )}
-                        
+
                         <button
                           onClick={() => {
                             setShowAccountDropdown(false);
@@ -730,8 +730,8 @@ export default function ResultPage() {
               <button
                 onClick={() => { setEditMode(true); setShowChanges(false); setShowMissedKeywords(false); }}
                 className={`relative flex-1 py-3 px-3 text-sm font-bold transition-all duration-200 rounded-2xl flex items-center justify-center gap-2 active:scale-95 ${editMode
-                    ? "bg-primary text-white shadow-lg shadow-primary/30 border border-primary"
-                    : "bg-surface-container-low text-on-surface-variant border border-surface-container-high hover:bg-surface-container-high hover:text-on-background"
+                  ? "bg-primary text-white shadow-lg shadow-primary/30 border border-primary"
+                  : "bg-surface-container-low text-on-surface-variant border border-surface-container-high hover:bg-surface-container-high hover:text-on-background"
                   }`}
               >
                 <Edit3 className={`w-4 h-4 ${editMode ? 'text-white' : 'text-on-surface-variant'}`} />
@@ -743,8 +743,8 @@ export default function ResultPage() {
               <button
                 onClick={() => { setShowChanges(true); setEditMode(false); setShowMissedKeywords(false); }}
                 className={`flex-1 py-3 px-3 text-sm font-bold transition-all duration-200 rounded-2xl flex items-center justify-center gap-2 active:scale-95 ${showChanges
-                    ? "bg-secondary text-white shadow-lg shadow-secondary/30 border border-secondary"
-                    : "bg-surface-container-low text-on-surface-variant border border-surface-container-high hover:bg-surface-container-high hover:text-on-background"
+                  ? "bg-secondary text-white shadow-lg shadow-secondary/30 border border-secondary"
+                  : "bg-surface-container-low text-on-surface-variant border border-surface-container-high hover:bg-surface-container-high hover:text-on-background"
                   }`}
               >
                 <Sparkles className={`w-4 h-4 ${showChanges ? 'text-white' : 'text-on-surface-variant'}`} />
@@ -754,8 +754,8 @@ export default function ResultPage() {
                 <button
                   onClick={() => { setShowMissedKeywords(true); setEditMode(false); setShowChanges(false); }}
                   className={`relative flex-1 py-3 px-3 text-sm font-bold transition-all duration-200 rounded-2xl flex items-center justify-center gap-2 active:scale-95 ${showMissedKeywords
-                      ? "bg-error text-white shadow-lg shadow-error/30 border border-error"
-                      : "bg-surface-container-low text-on-surface-variant border border-surface-container-high hover:bg-surface-container-high hover:text-on-background"
+                    ? "bg-error text-white shadow-lg shadow-error/30 border border-error"
+                    : "bg-surface-container-low text-on-surface-variant border border-surface-container-high hover:bg-surface-container-high hover:text-on-background"
                     }`}
                 >
                   <Zap className={`w-4 h-4 ${showMissedKeywords ? 'text-white' : 'text-on-surface-variant'}`} />
@@ -867,8 +867,8 @@ export default function ResultPage() {
                               onDragOver={(e) => handleSectionDragOver(e, index, sectionId)}
                               onDragEnd={handleSectionDragEnd}
                               className={`flex items-center gap-3 px-3 py-1.5 rounded-xl cursor-grab active:cursor-grabbing transition-all duration-150 shadow-sm select-none mb-1 ${isDragging
-                                  ? "opacity-25 scale-[0.97] bg-surface-container-high border-2 border-dashed border-primary/30"
-                                  : "bg-surface-container border-2 border-transparent hover:border-primary/20 hover:shadow-md"
+                                ? "opacity-25 scale-[0.97] bg-surface-container-high border-2 border-dashed border-primary/30"
+                                : "bg-surface-container border-2 border-transparent hover:border-primary/20 hover:shadow-md"
                                 }`}
                             >
                               <GripVertical className="text-on-surface-variant/40 w-4 h-4 flex-shrink-0" />
@@ -916,110 +916,110 @@ export default function ResultPage() {
                     </div>
 
                     <AnimatePresence initial={false}>
-                    {(!editMode || openEditSection === "contact") && (
-                      <motion.div
-                        key="contact-content"
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: "auto", opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        transition={{ type: "spring", stiffness: 300, damping: 30, opacity: { duration: 0.2 } }}
-                        className="overflow-hidden"
-                      >
-                        {editMode ? (
-                          <div className="space-y-3">
-                            <input
-                              type="text"
-                              value={resume.heading.name}
-                              onChange={(e) => updateResume({ heading: { ...resume.heading, name: e.target.value } })}
-                              className="w-full text-2xl font-bold text-on-background rounded-xl px-4 py-3 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm"
-                              placeholder="Full Name"
-                            />
-                            <input
-                              type="tel"
-                              value={resume.heading.phone}
-                              onChange={(e) => updateResume({ heading: { ...resume.heading, phone: e.target.value } })}
-                              className="w-full rounded-xl px-4 py-3 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm"
-                              placeholder="Phone"
-                            />
-                            <input
-                              type="email"
-                              value={resume.heading.email}
-                              onChange={(e) => updateResume({ heading: { ...resume.heading, email: e.target.value } })}
-                              className="w-full rounded-xl px-4 py-3 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm"
-                              placeholder="Email"
-                            />
-                            {/* LinkedIn: display text + actual URL */}
-                            <p className="text-xs text-on-surface-variant font-semibold uppercase tracking-wide">LinkedIn</p>
-                            <input
-                              type="text"
-                              value={cleanDisplayUrl(resume.heading.linkedin_url, "linkedin")}
-                              onChange={(e) => updateResume({ heading: { ...resume.heading, linkedin_url: e.target.value } })}
-                              className="w-full rounded-xl px-4 py-3 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm"
-                              placeholder="linkedin"
-                            />
-                            <input
-                              type="url"
-                              value={resume.heading.linkedin_url_href || "https://linkedin.com/in/username"}
-                              onChange={(e) => updateResume({ heading: { ...resume.heading, linkedin_url_href: e.target.value } })}
-                              className="w-full rounded-xl px-4 py-3 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm text-on-surface-variant"
-                              placeholder="https://linkedin.com/in/username"
-                            />
-                            {/* GitHub: display text + actual URL */}
-                            <p className="text-xs text-on-surface-variant font-semibold uppercase tracking-wide">GitHub</p>
-                            <input
-                              type="text"
-                              value={cleanDisplayUrl(resume.heading.github_url, "github.com/username")}
-                              onChange={(e) => updateResume({ heading: { ...resume.heading, github_url: e.target.value } })}
-                              className="w-full rounded-xl px-4 py-3 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm"
-                              placeholder="github.com/username"
-                            />
-                            <input
-                              type="url"
-                              value={resume.heading.github_url_href || "https://github.com/username"}
-                              onChange={(e) => updateResume({ heading: { ...resume.heading, github_url_href: e.target.value } })}
-                              className="w-full rounded-xl px-4 py-3 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm text-on-surface-variant"
-                              placeholder="https://github.com/username"
-                            />
-                          </div>
-                        ) : (
-                          <>
-                            <h2 className="text-3xl font-bold text-on-background mb-4">
-                              {resume.heading.name}
-                            </h2>
-                            <div className="space-y-2 text-on-surface-variant">
-                              <p className="flex items-center gap-2">
-                                <span className="w-5 h-5">📞</span> {resume.heading.phone}
-                              </p>
-                              <p className="flex items-center gap-2">
-                                <span className="w-5 h-5">📧</span> {resume.heading.email}
-                              </p>
-                              <p className="flex items-center gap-2">
-                                <span className="w-5 h-5">🔗</span>
-                                <a
-                                  href={resume.heading.linkedin_url_href || `https://${cleanDisplayUrl(resume.heading.linkedin_url, "linkedin.com/in/username")}`}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="text-primary hover:underline"
-                                >
-                                  {cleanDisplayUrl(resume.heading.linkedin_url, "linkedin")}
-                                </a>
-                              </p>
-                              <p className="flex items-center gap-2">
-                                <span className="w-5 h-5">💻</span>
-                                <a
-                                  href={resume.heading.github_url_href || `https://${cleanDisplayUrl(resume.heading.github_url, "github.com/username")}`}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="text-primary hover:underline"
-                                >
-                                  {cleanDisplayUrl(resume.heading.github_url, "github.com/username")}
-                                </a>
-                              </p>
+                      {(!editMode || openEditSection === "contact") && (
+                        <motion.div
+                          key="contact-content"
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: "auto", opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          transition={{ type: "spring", stiffness: 300, damping: 30, opacity: { duration: 0.2 } }}
+                          className="overflow-hidden"
+                        >
+                          {editMode ? (
+                            <div className="space-y-3">
+                              <input
+                                type="text"
+                                value={resume.heading.name}
+                                onChange={(e) => updateResume({ heading: { ...resume.heading, name: e.target.value } })}
+                                className="w-full text-2xl font-bold text-on-background rounded-xl px-4 py-3 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm"
+                                placeholder="Full Name"
+                              />
+                              <input
+                                type="tel"
+                                value={resume.heading.phone}
+                                onChange={(e) => updateResume({ heading: { ...resume.heading, phone: e.target.value } })}
+                                className="w-full rounded-xl px-4 py-3 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm"
+                                placeholder="Phone"
+                              />
+                              <input
+                                type="email"
+                                value={resume.heading.email}
+                                onChange={(e) => updateResume({ heading: { ...resume.heading, email: e.target.value } })}
+                                className="w-full rounded-xl px-4 py-3 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm"
+                                placeholder="Email"
+                              />
+                              {/* LinkedIn: display text + actual URL */}
+                              <p className="text-xs text-on-surface-variant font-semibold uppercase tracking-wide">LinkedIn</p>
+                              <input
+                                type="text"
+                                value={cleanDisplayUrl(resume.heading.linkedin_url, "linkedin")}
+                                onChange={(e) => updateResume({ heading: { ...resume.heading, linkedin_url: e.target.value } })}
+                                className="w-full rounded-xl px-4 py-3 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm"
+                                placeholder="linkedin"
+                              />
+                              <input
+                                type="url"
+                                value={resume.heading.linkedin_url_href || "https://linkedin.com/in/username"}
+                                onChange={(e) => updateResume({ heading: { ...resume.heading, linkedin_url_href: e.target.value } })}
+                                className="w-full rounded-xl px-4 py-3 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm text-on-surface-variant"
+                                placeholder="https://linkedin.com/in/username"
+                              />
+                              {/* GitHub: display text + actual URL */}
+                              <p className="text-xs text-on-surface-variant font-semibold uppercase tracking-wide">GitHub</p>
+                              <input
+                                type="text"
+                                value={cleanDisplayUrl(resume.heading.github_url, "github.com/username")}
+                                onChange={(e) => updateResume({ heading: { ...resume.heading, github_url: e.target.value } })}
+                                className="w-full rounded-xl px-4 py-3 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm"
+                                placeholder="github.com/username"
+                              />
+                              <input
+                                type="url"
+                                value={resume.heading.github_url_href || "https://github.com/username"}
+                                onChange={(e) => updateResume({ heading: { ...resume.heading, github_url_href: e.target.value } })}
+                                className="w-full rounded-xl px-4 py-3 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm text-on-surface-variant"
+                                placeholder="https://github.com/username"
+                              />
                             </div>
-                          </>
-                        )}
-                      </motion.div>
-                    )}
+                          ) : (
+                            <>
+                              <h2 className="text-3xl font-bold text-on-background mb-4">
+                                {resume.heading.name}
+                              </h2>
+                              <div className="space-y-2 text-on-surface-variant">
+                                <p className="flex items-center gap-2">
+                                  <span className="w-5 h-5">📞</span> {resume.heading.phone}
+                                </p>
+                                <p className="flex items-center gap-2">
+                                  <span className="w-5 h-5">📧</span> {resume.heading.email}
+                                </p>
+                                <p className="flex items-center gap-2">
+                                  <span className="w-5 h-5">🔗</span>
+                                  <a
+                                    href={resume.heading.linkedin_url_href || `https://${cleanDisplayUrl(resume.heading.linkedin_url, "linkedin.com/in/username")}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-primary hover:underline"
+                                  >
+                                    {cleanDisplayUrl(resume.heading.linkedin_url, "linkedin")}
+                                  </a>
+                                </p>
+                                <p className="flex items-center gap-2">
+                                  <span className="w-5 h-5">💻</span>
+                                  <a
+                                    href={resume.heading.github_url_href || `https://${cleanDisplayUrl(resume.heading.github_url, "github.com/username")}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-primary hover:underline"
+                                  >
+                                    {cleanDisplayUrl(resume.heading.github_url, "github.com/username")}
+                                  </a>
+                                </p>
+                              </div>
+                            </>
+                          )}
+                        </motion.div>
+                      )}
                     </AnimatePresence>
                   </motion.div>
 
@@ -1072,97 +1072,97 @@ export default function ResultPage() {
                           </div>
 
                           <AnimatePresence initial={false}>
-                          {(!editMode || openEditSection === sectionId) && (
-                            <motion.div
-                              key={`${sectionId}-content`}
-                              initial={{ height: 0, opacity: 0 }}
-                              animate={{ height: "auto", opacity: 1 }}
-                              exit={{ height: 0, opacity: 0 }}
-                              transition={{ type: "spring", stiffness: 300, damping: 30, opacity: { duration: 0.2 } }}
-                              className="overflow-hidden"
-                            >
+                            {(!editMode || openEditSection === sectionId) && (
+                              <motion.div
+                                key={`${sectionId}-content`}
+                                initial={{ height: 0, opacity: 0 }}
+                                animate={{ height: "auto", opacity: 1 }}
+                                exit={{ height: 0, opacity: 0 }}
+                                transition={{ type: "spring", stiffness: 300, damping: 30, opacity: { duration: 0.2 } }}
+                                className="overflow-hidden"
+                              >
 
-                              <ul className="space-y-2">
-                                {(customSection.bullets ?? []).map((bulletObj, bidx) => (
-                                  <li key={bidx} className="text-on-background text-sm flex items-start gap-3 rounded-lg p-3 transition-all">
-                                    <span className="text-primary mt-1 font-bold">•</span>
-                                    {editMode ? (
-                                      <div className="flex-1 flex gap-2 items-start">
-                                        <textarea
-                                          value={typeof bulletObj === 'string' ? bulletObj : bulletObj.text}
-                                          onChange={(e) => {
-                                            const newCustoms = [...(resume.custom_sections || [])];
-                                            if (typeof newCustoms[customIndex].bullets![bidx] === 'string') {
-                                              newCustoms[customIndex].bullets![bidx] = { text: e.target.value };
-                                            } else {
-                                              (newCustoms[customIndex].bullets![bidx] as any).text = e.target.value;
-                                            }
-                                            updateResume({ custom_sections: newCustoms });
-                                          }}
-                                          className="flex-[2] rounded-lg px-3 py-2 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm resize-none"
-                                          rows={2}
-                                          placeholder="Bullet text..."
-                                        />
-                                        <input
-                                          type="url"
-                                          value={typeof bulletObj === 'string' ? '' : (bulletObj.url || '')}
-                                          onChange={(e) => {
-                                            const newCustoms = [...(resume.custom_sections || [])];
-                                            if (typeof newCustoms[customIndex].bullets![bidx] === 'string') {
-                                              newCustoms[customIndex].bullets![bidx] = { text: newCustoms[customIndex].bullets![bidx] as string, url: e.target.value };
-                                            } else {
-                                              (newCustoms[customIndex].bullets![bidx] as any).url = e.target.value;
-                                            }
-                                            updateResume({ custom_sections: newCustoms });
-                                          }}
-                                          className="flex-[1] text-xs rounded-lg px-3 py-2 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm"
-                                          placeholder="Behind URL (e.g., LeetCode)"
-                                        />
-                                      </div>
-                                    ) : (
-                                      <span className="flex-1">
-                                        {(typeof bulletObj !== 'string' && bulletObj.url) ? (
-                                          <a href={bulletObj.url.startsWith('http') ? bulletObj.url : `https://${bulletObj.url}`} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-medium">
-                                            {bulletObj.text}
-                                          </a>
-                                        ) : (
-                                          typeof bulletObj === 'string' ? bulletObj : bulletObj.text
-                                        )}
-                                      </span>
-                                    )}
-                                  </li>
-                                ))}
-                              </ul>
+                                <ul className="space-y-2">
+                                  {(customSection.bullets ?? []).map((bulletObj, bidx) => (
+                                    <li key={bidx} className="text-on-background text-sm flex items-start gap-3 rounded-lg p-3 transition-all">
+                                      <span className="text-primary mt-1 font-bold">•</span>
+                                      {editMode ? (
+                                        <div className="flex-1 flex gap-2 items-start">
+                                          <textarea
+                                            value={typeof bulletObj === 'string' ? bulletObj : bulletObj.text}
+                                            onChange={(e) => {
+                                              const newCustoms = [...(resume.custom_sections || [])];
+                                              if (typeof newCustoms[customIndex].bullets![bidx] === 'string') {
+                                                newCustoms[customIndex].bullets![bidx] = { text: e.target.value };
+                                              } else {
+                                                (newCustoms[customIndex].bullets![bidx] as any).text = e.target.value;
+                                              }
+                                              updateResume({ custom_sections: newCustoms });
+                                            }}
+                                            className="flex-[2] rounded-lg px-3 py-2 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm resize-none"
+                                            rows={2}
+                                            placeholder="Bullet text..."
+                                          />
+                                          <input
+                                            type="url"
+                                            value={typeof bulletObj === 'string' ? '' : (bulletObj.url || '')}
+                                            onChange={(e) => {
+                                              const newCustoms = [...(resume.custom_sections || [])];
+                                              if (typeof newCustoms[customIndex].bullets![bidx] === 'string') {
+                                                newCustoms[customIndex].bullets![bidx] = { text: newCustoms[customIndex].bullets![bidx] as string, url: e.target.value };
+                                              } else {
+                                                (newCustoms[customIndex].bullets![bidx] as any).url = e.target.value;
+                                              }
+                                              updateResume({ custom_sections: newCustoms });
+                                            }}
+                                            className="flex-[1] text-xs rounded-lg px-3 py-2 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm"
+                                            placeholder="Behind URL (e.g., LeetCode)"
+                                          />
+                                        </div>
+                                      ) : (
+                                        <span className="flex-1">
+                                          {(typeof bulletObj !== 'string' && bulletObj.url) ? (
+                                            <a href={bulletObj.url.startsWith('http') ? bulletObj.url : `https://${bulletObj.url}`} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-medium">
+                                              {bulletObj.text}
+                                            </a>
+                                          ) : (
+                                            typeof bulletObj === 'string' ? bulletObj : bulletObj.text
+                                          )}
+                                        </span>
+                                      )}
+                                    </li>
+                                  ))}
+                                </ul>
 
-                              {editMode && (
-                                <div className="flex justify-between items-center mt-3">
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      const newCustoms = [...(resume.custom_sections || [])];
-                                      if (!newCustoms[customIndex].bullets) newCustoms[customIndex].bullets = [];
-                                      newCustoms[customIndex].bullets!.push({ text: '', url: '' });
-                                      updateResume({ custom_sections: newCustoms });
-                                    }}
-                                    className="px-3 py-1 text-sm text-primary hover:bg-primary/10 rounded-lg transition-colors font-semibold"
-                                  >
-                                    + Add Bullet Point
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      const newCustoms = (resume.custom_sections || []).filter((_, i) => i !== customIndex);
-                                      const newOrder = (resume.section_order || []).filter(id => id !== sectionId);
-                                      updateResume({ custom_sections: newCustoms, section_order: newOrder });
-                                    }}
-                                    className="px-3 py-1 text-sm text-red-500 hover:bg-red-50 rounded-lg transition-colors font-semibold"
-                                  >
-                                    Remove Section
-                                  </button>
-                                </div>
-                              )}
-                            </motion.div>
-                          )}
+                                {editMode && (
+                                  <div className="flex justify-between items-center mt-3">
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        const newCustoms = [...(resume.custom_sections || [])];
+                                        if (!newCustoms[customIndex].bullets) newCustoms[customIndex].bullets = [];
+                                        newCustoms[customIndex].bullets!.push({ text: '', url: '' });
+                                        updateResume({ custom_sections: newCustoms });
+                                      }}
+                                      className="px-3 py-1 text-sm text-primary hover:bg-primary/10 rounded-lg transition-colors font-semibold"
+                                    >
+                                      + Add Bullet Point
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        const newCustoms = (resume.custom_sections || []).filter((_, i) => i !== customIndex);
+                                        const newOrder = (resume.section_order || []).filter(id => id !== sectionId);
+                                        updateResume({ custom_sections: newCustoms, section_order: newOrder });
+                                      }}
+                                      className="px-3 py-1 text-sm text-red-500 hover:bg-red-50 rounded-lg transition-colors font-semibold"
+                                    >
+                                      Remove Section
+                                    </button>
+                                  </div>
+                                )}
+                              </motion.div>
+                            )}
                           </AnimatePresence>
                         </motion.div>
                       );
@@ -1199,30 +1199,30 @@ export default function ResultPage() {
                             </div>
 
                             <AnimatePresence initial={false}>
-                            {(!editMode || openEditSection === "summary") && (
-                              <motion.div
-                                key="summary-content"
-                                initial={{ height: 0, opacity: 0 }}
-                                animate={{ height: "auto", opacity: 1 }}
-                                exit={{ height: 0, opacity: 0 }}
-                                transition={{ type: "spring", stiffness: 300, damping: 30, opacity: { duration: 0.2 } }}
-                                className="overflow-hidden"
-                              >
-                              <>
-                                {editMode ? (
-                                  <textarea
-                                    value={resume.summary || ''}
-                                    onChange={(e) => updateResume({ summary: e.target.value })}
-                                    className="w-full rounded-xl px-4 py-3 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm resize-none"
-                                    rows={3}
-                                    placeholder="Professional summary..."
-                                  />
-                                ) : (
-                                  <p className="text-on-background leading-relaxed">{resume.summary}</p>
-                                )}
-                              </>
-                              </motion.div>
-                            )}
+                              {(!editMode || openEditSection === "summary") && (
+                                <motion.div
+                                  key="summary-content"
+                                  initial={{ height: 0, opacity: 0 }}
+                                  animate={{ height: "auto", opacity: 1 }}
+                                  exit={{ height: 0, opacity: 0 }}
+                                  transition={{ type: "spring", stiffness: 300, damping: 30, opacity: { duration: 0.2 } }}
+                                  className="overflow-hidden"
+                                >
+                                  <>
+                                    {editMode ? (
+                                      <textarea
+                                        value={resume.summary || ''}
+                                        onChange={(e) => updateResume({ summary: e.target.value })}
+                                        className="w-full rounded-xl px-4 py-3 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm resize-none"
+                                        rows={3}
+                                        placeholder="Professional summary..."
+                                      />
+                                    ) : (
+                                      <p className="text-on-background leading-relaxed">{resume.summary}</p>
+                                    )}
+                                  </>
+                                </motion.div>
+                              )}
                             </AnimatePresence>
                           </motion.div>
                         );
@@ -1256,116 +1256,116 @@ export default function ResultPage() {
                             </div>
 
                             <AnimatePresence initial={false}>
-                            {(!editMode || openEditSection === "education") && (
-                              <motion.div
-                                key="education-content"
-                                initial={{ height: 0, opacity: 0 }}
-                                animate={{ height: "auto", opacity: 1 }}
-                                exit={{ height: 0, opacity: 0 }}
-                                transition={{ type: "spring", stiffness: 300, damping: 30, opacity: { duration: 0.2 } }}
-                                className="overflow-hidden"
-                              >
-                              <>
-                                {resume.education.map((edu, idx) => (
-                                  <div key={idx} className="mb-6 last:mb-0">
-                                    {editMode ? (
-                                      <div className="space-y-2">
-                                        <input
-                                          type="text"
-                                          value={edu.degree || ''}
-                                          onChange={(e) => {
-                                            const newEducation = [...resume.education];
-                                            newEducation[idx].degree = e.target.value;
-                                            updateResume({ education: newEducation });
-                                          }}
-                                          className="w-full font-bold rounded-xl px-4 py-2 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm"
-                                          placeholder="Degree"
-                                        />
-                                        <input
-                                          type="text"
-                                          value={edu.institution || ''}
-                                          onChange={(e) => {
-                                            const newEducation = [...resume.education];
-                                            newEducation[idx].institution = e.target.value;
-                                            updateResume({ education: newEducation });
-                                          }}
-                                          className="w-full rounded-xl px-4 py-2 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm"
-                                          placeholder="Institution"
-                                        />
-                                        <div className="grid grid-cols-2 gap-2">
-                                          <input
-                                            type="text"
-                                            value={edu.location || ''}
-                                            onChange={(e) => {
-                                              const newEducation = [...resume.education];
-                                              newEducation[idx].location = e.target.value;
-                                              updateResume({ education: newEducation });
-                                            }}
-                                            className="rounded-xl px-4 py-2 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm"
-                                            placeholder="Location"
-                                          />
-                                          <input
-                                            type="text"
-                                            value={edu.duration || ''}
-                                            onChange={(e) => {
-                                              const newEducation = [...resume.education];
-                                              newEducation[idx].duration = e.target.value;
-                                              updateResume({ education: newEducation });
-                                            }}
-                                            className="rounded-xl px-4 py-2 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm"
-                                            placeholder="Duration"
-                                          />
-                                        </div>
-                                        <div className="flex justify-between items-center mt-2">
-                                          <input
-                                            type="text"
-                                            value={edu.cgpa || ''}
-                                            onChange={(e) => {
-                                              const newEducation = [...resume.education];
-                                              newEducation[idx].cgpa = e.target.value;
-                                              updateResume({ education: newEducation });
-                                            }}
-                                            className="flex-1 rounded-xl px-4 py-2 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm mr-4"
-                                            placeholder="CGPA / Score"
-                                          />
-                                          <button
-                                            type="button"
-                                            onClick={() => {
-                                              const newEducation = resume.education.filter((_, i) => i !== idx);
-                                              updateResume({ education: newEducation });
-                                            }}
-                                            className="px-3 py-1 text-sm text-red-500 hover:bg-red-50 rounded-lg transition-colors font-semibold"
-                                          >
-                                            Remove
-                                          </button>
-                                        </div>
+                              {(!editMode || openEditSection === "education") && (
+                                <motion.div
+                                  key="education-content"
+                                  initial={{ height: 0, opacity: 0 }}
+                                  animate={{ height: "auto", opacity: 1 }}
+                                  exit={{ height: 0, opacity: 0 }}
+                                  transition={{ type: "spring", stiffness: 300, damping: 30, opacity: { duration: 0.2 } }}
+                                  className="overflow-hidden"
+                                >
+                                  <>
+                                    {resume.education.map((edu, idx) => (
+                                      <div key={idx} className="mb-6 last:mb-0">
+                                        {editMode ? (
+                                          <div className="space-y-2">
+                                            <input
+                                              type="text"
+                                              value={edu.degree || ''}
+                                              onChange={(e) => {
+                                                const newEducation = [...resume.education];
+                                                newEducation[idx].degree = e.target.value;
+                                                updateResume({ education: newEducation });
+                                              }}
+                                              className="w-full font-bold rounded-xl px-4 py-2 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm"
+                                              placeholder="Degree"
+                                            />
+                                            <input
+                                              type="text"
+                                              value={edu.institution || ''}
+                                              onChange={(e) => {
+                                                const newEducation = [...resume.education];
+                                                newEducation[idx].institution = e.target.value;
+                                                updateResume({ education: newEducation });
+                                              }}
+                                              className="w-full rounded-xl px-4 py-2 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm"
+                                              placeholder="Institution"
+                                            />
+                                            <div className="grid grid-cols-2 gap-2">
+                                              <input
+                                                type="text"
+                                                value={edu.location || ''}
+                                                onChange={(e) => {
+                                                  const newEducation = [...resume.education];
+                                                  newEducation[idx].location = e.target.value;
+                                                  updateResume({ education: newEducation });
+                                                }}
+                                                className="rounded-xl px-4 py-2 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm"
+                                                placeholder="Location"
+                                              />
+                                              <input
+                                                type="text"
+                                                value={edu.duration || ''}
+                                                onChange={(e) => {
+                                                  const newEducation = [...resume.education];
+                                                  newEducation[idx].duration = e.target.value;
+                                                  updateResume({ education: newEducation });
+                                                }}
+                                                className="rounded-xl px-4 py-2 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm"
+                                                placeholder="Duration"
+                                              />
+                                            </div>
+                                            <div className="flex justify-between items-center mt-2">
+                                              <input
+                                                type="text"
+                                                value={edu.cgpa || ''}
+                                                onChange={(e) => {
+                                                  const newEducation = [...resume.education];
+                                                  newEducation[idx].cgpa = e.target.value;
+                                                  updateResume({ education: newEducation });
+                                                }}
+                                                className="flex-1 rounded-xl px-4 py-2 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm mr-4"
+                                                placeholder="CGPA / Score"
+                                              />
+                                              <button
+                                                type="button"
+                                                onClick={() => {
+                                                  const newEducation = resume.education.filter((_, i) => i !== idx);
+                                                  updateResume({ education: newEducation });
+                                                }}
+                                                className="px-3 py-1 text-sm text-red-500 hover:bg-red-50 rounded-lg transition-colors font-semibold"
+                                              >
+                                                Remove
+                                              </button>
+                                            </div>
+                                          </div>
+                                        ) : (
+                                          <>
+                                            <p className="font-bold text-lg text-on-background">{edu.degree}</p>
+                                            <p className="text-on-surface-variant">{edu.institution}, {edu.location}</p>
+                                            <p className="text-sm text-on-surface-variant">{edu.duration}{edu.cgpa ? ` • CGPA: ${edu.cgpa}` : ''}</p>
+                                          </>
+                                        )}
                                       </div>
-                                    ) : (
-                                      <>
-                                        <p className="font-bold text-lg text-on-background">{edu.degree}</p>
-                                        <p className="text-on-surface-variant">{edu.institution}, {edu.location}</p>
-                                        <p className="text-sm text-on-surface-variant">{edu.duration}{edu.cgpa ? ` • CGPA: ${edu.cgpa}` : ''}</p>
-                                      </>
+                                    ))}
+                                    {editMode && (
+                                      <div className="mt-4 flex justify-center">
+                                        <button
+                                          onClick={() => {
+                                            const newEducation = [...resume.education, { institution: '', location: '', degree: '', duration: '', cgpa: '' }];
+                                            updateResume({ education: newEducation });
+                                          }}
+                                          className="px-4 py-2 bg-primary/10 text-primary font-bold rounded-xl hover:bg-primary/20 transition-colors"
+                                          type="button"
+                                        >
+                                          + Add Education Field
+                                        </button>
+                                      </div>
                                     )}
-                                  </div>
-                                ))}
-                                {editMode && (
-                                  <div className="mt-4 flex justify-center">
-                                    <button
-                                      onClick={() => {
-                                        const newEducation = [...resume.education, { institution: '', location: '', degree: '', duration: '', cgpa: '' }];
-                                        updateResume({ education: newEducation });
-                                      }}
-                                      className="px-4 py-2 bg-primary/10 text-primary font-bold rounded-xl hover:bg-primary/20 transition-colors"
-                                      type="button"
-                                    >
-                                      + Add Education Field
-                                    </button>
-                                  </div>
-                                )}
-                              </>
-                              </motion.div>
-                            )}
+                                  </>
+                                </motion.div>
+                              )}
                             </AnimatePresence>
                           </motion.div>
                         );
@@ -1399,150 +1399,150 @@ export default function ResultPage() {
                             </div>
 
                             <AnimatePresence initial={false}>
-                            {(!editMode || openEditSection === "experience") && (
-                              <motion.div
-                                key="experience-content"
-                                initial={{ height: 0, opacity: 0 }}
-                                animate={{ height: "auto", opacity: 1 }}
-                                exit={{ height: 0, opacity: 0 }}
-                                transition={{ type: "spring", stiffness: 300, damping: 30, opacity: { duration: 0.2 } }}
-                                className="overflow-hidden"
-                              >
-                              <>
+                              {(!editMode || openEditSection === "experience") && (
+                                <motion.div
+                                  key="experience-content"
+                                  initial={{ height: 0, opacity: 0 }}
+                                  animate={{ height: "auto", opacity: 1 }}
+                                  exit={{ height: 0, opacity: 0 }}
+                                  transition={{ type: "spring", stiffness: 300, damping: 30, opacity: { duration: 0.2 } }}
+                                  className="overflow-hidden"
+                                >
+                                  <>
 
-                                {resume.experience.map((exp, idx) => (
-                                  <div key={idx} className="mb-8 last:mb-0">
-                                    {editMode ? (
-                                      <div className="space-y-2 mb-4">
-                                        <input
-                                          type="text"
-                                          value={exp.job_title || ''}
-                                          onChange={(e) => {
-                                            const newExperience = [...resume.experience];
-                                            newExperience[idx].job_title = e.target.value;
-                                            updateResume({ experience: newExperience });
-                                          }}
-                                          className="w-full font-bold rounded-xl px-4 py-2 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm"
-                                          placeholder="Job Title"
-                                        />
-                                        <input
-                                          type="text"
-                                          value={exp.company || ''}
-                                          onChange={(e) => {
-                                            const newExperience = [...resume.experience];
-                                            newExperience[idx].company = e.target.value;
-                                            updateResume({ experience: newExperience });
-                                          }}
-                                          className="w-full rounded-xl px-4 py-2 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm"
-                                          placeholder="Company"
-                                        />
-                                        <div className="grid grid-cols-2 gap-2">
-                                          <input
-                                            type="text"
-                                            value={exp.duration || ''}
-                                            onChange={(e) => {
-                                              const newExperience = [...resume.experience];
-                                              newExperience[idx].duration = e.target.value;
-                                              updateResume({ experience: newExperience });
-                                            }}
-                                            className="text-sm rounded-xl px-4 py-2 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm"
-                                            placeholder="Duration"
-                                          />
-                                          <input
-                                            type="text"
-                                            value={exp.location || ''}
-                                            onChange={(e) => {
-                                              const newExperience = [...resume.experience];
-                                              newExperience[idx].location = e.target.value;
-                                              updateResume({ experience: newExperience });
-                                            }}
-                                            className="text-sm rounded-xl px-4 py-2 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm"
-                                            placeholder="Location"
-                                          />
-                                        </div>
-                                      </div>
-                                    ) : (
-                                      <>
-                                        <p className="font-bold text-lg text-on-background">{exp.job_title}</p>
-                                        <p className="text-on-surface-variant">{exp.company}</p>
-                                        <p className="text-sm text-on-surface-variant mb-3">{exp.duration}{exp.location && ` • ${exp.location}`}</p>
-                                      </>
-                                    )}
-                                    <ul className="space-y-2">
-                                      {exp.bullets.map((bullet, bidx) => {
-                                        const isHighlighted = isBulletEnhanced(bullet, "Experience", resume.changes);
-                                        const highlightClass = getHighlightClass(isHighlighted, showHighlights);
-
-                                        return (
-                                          <li key={bidx} className={`text-on-background text-sm flex items-start gap-3 ${highlightClass} rounded-lg p-3 transition-all`}>
-                                            <span className="text-primary mt-1 font-bold">•</span>
-                                            {editMode ? (
-                                              <textarea
-                                                value={bullet}
+                                    {resume.experience.map((exp, idx) => (
+                                      <div key={idx} className="mb-8 last:mb-0">
+                                        {editMode ? (
+                                          <div className="space-y-2 mb-4">
+                                            <input
+                                              type="text"
+                                              value={exp.job_title || ''}
+                                              onChange={(e) => {
+                                                const newExperience = [...resume.experience];
+                                                newExperience[idx].job_title = e.target.value;
+                                                updateResume({ experience: newExperience });
+                                              }}
+                                              className="w-full font-bold rounded-xl px-4 py-2 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm"
+                                              placeholder="Job Title"
+                                            />
+                                            <input
+                                              type="text"
+                                              value={exp.company || ''}
+                                              onChange={(e) => {
+                                                const newExperience = [...resume.experience];
+                                                newExperience[idx].company = e.target.value;
+                                                updateResume({ experience: newExperience });
+                                              }}
+                                              className="w-full rounded-xl px-4 py-2 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm"
+                                              placeholder="Company"
+                                            />
+                                            <div className="grid grid-cols-2 gap-2">
+                                              <input
+                                                type="text"
+                                                value={exp.duration || ''}
                                                 onChange={(e) => {
                                                   const newExperience = [...resume.experience];
-                                                  newExperience[idx].bullets[bidx] = e.target.value;
+                                                  newExperience[idx].duration = e.target.value;
                                                   updateResume({ experience: newExperience });
                                                 }}
-                                                className="flex-1 rounded-lg px-3 py-2 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm resize-none"
-                                                rows={2}
+                                                className="text-sm rounded-xl px-4 py-2 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm"
+                                                placeholder="Duration"
                                               />
-                                            ) : (
-                                              <span className="flex items-start gap-2 flex-1">
-                                                <span className="flex-1">{bullet}</span>
-                                                {showHighlights && isHighlighted && (
-                                                  <Sparkles className="w-4 h-4 text-yellow-500 flex-shrink-0 animate-pulse" />
+                                              <input
+                                                type="text"
+                                                value={exp.location || ''}
+                                                onChange={(e) => {
+                                                  const newExperience = [...resume.experience];
+                                                  newExperience[idx].location = e.target.value;
+                                                  updateResume({ experience: newExperience });
+                                                }}
+                                                className="text-sm rounded-xl px-4 py-2 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm"
+                                                placeholder="Location"
+                                              />
+                                            </div>
+                                          </div>
+                                        ) : (
+                                          <>
+                                            <p className="font-bold text-lg text-on-background">{exp.job_title}</p>
+                                            <p className="text-on-surface-variant">{exp.company}</p>
+                                            <p className="text-sm text-on-surface-variant mb-3">{exp.duration}{exp.location && ` • ${exp.location}`}</p>
+                                          </>
+                                        )}
+                                        <ul className="space-y-2">
+                                          {exp.bullets.map((bullet, bidx) => {
+                                            const isHighlighted = isBulletEnhanced(bullet, "Experience", resume.changes);
+                                            const highlightClass = getHighlightClass(isHighlighted, showHighlights);
+
+                                            return (
+                                              <li key={bidx} className={`text-on-background text-sm flex items-start gap-3 ${highlightClass} rounded-lg p-3 transition-all`}>
+                                                <span className="text-primary mt-1 font-bold">•</span>
+                                                {editMode ? (
+                                                  <textarea
+                                                    value={bullet}
+                                                    onChange={(e) => {
+                                                      const newExperience = [...resume.experience];
+                                                      newExperience[idx].bullets[bidx] = e.target.value;
+                                                      updateResume({ experience: newExperience });
+                                                    }}
+                                                    className="flex-1 rounded-lg px-3 py-2 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm resize-none"
+                                                    rows={2}
+                                                  />
+                                                ) : (
+                                                  <span className="flex items-start gap-2 flex-1">
+                                                    <span className="flex-1">{bullet}</span>
+                                                    {showHighlights && isHighlighted && (
+                                                      <Sparkles className="w-4 h-4 text-yellow-500 flex-shrink-0 animate-pulse" />
+                                                    )}
+                                                  </span>
                                                 )}
-                                              </span>
-                                            )}
-                                          </li>
-                                        );
-                                      })}
-                                    </ul>
+                                              </li>
+                                            );
+                                          })}
+                                        </ul>
+                                        {editMode && (
+                                          <div className="flex justify-between items-center mt-3">
+                                            <button
+                                              type="button"
+                                              onClick={() => {
+                                                const newExperience = [...resume.experience];
+                                                newExperience[idx].bullets.push('');
+                                                updateResume({ experience: newExperience });
+                                              }}
+                                              className="px-3 py-1 text-sm text-primary hover:bg-primary/10 rounded-lg transition-colors font-semibold"
+                                            >
+                                              + Add Bullet Point
+                                            </button>
+                                            <button
+                                              type="button"
+                                              onClick={() => {
+                                                const newExperience = resume.experience.filter((_, i) => i !== idx);
+                                                updateResume({ experience: newExperience });
+                                              }}
+                                              className="px-3 py-1 text-sm text-red-500 hover:bg-red-50 rounded-lg transition-colors font-semibold"
+                                            >
+                                              Remove Experience
+                                            </button>
+                                          </div>
+                                        )}
+                                      </div>
+                                    ))}
                                     {editMode && (
-                                      <div className="flex justify-between items-center mt-3">
+                                      <div className="mt-4 flex justify-center">
                                         <button
-                                          type="button"
                                           onClick={() => {
-                                            const newExperience = [...resume.experience];
-                                            newExperience[idx].bullets.push('');
+                                            const newExperience = [...resume.experience, { job_title: '', company: '', location: '', duration: '', bullets: [''] }];
                                             updateResume({ experience: newExperience });
                                           }}
-                                          className="px-3 py-1 text-sm text-primary hover:bg-primary/10 rounded-lg transition-colors font-semibold"
-                                        >
-                                          + Add Bullet Point
-                                        </button>
-                                        <button
+                                          className="px-4 py-2 bg-primary/10 text-primary font-bold rounded-xl hover:bg-primary/20 transition-colors"
                                           type="button"
-                                          onClick={() => {
-                                            const newExperience = resume.experience.filter((_, i) => i !== idx);
-                                            updateResume({ experience: newExperience });
-                                          }}
-                                          className="px-3 py-1 text-sm text-red-500 hover:bg-red-50 rounded-lg transition-colors font-semibold"
                                         >
-                                          Remove Experience
+                                          + Add Experience
                                         </button>
                                       </div>
                                     )}
-                                  </div>
-                                ))}
-                                {editMode && (
-                                  <div className="mt-4 flex justify-center">
-                                    <button
-                                      onClick={() => {
-                                        const newExperience = [...resume.experience, { job_title: '', company: '', location: '', duration: '', bullets: [''] }];
-                                        updateResume({ experience: newExperience });
-                                      }}
-                                      className="px-4 py-2 bg-primary/10 text-primary font-bold rounded-xl hover:bg-primary/20 transition-colors"
-                                      type="button"
-                                    >
-                                      + Add Experience
-                                    </button>
-                                  </div>
-                                )}
-                              </>
-                              </motion.div>
-                            )}
+                                  </>
+                                </motion.div>
+                              )}
                             </AnimatePresence>
                           </motion.div>
                         );
@@ -1576,162 +1576,162 @@ export default function ResultPage() {
                             </div>
 
                             <AnimatePresence initial={false}>
-                            {(!editMode || openEditSection === "projects") && (
-                              <motion.div
-                                key="projects-content"
-                                initial={{ height: 0, opacity: 0 }}
-                                animate={{ height: "auto", opacity: 1 }}
-                                exit={{ height: 0, opacity: 0 }}
-                                transition={{ type: "spring", stiffness: 300, damping: 30, opacity: { duration: 0.2 } }}
-                                className="overflow-hidden"
-                              >
-                              <>
+                              {(!editMode || openEditSection === "projects") && (
+                                <motion.div
+                                  key="projects-content"
+                                  initial={{ height: 0, opacity: 0 }}
+                                  animate={{ height: "auto", opacity: 1 }}
+                                  exit={{ height: 0, opacity: 0 }}
+                                  transition={{ type: "spring", stiffness: 300, damping: 30, opacity: { duration: 0.2 } }}
+                                  className="overflow-hidden"
+                                >
+                                  <>
 
-                                {resume.projects.map((proj, idx) => (
-                                  <div key={idx} className="mb-8 last:mb-0">
-                                    {editMode ? (
-                                      <div className="space-y-2 mb-4">
-                                        <div className="flex flex-col gap-3">
-                                          <input
-                                            type="text"
-                                            value={proj.title}
-                                            onChange={(e) => {
-                                              const newProjects = [...resume.projects];
-                                              newProjects[idx].title = e.target.value;
-                                              updateResume({ projects: newProjects });
-                                            }}
-                                            className="w-full font-bold rounded-xl px-4 py-2 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm"
-                                            placeholder="Project Title"
-                                          />
-                                          <div className="flex gap-2">
-                                            <input
-                                              type="text"
-                                              value={proj.link || ''}
-                                              onChange={(e) => {
-                                                const newProjects = [...resume.projects];
-                                                newProjects[idx].link = e.target.value;
-                                                updateResume({ projects: newProjects });
-                                              }}
-                                              className="flex-[1] text-sm rounded-xl px-4 py-2 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm"
-                                              placeholder="Display Text (Link/GitHub)"
-                                            />
-                                            <input
-                                              type="url"
-                                              value={proj.link_href || ''}
-                                              onChange={(e) => {
-                                                const newProjects = [...resume.projects];
-                                                newProjects[idx].link_href = e.target.value;
-                                                updateResume({ projects: newProjects });
-                                              }}
-                                              className="flex-[2] text-sm rounded-xl px-4 py-2 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm"
-                                              placeholder="Actual Repo URL"
-                                            />
-                                          </div>
-                                        </div>
-                                        <input
-                                          type="text"
-                                          value={proj.tech_stack}
-                                          onChange={(e) => {
-                                            const newProjects = [...resume.projects];
-                                            newProjects[idx].tech_stack = e.target.value;
-                                            updateResume({ projects: newProjects });
-                                          }}
-                                          className="w-full text-sm rounded-xl px-4 py-2 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm"
-                                          placeholder="Tech Stack"
-                                        />
-                                      </div>
-                                    ) : (
-                                      <>
-                                        <div className="flex justify-between items-start mb-2">
-                                          <div className="flex items-center gap-2 flex-wrap">
-                                            <p className="font-bold text-lg text-on-background">{proj.title}</p>
-                                            {proj.tech_stack && (
-                                              <p className="text-sm text-on-surface-variant italic">
-                                                <span className="not-italic mr-2">|</span>{proj.tech_stack}
-                                              </p>
-                                            )}
-                                          </div>
-                                          <a href={proj.link_href ? (proj.link_href.startsWith('http') ? proj.link_href : `https://${proj.link_href}`) : 'https://github.com/reponame'} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline ml-4 flex-shrink-0">
-                                            {proj.link || 'Link'}
-                                          </a>
-                                        </div>
-                                      </>
-                                    )}
-                                    <ul className="space-y-2">
-                                      {proj.bullets.map((bullet, bidx) => {
-                                        const isHighlighted = isBulletEnhanced(bullet, proj.title, resume.changes);
-                                        const highlightClass = getHighlightClass(isHighlighted, showHighlights);
-
-                                        return (
-                                          <li key={bidx} className={`text-on-background text-sm flex items-start gap-3 ${highlightClass} rounded-lg p-3 transition-all`}>
-                                            <span className="text-primary mt-1 font-bold">•</span>
-                                            {editMode ? (
-                                              <textarea
-                                                value={bullet}
+                                    {resume.projects.map((proj, idx) => (
+                                      <div key={idx} className="mb-8 last:mb-0">
+                                        {editMode ? (
+                                          <div className="space-y-2 mb-4">
+                                            <div className="flex flex-col gap-3">
+                                              <input
+                                                type="text"
+                                                value={proj.title}
                                                 onChange={(e) => {
                                                   const newProjects = [...resume.projects];
-                                                  newProjects[idx].bullets[bidx] = e.target.value;
+                                                  newProjects[idx].title = e.target.value;
                                                   updateResume({ projects: newProjects });
                                                 }}
-                                                className="flex-1 rounded-lg px-3 py-2 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm resize-none"
-                                                rows={2}
+                                                className="w-full font-bold rounded-xl px-4 py-2 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm"
+                                                placeholder="Project Title"
                                               />
-                                            ) : (
-                                              <span className="flex items-start gap-2 flex-1">
-                                                <span className="flex-1">{bullet}</span>
-                                                {showHighlights && isHighlighted && (
-                                                  <Sparkles className="w-4 h-4 text-yellow-500 flex-shrink-0 animate-pulse" />
+                                              <div className="flex gap-2">
+                                                <input
+                                                  type="text"
+                                                  value={proj.link || ''}
+                                                  onChange={(e) => {
+                                                    const newProjects = [...resume.projects];
+                                                    newProjects[idx].link = e.target.value;
+                                                    updateResume({ projects: newProjects });
+                                                  }}
+                                                  className="flex-[1] text-sm rounded-xl px-4 py-2 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm"
+                                                  placeholder="Display Text (Link/GitHub)"
+                                                />
+                                                <input
+                                                  type="url"
+                                                  value={proj.link_href || ''}
+                                                  onChange={(e) => {
+                                                    const newProjects = [...resume.projects];
+                                                    newProjects[idx].link_href = e.target.value;
+                                                    updateResume({ projects: newProjects });
+                                                  }}
+                                                  className="flex-[2] text-sm rounded-xl px-4 py-2 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm"
+                                                  placeholder="Actual Repo URL"
+                                                />
+                                              </div>
+                                            </div>
+                                            <input
+                                              type="text"
+                                              value={proj.tech_stack}
+                                              onChange={(e) => {
+                                                const newProjects = [...resume.projects];
+                                                newProjects[idx].tech_stack = e.target.value;
+                                                updateResume({ projects: newProjects });
+                                              }}
+                                              className="w-full text-sm rounded-xl px-4 py-2 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm"
+                                              placeholder="Tech Stack"
+                                            />
+                                          </div>
+                                        ) : (
+                                          <>
+                                            <div className="flex justify-between items-start mb-2">
+                                              <div className="flex items-center gap-2 flex-wrap">
+                                                <p className="font-bold text-lg text-on-background">{proj.title}</p>
+                                                {proj.tech_stack && (
+                                                  <p className="text-sm text-on-surface-variant italic">
+                                                    <span className="not-italic mr-2">|</span>{proj.tech_stack}
+                                                  </p>
                                                 )}
-                                              </span>
-                                            )}
-                                          </li>
-                                        );
-                                      })}
-                                    </ul>
+                                              </div>
+                                              <a href={proj.link_href ? (proj.link_href.startsWith('http') ? proj.link_href : `https://${proj.link_href}`) : 'https://github.com/reponame'} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline ml-4 flex-shrink-0">
+                                                {proj.link || 'Link'}
+                                              </a>
+                                            </div>
+                                          </>
+                                        )}
+                                        <ul className="space-y-2">
+                                          {proj.bullets.map((bullet, bidx) => {
+                                            const isHighlighted = isBulletEnhanced(bullet, proj.title, resume.changes);
+                                            const highlightClass = getHighlightClass(isHighlighted, showHighlights);
+
+                                            return (
+                                              <li key={bidx} className={`text-on-background text-sm flex items-start gap-3 ${highlightClass} rounded-lg p-3 transition-all`}>
+                                                <span className="text-primary mt-1 font-bold">•</span>
+                                                {editMode ? (
+                                                  <textarea
+                                                    value={bullet}
+                                                    onChange={(e) => {
+                                                      const newProjects = [...resume.projects];
+                                                      newProjects[idx].bullets[bidx] = e.target.value;
+                                                      updateResume({ projects: newProjects });
+                                                    }}
+                                                    className="flex-1 rounded-lg px-3 py-2 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm resize-none"
+                                                    rows={2}
+                                                  />
+                                                ) : (
+                                                  <span className="flex items-start gap-2 flex-1">
+                                                    <span className="flex-1">{bullet}</span>
+                                                    {showHighlights && isHighlighted && (
+                                                      <Sparkles className="w-4 h-4 text-yellow-500 flex-shrink-0 animate-pulse" />
+                                                    )}
+                                                  </span>
+                                                )}
+                                              </li>
+                                            );
+                                          })}
+                                        </ul>
+                                        {editMode && (
+                                          <div className="flex justify-between items-center mt-3">
+                                            <button
+                                              type="button"
+                                              onClick={() => {
+                                                const newProjects = [...resume.projects];
+                                                newProjects[idx].bullets.push('');
+                                                updateResume({ projects: newProjects });
+                                              }}
+                                              className="px-3 py-1 text-sm text-primary hover:bg-primary/10 rounded-lg transition-colors font-semibold"
+                                            >
+                                              + Add Bullet Point
+                                            </button>
+                                            <button
+                                              type="button"
+                                              onClick={() => {
+                                                const newProjects = resume.projects.filter((_, i) => i !== idx);
+                                                updateResume({ projects: newProjects });
+                                              }}
+                                              className="px-3 py-1 text-sm text-red-500 hover:bg-red-50 rounded-lg transition-colors font-semibold"
+                                            >
+                                              Remove Project
+                                            </button>
+                                          </div>
+                                        )}
+                                      </div>
+                                    ))}
                                     {editMode && (
-                                      <div className="flex justify-between items-center mt-3">
+                                      <div className="mt-4 flex justify-center">
                                         <button
-                                          type="button"
                                           onClick={() => {
-                                            const newProjects = [...resume.projects];
-                                            newProjects[idx].bullets.push('');
+                                            const newProjects = [...resume.projects, { title: '', tech_stack: '', duration: '', link: '', link_href: '', bullets: [''] }];
                                             updateResume({ projects: newProjects });
                                           }}
-                                          className="px-3 py-1 text-sm text-primary hover:bg-primary/10 rounded-lg transition-colors font-semibold"
-                                        >
-                                          + Add Bullet Point
-                                        </button>
-                                        <button
+                                          className="px-4 py-2 bg-primary/10 text-primary font-bold rounded-xl hover:bg-primary/20 transition-colors"
                                           type="button"
-                                          onClick={() => {
-                                            const newProjects = resume.projects.filter((_, i) => i !== idx);
-                                            updateResume({ projects: newProjects });
-                                          }}
-                                          className="px-3 py-1 text-sm text-red-500 hover:bg-red-50 rounded-lg transition-colors font-semibold"
                                         >
-                                          Remove Project
+                                          + Add Project
                                         </button>
                                       </div>
                                     )}
-                                  </div>
-                                ))}
-                                {editMode && (
-                                  <div className="mt-4 flex justify-center">
-                                    <button
-                                      onClick={() => {
-                                        const newProjects = [...resume.projects, { title: '', tech_stack: '', duration: '', link: '', link_href: '', bullets: [''] }];
-                                        updateResume({ projects: newProjects });
-                                      }}
-                                      className="px-4 py-2 bg-primary/10 text-primary font-bold rounded-xl hover:bg-primary/20 transition-colors"
-                                      type="button"
-                                    >
-                                      + Add Project
-                                    </button>
-                                  </div>
-                                )}
-                              </>
-                              </motion.div>
-                            )}
+                                  </>
+                                </motion.div>
+                              )}
                             </AnimatePresence>
                           </motion.div>
                         );
@@ -1764,178 +1764,178 @@ export default function ResultPage() {
                             </div>
 
                             <AnimatePresence initial={false}>
-                            {(!editMode || openEditSection === "skills") && (
-                              <motion.div
-                                key="skills-content"
-                                initial={{ height: 0, opacity: 0 }}
-                                animate={{ height: "auto", opacity: 1 }}
-                                exit={{ height: 0, opacity: 0 }}
-                                transition={{ type: "spring", stiffness: 300, damping: 30, opacity: { duration: 0.2 } }}
-                                className="overflow-hidden"
-                              >
-                              <>
+                              {(!editMode || openEditSection === "skills") && (
+                                <motion.div
+                                  key="skills-content"
+                                  initial={{ height: 0, opacity: 0 }}
+                                  animate={{ height: "auto", opacity: 1 }}
+                                  exit={{ height: 0, opacity: 0 }}
+                                  transition={{ type: "spring", stiffness: 300, damping: 30, opacity: { duration: 0.2 } }}
+                                  className="overflow-hidden"
+                                >
+                                  <>
 
-                                <div className="space-y-4">
-                                  {(editMode || resume.technical_skills.languages.length > 0) && (
-                                    <div>
-                                      <p className="font-semibold text-on-background mb-2">Languages:</p>
-                                      <EditableSkillTags
-                                        skills={resume.technical_skills.languages}
-                                        onChange={(newSkills) =>
-                                          updateResume({
-                                            technical_skills: {
-                                              ...resume.technical_skills,
-                                              languages: newSkills,
-                                            },
-                                          })
-                                        }
-                                        editMode={editMode}
-                                        colorClass="bg-primary-container/20 text-primary"
-                                        highlightedSkills={resume.changes
-                                          .filter((c) => c.toLowerCase().includes("languages"))
-                                          .map((c) => {
-                                            const match = c.match(/Added (.+?) to/i);
-                                            return match ? match[1].toLowerCase() : "";
-                                          })
-                                          .filter(Boolean)}
-                                        showHighlights={showHighlights}
-                                      />
+                                    <div className="space-y-4">
+                                      {(editMode || resume.technical_skills.languages.length > 0) && (
+                                        <div>
+                                          <p className="font-semibold text-on-background mb-2">Languages:</p>
+                                          <EditableSkillTags
+                                            skills={resume.technical_skills.languages}
+                                            onChange={(newSkills) =>
+                                              updateResume({
+                                                technical_skills: {
+                                                  ...resume.technical_skills,
+                                                  languages: newSkills,
+                                                },
+                                              })
+                                            }
+                                            editMode={editMode}
+                                            colorClass="bg-primary-container/20 text-primary"
+                                            highlightedSkills={resume.changes
+                                              .filter((c) => c.toLowerCase().includes("languages"))
+                                              .map((c) => {
+                                                const match = c.match(/Added (.+?) to/i);
+                                                return match ? match[1].toLowerCase() : "";
+                                              })
+                                              .filter(Boolean)}
+                                            showHighlights={showHighlights}
+                                          />
+                                        </div>
+                                      )}
+                                      {(editMode || resume.technical_skills.frameworks_and_libraries.length > 0) && (
+                                        <div>
+                                          <p className="font-semibold text-on-background mb-2">Frameworks & Libraries:</p>
+                                          <EditableSkillTags
+                                            skills={resume.technical_skills.frameworks_and_libraries}
+                                            onChange={(newSkills) =>
+                                              updateResume({
+                                                technical_skills: {
+                                                  ...resume.technical_skills,
+                                                  frameworks_and_libraries: newSkills,
+                                                },
+                                              })
+                                            }
+                                            editMode={editMode}
+                                            colorClass="bg-secondary-container/20 text-secondary-container"
+                                            highlightedSkills={resume.changes
+                                              .filter((c) => c.toLowerCase().includes("frameworks"))
+                                              .map((c) => {
+                                                const match = c.match(/Added (.+?) to/i);
+                                                return match ? match[1].toLowerCase() : "";
+                                              })
+                                              .filter(Boolean)}
+                                            showHighlights={showHighlights}
+                                          />
+                                        </div>
+                                      )}
+                                      {(editMode || resume.technical_skills.databases.length > 0) && (
+                                        <div>
+                                          <p className="font-semibold text-on-background mb-2">Databases:</p>
+                                          <EditableSkillTags
+                                            skills={resume.technical_skills.databases}
+                                            onChange={(newSkills) =>
+                                              updateResume({
+                                                technical_skills: {
+                                                  ...resume.technical_skills,
+                                                  databases: newSkills,
+                                                },
+                                              })
+                                            }
+                                            editMode={editMode}
+                                            colorClass="bg-tertiary-container/20 text-tertiary-container"
+                                            highlightedSkills={resume.changes
+                                              .filter((c) => c.toLowerCase().includes("databases"))
+                                              .map((c) => {
+                                                const match = c.match(/Added (.+?) to/i);
+                                                return match ? match[1].toLowerCase() : "";
+                                              })
+                                              .filter(Boolean)}
+                                            showHighlights={showHighlights}
+                                          />
+                                        </div>
+                                      )}
+                                      {(editMode || resume.technical_skills.cloud_services.length > 0) && (
+                                        <div>
+                                          <p className="font-semibold text-on-background mb-2">Cloud Services:</p>
+                                          <EditableSkillTags
+                                            skills={resume.technical_skills.cloud_services}
+                                            onChange={(newSkills) =>
+                                              updateResume({
+                                                technical_skills: {
+                                                  ...resume.technical_skills,
+                                                  cloud_services: newSkills,
+                                                },
+                                              })
+                                            }
+                                            editMode={editMode}
+                                            colorClass="bg-primary/10 text-primary"
+                                            highlightedSkills={resume.changes
+                                              .filter((c) => c.toLowerCase().includes("cloud"))
+                                              .map((c) => {
+                                                const match = c.match(/Added (.+?) to/i);
+                                                return match ? match[1].toLowerCase() : "";
+                                              })
+                                              .filter(Boolean)}
+                                            showHighlights={showHighlights}
+                                          />
+                                        </div>
+                                      )}
+                                      {(editMode || resume.technical_skills.developer_tools.length > 0) && (
+                                        <div>
+                                          <p className="font-semibold text-on-background mb-2">Developer Tools:</p>
+                                          <EditableSkillTags
+                                            skills={resume.technical_skills.developer_tools}
+                                            onChange={(newSkills) =>
+                                              updateResume({
+                                                technical_skills: {
+                                                  ...resume.technical_skills,
+                                                  developer_tools: newSkills,
+                                                },
+                                              })
+                                            }
+                                            editMode={editMode}
+                                            colorClass="bg-surface-container-high text-on-surface-variant"
+                                            highlightedSkills={resume.changes
+                                              .filter((c) => c.toLowerCase().includes("developer_tools") || c.toLowerCase().includes("tools"))
+                                              .map((c) => {
+                                                const match = c.match(/Added (.+?) to/i);
+                                                return match ? match[1].toLowerCase() : "";
+                                              })
+                                              .filter(Boolean)}
+                                            showHighlights={showHighlights}
+                                          />
+                                        </div>
+                                      )}
+                                      {(editMode || (resume.technical_skills.miscellaneous && resume.technical_skills.miscellaneous.length > 0)) && (
+                                        <div>
+                                          <p className="font-semibold text-on-background mb-2">Miscellaneous:</p>
+                                          <EditableSkillTags
+                                            skills={resume.technical_skills.miscellaneous}
+                                            onChange={(newSkills) =>
+                                              updateResume({
+                                                technical_skills: {
+                                                  ...resume.technical_skills,
+                                                  miscellaneous: newSkills,
+                                                },
+                                              })
+                                            }
+                                            editMode={editMode}
+                                            colorClass="bg-red-500/10 text-red-600"
+                                            highlightedSkills={resume.changes
+                                              .filter((c) => c.toLowerCase().includes("miscellaneous"))
+                                              .map((c) => {
+                                                const match = c.match(/Added (.+?) to/i);
+                                                return match ? match[1].toLowerCase() : "";
+                                              })
+                                              .filter(Boolean)}
+                                            showHighlights={showHighlights}
+                                          />
+                                        </div>
+                                      )}
                                     </div>
-                                  )}
-                                  {(editMode || resume.technical_skills.frameworks_and_libraries.length > 0) && (
-                                    <div>
-                                      <p className="font-semibold text-on-background mb-2">Frameworks & Libraries:</p>
-                                      <EditableSkillTags
-                                        skills={resume.technical_skills.frameworks_and_libraries}
-                                        onChange={(newSkills) =>
-                                          updateResume({
-                                            technical_skills: {
-                                              ...resume.technical_skills,
-                                              frameworks_and_libraries: newSkills,
-                                            },
-                                          })
-                                        }
-                                        editMode={editMode}
-                                        colorClass="bg-secondary-container/20 text-secondary-container"
-                                        highlightedSkills={resume.changes
-                                          .filter((c) => c.toLowerCase().includes("frameworks"))
-                                          .map((c) => {
-                                            const match = c.match(/Added (.+?) to/i);
-                                            return match ? match[1].toLowerCase() : "";
-                                          })
-                                          .filter(Boolean)}
-                                        showHighlights={showHighlights}
-                                      />
-                                    </div>
-                                  )}
-                                  {(editMode || resume.technical_skills.databases.length > 0) && (
-                                    <div>
-                                      <p className="font-semibold text-on-background mb-2">Databases:</p>
-                                      <EditableSkillTags
-                                        skills={resume.technical_skills.databases}
-                                        onChange={(newSkills) =>
-                                          updateResume({
-                                            technical_skills: {
-                                              ...resume.technical_skills,
-                                              databases: newSkills,
-                                            },
-                                          })
-                                        }
-                                        editMode={editMode}
-                                        colorClass="bg-tertiary-container/20 text-tertiary-container"
-                                        highlightedSkills={resume.changes
-                                          .filter((c) => c.toLowerCase().includes("databases"))
-                                          .map((c) => {
-                                            const match = c.match(/Added (.+?) to/i);
-                                            return match ? match[1].toLowerCase() : "";
-                                          })
-                                          .filter(Boolean)}
-                                        showHighlights={showHighlights}
-                                      />
-                                    </div>
-                                  )}
-                                  {(editMode || resume.technical_skills.cloud_services.length > 0) && (
-                                    <div>
-                                      <p className="font-semibold text-on-background mb-2">Cloud Services:</p>
-                                      <EditableSkillTags
-                                        skills={resume.technical_skills.cloud_services}
-                                        onChange={(newSkills) =>
-                                          updateResume({
-                                            technical_skills: {
-                                              ...resume.technical_skills,
-                                              cloud_services: newSkills,
-                                            },
-                                          })
-                                        }
-                                        editMode={editMode}
-                                        colorClass="bg-primary/10 text-primary"
-                                        highlightedSkills={resume.changes
-                                          .filter((c) => c.toLowerCase().includes("cloud"))
-                                          .map((c) => {
-                                            const match = c.match(/Added (.+?) to/i);
-                                            return match ? match[1].toLowerCase() : "";
-                                          })
-                                          .filter(Boolean)}
-                                        showHighlights={showHighlights}
-                                      />
-                                    </div>
-                                  )}
-                                  {(editMode || resume.technical_skills.developer_tools.length > 0) && (
-                                    <div>
-                                      <p className="font-semibold text-on-background mb-2">Developer Tools:</p>
-                                      <EditableSkillTags
-                                        skills={resume.technical_skills.developer_tools}
-                                        onChange={(newSkills) =>
-                                          updateResume({
-                                            technical_skills: {
-                                              ...resume.technical_skills,
-                                              developer_tools: newSkills,
-                                            },
-                                          })
-                                        }
-                                        editMode={editMode}
-                                        colorClass="bg-surface-container-high text-on-surface-variant"
-                                        highlightedSkills={resume.changes
-                                          .filter((c) => c.toLowerCase().includes("developer_tools") || c.toLowerCase().includes("tools"))
-                                          .map((c) => {
-                                            const match = c.match(/Added (.+?) to/i);
-                                            return match ? match[1].toLowerCase() : "";
-                                          })
-                                          .filter(Boolean)}
-                                        showHighlights={showHighlights}
-                                      />
-                                    </div>
-                                  )}
-                                  {(editMode || (resume.technical_skills.miscellaneous && resume.technical_skills.miscellaneous.length > 0)) && (
-                                    <div>
-                                      <p className="font-semibold text-on-background mb-2">Miscellaneous:</p>
-                                      <EditableSkillTags
-                                        skills={resume.technical_skills.miscellaneous}
-                                        onChange={(newSkills) =>
-                                          updateResume({
-                                            technical_skills: {
-                                              ...resume.technical_skills,
-                                              miscellaneous: newSkills,
-                                            },
-                                          })
-                                        }
-                                        editMode={editMode}
-                                        colorClass="bg-red-500/10 text-red-600"
-                                        highlightedSkills={resume.changes
-                                          .filter((c) => c.toLowerCase().includes("miscellaneous"))
-                                          .map((c) => {
-                                            const match = c.match(/Added (.+?) to/i);
-                                            return match ? match[1].toLowerCase() : "";
-                                          })
-                                          .filter(Boolean)}
-                                        showHighlights={showHighlights}
-                                      />
-                                    </div>
-                                  )}
-                                </div>
-                              </>
-                              </motion.div>
-                            )}
+                                  </>
+                                </motion.div>
+                              )}
                             </AnimatePresence>
                           </motion.div>
                         );
@@ -1975,78 +1975,78 @@ export default function ResultPage() {
                             </div>
 
                             <AnimatePresence initial={false}>
-                            {(!editMode || openEditSection === "certifications") && (
-                              <motion.div
-                                key="certifications-content"
-                                initial={{ height: 0, opacity: 0 }}
-                                animate={{ height: "auto", opacity: 1 }}
-                                exit={{ height: 0, opacity: 0 }}
-                                transition={{ type: "spring", stiffness: 300, damping: 30, opacity: { duration: 0.2 } }}
-                                className="overflow-hidden"
-                              >
-                              <>
-                                <ul className="space-y-3">
-                                  {uniqueItems.map((item, idx) => (
-                                    <li key={idx} className="flex items-start gap-3 text-on-background">
-                                      <span className="text-tertiary-container mt-1">•</span>
-                                      {editMode ? (
-                                        <div className="flex-1 flex gap-2">
-                                          <textarea
-                                            value={item}
-                                            onChange={(e) => {
-                                              const newItems = [...uniqueItems];
-                                              newItems[idx] = e.target.value;
-                                              updateResume({
-                                                certifications_and_achievements: newItems,
-                                                certifications: [],
-                                                achievements: []
-                                              });
-                                            }}
-                                            className="flex-1 rounded-lg px-3 py-2 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm resize-none"
-                                            rows={2}
-                                          />
-                                          <button
-                                            type="button"
-                                            onClick={() => {
-                                              const newItems = uniqueItems.filter((_, i) => i !== idx);
-                                              updateResume({
-                                                certifications_and_achievements: newItems,
-                                                certifications: [],
-                                                achievements: []
-                                              });
-                                            }}
-                                            className="px-3 py-1 text-sm text-red-500 hover:bg-red-50 rounded-lg transition-colors font-semibold self-start mt-1"
-                                          >
-                                            Remove
-                                          </button>
-                                        </div>
-                                      ) : (
-                                        <span className="flex-1">{item}</span>
-                                      )}
-                                    </li>
-                                  ))}
-                                </ul>
-                                {editMode && (
-                                  <div className="mt-4 flex justify-center">
-                                    <button
-                                      onClick={() => {
-                                        const newItems = [...uniqueItems, ''];
-                                        updateResume({
-                                          certifications_and_achievements: newItems,
-                                          certifications: [],
-                                          achievements: []
-                                        });
-                                      }}
-                                      className="px-4 py-2 bg-primary/10 text-primary font-bold rounded-xl hover:bg-primary/20 transition-colors"
-                                      type="button"
-                                    >
-                                      + Add More
-                                    </button>
-                                  </div>
-                                )}
-                              </>
-                              </motion.div>
-                            )}
+                              {(!editMode || openEditSection === "certifications") && (
+                                <motion.div
+                                  key="certifications-content"
+                                  initial={{ height: 0, opacity: 0 }}
+                                  animate={{ height: "auto", opacity: 1 }}
+                                  exit={{ height: 0, opacity: 0 }}
+                                  transition={{ type: "spring", stiffness: 300, damping: 30, opacity: { duration: 0.2 } }}
+                                  className="overflow-hidden"
+                                >
+                                  <>
+                                    <ul className="space-y-3">
+                                      {uniqueItems.map((item, idx) => (
+                                        <li key={idx} className="flex items-start gap-3 text-on-background">
+                                          <span className="text-tertiary-container mt-1">•</span>
+                                          {editMode ? (
+                                            <div className="flex-1 flex gap-2">
+                                              <textarea
+                                                value={item}
+                                                onChange={(e) => {
+                                                  const newItems = [...uniqueItems];
+                                                  newItems[idx] = e.target.value;
+                                                  updateResume({
+                                                    certifications_and_achievements: newItems,
+                                                    certifications: [],
+                                                    achievements: []
+                                                  });
+                                                }}
+                                                className="flex-1 rounded-lg px-3 py-2 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm resize-none"
+                                                rows={2}
+                                              />
+                                              <button
+                                                type="button"
+                                                onClick={() => {
+                                                  const newItems = uniqueItems.filter((_, i) => i !== idx);
+                                                  updateResume({
+                                                    certifications_and_achievements: newItems,
+                                                    certifications: [],
+                                                    achievements: []
+                                                  });
+                                                }}
+                                                className="px-3 py-1 text-sm text-red-500 hover:bg-red-50 rounded-lg transition-colors font-semibold self-start mt-1"
+                                              >
+                                                Remove
+                                              </button>
+                                            </div>
+                                          ) : (
+                                            <span className="flex-1">{item}</span>
+                                          )}
+                                        </li>
+                                      ))}
+                                    </ul>
+                                    {editMode && (
+                                      <div className="mt-4 flex justify-center">
+                                        <button
+                                          onClick={() => {
+                                            const newItems = [...uniqueItems, ''];
+                                            updateResume({
+                                              certifications_and_achievements: newItems,
+                                              certifications: [],
+                                              achievements: []
+                                            });
+                                          }}
+                                          className="px-4 py-2 bg-primary/10 text-primary font-bold rounded-xl hover:bg-primary/20 transition-colors"
+                                          type="button"
+                                        >
+                                          + Add More
+                                        </button>
+                                      </div>
+                                    )}
+                                  </>
+                                </motion.div>
+                              )}
                             </AnimatePresence>
                           </motion.div>
                         );
@@ -2166,7 +2166,8 @@ export default function ResultPage() {
                     ) : (
                       <>
                         <p className="text-on-surface-variant mb-6 text-sm">
-                          These keywords from the job description could not be naturally integrated into your existing experience. Try to explicitly add these terms into your skills or bullet points if applicable to your actual experience.
+                          These keywords from the job description which are not found in your resume and injected with miniimum achievable edits.
+
                         </p>
                         <div className="flex flex-wrap gap-2">
                           {missingKeywords.map((keyword, idx) => (
