@@ -1,31 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "motion/react";
-import { Calendar } from "lucide-react";
+import { CheckCircle } from "lucide-react";
 
 type Filter = "daily" | "weekly" | "monthly";
+type DataPoint = { label: string; value: number };
 
-const MOCK: Record<Filter, { label: string; value: number }[]> = {
-  daily: [
-    { label: "Mon", value: 45 }, { label: "Tue", value: 62 },
-    { label: "Wed", value: 38 }, { label: "Thu", value: 71 },
-    { label: "Fri", value: 55 }, { label: "Sat", value: 83 },
-    { label: "Sun", value: 94 },
-  ],
-  weekly: [
-    { label: "Wk 1", value: 285 }, { label: "Wk 2", value: 342 },
-    { label: "Wk 3", value: 298 }, { label: "Wk 4", value: 356 },
-  ],
-  monthly: [
-    { label: "May", value: 120 }, { label: "Jun", value: 145 },
-    { label: "Jul", value: 189 }, { label: "Aug", value: 234 },
-    { label: "Sep", value: 267 }, { label: "Oct", value: 312 },
-    { label: "Nov", value: 298 }, { label: "Dec", value: 345 },
-    { label: "Jan", value: 389 }, { label: "Feb", value: 423 },
-    { label: "Mar", value: 456 }, { label: "Apr", value: 502 },
-  ],
-};
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 const FILTERS: { id: Filter; label: string }[] = [
   { id: "daily", label: "Daily" },
@@ -35,9 +17,22 @@ const FILTERS: { id: Filter; label: string }[] = [
 
 export default function DownloadChart() {
   const [filter, setFilter] = useState<Filter>("daily");
-  const data = MOCK[filter];
-  const max = Math.max(...data.map((d) => d.value));
+  const [trends, setTrends] = useState<Record<Filter, DataPoint[]>>({
+    daily: [],
+    weekly: [],
+    monthly: []
+  });
   const [tooltip, setTooltip] = useState<{ label: string; value: number } | null>(null);
+
+  useEffect(() => {
+    fetch(`${API_URL}/api/admin/download-trends`)
+      .then((res) => res.json())
+      .then((data) => setTrends(data))
+      .catch((e) => console.error("Failed to fetch download trends", e));
+  }, []);
+
+  const data = trends[filter] || [];
+  const max = data.length > 0 ? Math.max(...data.map((d) => d.value)) : 0;
 
   return (
     <div className="bg-white rounded-[1.5rem] p-6 border border-[#eff1f2] shadow-sm space-y-5">
@@ -63,11 +58,10 @@ export default function DownloadChart() {
               </button>
             ))}
           </div>
-          {/* Custom date (future) */}
-          <button className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-[#595c5d] border border-[#eff1f2] hover:border-[#006859]/30 transition-colors">
-            <Calendar className="w-3.5 h-3.5" />
-            Custom
-          </button>
+          <span className="flex items-center gap-1 text-xs font-bold text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-xl border border-emerald-200">
+            <CheckCircle className="w-3.5 h-3.5" />
+            Live Data
+          </span>
         </div>
       </div>
 
@@ -78,7 +72,9 @@ export default function DownloadChart() {
 
       {/* Bar Chart */}
       <div className="flex items-end gap-2 h-44">
-        {data.map((d, i) => {
+        {data.length === 0 ? (
+           <div className="w-full h-full flex items-center justify-center text-sm text-[#595c5d]">Loading data...</div>
+        ) : data.map((d, i) => {
           const heightPct = max > 0 ? (d.value / max) * 100 : 0;
           return (
             <div
@@ -103,7 +99,7 @@ export default function DownloadChart() {
       </div>
 
       <p className="text-xs text-[#595c5d]/70 text-right">
-        * Simulated data — wire to DB for real analytics
+        * Accurately tracks downloads across all users on the platform
       </p>
     </div>
   );

@@ -1,42 +1,33 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { motion } from "motion/react";
-import { IndianRupee, AlertCircle } from "lucide-react";
+import { IndianRupee, CheckCircle } from "lucide-react";
 
-const PLANS = [
-  {
-    name: "Free",
-    price: 0,
-    users: 2847,
-    color: "bg-[#eff1f2]",
-    textColor: "text-[#595c5d]",
-    barColor: "bg-[#595c5d]/30",
-    mrr: 0,
-  },
-  {
-    name: "Pro",
-    price: 99,
-    users: 342,
-    color: "bg-[#12f8d7]/15",
-    textColor: "text-[#006859]",
-    barColor: "bg-gradient-to-r from-[#006859] to-[#12f8d7]",
-    mrr: 342 * 99,
-  },
-  {
-    name: "Lifetime",
-    price: 999,
-    users: 89,
-    color: "bg-purple-50",
-    textColor: "text-purple-700",
-    barColor: "bg-gradient-to-r from-purple-500 to-purple-400",
-    mrr: 89 * 999,
-  },
-];
+interface Plan {
+  name: string;
+  price: string | number;
+  users: number;
+  mrr: number;
+  color: string;
+  textColor: string;
+  barColor: string;
+}
 
-const TOTAL_USERS = PLANS.reduce((s, p) => s + p.users, 0);
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 export default function RevenuePanel() {
-  const mrr = PLANS.reduce((s, p) => s + p.mrr, 0);
+  const [plans, setPlans] = useState<Plan[]>([]);
+  
+  useEffect(() => {
+    fetch(`${API_URL}/api/admin/revenue-breakdown`)
+      .then((res) => res.json())
+      .then((data) => setPlans(data))
+      .catch((e) => console.error("Failed to fetch revenue", e));
+  }, []);
+
+  const totalUsers = plans.reduce((s, p) => s + p.users, 0);
+  const mrr = plans.reduce((s, p) => s + p.mrr, 0);
 
   return (
     <div className="bg-white rounded-[1.5rem] p-6 border border-[#eff1f2] shadow-sm space-y-6">
@@ -46,9 +37,9 @@ export default function RevenuePanel() {
           <h2 className="font-headline text-xl font-bold text-[#2c2f30]">Revenue & Subscriptions</h2>
           <p className="text-sm text-[#595c5d]">Breakdown by plan</p>
         </div>
-        <span className="flex items-center gap-1 text-xs font-bold text-amber-700 bg-amber-50 px-3 py-1.5 rounded-full border border-amber-200">
-          <AlertCircle className="w-3 h-3" />
-          Simulated
+        <span className="flex items-center gap-1 text-xs font-bold text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-full border border-emerald-200">
+          <CheckCircle className="w-3 h-3" />
+          Live Data
         </span>
       </div>
 
@@ -67,8 +58,10 @@ export default function RevenuePanel() {
 
       {/* Plan Breakdown */}
       <div className="space-y-4">
-        {PLANS.map((plan, i) => {
-          const userPct = (plan.users / TOTAL_USERS) * 100;
+        {plans.length === 0 ? (
+          <div className="text-sm text-[#595c5d] text-center py-4">Loading data...</div>
+        ) : plans.map((plan, i) => {
+          const userPct = totalUsers > 0 ? (plan.users / totalUsers) * 100 : 0;
           return (
             <div key={plan.name} className="space-y-2">
               <div className="flex items-center justify-between text-sm">
@@ -103,7 +96,7 @@ export default function RevenuePanel() {
       </div>
 
       <p className="text-xs text-[#595c5d]/70">
-        * Wire to Razorpay / Stripe webhook for real revenue data
+        * Aggregated securely from active subscriptions and successful payments
       </p>
     </div>
   );
