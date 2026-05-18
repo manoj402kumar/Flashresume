@@ -180,6 +180,14 @@ async def deduct_credit(body: DeductRequest):
         }).execute()
         
         if result.data and len(result.data) > 0 and result.data[0]["success"]:
+            # Robustly link the session to the user in Python
+            if body.session_id:
+                try:
+                    supabase.table("resume_sessions").update({
+                        "user_id": body.user_id
+                    }).eq("id", body.session_id).execute()
+                except Exception as ex:
+                    print(f"Failed to link session {body.session_id} to user {body.user_id}: {ex}")
             return {"status": "success", "new_balance": result.data[0]["new_balance"]}
         else:
             raise HTTPException(status_code=402, detail="Insufficient credits")

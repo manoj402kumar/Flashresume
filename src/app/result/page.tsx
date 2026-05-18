@@ -425,7 +425,7 @@ export default function ResultPage() {
           await fetch(`${apiUrl}/api/payments/deduct-credit`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ user_id: session.user.id })
+            body: JSON.stringify({ user_id: session.user.id, session_id: sessionGuid })
           });
           // Re-evaluate access silently
           await checkAccess();
@@ -440,12 +440,13 @@ export default function ResultPage() {
         try {
           const res = await fetch(`${apiUrl}/api/resume/increment-download`, {
             method: "POST",
-            body: JSON.stringify({ session_id: sessionGuid }),
+            body: JSON.stringify({ session_id: sessionGuid, user_id: currentUserId }),
             headers: { "Content-Type": "application/json" }
           });
           if (res.ok) {
             const data = await res.json();
-            if (data.download_count === 1) {
+            const total = data.total_platform_downloads;
+            if (total && total > 0 && total % 20 === 0) {
               setTimeout(() => setShowFeedback(true), 10000);
             }
           }

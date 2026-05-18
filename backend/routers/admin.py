@@ -21,10 +21,21 @@ except Exception as e:
     print(f"Supabase client initialization failed: {e}")
     supabase = None
 
+from datetime import datetime, timedelta, timezone
+
 @router.get("/health/queue")
 async def get_queue_status():
-    # Since AI generation is synchronous right now, queue is always 0
-    return {"processing": 0}
+    # Proxy for active sessions: sessions created in the last 5 minutes
+    if not supabase:
+        return {"processing": 0}
+    try:
+        five_mins_ago = (datetime.now(timezone.utc) - timedelta(minutes=5)).isoformat()
+        res = supabase.table("resume_sessions").select("id", count="exact").gte("created_at", five_mins_ago).execute()
+        active_count = res.count if hasattr(res, 'count') and res.count is not None else (len(res.data) if res.data else 0)
+        return {"processing": active_count}
+    except Exception as e:
+        print(f"Health Queue Error: {str(e)}")
+        return {"processing": 0}
 
 @router.get("/admin/stats")
 async def get_admin_stats():
@@ -32,9 +43,9 @@ async def get_admin_stats():
     
     stats = {
         "uptime_seconds": uptime_seconds,
-        "revenue": 0,
-        "downloads": 0,
-        "subscribers": 0
+        "total_revenue": 0,
+        "total_downloads": 0,
+        "active_subs": 0
     }
     
     if not supabase:
@@ -42,32 +53,23 @@ async def get_admin_stats():
         
     try:
         # 1. Total Revenue (sum of all successful payments)
-        # Note: supabase-py doesn't have aggregate sum easily, so we fetch and sum or use RPC.
-        # For simplicity, we fetch them (in a real app with 1M rows, use an RPC)
         payments_res = supabase.table("payments").select("amount").eq("status", "success").execute()
         if payments_res.data:
-            # amount is in paise, so divide by 100 for INR
-            stats["revenue"] = sum(p["amount"] for p in payments_res.data) // 100
+            stats["total_revenue"] = sum(p["amount"] for p in payments_res.data) // 100
             
-        # 2. Total Downloads (from resume_downloads table or resume_sessions)
-        # Let's count resume_sessions for now as a proxy if downloads isn't heavily populated yet.
-        # Using count="exact" is supported in Supabase
-        sessions_res = supabase.table("resume_sessions").select("id", count="exact").execute()
-        if hasattr(sessions_res, 'count') and sessions_res.count is not None:
-            stats["downloads"] = sessions_res.count
+        # 2. Total Downloads (using resume_downloads table)
+        downloads = supabase.table("resume_downloads").select("id", count="exact").execute()
+        if hasattr(downloads, 'count') and downloads.count is not None:
+            stats["total_downloads"] = downloads.count
         else:
-            stats["downloads"] = len(sessions_res.data) if sessions_res.data else 0
+            stats["total_downloads"] = len(downloads.data) if downloads.data else 0
             
-        # 3. Paid Subscribers (active regular or student)
-        subs_res = supabase.table("subscriptions")\
-            .select("id", count="exact")\
-            .eq("is_active", True)\
-            .neq("plan_type", "one_time")\
-            .execute()
-        if hasattr(subs_res, 'count') and subs_res.count is not None:
-            stats["subscribers"] = subs_res.count
+        # 3. Active Subscribers
+        subs = supabase.table("subscriptions").select("id", count="exact").eq("is_active", True).execute()
+        if hasattr(subs, 'count') and subs.count is not None:
+            stats["active_subs"] = subs.count
         else:
-            stats["subscribers"] = len(subs_res.data) if subs_res.data else 0
+            stats["active_subs"] = len(subs.data) if subs.data else 0
 
         return stats
     except Exception as e:

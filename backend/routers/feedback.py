@@ -31,12 +31,10 @@ async def submit_feedback(body: FeedbackRequest):
         raise HTTPException(404, "Session not found")
     if session.data["user_id"] != body.user_id:
         raise HTTPException(403, "Not your session")
-    if session.data.get("download_count", 0) != 1:
+    if (session.data.get("download_count") or 0) < 1:
         raise HTTPException(400, "Feedback only accepted after first download")
         
-    existing = supabase.table("feedback").select("id").eq("session_id", body.session_id).execute()
-    if existing.data:
-        raise HTTPException(400, "Feedback already submitted for this session")
+
         
     supabase.table("feedback").insert({
         "user_id": body.user_id,
@@ -54,38 +52,45 @@ async def get_feedback():
     result = supabase.table("feedback").select("*, users(email)").order("created_at", desc=True).limit(100).execute()
     return result.data
 
-@router.get("/admin/dashboard-stats")
-async def dashboard_stats():
-    if not supabase:
-        return {"total_users": 0, "total_revenue": 0, "total_downloads": 0, "active_subs": 0}
-        
-    users = supabase.table("users").select("id", count="exact").execute()
-    payments = supabase.table("payments").select("amount").eq("status", "success").execute()
-    revenue = sum(p["amount"] for p in payments.data) / 100 if payments.data else 0
-    downloads = supabase.table("resume_downloads").select("id", count="exact").execute()
-    subs = supabase.table("subscriptions").select("id", count="exact").eq("is_active", True).execute()
-    
-    return {
-        "total_users": users.count or 0,
-        "total_revenue": revenue,
-        "total_downloads": downloads.count or 0,
-        "active_subs": subs.count or 0,
-    }
 
 class IncrementDownloadRequest(BaseModel):
     session_id: str
+    user_id: str | None = None
 
 @router.post("/resume/increment-download")
 async def increment_download(body: IncrementDownloadRequest):
     if not supabase:
         raise HTTPException(status_code=500, detail="Database not configured")
         
-    session = supabase.table("resume_sessions").select("download_count").eq("id", body.session_id).single().execute()
+    session = supabase.table("resume_sessions").select("download_count, user_id").eq("id", body.session_id).single().execute()
     new_count = (session.data.get("download_count") or 0) + 1
     
     supabase.table("resume_sessions").update({"download_count": new_count}).eq("id", body.session_id).execute()
     
-    return {"download_count": new_count}
+    global_count = 0
+    # Determine the actual user_id to log for
+    actual_user_id = body.user_id or session.data.get("user_id")
+    
+    if actual_user_id:
+        try:
+            # Log the download globally
+            supabase.table("resume_downloads").insert({
+                "user_id": actual_user_id,
+                "session_id": body.session_id
+            }).execute()
+            # Count total platform downloads (across all users)
+            downloads_res = supabase.table("resume_downloads").select("id", count="exact").execute()
+            if hasattr(downloads_res, 'count') and downloads_res.count is not None:
+                global_count = downloads_res.count
+            else:
+                global_count = len(downloads_res.data) if downloads_res.data else 0
+        except Exception as e:
+            print(f"Error logging to resume_downloads: {e}")
+    
+    return {
+        "download_count": new_count,
+        "total_platform_downloads": global_count
+    }
 
 @router.get("/admin/llm-stats")
 async def llm_stats():
