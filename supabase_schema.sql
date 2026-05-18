@@ -91,3 +91,17 @@ CREATE TABLE IF NOT EXISTS public.resume_downloads (
 
 ALTER TABLE public.resume_downloads ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Users can view own downloads" ON public.resume_downloads FOR SELECT USING (auth.uid() = user_id);
+
+-- 6. Page Visits (Analytics)
+CREATE TABLE IF NOT EXISTS public.page_visits (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  page_type TEXT NOT NULL, -- 'landing', 'result', etc
+  session_id TEXT, -- Optional cookie/localstorage id for anonymous tracking
+  user_id UUID REFERENCES public.users(id) ON DELETE SET NULL,
+  visited_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE public.page_visits ENABLE ROW LEVEL SECURITY;
+-- Analytics should be readable only by admins, but inserts should be open (if public) or handled via backend service key
+-- Using service role key in backend bypasses RLS, so this is safe:
+CREATE POLICY "Enable insert for all" ON public.page_visits FOR INSERT WITH CHECK (true);

@@ -68,6 +68,16 @@ export default function App() {
     return () => subscription.unsubscribe();
   }, []);
 
+  // Track Landing Page Visit
+  useEffect(() => {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+    fetch(`${apiUrl}/api/analytics/track-visit`, {
+      method: "POST",
+      body: JSON.stringify({ page_type: "landing" }),
+      headers: { "Content-Type": "application/json" }
+    }).catch(() => {});
+  }, []);
+
   // Close dropdown on outside click
   useEffect(() => {
     const handler = (e: MouseEvent) => {
