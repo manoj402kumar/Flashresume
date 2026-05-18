@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { User } from "@supabase/supabase-js";
-import { User as UserIcon, Calendar, Zap, CreditCard, Loader2 } from "lucide-react";
+import { User as UserIcon, Calendar, Zap, CreditCard, Loader2, Share2, Copy, CheckCircle2 } from "lucide-react";
 import { motion } from "motion/react";
 
 interface AccountSectionProps {
@@ -15,6 +15,9 @@ export default function AccountSection({ onTopUpClick }: AccountSectionProps) {
   const [credits, setCredits] = useState<number | null>(null);
   const [plan, setPlan] = useState<string>("Free");
   const [validUntil, setValidUntil] = useState<string | null>(null);
+  const [referralCode, setReferralCode] = useState<string | null>(null);
+  const [referralStats, setReferralStats] = useState({ count: 0, earned: 0 });
+  const [copied, setCopied] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -26,14 +29,30 @@ export default function AccountSection({ onTopUpClick }: AccountSectionProps) {
       }
       setUser(session.user);
 
-      // Fetch credits
+      // Fetch user data (credits + referral code)
       const { data: userData } = await supabase
         .from("users")
-        .select("credits_balance")
+        .select("credits_balance, referral_code")
         .eq("id", session.user.id)
         .single();
-      
+
       setCredits(userData?.credits_balance ?? 0);
+      setReferralCode(userData?.referral_code ?? null);
+
+      // Fetch referral rewards stats (safe — returns empty array if table missing)
+      try {
+        const { data: rewardData } = await supabase
+          .from("referral_rewards")
+          .select("credits_awarded")
+          .eq("referrer_id", session.user.id);
+
+        if (rewardData) {
+          const earned = rewardData.reduce((acc, curr) => acc + (curr.credits_awarded || 0), 0);
+          setReferralStats({ count: rewardData.length, earned });
+        }
+      } catch {
+        // referral_rewards table may not exist yet — silently ignore
+      }
 
       // Fetch active subscription
       const { data: subData } = await supabase
@@ -46,9 +65,9 @@ export default function AccountSection({ onTopUpClick }: AccountSectionProps) {
         .maybeSingle();
 
       if (subData) {
-        setPlan(subData.plan_type === "regular" ? "Pro Monthly" : 
-                subData.plan_type === "student" ? "Student Plan" : 
-                subData.plan_type === "pay_per_use" ? "Pay Per Use" : "Free");
+        setPlan(subData.plan_type === "regular" ? "Pro Monthly" :
+          subData.plan_type === "student" ? "Student Plan" :
+            subData.plan_type === "pay_per_use" ? "Pay Per Use" : "Free");
         setValidUntil(subData.expires_at);
       }
 
@@ -60,12 +79,13 @@ export default function AccountSection({ onTopUpClick }: AccountSectionProps) {
     // Listen for realtime credit updates
     const subscription = supabase
       .channel('public:users')
-      .on('postgres_changes', { 
-        event: 'UPDATE', 
-        schema: 'public', 
-        table: 'users' 
+      .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'users'
       }, (payload) => {
         setCredits(payload.new.credits_balance);
+        if (payload.new.referral_code) setReferralCode(payload.new.referral_code);
       })
       .subscribe();
 
@@ -84,15 +104,27 @@ export default function AccountSection({ onTopUpClick }: AccountSectionProps) {
 
   if (!user) return null;
 
+  const referralLink = referralCode
+    ? `${typeof window !== 'undefined' ? window.location.origin : 'https://flashresume.com'}/?ref=${referralCode}`
+    : null;
+
+  const handleCopyLink = () => {
+    if (referralLink) {
+      navigator.clipboard.writeText(referralLink);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
   return (
-    <section className="bg-surface py-20 border-t border-surface-container-low">
+    <section id="account-section" className="bg-surface py-20 border-t border-surface-container-low">
       <div className="max-w-4xl mx-auto px-6">
         <div className="mb-10">
           <h2 className="font-headline text-3xl md:text-4xl font-bold text-on-background mb-2">Your Account</h2>
           <p className="text-on-surface-variant text-lg">Manage your credits and subscription.</p>
         </div>
 
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="bg-surface-container-low rounded-[2rem] p-8 md:p-10 border border-primary/10 shadow-xl shadow-primary/5"
@@ -145,7 +177,7 @@ export default function AccountSection({ onTopUpClick }: AccountSectionProps) {
 
             <div className="bg-surface-container-lowest rounded-2xl p-6 border border-primary/10 flex flex-col items-center justify-center text-center relative overflow-hidden">
               <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-bl-[100px] -z-10" />
-              
+
               <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center text-primary mb-4">
                 <Zap className="w-8 h-8" />
               </div>
@@ -153,13 +185,65 @@ export default function AccountSection({ onTopUpClick }: AccountSectionProps) {
               <div className="text-5xl font-black text-on-background mb-6">
                 {credits !== null ? credits : "..."}
               </div>
-              
+
               <button
                 onClick={onTopUpClick}
                 className="w-full flash-gradient text-white font-bold py-3.5 rounded-xl hover:opacity-90 transition-opacity shadow-lg shadow-primary/20"
               >
                 Buy More Credits
               </button>
+            </div>
+          </div>
+
+          {/* ── Refer & Earn Section ── */}
+          <div className="mt-8 pt-8 border-t border-surface-container-high">
+            <div className="flex flex-col md:flex-row gap-6 md:items-center justify-between">
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <Share2 className="w-4 h-4 text-primary" />
+                  </div>
+                  <h3 className="font-headline text-xl font-bold text-on-background">Refer &amp; Earn</h3>
+                </div>
+                <p className="text-on-surface-variant text-sm max-w-sm">
+                  Share your link. When a friend purchases any plan, you get{" "}
+                  <span className="font-bold text-primary">+20 Credits</span> automatically!
+                </p>
+                <div className="flex items-center gap-6 mt-3 text-sm font-semibold">
+                  <p className="text-on-surface-variant">
+                    Friends Referred:{" "}
+                    <span className="text-on-background font-black">{referralStats.count}</span>
+                  </p>
+                  <p className="text-on-surface-variant">
+                    Credits Earned:{" "}
+                    <span className="text-primary font-black">+{referralStats.earned}</span>
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-2 w-full md:w-80 flex-shrink-0">
+                <p className="text-xs font-bold text-on-surface-variant uppercase tracking-wider">Your Referral Link</p>
+                <div className="flex items-center bg-surface-container-lowest border border-primary/20 rounded-xl overflow-hidden">
+                  <div className="px-4 py-3 text-primary font-mono text-xs font-bold border-r border-primary/20 truncate flex-1">
+                    {referralLink ?? "Generating your link..."}
+                  </div>
+                  <button
+                    onClick={handleCopyLink}
+                    disabled={!referralLink}
+                    className="px-4 py-3 hover:bg-primary/10 transition-colors text-primary flex items-center justify-center flex-shrink-0 disabled:opacity-40"
+                    title="Copy Link"
+                  >
+                    {copied
+                      ? <CheckCircle2 className="w-5 h-5 text-green-500" />
+                      : <Copy className="w-5 h-5" />}
+                  </button>
+                </div>
+                {referralCode && (
+                  <p className="text-xs text-on-surface-variant text-center">
+                    Code: <span className="font-mono font-black text-on-background tracking-widest">{referralCode}</span>
+                  </p>
+                )}
+              </div>
             </div>
           </div>
         </motion.div>

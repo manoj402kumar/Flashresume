@@ -8,7 +8,10 @@ CREATE TABLE IF NOT EXISTS public.users (
   roll_number TEXT,
   is_student BOOLEAN DEFAULT FALSE,
   student_verified_at TIMESTAMPTZ,
-  created_at TIMESTAMPTZ DEFAULT NOW()
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  referral_code TEXT UNIQUE,
+  referred_by UUID REFERENCES public.users(id),
+  credits_balance INTEGER DEFAULT 0
 );
 
 -- Turn on Row Level Security
@@ -23,8 +26,8 @@ CREATE POLICY "Users can insert own profile" ON public.users FOR INSERT WITH CHE
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS trigger AS $$
 BEGIN
-  INSERT INTO public.users (id, email)
-  VALUES (new.id, new.email);
+  INSERT INTO public.users (id, email, referral_code)
+  VALUES (new.id, new.email, upper(substring(gen_random_uuid()::text, 1, 8)));
   RETURN new;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
@@ -105,3 +108,37 @@ ALTER TABLE public.page_visits ENABLE ROW LEVEL SECURITY;
 -- Analytics should be readable only by admins, but inserts should be open (if public) or handled via backend service key
 -- Using service role key in backend bypasses RLS, so this is safe:
 CREATE POLICY "Enable insert for all" ON public.page_visits FOR INSERT WITH CHECK (true);
+
+
+-- 7. Referral Rewards
+CREATE TABLE IF NOT EXISTS public.referral_rewards (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  referrer_id UUID REFERENCES public.users(id) ON DELETE CASCADE,
+  referred_user_id UUID REFERENCES public.users(id) ON DELETE CASCADE,
+  payment_id TEXT,
+  credits_awarded INTEGER DEFAULT 20,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(referrer_id, referred_user_id)
+);
+
+ALTER TABLE public.referral_rewards ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users can view own referral rewards" ON public.referral_rewards FOR SELECT USING (auth.uid() = referrer_id);
+
+-- RPC Function for Atomic Credit Award
+CREATE OR REPLACE FUNCTION public.award_referral_bonus(
+  p_referrer_uuid UUID,
+  p_referred_uuid UUID,
+  p_amount INTEGER,
+  p_pay_id TEXT
+) RETURNS void AS $$
+BEGIN
+  -- Insert into referral_rewards first. If it violates UNIQUE constraint, it throws an error and aborts transaction.
+  INSERT INTO public.referral_rewards (referrer_id, referred_user_id, payment_id, credits_awarded)
+  VALUES (p_referrer_uuid, p_referred_uuid, p_pay_id, p_amount);
+  
+  -- If insert succeeds, safely update credits
+  UPDATE public.users
+  SET credits_balance = COALESCE(credits_balance, 0) + p_amount
+  WHERE id = p_referrer_uuid;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;

@@ -364,7 +364,7 @@ export default function ResumePDFTemplateLetter({ resume, showHighlights = false
                   <Text style={styles.sectionTitle}>Technical Skills</Text>
                   <View style={styles.sectionDivider} />
                   <View style={styles.skillsContainer}>
-                    {resume.technical_skills.languages.length > 0 && (
+                    {(resume.technical_skills?.languages?.length ?? 0) > 0 && (
                       <View style={styles.skillCategoryRow}>
                         <Text style={styles.skillLabel}>Languages</Text>
                         <HighlightedText
@@ -376,7 +376,7 @@ export default function ResumePDFTemplateLetter({ resume, showHighlights = false
                         />
                       </View>
                     )}
-                    {resume.technical_skills.frameworks_and_libraries.length > 0 && (
+                    {(resume.technical_skills?.frameworks_and_libraries?.length ?? 0) > 0 && (
                       <View style={styles.skillCategoryRow}>
                         <Text style={styles.skillLabel}>Frameworks & Libraries</Text>
                         <HighlightedText
@@ -388,7 +388,7 @@ export default function ResumePDFTemplateLetter({ resume, showHighlights = false
                         />
                       </View>
                     )}
-                    {resume.technical_skills.databases.length > 0 && (
+                    {(resume.technical_skills?.databases?.length ?? 0) > 0 && (
                       <View style={styles.skillCategoryRow}>
                         <Text style={styles.skillLabel}>Databases</Text>
                         <HighlightedText
@@ -400,7 +400,7 @@ export default function ResumePDFTemplateLetter({ resume, showHighlights = false
                         />
                       </View>
                     )}
-                    {resume.technical_skills.cloud_services.length > 0 && (
+                    {(resume.technical_skills?.cloud_services?.length ?? 0) > 0 && (
                       <View style={styles.skillCategoryRow}>
                         <Text style={styles.skillLabel}>Cloud Services</Text>
                         <HighlightedText
@@ -412,7 +412,7 @@ export default function ResumePDFTemplateLetter({ resume, showHighlights = false
                         />
                       </View>
                     )}
-                    {resume.technical_skills.developer_tools.length > 0 && (
+                    {(resume.technical_skills?.developer_tools?.length ?? 0) > 0 && (
                       <View style={styles.skillCategoryRow}>
                         <Text style={styles.skillLabel}>Developer Tools</Text>
                         <HighlightedText
@@ -424,7 +424,7 @@ export default function ResumePDFTemplateLetter({ resume, showHighlights = false
                         />
                       </View>
                     )}
-                    {resume.technical_skills.miscellaneous && resume.technical_skills.miscellaneous.length > 0 && (
+                    {resume.technical_skills?.miscellaneous && resume.technical_skills.miscellaneous.length > 0 && (
                       <View style={styles.skillCategoryRow}>
                         <Text style={styles.skillLabel}>Miscellaneous</Text>
                         <HighlightedText

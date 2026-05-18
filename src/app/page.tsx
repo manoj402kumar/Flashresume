@@ -56,6 +56,7 @@ export default function App() {
   const [subscriptionData, setSubscriptionData] = useState<any>(null);
   const [optimizeMode, setOptimizeMode] = useState<"jd" | "no_jd" | "manual" | null>("jd");
   const [showModeDropdown, setShowModeDropdown] = useState(false);
+  const [purchaseSuccess, setPurchaseSuccess] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -66,16 +67,6 @@ export default function App() {
       setCurrentUser(session?.user ?? null);
     });
     return () => subscription.unsubscribe();
-  }, []);
-
-  // Track Landing Page Visit
-  useEffect(() => {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-    fetch(`${apiUrl}/api/analytics/track-visit`, {
-      method: "POST",
-      body: JSON.stringify({ page_type: "landing" }),
-      headers: { "Content-Type": "application/json" }
-    }).catch(() => {});
   }, []);
 
   // Close dropdown on outside click
@@ -784,7 +775,10 @@ export default function App() {
           </section>
         )}
 
-
+        {/* Account & Refer Earn Section */}
+        {currentUser && (
+          <AccountSection onTopUpClick={() => { setSelectedPricingPlan(null); setShowDownloadGate(true); }} />
+        )}
 
         {/* Reviews Section */}
         <section id="reviews" className="py-32">
@@ -862,6 +856,31 @@ export default function App() {
         </section>
       </main>
 
+      {/* Purchase Success Toast */}
+      {purchaseSuccess && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[100] animate-in slide-in-from-bottom-4 duration-300">
+          <div className="flex items-center gap-3 bg-on-background text-surface px-6 py-4 rounded-2xl shadow-2xl shadow-black/30 border border-white/10">
+            <div className="w-9 h-9 bg-primary rounded-full flex items-center justify-center flex-shrink-0">
+              <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <div>
+              <p className="font-bold text-sm">Credits Added Successfully!</p>
+              <p className="text-xs opacity-70 mt-0.5">Upload your resume above and click Generate to get started.</p>
+            </div>
+            <button
+              onClick={() => setPurchaseSuccess(false)}
+              className="ml-4 opacity-50 hover:opacity-100 transition-opacity"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Parsed Text Modal */}
       {showParsedText && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
@@ -912,7 +931,15 @@ export default function App() {
         onClose={() => setShowDownloadGate(false)}
         onSuccess={() => {
           setShowDownloadGate(false);
-          router.push("/result");
+          // Refresh credits from Supabase immediately
+          if (currentUser) {
+            supabase.from("users").select("credits_balance").eq("id", currentUser.id).single()
+              .then(({ data }) => { if (data) setCredits(data.credits_balance); });
+          }
+          // Show success toast — do NOT redirect to /result
+          // (user purchased from home page, no resume session exists yet)
+          setPurchaseSuccess(true);
+          setTimeout(() => setPurchaseSuccess(false), 5000);
         }}
         initialPlan={selectedPricingPlan}
         directPay={!!selectedPricingPlan}

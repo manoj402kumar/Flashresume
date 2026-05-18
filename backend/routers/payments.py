@@ -143,7 +143,23 @@ async def verify_payment(body: VerifyRequest):
                 
             supabase.table("subscriptions").insert(sub_data).execute()
 
-            # 3. Link session_id to the user
+            # 3. Award Referral Bonus if the buyer was referred
+            try:
+                ref_check = supabase.table("users").select("referred_by").eq("id", body.user_id).execute()
+                referrer_id = ref_check.data[0].get("referred_by") if ref_check.data else None
+                if referrer_id:
+                    supabase.rpc("award_referral_bonus", {
+                        "p_referrer_uuid": referrer_id,
+                        "p_referred_uuid": body.user_id,
+                        "p_amount": 20,
+                        "p_pay_id": body.razorpay_payment_id
+                    }).execute()
+                    print(f"Referral bonus awarded: referrer={referrer_id}, buyer={body.user_id}")
+            except Exception as ref_err:
+                # Never block payment success for referral errors
+                print(f"Referral bonus error (non-critical): {ref_err}")
+
+            # 4. Link session_id to the user
             if body.session_id:
                 supabase.table("resume_sessions").update({
                     "user_id": body.user_id,

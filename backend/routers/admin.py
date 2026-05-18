@@ -23,19 +23,6 @@ except Exception as e:
 
 from datetime import datetime, timedelta, timezone
 
-@router.get("/health/queue")
-async def get_queue_status():
-    # Proxy for active sessions: sessions created in the last 5 minutes
-    if not supabase:
-        return {"processing": 0}
-    try:
-        five_mins_ago = (datetime.now(timezone.utc) - timedelta(minutes=5)).isoformat()
-        res = supabase.table("resume_sessions").select("id", count="exact").gte("created_at", five_mins_ago).execute()
-        active_count = res.count if hasattr(res, 'count') and res.count is not None else (len(res.data) if res.data else 0)
-        return {"processing": active_count}
-    except Exception as e:
-        print(f"Health Queue Error: {str(e)}")
-        return {"processing": 0}
 
 @router.get("/admin/stats")
 async def get_admin_stats():
@@ -279,3 +266,36 @@ async def get_funnel_stats():
     except Exception as e:
         print(f"Funnel Stats Error: {str(e)}")
         return {"landing": 0, "result": 0, "purchases": 0}
+
+
+class ApplyReferralRequest(BaseModel):
+    referral_code: str
+    user_id: str
+
+@router.post("/api/user/apply-referral")
+async def apply_referral(body: ApplyReferralRequest):
+    if not supabase:
+        return {"status": "error", "message": "Supabase not configured"}
+    
+    try:
+        # Find referrer user by code
+        ref_res = supabase.table("users").select("id").eq("referral_code", body.referral_code).execute()
+        if not ref_res.data:
+            return {"status": "error", "message": "Invalid referral code"}
+            
+        referrer_id = ref_res.data[0]["id"]
+        
+        # Don't allow self-referral
+        if referrer_id == body.user_id:
+            return {"status": "error", "message": "Cannot refer yourself"}
+            
+        # Update user's referred_by ONLY if it's currently null
+        user_res = supabase.table("users").select("referred_by").eq("id", body.user_id).execute()
+        if user_res.data and user_res.data[0].get("referred_by") is None:
+            supabase.table("users").update({"referred_by": referrer_id}).eq("id", body.user_id).execute()
+            return {"status": "ok"}
+            
+        return {"status": "skipped", "message": "Already referred"}
+    except Exception as e:
+        print(f"Apply Referral Error: {str(e)}")
+        return {"status": "error", "message": str(e)}
