@@ -138,6 +138,7 @@ METRIC RULE for Case A enhancement:
     Go through the missing keywords list one by one and place each keyword as follows:
     (i) Existing project bullets — FIRST PRIORITY. Weave (70-90%) of keywords naturally into the enhanced project bullets of relavant project(s) only, for non relavant tech stack project if any inject non tech stack missing keywords only like debugging, error handling, tools and so on.
     (ii) Work experience bullets — ONLY if the keyword is directly relevant to work experience tech stack (20-30% of keywords). Never add missing languages, frameworks, libraries keywords into experience section if the work experience tech stack does not match. since it makes user hard to prove later.
+    ↳ If RESUME_TEXT has 0 work experience → put all keywords into project bullets instead.
     (iii) Miscellaneous Skills — Insert max 1-2 broad missing concepts only here if applicable. NEVER put languages/frameworks here.
   - Every keyword from the list MUST appear at least once in the final JSON output following above guidelines. Zero exceptions.
   - Keywords must be woven naturally, not awkwardly bolted on. They must sound authentic for the candidate.
@@ -159,6 +160,7 @@ Case B — "[APPROVED NEW PROJECT TO ADD]" marker is present in RESUME_TEXT:
     Go through the MISSING KEYWORDS TO INJECT list one by one and place each keyword as follows:
     (i) New project bullets — FIRST PRIORITY. (70-90%) of keywords should land here since you are writing fresh bullets for this approved project. For second project if present, which has non relevant tech stack, inject missing non tech stack keywords only like debugging, error handling.
     (ii) Work experience bullets — ONLY if the keyword is directly relevant tech stack (20-30% of keywords). Never add missing languages, frameworks, libraries keywords into experience section if the work experience tech stack does not match. since it makes user hard to prove later.
+    ↳ If RESUME_TEXT has 0 work experience → put all keywords into project bullets instead.
     (iii) Miscellaneous Skills — Insert max 1-2 broad missing concepts only here if applicable. NEVER put languages/frameworks here.
   - Every keyword from the list MUST appear at least once in the final JSON output following above guidelines. Zero exceptions.
   - Keywords must be woven naturally, not awkwardly bolted on. They must sound authentic for a fresher.
@@ -246,7 +248,7 @@ RULES (MUST FOLLOW):
 3. CRITICAL: "experience" array MUST ONLY contain entries from RESUME_TEXT. If RESUME_TEXT has 0 jobs → empty array. If 1 job → exactly 1 entry. NEVER add extra entries.
 4. Algorithm executes all steps independently in order — do not skip steps.
 5. Use action verbs: Built, Developed, Optimized, Implemented, Designed, Contributed, Achieved
-6. Add AUTHENTIC quantified metrics only (countable, technical, or measured)
+6. MAY add countable technical facts ("3 REST endpoints", "2 modules"). NEVER invent performance claims ("reduced latency by 50%", "served 10,000 users").
 7. Weave JOB_DESCRIPTION keywords naturally — must sound authentic.
 8. Keep dates, companies, institutions exactly as in RESUME_TEXT
 9. Projects: show ONLY projects that exist in RESUME_TEXT except the one approved by user.(overall max 2, min 0).
@@ -264,7 +266,6 @@ RULES (MUST FOLLOW):
    - "Removed least relevant project: Project Y (kept top 2 most JOB_DESCRIPTION-relevant)"
    - "Merged 1 certification with achievements"
    - For every keyword injected from MISSING KEYWORDS list, log it: e.g. "Injected 'Kubernetes' into Project 1 bullet 2 naturally"
-   - For any keyword from MISSING KEYWORDS list that could NOT be injected (doesn't fit anywhere authentically), log it: e.g. "Could not inject 'SAP' — not relevant to any section"
 
 ⚠️ MANDATORY SELF-VALIDATION (Run this BEFORE writing your JSON output):
 Before you output the final JSON, you MUST mentally go through this checklist:
