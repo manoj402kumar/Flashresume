@@ -135,12 +135,12 @@ METRIC RULE for Case A enhancement:
   - 🚨🚨🚨 HIGHEST PRIORITY — OVERRIDES ALL OTHER INSTRUCTIONS  🚨🚨🚨
     INJECT EVERY SINGLE KEYWORD from the "MISSING KEYWORDS TO INJECT" list (provided at the bottom of this prompt).
     This rule takes absolute precedence. If any other instruction before/after in this prompt conflicts with injecting these keywords, THIS instruction wins.
-    Go through the missing keywords list one by one and place each keyword as follows:
-    (i) Existing project bullets — FIRST PRIORITY. Weave (70-90%) of keywords naturally into the enhanced project bullets of relavant project(s) only, for non relavant project if any inject non tech stack missing keywords only like debugging, error handling, tools and so on.
+    Go through the MISSING KEYWORDS TO INJECT list one by one and place each keyword as follows:
+    (i) Existing project bullets — FIRST PRIORITY. Weave (70-90%) of keywords naturally into the enhanced project bullets of relevant project(s) only, for non relevant project if any inject non tech stack missing keywords only like debugging, error handling, tools and so on.
     (ii) Work experience bullets — ONLY if the keyword is directly relevant to work experience tech stack (20-30% of keywords). Never add missing languages, frameworks, libraries keywords into experience section if the work experience tech stack does not match. since it makes user hard to prove later.
-    (iii) Miscellaneous Skills — Insert max 1-2 broad missing concepts here if applicable. NEVER put languages/frameworks here.
-  - Every keyword from the list MUST appear at least once in the final JSON output. Zero exceptions.
-  - Keywords must be woven naturally, not awkwardly bolted on. They must sound authentic for a fresher. 
+    (iii) Miscellaneous Skills — Insert max 1-2 broad missing concepts only here if applicable. NEVER put languages/frameworks here.
+  - Every keyword from the list MUST appear at least once in the final JSON output following above guidelines. Zero exceptions.
+  - Keywords must be woven naturally, not awkwardly bolted on. They must sound authentic for the candidate.
   - ⛔ NEVER add a new project to the list — not even if you think one is missing.
 
 Case B — "[APPROVED NEW PROJECT TO ADD]" marker is present in RESUME_TEXT:
@@ -156,11 +156,11 @@ Case B — "[APPROVED NEW PROJECT TO ADD]" marker is present in RESUME_TEXT:
   - 🚨🚨🚨 HIGHEST PRIORITY — OVERRIDES ALL OTHER INSTRUCTIONS 🚨🚨🚨
     INJECT EVERY SINGLE KEYWORD from the "MISSING KEYWORDS TO INJECT" list (provided at the bottom of this prompt).
     This rule takes absolute precedence. If any other instruction before/after in this prompt conflicts with injecting these keywords, THIS instruction wins.
-    Go through the missing keywords list one by one and place each keyword as follows:
-    (i) New project bullets — FIRST PRIORITY. (70-90%) of keywords should land here since you are writing fresh bullets for this approved project. for second project if present, which has non relavant tech stack inject missing non tech stack keywords only like debugging, error handling.
+    Go through the MISSING KEYWORDS TO INJECT list one by one and place each keyword as follows:
+    (i) New project bullets — FIRST PRIORITY. (70-90%) of keywords should land here since you are writing fresh bullets for this approved project. For second project if present, which has non relevant tech stack, inject missing non tech stack keywords only like debugging, error handling.
     (ii) Work experience bullets — ONLY if the keyword is directly relevant tech stack (20-30% of keywords). Never add missing languages, frameworks, libraries keywords into experience section if the work experience tech stack does not match. since it makes user hard to prove later.
-    (iii) Miscellaneous Skills — Insert max 1-2 broad missing concepts here if applicable. NEVER put languages/frameworks here.
-  - Every keyword from the list MUST appear at least once in the final JSON output. Zero exceptions.
+    (iii) Miscellaneous Skills — Insert max 1-2 broad missing concepts only here if applicable. NEVER put languages/frameworks here.
+  - Every keyword from the list MUST appear at least once in the final JSON output following above guidelines. Zero exceptions.
   - Keywords must be woven naturally, not awkwardly bolted on. They must sound authentic for a fresher.
 
   - If RESUME_TEXT has 0 projects → add the approved one (now 1 total, which is fine)
@@ -172,73 +172,44 @@ PROJECT LINK FIELD (output detail — applies to ALL projects):
 - ALWAYS set "link": "Link" as default value for all projects.
 - User will edit this field later in the editable form to add GitHub/live links.
 
-Step 5: Skills — Ecosystem Filter + JD Integration (LAST SECTION)
-
-This step has TWO phases. Execute them in order.
+Step 5: Technical Skills (SIMPLE RULE — apply to EVERY category)
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-PHASE 1: ECOSYSTEM RELEVANCE FILTER
+THE FORMULA (same for all 6 categories):
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Goal: 100% Signal. Remove skills that belong to a completely different tech ecosystem than the JOB_DESCRIPTION.
+  1. Put every skill of this category type from JOB_DESCRIPTION first.
+  2. If count < 5, fill remaining slots with user's RESUME_TEXT skills (same category), prioritized by JOB_DESCRIPTION relevance.
+  3. Hard cap = 5 items per category. Never exceed 5.
+  4. ⛔ Do NOT extract skills from "Work Experience" or "Projects" bullets — only from JOB_DESCRIPTION or RESUME_TEXT Skills section.
 
-First, identify the JOB_DESCRIPTION's primary tech ecosystem by looking at the core stack it demands.
-Examples: "Java + Spring Boot ecosystem", "Python + Django ecosystem", "Node.js + React ecosystem", "iOS + Swift ecosystem"
+Apply this formula to each category:
 
-Then, for EACH skill in RESUME_TEXT Skills section, apply these rules BY CATEGORY:
+LANGUAGES (programming languages only):
+  → Put every language from JOB_DESCRIPTION first → fill with user's resume languages → max 5.
 
-LANGUAGES → KEEP (up to 5 most relevant)
-  ✅ Keep Python even if JD is Java-only. Drop least relevant if > 5. Add every language from JD here.
+FRAMEWORKS & LIBRARIES (⚠️ ONE EXTRA RULE — ecosystem filter):
+  → Put every framework/library from JOB_DESCRIPTION first → fill with user's resume frameworks ONLY if they belong to the SAME ecosystem as the JOB_DESCRIPTION.
+  → REMOVE frameworks from a completely different ecosystem:
+     - JOB_DESCRIPTION: Java/Spring Boot → REMOVE: Django, Flask, FastAPI, Laravel, Rails
+     - JOB_DESCRIPTION: Python/Django → REMOVE: Spring Boot, Hibernate, Express.js
+     - JOB_DESCRIPTION: Node.js/Express → REMOVE: Django, Spring Boot, Laravel
+     - JOB_DESCRIPTION: React frontend → REMOVE: Angular OR Vue (keep only the JOB_DESCRIPTION one)
+  → LOG every removal in "changes": e.g. "Removed Django from frameworks — not relevant to Java/Spring Boot JOB_DESCRIPTION"
+  → Max 5.
 
-DATABASES → KEEP (up to 5 most relevant)
-  ✅ Keep PostgreSQL, MongoDB, Redis regardless of JD ecosystem. Drop least relevant if > 5. Add every database from JD here.
+DATABASES:
+  → Put every database from JOB_DESCRIPTION first → fill with user's resume databases → max 5.
 
-CLOUD SERVICES → KEEP (up to 5 most relevant)
-  ✅ Keep universal cloud skills. Drop least relevant if > 5. Add every cloud service from JD here.
+CLOUD SERVICES:
+  → Put every cloud service from JOB_DESCRIPTION first → fill with user's resume cloud services → max 5.
 
-DEVELOPER TOOLS → KEEP (up to 5 most relevant)
-  ✅ Keep standard dev tools. Drop least relevant if > 5. Add every developer tools from JD here.
+DEVELOPER TOOLS (Git, Docker, Postman, Jenkins — professional tools only):
+  → Put every developer tool from JOB_DESCRIPTION first → fill with user's resume dev tools → max 5.
 
-FRAMEWORKS & LIBRARIES → FILTER AGGRESSIVELY ⬅️ THIS IS WHERE THE PROBLEM LIVES
-  Ask: "Does this framework belong to the SAME ecosystem the JD is asking for?"
-  
-  KEEP if:
-  ✅ It is explicitly mentioned in JOB_DESCRIPTION
-  ✅ It is in the MISSING KEYWORDS TO INJECT list
-  ✅ It is from the same language/ecosystem as the JD (e.g., Spring Boot JD → keep Hibernate, Maven, Lombok)
-  ✅ It is a universal UI/testing library that transfers (e.g., React in a full-stack JD)
-  
-  REMOVE if:
-  ❌ It belongs to a completely different language ecosystem than the JD demands
-     Real examples:
-     - JD: Java/Spring Boot → REMOVE: Django, Flask, FastAPI, Laravel, Rails (Python/PHP/Ruby frameworks)
-     - JD: Python/Django → REMOVE: Spring Boot, Hibernate, Express.js, Laravel
-     - JD: Node.js/Express → REMOVE: Django, Spring Boot, Laravel
-     - JD: React frontend → REMOVE: Angular OR Vue (only keep the one matching JD)
-  ❌ It is a framework the JD has no mention of AND it is from a competing ecosystem or different tech stack.
-  Add each and every framework and library from the JD, even if it is not in the user's original Skills section.
-  
-  LOG every removal in "changes": e.g. "Removed Django from frameworks — Python ecosystem not relevant to Java/Spring Boot JD"
-
-MISCELLANEOUS → FILTER MODERATELY(max 5 only)
-  KEEP if it is a broadly applicable concept (REST APIs, Agile, Microservices, System Design)
-  REMOVE if it is a framework-specific tool from a different ecosystem.
-
-⛔ IMPORTANT: Do NOT extract skills from "Work Experience" or "Projects" bullets — only from the user's original Skills section.
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-PHASE 2: ORGANIZE THE FINAL SKILLS LIST
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Category Order:
-1. Languages (programming languages only)
-2. Frameworks & Libraries
-3. Databases
-4. Cloud Services
-5. Developer Tools (Git, Docker, Postman — professional tools only)
-6. Miscellaneous
-
-Must follow Organization Rules:
-1. Put JOB_DESCRIPTION-matched skills FIRST in each category.
-2. Limit each category to max 5 skills (readability).
+MISCELLANEOUS (broad concepts only — REST APIs, Agile, Microservices, System Design):
+  → Put any broad concepts from JOB_DESCRIPTION that don't fit above categories → fill with user's resume miscellaneous → max 5 total.
+  → Of these 5, at most 1-2 may come from MISSING KEYWORDS TO INJECT. The rest must come from JOB_DESCRIPTION or RESUME_TEXT Skills section.
+  → NEVER put languages, frameworks, or databases here.
 
 Step 6: Certifications and Achievements (MERGED)
 
@@ -249,7 +220,7 @@ Step 6: Certifications and Achievements (MERGED)
 
 INCLUDE (in priority order):
 ✅ Cloud/DevOps certifications (AWS, Azure, GCP, Docker, Kubernetes) — universally relevant
-✅ JOB_DESCRIPTION-mentioned certifications (e.g., "Java Certified" if JD needs Java)
+✅ JOB_DESCRIPTION-mentioned certifications (e.g., "Java Certified" if JOB_DESCRIPTION needs Java and mentioned in RESUME_TEXT)
 ✅ Language-specific certifications (Python, Java, C++)
 ✅ Competitive programming achievements (LeetCode, CodeChef, Codeforces — with rating/count)
 ✅ Hackathon wins or top placements
@@ -278,7 +249,7 @@ RULES (MUST FOLLOW):
 6. Add AUTHENTIC quantified metrics only (countable, technical, or measured)
 7. Weave JOB_DESCRIPTION keywords naturally — must sound authentic.
 8. Keep dates, companies, institutions exactly as in RESUME_TEXT
-9. Projects: show ONLY projects that exist in RESUME_TEXT (max 2, min 0)
+9. Projects: show ONLY projects that exist in RESUME_TEXT except the one approved by user.(overall max 2, min 0).
 10. PRESERVE good content from RESUME_TEXT — only enhance weak content
 11. Return ONLY valid JSON. No markdown code blocks. No **bold**, no *italics*, no # headers inside JSON string values. Plain text only. No explanation outside the JSON and inside it.
 12. NEVER output null for string fields (degree, company, job_title, etc.). Use empty string "" if information is missing.
@@ -330,7 +301,7 @@ OUTPUT FORMAT (Template v1):
     "github_url": "github.com/username",
     "portfolio_url": "portfolio.com"
   }},
-  "summary": "Freshers: 2-line foundation-focused summary (strong foundation + projects/internships + JD alignment). Experienced: 2-3 line impact-driven summary (years of experience + domain expertise + key achievements from RESUME_TEXT, aligned with JOB_DESCRIPTION).",
+  "summary": "Freshers: 2-line foundation-focused summary (strong foundation + projects/internships + JOB_DESCRIPTION alignment). Experienced: 2-3 line impact-driven summary (years of experience + domain expertise + key achievements from RESUME_TEXT, aligned with JOB_DESCRIPTION).",
   "education": [
     {{
       "institution": "University Name",
