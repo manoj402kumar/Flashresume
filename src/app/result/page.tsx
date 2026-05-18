@@ -445,7 +445,8 @@ export default function ResultPage() {
           });
           if (res.ok) {
             const data = await res.json();
-            if ([1, 10, 40].includes(data.global_download_count)) {
+            const total = data.total_platform_downloads;
+            if (total && total > 0 && total % 20 === 0) {
               setTimeout(() => setShowFeedback(true), 10000);
             }
           }

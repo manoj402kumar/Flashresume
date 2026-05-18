@@ -78,9 +78,8 @@ async def increment_download(body: IncrementDownloadRequest):
                 "user_id": actual_user_id,
                 "session_id": body.session_id
             }).execute()
-            
-            # Count total global downloads
-            downloads_res = supabase.table("resume_downloads").select("id", count="exact").eq("user_id", actual_user_id).execute()
+            # Count total platform downloads (across all users)
+            downloads_res = supabase.table("resume_downloads").select("id", count="exact").execute()
             if hasattr(downloads_res, 'count') and downloads_res.count is not None:
                 global_count = downloads_res.count
             else:
@@ -90,7 +89,7 @@ async def increment_download(body: IncrementDownloadRequest):
     
     return {
         "download_count": new_count,
-        "global_download_count": global_count
+        "total_platform_downloads": global_count
     }
 
 @router.get("/admin/llm-stats")
