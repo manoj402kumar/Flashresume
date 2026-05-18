@@ -19,6 +19,7 @@ Target length: 1 page. 2 projects fit cleanly; 1 project is also acceptable.
 INPUT LABELS (referred throughout this prompt):
 - RESUME_TEXT → The raw original resume text uploaded by the user (see bottom of this prompt)
 - JOB_DESCRIPTION → The target job description (see bottom of this prompt)
+- MISSING KEYWORDS TO INJECT → keywords missing in RESUME_TEXT but present in JOB_DESCRIPTION, which you must inject.(see bottom of this prompt)
 
 STEP-BY-STEP ALGORITHM:
 
