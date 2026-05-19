@@ -38,7 +38,7 @@ export default function AnalyzePage() {
     console.log("[DEBUG] relevant_projects:", parsedAnalysis.relevant_projects);
     console.log("[DEBUG] suggested_project:", parsedAnalysis.suggested_project);
     console.log("[DEBUG] requires_consent:", parsedAnalysis.requires_consent);
-    
+
     setAnalysis(parsedAnalysis);
     setLoading(false);
   }, [router]);
@@ -258,7 +258,7 @@ export default function AnalyzePage() {
               >
                 <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
                 <span>
-                  <strong>Warning:</strong> If unchecked, this cannot be applied to this job description. It is impossible to get shortlisted.
+                  <strong>Warning:</strong> There is no JD relavant project in your resume. If you uncheck this there is no point applying for this job and get shorlisted
                 </span>
               </motion.div>
             )}
@@ -296,11 +296,10 @@ export default function AnalyzePage() {
           <button
             onClick={handleProceed}
             disabled={!!(analysis.requires_consent && !projectApproved)}
-            className={`text-white text-lg font-bold px-12 py-5 rounded-full flex items-center gap-3 transition-all shadow-xl ${
-              analysis.requires_consent && !projectApproved
+            className={`text-white text-lg font-bold px-12 py-5 rounded-full flex items-center gap-3 transition-all shadow-xl ${analysis.requires_consent && !projectApproved
                 ? "bg-surface-container-high text-on-surface-variant cursor-not-allowed opacity-50 shadow-none"
                 : "flash-gradient hover:opacity-90 shadow-primary/25 active:scale-95"
-            }`}
+              }`}
           >
             Continue to Generate
             <ArrowRight className="w-6 h-6" />

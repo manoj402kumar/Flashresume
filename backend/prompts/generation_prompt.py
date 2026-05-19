@@ -38,7 +38,7 @@ Step 0: Determine Candidate Level
 Step 1: Extract resume sections (already done — you have RESUME_TEXT below)
 
 Step 2: Summary Evaluation
-write/rewrite summary telling why the candidate is best fit for the JOB_DESCRIPTION based on RESUME_TEXT projects and experience. Keep it 1-2 lines, professional, and should impress the recruiters.
+write/rewrite summary telling why the candidate is best fit for the JOB_DESCRIPTION based on RESUME_TEXT projects and experience. Keep it 1-2 lines space in output resume, professional, and should impress the recruiters.
 
 Step 3: Education
 - Keep as-is, NO changes
@@ -138,7 +138,7 @@ Step 5: Technical Skills (SIMPLE RULE — apply to EVERY category)
 THE FORMULA (same for all 6 categories):
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   1. Put every skill of this category type from JOB_DESCRIPTION first.
-  2. If count < 5, fill remaining slots with user's RESUME_TEXT skills (same category), prioritized by JOB_DESCRIPTION relevance.
+  2. If count < 5, fill remaining slots with user's RESUME_TEXT skills section (same category), prioritized by JOB_DESCRIPTION relevance.
   3. Hard cap = 5 items per category. Never exceed 5.
   4. ⛔ Do NOT extract skills from "Work Experience" or "Projects" bullets — only from JOB_DESCRIPTION or RESUME_TEXT Skills section.
 
