@@ -272,7 +272,7 @@ class ApplyReferralRequest(BaseModel):
     referral_code: str
     user_id: str
 
-@router.post("/api/user/apply-referral")
+@router.post("/user/apply-referral")
 async def apply_referral(body: ApplyReferralRequest):
     if not supabase:
         return {"status": "error", "message": "Supabase not configured"}

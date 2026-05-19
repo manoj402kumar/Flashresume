@@ -69,7 +69,50 @@ export default function App() {
     return () => subscription.unsubscribe();
   }, []);
 
-  // Close dropdown on outside click
+  // ── Referral Capture: Step 1 ─────────────────────────────────────────────
+  // On page load, read ?ref=CODE from the URL and store it in localStorage.
+  // This persists across OAuth redirects so the code survives Google sign-in.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const refCode = params.get("ref");
+    if (refCode && refCode.trim().length > 0) {
+      localStorage.setItem("flashresume_ref", refCode.trim().toUpperCase());
+    }
+  }, []);
+
+  // ── Referral Capture: Step 2 ─────────────────────────────────────────────
+  // When a user signs in, check if there's a stored referral code and apply it.
+  // This sets `referred_by` in the DB so the payment verifier can award the bonus.
+  useEffect(() => {
+    if (!currentUser) return;
+    const storedRef = localStorage.getItem("flashresume_ref");
+    if (!storedRef) return;
+
+    const applyReferral = async () => {
+      try {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/api/user/apply-referral`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            referral_code: storedRef,
+            user_id: currentUser.id,
+          }),
+        });
+        const json = await res.json();
+        // Clear localStorage regardless — if skipped/error, no point retrying
+        localStorage.removeItem("flashresume_ref");
+        if (json.status === "ok") {
+          console.log("[Referral] Referral applied successfully.");
+        }
+      } catch (err) {
+        // Non-critical — never block the user
+        console.warn("[Referral] Could not apply referral code:", err);
+      }
+    };
+
+    applyReferral();
+  }, [currentUser]);
+
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {

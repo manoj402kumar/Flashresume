@@ -59,7 +59,7 @@ export default function AccountSection({ onTopUpClick }: AccountSectionProps) {
         .from("subscriptions")
         .select("*")
         .eq("user_id", session.user.id)
-        .eq("status", "active")
+        .eq("is_active", true)
         .order("created_at", { ascending: false })
         .limit(1)
         .maybeSingle();
