@@ -163,24 +163,22 @@ function HighlightedText({ text, matched, missing, showHighlights, style }: { te
   const wordTypes = new Map<string, "matched" | "missing">();
   const allWords: string[] = [];
 
-  (matched || []).forEach(w => {
-    const word = w.trim();
-    if (word) {
-      wordTypes.set(word.toLowerCase(), "matched");
-      const startB = /^[a-z0-9]/i.test(word) ? "\\b" : "";
-      const endB = /[a-z0-9]$/i.test(word) ? "\\b" : "";
-      allWords.push(`${startB}${escapeRegex(word)}${endB}`);
-    }
+  const normalizeKeywords = (keywords: string[]) => {
+    return keywords.flatMap(k => k.split(/\s*\/\s*|\s+[Oo][Rr]\s+|\s*,\s*|\|/).map(w => w.trim()).filter(Boolean));
+  };
+
+  normalizeKeywords(matched || []).forEach(word => {
+    wordTypes.set(word.toLowerCase(), "matched");
+    const startB = /^[a-z0-9]/i.test(word) ? "\\b" : "";
+    const endB = /[a-z0-9]$/i.test(word) ? "\\b" : "";
+    allWords.push(`${startB}${escapeRegex(word)}${endB}`);
   });
 
-  (missing || []).forEach(w => {
-    const word = w.trim();
-    if (word) {
-      wordTypes.set(word.toLowerCase(), "missing");
-      const startB = /^[a-z0-9]/i.test(word) ? "\\b" : "";
-      const endB = /[a-z0-9]$/i.test(word) ? "\\b" : "";
-      allWords.push(`${startB}${escapeRegex(word)}${endB}`);
-    }
+  normalizeKeywords(missing || []).forEach(word => {
+    wordTypes.set(word.toLowerCase(), "missing");
+    const startB = /^[a-z0-9]/i.test(word) ? "\\b" : "";
+    const endB = /[a-z0-9]$/i.test(word) ? "\\b" : "";
+    allWords.push(`${startB}${escapeRegex(word)}${endB}`);
   });
 
   if (allWords.length === 0) return <Text style={style}>{text}</Text>;
@@ -321,7 +319,13 @@ export default function ResumePDFTemplateLetter({ resume, showHighlights = false
                           {proj.tech_stack ? (
                             <Text>
                               {" | "}
-                              <Text style={styles.textItalic}>{proj.tech_stack}</Text>
+                              <HighlightedText
+                                text={proj.tech_stack}
+                                matched={matchedKeywords}
+                                missing={missingKeywords}
+                                showHighlights={showHighlights}
+                                style={styles.textItalic}
+                              />
                             </Text>
                           ) : null}
                         </Text>

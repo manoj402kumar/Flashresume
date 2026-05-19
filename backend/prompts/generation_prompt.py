@@ -87,8 +87,9 @@ The approved project (new) is provided as APPROVED_PROJECT at the bottom of this
 For the APPROVED PROJECT:
   - Use the EXACT title and tech_stack from APPROVED_PROJECT. Do NOT change them.
   - This is a brand new project — it does NOT exist in RESUME_TEXT.
-  - Write 3-4 strong, achievable, realistic bullets using this format:
-      Action verb + tech stack/algorithm/methodology + outcome/scope/result
+  - Write 3-4 strong, achievable, realistic bullets.
+  - 🚨 MANDATORY: The FIRST bullet MUST clearly state the real-world problem or business domain the project solves (derived from the APPROVED_PROJECT description). Do NOT just list technical steps.
+  - For all bullets, use this format: Action verb + tech stack/algorithm/methodology + outcome/scope/result.
       (achievable and realistic — never insert numbers forcefully where they don't fit naturally)
   - 🚨 INJECT 70-90% of MISSING KEYWORDS here — especially tech stack keywords.
     These are FRESH bullets, so you have full freedom to weave keywords naturally.
@@ -145,10 +146,10 @@ THE FORMULA (same for all 6 categories):
 Apply this formula to each category:
 
 LANGUAGES (programming languages only):
-  → Put every language from JOB_DESCRIPTION first → fill with user's resume languages → max 5.
+  → Put every language from JOB_DESCRIPTION first → append with user's resume languages → max 5.
 
 FRAMEWORKS & LIBRARIES (⚠️ ONE EXTRA RULE — ecosystem filter):
-  → Put every framework/library from JOB_DESCRIPTION first → fill with user's resume frameworks ONLY if they belong to the SAME ecosystem as the JOB_DESCRIPTION.
+  → Put every framework/library from JOB_DESCRIPTION first → append with user's resume frameworks ONLY if they belong to the SAME ecosystem as the JOB_DESCRIPTION.
   → REMOVE frameworks from a completely different ecosystem:
      - JOB_DESCRIPTION: Java/Spring Boot → REMOVE: Django, Flask, FastAPI, Laravel, Rails
      - JOB_DESCRIPTION: Python/Django → REMOVE: Spring Boot, Hibernate, Express.js
@@ -158,16 +159,16 @@ FRAMEWORKS & LIBRARIES (⚠️ ONE EXTRA RULE — ecosystem filter):
   → Max 5.
 
 DATABASES:
-  → Put every database from JOB_DESCRIPTION first → fill with user's resume databases → max 5.
+  → Put every database from JOB_DESCRIPTION first → append with user's resume databases → max 5.
 
 CLOUD SERVICES:
-  → Put every cloud service from JOB_DESCRIPTION first → fill with user's resume cloud services → max 5.
+  → Put every cloud service from JOB_DESCRIPTION first → append with user's resume cloud services → max 5.
 
 DEVELOPER TOOLS (Git, Docker, Postman, Jenkins — professional tools only):
-  → Put every developer tool from JOB_DESCRIPTION first → fill with user's resume dev tools → max 5.
+  → Put every developer tool from JOB_DESCRIPTION first → append with user's resume dev tools → max 5.
 
 MISCELLANEOUS (broad concepts only — REST APIs, Agile, Microservices, System Design):
-  → Put any broad concepts from JOB_DESCRIPTION that don't fit above categories → fill with user's resume miscellaneous → max 5 total.
+  → Put any broad concepts from JOB_DESCRIPTION that don't fit above categories → append with user's resume miscellaneous → max 5 total.
   → Of these 5, at most 1-2 may come from MISSING KEYWORDS TO INJECT. The rest must come from JOB_DESCRIPTION or RESUME_TEXT Skills section.
   → NEVER put languages, frameworks, or databases here.
 
