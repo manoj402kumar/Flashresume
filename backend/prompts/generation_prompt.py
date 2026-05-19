@@ -101,14 +101,13 @@ Case 3 — APPROVED_PROJECT is "none" (both projects already in resume):
 Both selected projects already exist in RESUME_TEXT with their own bullets.
 
 For BOTH projects:
-  - Keep original title and tech_stack — do NOT change them.
-  - Rewrite bullets with MINIMAL changes to land 70-90% of MISSING KEYWORDS naturally.
-  - Inject tech-stack keywords (languages, frameworks, libraries) into the project whose tech stack is most relevant. Do NOT inject a language/framework into a project that uses a completely different stack.
-  - Inject non-tech keywords (debugging, testing, CI/CD, error handling, code review) into either project where they fit naturally.
-  - If a bullet is already strong (action verb + tech + scope) → keep it, only add a keyword if it fits without ruining the sentence.
-  - If a bullet is weak/vague → enhance it using: action verb + tech/methodology + outcome.
-  - NEVER invent performance claims ("reduced latency by 50%", "served 10K users") unless user wrote them.
+  - Keep original title, tech_stack — do NOT rewrite them.
+  - Only INSERT missing keywords(70-90%) into existing bullets where they naturally fit without changing the original meaning.
+  - Inject tech-stack keywords into the project whose tech stack matches. Do NOT inject a language/framework into a project that uses a completely different stack.
+  - Inject non-tech keywords (debugging, testing, CI/CD, error handling) into either project where they fit naturally.
+  - Do NOT change facts, data, or features — candidate must be able to prove every bullet later.
   - If a bullet already has numbers/metrics → keep them exactly.
+  - if you think bullet point is weak rewrite it with better sentence framing without changing any data or feature but injecting missing keywords is must as mentioned.
 
 ────────────────────────────────────────────────────
 MISSING KEYWORDS INJECTION (applies to ALL cases):
