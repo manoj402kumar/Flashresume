@@ -24,7 +24,7 @@ STEP 3: Decide the case — check in this order
 CASE 1 — Suggest a brand new project:
   Trigger: No resume project matches even ONE JD language, framework, or library.
   Action: Suggest a completely new project using the JD's primary tech stack.
-  Second project = most JD-relevant existing resume project (if one exists).
+  Second project = most JD-relevant existing resume project (if one exists — ALWAYS include it in selected_projects; do NOT drop it).
 
 CASE 2 — Upgrade an existing project:
   Trigger: At least 1 resume project matches at least 1 JD language, framework, or library.
