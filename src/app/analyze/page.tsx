@@ -194,8 +194,7 @@ export default function AnalyzePage() {
         </motion.div>
 
         {/* Project Approval (if needed) */}
-        {/* ONLY show if: requires_consent is true AND suggested_project exists AND has NO relevant projects */}
-        {analysis.requires_consent && analysis.suggested_project && !analysis.has_relevant_projects && (
+        {analysis.requires_consent && analysis.suggested_project && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -207,7 +206,7 @@ export default function AnalyzePage() {
                 <FolderGit2 className="w-6 h-6 text-primary" />
               </div>
               <h3 className="font-headline text-2xl font-bold text-on-background">
-                Project Suggestion
+                {analysis.case === 2 ? "Project Upgrade Required" : "Project Suggestion"}
               </h3>
             </div>
 
@@ -234,12 +233,21 @@ export default function AnalyzePage() {
               <div className="flex items-start gap-3">
                 <AlertCircle className="w-5 h-5 text-tertiary-container flex-shrink-0 mt-0.5" />
                 <div className="text-sm text-on-surface-variant">
-                  <p className="font-semibold mb-1">Why this suggestion?</p>
-                  <p>
-                    {analysis.has_relevant_projects
-                      ? `You have ${analysis.total_projects_count} project(s), but we recommend adding this highly relevant project to strengthen your profile.`
-                      : "Your resume lacks projects relevant to this job description. Adding this project will significantly improve your ATS score."}
-                  </p>
+                  {analysis.case === 2 ? (
+                    <>
+                      <p className="font-semibold mb-1">Upgrade required to get shortlisted</p>
+                      <p>
+                        We need to upgrade <strong>{analysis.suggested_project.title}</strong> in order to get shortlisted.
+                        The following tech will be added to this project:{" "}
+                        <strong>{analysis.suggested_project.tech_stack}</strong>.
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <p className="font-semibold mb-1">Why this suggestion?</p>
+                      <p>Your resume lacks projects relevant to this job description. Adding this project will significantly improve your ATS score.</p>
+                    </>
+                  )}
                 </div>
               </div>
             </div>
@@ -252,18 +260,20 @@ export default function AnalyzePage() {
                 className="w-5 h-5 rounded border-2 border-primary text-primary focus:ring-2 focus:ring-primary"
               />
               <span className="text-on-background font-medium">
-                Yes, add this project to my resume
+                {analysis.case === 2
+                  ? `Yes, upgrade "${analysis.suggested_project.title}" for this JD`
+                  : "Yes, add this project to my resume"}
               </span>
             </label>
             {!projectApproved && (
-              <motion.div 
-                initial={{ opacity: 0, y: -5 }} 
-                animate={{ opacity: 1, y: 0 }} 
+              <motion.div
+                initial={{ opacity: 0, y: -5 }}
+                animate={{ opacity: 1, y: 0 }}
                 className="mt-3 text-sm text-error flex items-start gap-2 px-1"
               >
                 <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
                 <span>
-                  <strong>Warning:</strong> Unselecting this project will directly affect your ATS score. Your probability of being shortlisted will significantly decrease without relevant projects.
+                  <strong>Warning:</strong> If unchecked, this cannot be applied to this job description. It is impossible to get shortlisted.
                 </span>
               </motion.div>
             )}
@@ -300,7 +310,12 @@ export default function AnalyzePage() {
           </div>
           <button
             onClick={handleProceed}
-            className="flash-gradient text-white text-lg font-bold px-12 py-5 rounded-full flex items-center gap-3 hover:opacity-90 transition-all shadow-xl shadow-primary/25 active:scale-95"
+            disabled={!!(analysis.requires_consent && !projectApproved)}
+            className={`text-white text-lg font-bold px-12 py-5 rounded-full flex items-center gap-3 transition-all shadow-xl ${
+              analysis.requires_consent && !projectApproved
+                ? "bg-surface-container-high text-on-surface-variant cursor-not-allowed opacity-50 shadow-none"
+                : "flash-gradient hover:opacity-90 shadow-primary/25 active:scale-95"
+            }`}
           >
             Continue to Generate
             <ArrowRight className="w-6 h-6" />

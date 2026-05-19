@@ -16,10 +16,13 @@ class CombinedAnalysisResponse(BaseModel):
     ats_score: int
     matched_skills: List[str]
     missing_skills: List[str]
+    all_missing_skills: List[str] = []
     has_relevant_projects: bool
     relevant_projects: List[str]
     total_projects_count: int
     least_relevant_project: Optional[str]
     suggested_project: Optional[SuggestedProject]
     requires_consent: bool
+    selected_projects: List[str] = []
+    case: int = 3
     model_used: Optional[str] = None

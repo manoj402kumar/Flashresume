@@ -292,7 +292,7 @@ export default function ResultPage() {
       if (analysisData) {
         try {
           const parsedAnalysis = JSON.parse(analysisData);
-          setMissingKeywords(parsedAnalysis.missing_skills || []);
+          setMissingKeywords(parsedAnalysis.all_missing_skills || parsedAnalysis.missing_skills || []);
           setMatchedKeywords(parsedAnalysis.matched_skills || []);
         } catch (e) { }
       }

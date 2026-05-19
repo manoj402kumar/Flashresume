@@ -68,6 +68,7 @@ export default function GeneratePage() {
             ? `${approvedProject.title} | Tech Stack: ${approvedProject.tech_stack} | Description: ${approvedProject.description}`
             : undefined,
           missing_keywords: analysis.missing_skills || [],
+          selected_projects: analysis.selected_projects || [],
           preferred_model: preferredModel,
           no_ai_changes: noAiChanges,
         });

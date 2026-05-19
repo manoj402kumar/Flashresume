@@ -67,6 +67,7 @@ export interface CombinedAnalysisResponse {
   ats_score: number;
   matched_skills: string[];
   missing_skills: string[];
+  all_missing_skills: string[];
   // Project Check
   has_relevant_projects: boolean;
   relevant_projects: string[];
@@ -74,6 +75,8 @@ export interface CombinedAnalysisResponse {
   least_relevant_project?: string;
   suggested_project?: SuggestedProject;
   requires_consent: boolean;
+  selected_projects: string[];
+  case: number;
   model_used?: string;
 }
 
@@ -118,6 +121,7 @@ export interface GenerateRequest {
   ats_score_before: number;
   approved_project?: string;
   missing_keywords?: string[];
+  selected_projects?: string[];
   preferred_model?: string;
   no_ai_changes?: boolean;
 }

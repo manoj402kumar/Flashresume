@@ -1,8 +1,10 @@
 GENERATION_PROMPT = """
+Read whole prompt and understand it properly before generating the JSON output.
+
 Act as ATS Resume Expert and implement below algorithm in order to optimize RESUME_TEXT with respect to JOB_DESCRIPTION.
 
 GOAL: 0% Noise, 100% Signal. Target 1 page resume. Improvise existing resume, NOT rewrite.
-OBJECTIVE: Pass ATS + User can handle actual interview with achievable, provable edits.
+OBJECTIVE: Pass ATS + User can handle actual interview with minimal, achievable, provable edits.
 TARGET USERS: All experience levels — Freshers (0-1 year) to Mid/Senior professionals (3+ years)
 
 CORE PRINCIPLE: "If original description is good, keep it. Only enhance what needs enhancement."
@@ -43,137 +45,88 @@ Step 3: Education
 Step 3.5: Work Experience (includes Internships for Freshers)
 IMPORTANT: For freshers, internships go in "Work Experience" section (NOT separate).
 
-⛔ ABSOLUTE RULE — NO FABRICATION:
+⛔ NO FABRICATION:
 - ONLY include work experience entries that EXIST in RESUME_TEXT.
-- NEVER invent, add, or create new jobs, internships, or roles.
 - If RESUME_TEXT has 0 work experience → output "experience": [] (empty array).
-- If RESUME_TEXT has 1 internship → output exactly 1 experience entry.
-- If RESUME_TEXT has 2 internships and both are relevant → keep both.
-- If RESUME_TEXT has 2+ internships, keep the most relevant 2 based on JOB_DESCRIPTION.
-- NEVER add extra entries to "fill" the resume or match JOB_DESCRIPTION.
-- Violating this rule is a critical failure.
+- If RESUME_TEXT has 2+ entries, keep the most relevant 2 based on JOB_DESCRIPTION.
+- NEVER invent, add, or create new jobs, internships, or roles.
 
-JOB TITLE RULES (apply before writing any bullets):
-- DO NOT alter the user's authentic job title. If RESUME_TEXT has "Software Engineer", keep it exactly as "Software Engineer".
-- Only append "Intern" or "Trainee" if they explicitly wrote it in RESUME_TEXT.
-- Use honest action verbs in bullets: "Contributed to", "Implemented", "Developed".
-- NEVER use inflated verbs: "Led", "Managed", "Architected" — unless the user explicitly wrote them in RESUME_TEXT.
-
-BULLET EVALUATION — for each bullet in RESUME_TEXT, score it:
-1. Has a clear action verb? (Developed, Built, Implemented, Contributed, Optimized)
-2. Mentions specific work? (not vague like "worked on" or "helped with")
-3. Includes specific technologies? (Node.js, React, MongoDB, etc.)
-4. Shows scope or impact? (3 APIs, reduced time, measurable output, feature for X team)
-
-DECISION RULE:
-→ KEEP AS-IS if the bullet has: action verb + at least one of (specific tech OR measurable scope).
-→ ENHANCE if the bullet is missing the action verb OR is completely vague with no tech and no scope.
-→ PRESERVE verbatim if the bullet is already excellent (has verb + tech + impact).
-→ DELETE ONLY if the bullet is 100% pure fluff with zero technical signal (e.g., "Attended daily meetings", "Participated in standup").
-
-EXAMPLES OF STRONG USER-WRITTEN BULLETS — preserve these exactly if present in RESUME_TEXT:
-(Note: these examples contain numbers that came from the user. Do NOT invent these numbers yourself.)
-✅ "Developed REST API for user authentication using Node.js and Express"
-✅ "Contributed to backend API development using Node.js and Express, implementing 3 REST endpoints"
-✅ "Implemented 3 microservices handling payment processing"
-✅ "Developed a feature for X team, which resulted in Y% improvement in Z"
-✅ "Fixed 15 bugs reported by QA across 3 sprint cycles"
-✅ "Optimized backend response time by 50% using query indexing"
-✅ "Achieved 90% accuracy in model predictions on test dataset"
-
-ENHANCE if bullet is weak/generic (only reframe the sentence — do NOT change facts or data):
-❌ "Worked on backend development" → "Contributed to backend API development using Node.js, implementing REST endpoints for user and product modules"
-❌ "Fixed bugs" → "Resolved production bugs in the codebase, improving overall system stability"
-❌ "Learned new technologies" → "Gained hands-on experience with React and Redux through feature development for the dashboard module"
-
-(Notice: the enhanced examples above do NOT contain invented numbers like "10+ bugs" — only describe what actually happened.)
-
+BULLET RULES — keep it simple:
+- Keep any bullet that is already good. Only reframe weak/vague sentences for better clarity.
+- Do NOT change any facts, data, features, keywords, or technologies — just better sentence framing.
+- Do NOT alter job titles, company names, dates, or locations.
+- Do NOT invent numbers or performance claims the user didn't write.
+- There is no scope to make significant changes in work experience — it is hard for the candidate to prove later.
 
 
 Step 4: Projects (CRITICAL)
 
-⛔ WHAT COUNTS AS A PROJECT (strict definition — read before anything else):
+⛔ WHAT COUNTS AS A PROJECT (strict definition):
 - A project is ONLY an entry explicitly listed under a "PROJECTS", "LIVE PROJECTS", or similar section with a title, tech stack, and at least 1 bullet.
-- "Developed 12+ projects" or "see GitHub" is NOT a project entry — it is a reference, ignore it.
-- Skills listed under a "SKILLS" section in RESUME_TEXT (Java, Python, etc.) do NOT imply projects — NEVER fabricate a project from a skill.
-- Work experience bullets are NOT projects — they go in the experience section only.
+- "Developed 12+ projects" or "see GitHub" is NOT a project entry — ignore it.
+- Skills listed under SKILLS do NOT imply projects — NEVER fabricate a project from a skill.
+- Work experience bullets are NOT projects.
 
-⛔ ABSOLUTE RULE — NO PROJECT FABRICATION:
-- ONLY include projects that EXIST in RESUME_TEXT.
-- NEVER invent, create, or hallucinate a project that is not mentioned in RESUME_TEXT.
-- The ONLY exception: if RESUME_TEXT contains "[APPROVED NEW PROJECT TO ADD]" — add ONLY that specific project.
-- Violating this rule is a CRITICAL FAILURE and invalidates the entire output.
+PROJECT SELECTION — pre-determined:
+The projects to include are listed in SELECTED_PROJECTS (at the bottom of this prompt).
+Include ONLY projects whose titles appear in SELECTED_PROJECTS. Exclude all others.
+If SELECTED_PROJECTS has 1 entry → output 1 project. If 2 → output 2.
 
-PROJECT COUNT (based strictly on RESUME_TEXT):
-- If RESUME_TEXT has 3+ projects → Keep top 2 most JOB_DESCRIPTION-relevant
-- If RESUME_TEXT has exactly 2 projects → Keep both
-- If RESUME_TEXT has 1 project → Output exactly 1 project (unless [APPROVED NEW PROJECT TO ADD] is present)
-- If RESUME_TEXT has 0 projects → Output "projects": []
-- DO NOT add projects to reach a target count of 2
+PROJECT LINK FIELD: ALWAYS set "link": "Link" for all projects. User edits this later.
 
-PROJECT SELECTION (when 3+ actual project entries exist):
-1. Rank all actual project entries by JOB_DESCRIPTION relevance (tech stack match %)
-2. Keep top 2 most relevant actual entries
-3. Remove all others — do NOT replace removed entries with new invented ones
+────────────────────────────────────────────────────
+Case 1 & 2 — APPROVED_PROJECT is present (not "none"):
+────────────────────────────────────────────────────
 
-Case A — RESUME_TEXT has relevant project(s) (no "[APPROVED NEW PROJECT TO ADD]" marker present):
+The approved project (new or upgraded) is provided as APPROVED_PROJECT at the bottom of this prompt with title, tech_stack, and description.
 
-BULLET EVALUATION — for each project bullet in RESUME_TEXT:
-→ KEEP AS-IS if the bullet has: action verb + specific tech + some scope or outcome.
-→ ENHANCE if the bullet is vague, missing tech references, or has no clear action verb.
-→ PRESERVE verbatim any bullet that is already excellent — do not change a word.
+For the APPROVED PROJECT:
+  - Use the EXACT title and tech_stack from APPROVED_PROJECT. Do NOT change them.
+  - If this title matches an existing project in RESUME_TEXT, REPLACE that project entirely — do not keep the old version.
+  - Write 3-4 strong, achievable, realistic bullets using this format:
+      Action verb + tech stack/algorithm/methodology + outcome/scope/result
+      (achievable and realistic — never insert numbers forcefully where they don't fit naturally)
+  - 🚨 INJECT 70-90% of MISSING KEYWORDS here — especially tech stack keywords.
+    These are FRESH bullets, so you have full freedom to weave keywords naturally.
 
-WHEN ENHANCING a weak bullet, use this 3-part format:
-  Part 1 — What was done: Start with action verb (Developed, Built, Implemented, Optimized)
-  Part 2 — How it was done: Mention tech stack / library / algorithm / methodology
-  Part 3 — Impact: Authentic outcome or scope (ONLY if it naturally fits — do not force it)
+For the SECOND PROJECT (if present in SELECTED_PROJECTS):
+  - This project already exists in RESUME_TEXT — preserve its original title, tech_stack, and bullets.
+  - Only inject non-tech-stack missing keywords where they naturally fit (e.g., debugging, error handling, CI/CD, testing, code review).
+  - Do NOT inject languages, frameworks, or libraries into this project if its tech stack does not match.
 
-METRIC RULE for Case A enhancement:
-- If RESUME_TEXT bullet already has a number/metric → keep it exactly as written (do not edit it).
-- You MAY add a countable technical fact if it genuinely fits: "3 REST endpoints", "2 modules", "15 CRUD operations"
-- NEVER invent performance claims: "reduced latency by 50%", "served 10,000 users" — unless the user explicitly wrote them.
+────────────────────────────────────────────────────
+Case 3 — APPROVED_PROJECT is "none" (both projects already in resume):
+────────────────────────────────────────────────────
 
-  - 🚨🚨🚨 HIGHEST PRIORITY — OVERRIDES ALL OTHER INSTRUCTIONS  🚨🚨🚨
-    INJECT EVERY SINGLE KEYWORD from the "MISSING KEYWORDS TO INJECT" list (provided at the bottom of this prompt).
-    This rule takes absolute precedence. If any other instruction before/after in this prompt conflicts with injecting these keywords, THIS instruction wins.
-    Go through the missing keywords list one by one and place each keyword as follows:
-    (i) Existing project bullets — FIRST PRIORITY. Weave (70-90%) of keywords naturally into the enhanced project bullets of relavant project(s) only. for non relavant tech stack project if any, inject non tech stack missing keywords only like debugging, error handling, tools and so on.
-    (ii) Work experience bullets — ONLY if the keyword is directly relevant to work experience tech stack (20-30% of keywords). Never add missing languages, frameworks, libraries keywords into experience section if the work experience tech stack does not match. since it makes user hard to prove later.
-    ↳ If RESUME_TEXT has 0 work experience → put all keywords into project bullets instead.
-    (iii) Miscellaneous Skills — Insert max 1-2 broad missing concepts only here if applicable. NEVER put languages/frameworks here.
-  - Every keyword from the list MUST appear at least once in the final JSON output following above guidelines. Zero exceptions.
-  - Keywords must be woven naturally, not awkwardly bolted on. They must sound authentic for the candidate.
-  - ⛔ NEVER add a new project to the list — not even if you think one is missing.
+Both selected projects already exist in RESUME_TEXT with their own bullets.
 
-Case B — "[APPROVED NEW PROJECT TO ADD]" marker is present in RESUME_TEXT:
-  - Include the approved project exactly as described in the marker.
-  - CRITICAL: Use the EXACT "Tech Stack" provided in the marker for the "tech_stack" field. Do NOT change it.
-  - Write 3-4 strong, achievable and realistic bullets for this project using JOB_DESCRIPTION keywords naturally.
+For BOTH projects:
+  - Keep original title and tech_stack — do NOT change them.
+  - Rewrite bullets with MINIMAL changes to land 70-90% of MISSING KEYWORDS naturally.
+  - Inject tech-stack keywords (languages, frameworks, libraries) into the project whose tech stack is most relevant. Do NOT inject a language/framework into a project that uses a completely different stack.
+  - Inject non-tech keywords (debugging, testing, CI/CD, error handling, code review) into either project where they fit naturally.
+  - If a bullet is already strong (action verb + tech + scope) → keep it, only add a keyword if it fits without ruining the sentence.
+  - If a bullet is weak/vague → enhance it using: action verb + tech/methodology + outcome.
+  - NEVER invent performance claims ("reduced latency by 50%", "served 10K users") unless user wrote them.
+  - If a bullet already has numbers/metrics → keep them exactly.
 
-  Bullet format (3 parts — apply to each bullet):
-    Part 1 — What you solved: Start with an action verb (Developed, Built, Implemented, Designed)
-    Part 2 — How you solved it: Mention tech stack / tools / libraries / methodology / algorithm
-    Part 3 — What was the impact: State the outcome, scope, or result (achievable and realistic — never insert numbers forcefully where they don't fit naturally)
+────────────────────────────────────────────────────
+MISSING KEYWORDS INJECTION (applies to ALL cases):
+────────────────────────────────────────────────────
 
-  - 🚨🚨🚨 HIGHEST PRIORITY — OVERRIDES ALL OTHER INSTRUCTIONS 🚨🚨🚨
-    INJECT EVERY SINGLE KEYWORD from the "MISSING KEYWORDS TO INJECT" list (provided at the bottom of this prompt).
-    This rule takes absolute precedence. If any other instruction before/after in this prompt conflicts with injecting these keywords, THIS instruction wins.
-    Go through the MISSING KEYWORDS TO INJECT list one by one and place each keyword as follows:
-    (i) New project bullets — FIRST PRIORITY. (70-90%) of keywords should land here since you are writing fresh bullets for this approved project. For second project if present, which has non relevant tech stack, inject missing non tech stack keywords only like debugging, error handling.
-    (ii) Work experience bullets — ONLY if the keyword is directly relevant tech stack (20-30% of keywords). Never add missing languages, frameworks, libraries keywords into experience section if the work experience tech stack does not match. since it makes user hard to prove later.
-    ↳ If RESUME_TEXT has 0 work experience → put all keywords into project bullets instead.
-    (iii) Miscellaneous Skills — Insert max 1-2 broad missing concepts only here if applicable. NEVER put languages/frameworks here.
-  - Every keyword from the list MUST appear at least once in the final JSON output following above guidelines. Zero exceptions.
-  - Keywords must be woven naturally, not awkwardly bolted on. They must sound authentic for a fresher.
+🚨🚨🚨 HIGHEST PRIORITY — OVERRIDES ALL OTHER INSTRUCTIONS 🚨🚨🚨
+INJECT EVERY SINGLE KEYWORD from "MISSING KEYWORDS TO INJECT" list (bottom of this prompt).
 
-  - If RESUME_TEXT has 0 projects → add the approved one (now 1 total, which is fine)
-  - If RESUME_TEXT has 1 project → add the approved one (now 2 total, which is fine)
-  - If RESUME_TEXT already has 2 projects → remove least relevant one to maintain max 2 total
-
-PROJECT LINK FIELD (output detail — applies to ALL projects):
-- Since resume is parsed from text, links are NOT available during generation.
-- ALWAYS set "link": "Link" as default value for all projects.
-- User will edit this field later in the editable form to add GitHub/live links.
+Distribution rules:
+  (i) Project bullets — FIRST PRIORITY (70-90% of keywords).
+      For Case 1 & 2: inject into the approved project's bullets. Second project gets only non-tech keywords.
+      For Case 3: inject into the project whose tech stack matches. Non-tech keywords go into either.
+  (ii) Work experience bullets — ONLY if keyword is directly relevant to work experience tech stack (10-20% of keywords). Never add missing languages, frameworks, libraries into experience if the tech stack does not match — user cannot prove it later.
+      ↳ If RESUME_TEXT has 0 work experience → put all keywords into project bullets instead.
+  (iii) Miscellaneous Skills — max 1-2 broad concepts only (e.g., Agile, Code Review). NEVER put languages/frameworks here.
+  - If a keyword appears as an OR group (e.g., "java/python"), inject the specific alternative that fits the project's tech stack. NEVER write the literal slash string into a bullet.
+  - Every keyword MUST appear at least once in the final output. Zero exceptions.
+  - Keywords must be woven naturally — not awkwardly bolted on.
 
 Step 5: Technical Skills (SIMPLE RULE — apply to EVERY category)
 
@@ -244,29 +197,9 @@ Format examples:
 
 
 RULES (MUST FOLLOW):
-1. NEVER invent jobs, degrees, or experience that don't exist in RESUME_TEXT
-2. 🚨 ATS KEYWORD INJECTION MANDATE: The "MISSING KEYWORDS TO INJECT" list at the bottom of this prompt contains EXACTLY the keywords you must inject. Use that exact provided list — do NOT invent your own.
-3. CRITICAL: "experience" array MUST ONLY contain entries from RESUME_TEXT. If RESUME_TEXT has 0 jobs → empty array. If 1 job → exactly 1 entry. NEVER add extra entries.
-4. Algorithm executes all steps independently in order — do not skip steps.
-5. Use action verbs: Built, Developed, Optimized, Implemented, Designed, Contributed, Achieved
-6. MAY add countable technical facts ("3 REST endpoints", "2 modules"). NEVER invent performance claims ("reduced latency by 50%", "served 10,000 users").
-7. Weave JOB_DESCRIPTION keywords naturally — must sound authentic.
-8. Keep dates, companies, institutions exactly as in RESUME_TEXT
-9. Projects: show ONLY projects that exist in RESUME_TEXT except the one approved by user.(overall max 2, min 0).
-10. PRESERVE good content from RESUME_TEXT — only enhance weak content
-11. Return ONLY valid JSON. No markdown code blocks. No **bold**, no *italics*, no # headers inside JSON string values. Plain text only. No explanation outside the JSON and inside it.
-12. NEVER output null for string fields (degree, company, job_title, etc.). Use empty string "" if information is missing.
-13. In "changes" field, list EVERY modification with BEFORE → AFTER with text to show the user what exactly changed or updated:
-   - "Kept summary as-is (already good)"
-   - "Kept internship bullet 1 as-is (excellent)"
-   - "Enhanced internship bullet 2: [old] → [new]"
-   - "Kept project 1 bullets as-is, added Docker keyword"
-   - "Enhanced Project X bullet 1: [old] → [new]"
-   - "Added Docker to developer_tools"
-   - "Removed non-relevant certification: Basic Excel"
-   - "Removed least relevant project: Project Y (kept top 2 most JOB_DESCRIPTION-relevant)"
-   - "Merged 1 certification with achievements"
-   - For every keyword injected from MISSING KEYWORDS list, log it: e.g. "Injected 'Kubernetes' into Project 1 bullet 2 naturally"
+1. Return ONLY valid JSON. No markdown code blocks. No **bold**, no *italics*, no # headers inside JSON string values. Plain text only. No explanation outside the JSON and inside it.
+2. NEVER output null for string fields (degree, company, job_title, etc.). Use empty string "" if information is missing.
+3. In "changes" field, list EVERY modification: "Enhanced [section] bullet X: [old] → [new]", "Injected 'keyword' into Project X bullet Y", "Added X to developer_tools", etc.
 
 ⚠️ MANDATORY SELF-VALIDATION (Run this BEFORE writing your JSON output):
 Before you output the final JSON, you MUST mentally go through this checklist:
@@ -378,5 +311,11 @@ ATS Score Before:
 
 MISSING KEYWORDS TO INJECT:
 {missing_keywords}
+
+SELECTED PROJECTS (include ONLY these in the final output — exclude all others):
+{selected_projects}
+
+APPROVED_PROJECT (for Case 1 & 2 — "none" means Case 3, no approved project):
+{approved_project}
 """
 
