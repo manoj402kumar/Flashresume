@@ -166,11 +166,11 @@ export default function AnalyzePage() {
               Missing Keywords
             </h3>
             <span className="ml-auto bg-error/20 px-4 py-2 rounded-full text-error font-bold">
-              {analysis.missing_skills.length}
+              {(analysis.all_missing_skills ?? analysis.missing_skills).length}
             </span>
           </div>
           <div className="flex flex-wrap gap-3">
-            {analysis.missing_skills.map((skill, idx) => (
+            {(analysis.all_missing_skills ?? analysis.missing_skills).map((skill, idx) => (
               <motion.span
                 key={idx}
                 initial={{ opacity: 0, scale: 0.8 }}
@@ -206,7 +206,7 @@ export default function AnalyzePage() {
                 <FolderGit2 className="w-6 h-6 text-primary" />
               </div>
               <h3 className="font-headline text-2xl font-bold text-on-background">
-                {analysis.case === 2 ? "Project Upgrade Required" : "Project Suggestion"}
+                Project Suggestion
               </h3>
             </div>
 
@@ -233,21 +233,8 @@ export default function AnalyzePage() {
               <div className="flex items-start gap-3">
                 <AlertCircle className="w-5 h-5 text-tertiary-container flex-shrink-0 mt-0.5" />
                 <div className="text-sm text-on-surface-variant">
-                  {analysis.case === 2 ? (
-                    <>
-                      <p className="font-semibold mb-1">Upgrade required to get shortlisted</p>
-                      <p>
-                        We need to upgrade <strong>{analysis.suggested_project.title}</strong> in order to get shortlisted.
-                        The following tech will be added to this project:{" "}
-                        <strong>{analysis.suggested_project.tech_stack}</strong>.
-                      </p>
-                    </>
-                  ) : (
-                    <>
-                      <p className="font-semibold mb-1">Why this suggestion?</p>
-                      <p>Your resume lacks projects relevant to this job description. Adding this project will significantly improve your ATS score.</p>
-                    </>
-                  )}
+                  <p className="font-semibold mb-1">Why this suggestion?</p>
+                  <p>Your resume lacks projects relevant to this job description. Adding this project will significantly improve your ATS score.</p>
                 </div>
               </div>
             </div>
@@ -260,9 +247,7 @@ export default function AnalyzePage() {
                 className="w-5 h-5 rounded border-2 border-primary text-primary focus:ring-2 focus:ring-primary"
               />
               <span className="text-on-background font-medium">
-                {analysis.case === 2
-                  ? `Yes, upgrade "${analysis.suggested_project.title}" for this JD`
-                  : "Yes, add this project to my resume"}
+                Yes, add this project to my resume
               </span>
             </label>
             {!projectApproved && (

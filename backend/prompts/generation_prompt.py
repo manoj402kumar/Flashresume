@@ -23,6 +23,10 @@ INPUT LABELS (referred throughout this prompt):
 - JOB_DESCRIPTION → The target job description (see bottom of this prompt)
 - MISSING KEYWORDS TO INJECT → keywords missing in RESUME_TEXT but present in JOB_DESCRIPTION, which you must inject.(see bottom of this prompt)
 
+KEYWORD DEFINITIONS (applies throughout this prompt):
+- Tech Stack Keywords: Programming languages (Java, Python, C++), Frameworks (React, Spring Boot, Django, Express.js, node.js), Libraries (NumPy, Pandas), Databases (MongoDB, PostgreSQL), Cloud Services (AWS, Azure), and Developer Tools (Docker, Kubernetes).
+- Non-Tech Stack Keywords: General concepts (REST APIs, Microservices, OOP, System Design), Methodologies (Agile, Scrum, CI/CD), and Practices (Debugging, Testing, Code Review, Error Handling).
+
 STEP-BY-STEP ALGORITHM:
 
 Step 0: Determine Candidate Level
@@ -75,14 +79,14 @@ If SELECTED_PROJECTS has 1 entry → output 1 project. If 2 → output 2.
 PROJECT LINK FIELD: ALWAYS set "link": "Link" for all projects. User edits this later.
 
 ────────────────────────────────────────────────────
-Case 1 & 2 — APPROVED_PROJECT is present (not "none"):
+Case 2 — APPROVED_PROJECT is present (not "none"):
 ────────────────────────────────────────────────────
 
-The approved project (new or upgraded) is provided as APPROVED_PROJECT at the bottom of this prompt with title, tech_stack, and description.
+The approved project (new) is provided as APPROVED_PROJECT at the bottom of this prompt with title, tech_stack, and description.
 
 For the APPROVED PROJECT:
   - Use the EXACT title and tech_stack from APPROVED_PROJECT. Do NOT change them.
-  - If this title matches an existing project in RESUME_TEXT, REPLACE that project entirely — do not keep the old version.
+  - This is a brand new project — it does NOT exist in RESUME_TEXT.
   - Write 3-4 strong, achievable, realistic bullets using this format:
       Action verb + tech stack/algorithm/methodology + outcome/scope/result
       (achievable and realistic — never insert numbers forcefully where they don't fit naturally)
@@ -95,7 +99,7 @@ For the SECOND PROJECT (if present in SELECTED_PROJECTS):
   - Do NOT inject languages, frameworks, or libraries into this project if its tech stack does not match.
 
 ────────────────────────────────────────────────────
-Case 3 — APPROVED_PROJECT is "none" (both projects already in resume):
+Case 1 — APPROVED_PROJECT is "none" (both projects already in resume):
 ────────────────────────────────────────────────────
 
 Both selected projects already exist in RESUME_TEXT with their own bullets.
@@ -103,8 +107,8 @@ Both selected projects already exist in RESUME_TEXT with their own bullets.
 For BOTH projects:
   - Keep original title, tech_stack — do NOT rewrite them.
   - Only INSERT missing keywords(70-90%) into existing bullets where they naturally fit without changing the original meaning.
-  - Inject tech-stack keywords into the project whose tech stack matches. Do NOT inject a language/framework into a project that uses a completely different stack.
-  - Inject non-tech keywords (debugging, testing, CI/CD, error handling) into either project where they fit naturally.
+  - Inject tech-stack keywords into the project whose tech stack matches. Do NOT inject a language/framework/library into a project that uses a completely different stack.
+  - Inject non-tech-stack keywords (debugging, testing, CI/CD, error handling) into either project where they fit naturally.
   - Do NOT change facts, data, or features — candidate must be able to prove every bullet later.
   - If a bullet already has numbers/metrics → keep them exactly.
   - if you think bullet point is weak rewrite it with better sentence framing without changing any data or feature but injecting missing keywords is must as mentioned.
@@ -117,11 +121,12 @@ MISSING KEYWORDS INJECTION (applies to ALL cases):
 INJECT EVERY SINGLE KEYWORD from "MISSING KEYWORDS TO INJECT" list (bottom of this prompt).
 
 Distribution rules:
-  (i) Project bullets — FIRST PRIORITY (70-90% of keywords).
-      For Case 1 & 2: inject into the approved project's bullets. Second project gets only non-tech keywords.
-      For Case 3: inject into the project whose tech stack matches. Non-tech keywords go into either.
-  (ii) Work experience bullets — ONLY if keyword is directly relevant to work experience tech stack (10-20% of keywords). Never add missing languages, frameworks, libraries into experience if the tech stack does not match — user cannot prove it later.
-      ↳ If RESUME_TEXT has 0 work experience → put all keywords into project bullets instead.
+  (i) Project bullets — FIRST PRIORITY (70-90% of missing keywords).
+      For Case 2: inject into the approved project's bullets. Second project gets only non-tech stack keywords.
+      For Case 1: inject into the project whose tech stack matches. Non-tech stack keywords go into either.
+  (ii) Work experience bullets — (10-20% of missing keywords) ONLY if missing keyword is directly matches exact work experience tech stack. Never add missing languages, frameworks, libraries into experience if the tech stack does not match — user cannot prove it later.
+      For ex: If it is java based work experience you can add java related missing keywords but not python or react. 
+      ↳ If RESUME_TEXT has 0 work experience → put all missing keywords into project bullets instead.
   (iii) Miscellaneous Skills — max 1-2 broad concepts only (e.g., Agile, Code Review). NEVER put languages/frameworks here.
   - If a keyword appears as an OR group (e.g., "java/python"), inject the specific alternative that fits the project's tech stack. NEVER write the literal slash string into a bullet.
   - Every keyword MUST appear at least once in the final output. Zero exceptions.
@@ -314,7 +319,7 @@ MISSING KEYWORDS TO INJECT:
 SELECTED PROJECTS (include ONLY these in the final output — exclude all others):
 {selected_projects}
 
-APPROVED_PROJECT (for Case 1 & 2 — "none" means Case 3, no approved project):
+APPROVED_PROJECT (for Case 2 — "none" means Case 1, no approved project):
 {approved_project}
 """
 

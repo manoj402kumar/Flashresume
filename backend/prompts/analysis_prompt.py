@@ -1,4 +1,5 @@
 ANALYSIS_PROMPT = """
+Read whole prompt once and proceed to Json result.
 Act as best ATS resume analyzer wrt given job description.
 Analyze this resume against the job description. Calculate ATS score and missing skills as instructed below.
 
@@ -6,6 +7,10 @@ Return ONLY valid JSON. No markdown code blocks. DO NOT use markdown formatting 
 
 TARGET USERS: B.Tech freshers (0-1 year experience) to experienced professionals.
 OBJECTIVE: Calculate ATS score based on rigorous keyword and concept matching.
+
+INPUT LABELS (referred throughout this prompt):
+- RESUME_TEXT → The raw resume text (see bottom of this prompt)
+- JOB_DESCRIPTION → The target job description (see bottom of this prompt)
 
 OR CONDITION RULE — apply this FIRST before any matching:
 When the JD lists technologies separated by "/" or "OR" (e.g., "java/python", "react OR angular", "mysql/postgresql"), treat the ENTIRE group as ONE slot.
@@ -30,11 +35,12 @@ This includes:
 Analysis Rules:
 1. Extract ALL critical keywords/concepts from the JD using the expanded definition above.
 2. Apply OR CONDITION RULE first — normalize all slash/OR groups into single slots before matching.
-3. Strict Verification for Matches: A concept/keyword is ONLY a matched_skill if it is EXPLICITLY stated in the Resume. Do NOT infer, assume, or guess a skill. (e.g., if the resume says "REST API", do not assume "Microservices" unless the word "Microservices" is actually there).
-4. Identify matched_skills (explicitly present in BOTH the resume and the JD — one entry per slot).
-5. Identify missing_skills (present in the JD but missing from the resume — one entry per slot, OR groups shown as single "x/y" entry).
-6. Calculate ATS score based on keyword match percentage.
-7. Score formula: (matched_skills / (matched_skills + missing_skills)) * 100
+3. Strict Verification for Matches: A concept/keyword is ONLY a matched_skill if it is EXPLICITLY stated in RESUME_TEXT. Do NOT infer, assume, or guess a skill. (e.g., if RESUME_TEXT says "REST API", do not assume "Microservices" unless that word is actually in RESUME_TEXT).
+4. Identify matched_skills: ONLY skills that are (a) extracted from JOB_DESCRIPTION AND (b) explicitly present in RESUME_TEXT. Source is always JOB_DESCRIPTION — never add a RESUME_TEXT-only skill here.
+5. Identify missing_skills: ONLY skills extracted from JOB_DESCRIPTION that are NOT present in RESUME_TEXT. One entry per slot; OR groups shown as single "x/y" entry.
+6. HARD EXCLUSION: A skill CANNOT appear in both matched_skills and missing_skills. If it matched, it is matched only. If it is missing, it is missing only.
+7. HARD EXCLUSION: Do NOT add any skill to matched_skills that is not present in JOB_DESCRIPTION, even if it appears in RESUME_TEXT.
+8. Calculate ATS score: (count of matched_skills / (count of matched_skills + count of missing_skills)) * 100
 
 Required format:
 {{
@@ -43,9 +49,9 @@ Required format:
   "missing_skills": ["java/nodejs", "spring boot/django"]
 }}
 
-Resume Text:
+RESUME_TEXT:
 {resume_text}
 
-Job Description:
+JOB_DESCRIPTION:
 {job_description}
 """

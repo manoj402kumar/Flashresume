@@ -24,5 +24,5 @@ class CombinedAnalysisResponse(BaseModel):
     suggested_project: Optional[SuggestedProject]
     requires_consent: bool
     selected_projects: List[str] = []
-    case: int = 3
+    case: int = 1
     model_used: Optional[str] = None

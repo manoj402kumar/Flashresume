@@ -23,8 +23,8 @@ async def analyze_resume(request: AnalyzeRequest):
 
     Returns:
     - ATS score, matched skills, missing skills (pre-filtered using covered_jd_tech)
-    - Project case (1/2/3), selected_projects, suggested_project (if needed)
-    - requires_consent flag (true for Case 1 and 2)
+    - Project case (1/2), selected_projects, suggested_project (if needed)
+    - requires_consent flag (true for Case 2)
     """
     try:
         # Run ATS scoring and project check concurrently
@@ -52,7 +52,7 @@ async def analyze_resume(request: AnalyzeRequest):
             suggested_project=project_result.get("suggested_project"),
             requires_consent=project_result["requires_consent"],
             selected_projects=project_result.get("selected_projects", []),
-            case=project_result.get("case", 3),
+            case=project_result.get("case", 1),
             model_used=ats_result.get("_model_used")
         )
     except ValueError as e:
