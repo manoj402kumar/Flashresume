@@ -478,12 +478,12 @@ export default function ResultPage() {
           <div className="relative">
             <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-primary mx-auto mb-6"></div>
             <div className="absolute inset-0 flex items-center justify-center">
-              <svg viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-8 h-8 animate-pulse drop-shadow-[0_0_8px_rgba(0,210,190,0.6)]">
-                <path d="M18 2L32 10V26L18 34L4 26V10L18 2Z" fill="url(#hex-grad-loading)" stroke="rgba(0,210,190,0.3)" strokeWidth="0.8" />
+              <svg viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-8 h-8 animate-pulse">
+                <path d="M18 2L32 10V26L18 34L4 26V10L18 2Z" fill="url(#hex-grad-loading)" stroke="rgba(0,104,89,0.3)" strokeWidth="0.8" />
                 <defs>
                   <linearGradient id="hex-grad-loading" x1="4" y1="2" x2="32" y2="34" gradientUnits="userSpaceOnUse">
-                    <stop stopColor="#00D2BE" />
-                    <stop offset="1" stopColor="#00A896" />
+                    <stop stopColor="#006859" />
+                    <stop offset="1" stopColor="#12f8d7" />
                   </linearGradient>
                 </defs>
                 <path d="M20 8L13 20h6l-1 8 8-12h-6l1-8z" fill="white" fillOpacity="0.95" transform="translate(-1.5, 0)" />
@@ -506,12 +506,12 @@ export default function ResultPage() {
           <div className="flex items-center gap-3">
             <a href="/" title="Back to Home" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
               <div className="relative flex items-center justify-center w-9 h-9">
-                <svg viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full drop-shadow-[0_0_6px_rgba(0,210,190,0.45)]">
-                  <path d="M18 2L32 10V26L18 34L4 26V10L18 2Z" fill="url(#hex-grad-result)" stroke="rgba(0,210,190,0.3)" strokeWidth="0.8" />
+                <svg viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
+                  <path d="M18 2L32 10V26L18 34L4 26V10L18 2Z" fill="url(#hex-grad-result)" stroke="rgba(0,104,89,0.3)" strokeWidth="0.8" />
                   <defs>
                     <linearGradient id="hex-grad-result" x1="4" y1="2" x2="32" y2="34" gradientUnits="userSpaceOnUse">
-                      <stop stopColor="#00D2BE" />
-                      <stop offset="1" stopColor="#00A896" />
+                      <stop stopColor="#006859" />
+                      <stop offset="1" stopColor="#12f8d7" />
                     </linearGradient>
                   </defs>
                   <path d="M20 8L13 20h6l-1 8 8-12h-6l1-8z" fill="white" fillOpacity="0.95" transform="translate(-1.5, 0)" />

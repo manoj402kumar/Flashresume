@@ -287,17 +287,17 @@ export default function App() {
           <div className="flex items-center gap-2 shrink-0">
             {/* Hexagon logo mark */}
             <div className="relative flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9">
-              <svg viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full drop-shadow-[0_0_6px_rgba(0,210,190,0.45)]">
+              <svg viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
                 <path
                   d="M18 2L32 10V26L18 34L4 26V10L18 2Z"
                   fill="url(#hex-grad)"
-                  stroke="rgba(0,210,190,0.3)"
+                  stroke="rgba(0,104,89,0.3)"
                   strokeWidth="0.8"
                 />
                 <defs>
                   <linearGradient id="hex-grad" x1="4" y1="2" x2="32" y2="34" gradientUnits="userSpaceOnUse">
-                    <stop stopColor="#00D2BE" />
-                    <stop offset="1" stopColor="#00A896" />
+                    <stop stopColor="#006859" />
+                    <stop offset="1" stopColor="#12f8d7" />
                   </linearGradient>
                 </defs>
                 {/* Bolt icon centered */}
