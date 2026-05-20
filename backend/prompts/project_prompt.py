@@ -36,12 +36,18 @@ MATCHING SCOPE — what counts as "language/framework/library" for Case triggers
                      DevOps/Tools (Docker, Git, Kubernetes, CI/CD, Postman),
                      Methodologies (Agile, Scrum, Code Review, Unit Testing)
 
-CASE 1 — check FIRST:
-  Trigger: RESUME_TEXT projects together cover ALL JOB_DESCRIPTION language/framework/library slots (using MATCHING SCOPE above, OR condition applied). don't consider databases for matching.
+CASE 1 — No new project needed:
+  Trigger: RESUME_TEXT projects already cover the majority of the JOB_DESCRIPTION's primary
+           tech stack (languages, frameworks, libraries). Use your judgment — consider parent
+           technologies (e.g., Next.js implies JavaScript, FastAPI implies Python), "or similar"
+           phrasing, and soft requirements ("one of", "e.g.", "etc.") as satisfied.
+          dont consider any databases, cloud services, devops tools as mandatory requirements in projects.
   Action: Pick the top 2 most JOB_DESCRIPTION-relevant ones. No new project needed.
 
-CASE 2 — check ONLY if Case 1 did not trigger:
-  Trigger: Not all JOB_DESCRIPTION language/framework/library slots are covered by existing RESUME_TEXT projects.
+CASE 2 — New project needed:
+  Trigger: There is a significant, undeniable gap in the JOB_DESCRIPTION's core tech stack
+           (languages, frameworks, libraries) that no existing RESUME_TEXT project(s) can
+           reasonably cover — even accounting for related/parent technologies.
   Action: Suggest a completely new project using the JOB_DESCRIPTION's primary tech stack.
   Second project = most JOB_DESCRIPTION-relevant existing RESUME_TEXT project (if one exists — ALWAYS include it in selected_projects; do NOT drop it).
 
