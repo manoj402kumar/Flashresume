@@ -78,6 +78,7 @@ If SELECTED_PROJECTS has 1 entry → output 1 project. If 2 → output 2.
 
 PROJECT LINK FIELD: ALWAYS set "link": "Link" for all projects. User edits this later.
 
+
 ────────────────────────────────────────────────────
 Case 2 — APPROVED_PROJECT is present (not "none"):
 ────────────────────────────────────────────────────
@@ -118,9 +119,9 @@ For BOTH projects:
 MISSING KEYWORDS INJECTION (applies to ALL cases):
 ────────────────────────────────────────────────────
 
-🚨🚨🚨 HIGHEST PRIORITY — OVERRIDES ALL OTHER INSTRUCTIONS 🚨🚨🚨
+🚨🚨🚨 HIGHEST PRIORITY — OVERRIDES ALL OTHER BEFORE/AFTER INSTRUCTIONS 🚨🚨🚨
 INJECT EVERY SINGLE KEYWORD from "MISSING KEYWORDS TO INJECT" list (bottom of this prompt).
-
+Suppose missing keyword has aws/azure, injecting one aws or azure is sufficient. follow this logic for injecting all missing keywords.
 Distribution rules:
   (i) Project bullets — FIRST PRIORITY (70-90% of missing keywords).
       For Case 2: inject into the approved project's bullets. Second project gets only non-tech stack keywords.

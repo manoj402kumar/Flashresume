@@ -8,8 +8,9 @@ INPUT LABELS (referred throughout this prompt):
 - JOB_DESCRIPTION → The target job description (see bottom of this prompt)
 
 OR CONDITION RULE — apply throughout all steps:
-When a JOB_DESCRIPTION lists technologies separated by "/" or "OR" (e.g., "java/python", "react OR angular", "mysql/postgresql"), treat the entire group as ONE slot. Matching ANY ONE satisfies the whole slot. Never treat them as separate independent requirements.
+When a JOB_DESCRIPTION lists technologies separated by "/", "OR", commas, or natural language like "proficiency in any one of Python, Java" or "one of React, Angular, Vue" — treat the entire group as ONE slot. Matching ANY ONE satisfies the whole slot. Never treat them as separate independent requirements.
 Example: JOB_DESCRIPTION says "java/python" → if RESUME_TEXT has Python, the language slot is fully satisfied. Java is NOT a missing requirement.
+Example: JOB_DESCRIPTION says "proficiency in any one of Python, Java" → if RESUME_TEXT has Python, the slot is fully satisfied.
 
 ────────────────────────────────────────────────────
 STEP 1: Extract JOB_DESCRIPTION tech requirements
@@ -38,16 +39,19 @@ MATCHING SCOPE — what counts as "language/framework/library" for Case triggers
 
 CASE 1 — No new project needed:
   Trigger: RESUME_TEXT projects already cover the majority of the JOB_DESCRIPTION's primary
-           tech stack (languages, frameworks, libraries). Use your judgment — consider parent
+           tech stack (languages, frameworks, libraries only). Use your judgment — consider parent
            technologies (e.g., Next.js implies JavaScript, FastAPI implies Python), "or similar"
            phrasing, and soft requirements ("one of", "e.g.", "etc.") as satisfied.
-          dont consider any databases, cloud services, devops tools as mandatory requirements in projects.
-  Action: Pick the top 2 most JOB_DESCRIPTION-relevant ones. No new project needed.
+           OR CONDITION: If JOB_DESCRIPTION lists alternatives such as "Java/Python" or
+           "React OR Angular", matching ANY ONE fully satisfies that slot (e.g., Python alone
+           satisfies "Java/Python") — do NOT treat unmatched alternatives as missing requirements.
+           Dont consider Databases, cloud services, and DevOps tools for project matching requirements.(strictly follow) - only consider languages, libraries, frameworks following OR codnition rule.
+  Action: Pick the top 2 most JOB_DESCRIPTION-relevant projects. No new project needed.
 
 CASE 2 — New project needed:
-  Trigger: There is a significant, undeniable gap in the JOB_DESCRIPTION's core tech stack
+  Trigger only if case1 fails: There is a significant, undeniable gap in the JOB_DESCRIPTION's core tech stack
            (languages, frameworks, libraries) that no existing RESUME_TEXT project(s) can
-           reasonably cover — even accounting for related/parent technologies.
+           reasonably cover — even accounting for related/parent technologies (or) OR CONDITION applied.
   Action: Suggest a completely new project using the JOB_DESCRIPTION's primary tech stack.
   Second project = most JOB_DESCRIPTION-relevant existing RESUME_TEXT project (if one exists — ALWAYS include it in selected_projects; do NOT drop it).
 
@@ -64,7 +68,8 @@ description: 2-3 sentences — (a) real-world problem it solves, (b) how JOB_DES
 ────────────────────────────────────────────────────
 STEP 5: Build covered_jd_tech
 ────────────────────────────────────────────────────
-List every JOB_DESCRIPTION tech item satisfied by the 2 selected projects combined (including the new project's tech_stack).
+List ONLY languages, frameworks, libraries, and databases from the JOB_DESCRIPTION that are satisfied by the 2 selected projects combined (including the new project's tech_stack).
+Do NOT include concepts (REST APIs, OOP, microservices), DevOps tools (Docker, Git, CI/CD), or methodologies (Agile, Scrum) — these must remain in missing_skills so the generation prompt can weave them into resume bullets.
 
 OR GROUP RULE: If JOB_DESCRIPTION says "java/python" and Python is covered, add BOTH "java" AND "python" to covered_jd_tech. The entire OR slot is satisfied, so all alternatives must be listed (this prevents false "missing keywords" later in the pipeline).
 
@@ -101,24 +106,24 @@ OUTPUT — return ONLY valid JSON, no markdown, no explanation, no symbols like 
 ────────────────────────────────────────────────────
 
 {{
-  "case": 2,
+  "case": "<1 or 2>",
   "selected_projects": ["Title1", "Title2"],
   "suggested_project": {{
-    "title": "any unique name",
-    "tech_stack": "comma-separated string, max 7 items",
-    "description": "2-3 sentence description"
+    "title": "<unique creative name>",
+    "tech_stack": "<comma-separated string, max 7 items>",
+    "description": "<2-3 sentence description>"
   }},
-  "covered_jd_tech": ["python", "django", "mysql"],
-  "requires_consent": true,
-  "least_relevant_project": "lowest-scoring resume project title or null",
-  "total_projects_count": 2
+  "covered_jd_tech": ["<tech1>", "<tech2>", "<tech3>"],
+  "requires_consent": "<true for Case 2, false for Case 1>",
+  "least_relevant_project": "<lowest-scoring resume project title or null>",
+  "total_projects_count": "<count>"
 }}
 
 Field rules:
 - case: 1 or 2 (integer).
 - selected_projects: max 2 entries. If resume has 0 or 1 existing project, may have only 1 entry.
 - suggested_project: object for Case 2, null for Case 1.
-- covered_jd_tech: all JOB_DESCRIPTION tech items satisfied by both selected projects combined, including all OR-slot alternatives when any one is matched.
+- covered_jd_tech: ONLY languages, frameworks, libraries, and databases from the JOB_DESCRIPTION satisfied by both selected projects combined. Include all OR-slot alternatives when any one is matched. Do NOT include concepts, DevOps tools, or methodologies.
 - requires_consent: true for Case 2, false for Case 1.
 - least_relevant_project: title of lowest-scoring existing RESUME_TEXT project (shown in UI as which project gets replaced). null if resume has 0 or 1 project.
 - total_projects_count: count of distinct project entries found in the RESUME_TEXT. Does NOT count the new/upgraded suggested project.

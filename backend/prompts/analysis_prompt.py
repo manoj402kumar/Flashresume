@@ -13,16 +13,23 @@ INPUT LABELS (referred throughout this prompt):
 - JOB_DESCRIPTION → The target job description (see bottom of this prompt)
 
 OR CONDITION RULE — apply this FIRST before any matching:
-When the JD lists technologies separated by "/" or "OR" (e.g., "java/python", "react OR angular", "mysql/postgresql"), treat the ENTIRE group as ONE slot.
-- If resume matches ANY ONE alternative → slot is MATCHED. Add only the matched alternative (e.g., "python") to matched_skills. Do NOT add the other alternatives separately.
-- If resume matches NONE → slot is MISSING. Add the full group as ONE entry (e.g., "java/python") to missing_skills. Do NOT split into separate items.
-- NEVER add both "java" and "python" as two separate entries when they appear as "java/python" in the JD.
+When the JD lists alternative technologies — whether using "/", "OR", commas, or natural language like
+"Proficiency in Java or Python", "one of React, Angular, Vue", "Java/Python/Go",
+"proficiency in any one of Python, Java" — treat the ENTIRE group as ONE slot.
+- If resume matches ANY ONE alternative → slot is MATCHED. Add only the matched alternative
+  (e.g., "python") to matched_skills. Do NOT add the other unmatched alternatives to missing_skills.
+- If resume matches NONE → slot is MISSING. Add the full group as ONE entry (e.g., "java/python")
+  to missing_skills. Do NOT split into separate items.
+- NEVER add both "java" and "python" as two separate entries when they come from the same OR group.
 
 Examples of correct OR behavior:
-  JD: "java/python", Resume has Python → matched_skills: ["python"]        (java is NOT listed in missing_skills)
+  JD: "java/python", Resume has Python → matched_skills: ["python"]        (java is NOT in missing_skills)
+  JD: "Proficiency in Java or Python", Resume has Python → matched_skills: ["python"]  (java is NOT in missing_skills)
   JD: "java/python", Resume has neither → missing_skills: ["java/python"]  (one entry, not two)
-  JD: "react OR angular", Resume has React → matched_skills: ["react"]     (angular is NOT listed in missing_skills)
-  JD: "mysql/postgresql", Resume has MySQL → matched_skills: ["mysql"]     (postgresql is NOT listed in missing_skills)
+  JD: "react OR angular", Resume has React → matched_skills: ["react"]     (angular is NOT in missing_skills)
+  JD: "mysql/postgresql", Resume has MySQL → matched_skills: ["mysql"]     (postgresql is NOT in missing_skills)
+  JD: "proficiency in any one of Python, Java", Resume has Python → matched_skills: ["python"]  (java is NOT in missing_skills)
+  JD: "proficiency in any one of Python, Java", Resume has neither → missing_skills: ["python/java"]  (one entry, not two)
 
 CRITICAL INSTRUCTION - DEFINITION OF A "SKILL/KEYWORD":
 Do NOT restrict your extraction to just tools and frameworks (like React, Java, MongoDB). You MUST comprehensively extract all ATS-relevant keywords from the ENTIRE Job Description (both "Responsibilities" and "Qualifications" sections).
