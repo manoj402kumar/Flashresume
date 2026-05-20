@@ -38,6 +38,7 @@ MATCHING SCOPE — what counts as "language/framework/library" for Case triggers
                      Methodologies (Agile, Scrum, Code Review, Unit Testing)
 
 CASE 1 — No new project needed:
+
   Trigger: RESUME_TEXT projects already cover the majority of the JOB_DESCRIPTION's primary
            tech stack (languages, frameworks, libraries only). Use your judgment — consider parent
            technologies (e.g., Next.js implies JavaScript, FastAPI implies Python), "or similar"
@@ -45,7 +46,7 @@ CASE 1 — No new project needed:
            OR CONDITION: If JOB_DESCRIPTION lists alternatives such as "Java/Python" or
            "React OR Angular", matching ANY ONE fully satisfies that slot (e.g., Python alone
            satisfies "Java/Python") — do NOT treat unmatched alternatives as missing requirements.
-           Dont consider Databases, cloud services, and DevOps tools for project matching requirements.(strictly follow) - only consider languages, libraries, frameworks following OR codnition rule.
+           Dont consider Databases, cloud services, and DevOps tools or any concepts for project matching requirements.(strictly follow) - only consider languages, libraries, frameworks following OR codnition rule.
   Action: Pick the top 2 most JOB_DESCRIPTION-relevant projects. No new project needed.
 
 CASE 2 — New project needed:

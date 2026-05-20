@@ -38,7 +38,7 @@ Step 0: Determine Candidate Level
 Step 1: Extract resume sections (already done — you have RESUME_TEXT below)
 
 Step 2: Summary Evaluation
-write/rewrite summary telling why the candidate is best fit for the JOB_DESCRIPTION based on RESUME_TEXT projects and experience. Keep it 1-2 lines space in output resume, professional, and should impress the recruiters.
+write/rewrite summary telling why the candidate is best fit for the JOB_DESCRIPTION based on RESUME_TEXT projects and experience. Keep it exactly 1-2 lines, professional, and should impress the recruiters.
 
 Step 3: Education
 - Keep as-is, NO changes
@@ -133,6 +133,7 @@ Distribution rules:
   - If a keyword appears as an OR group (e.g., "java/python"), inject the specific alternative that fits the project's tech stack. NEVER write the literal slash string into a bullet.
   - Every keyword MUST appear at least once in the final output. Zero exceptions.
   - Keywords must be woven naturally — not awkwardly bolted on.
+  - ⛔ NO FORMATTING: Write injected keywords as plain text. Do NOT wrap them in **bold**, *italics*, or any markdown. Output "REST APIs" not "**REST APIs**".
 
 Step 5: Technical Skills (SIMPLE RULE — apply to EVERY category)
 

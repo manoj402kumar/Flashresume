@@ -43,8 +43,9 @@ Analysis Rules:
 1. Extract ALL critical keywords/concepts from the JD using the expanded definition above.
 2. Apply OR CONDITION RULE first — normalize all slash/OR groups into single slots before matching.
 3. Strict Verification for Matches: A concept/keyword is ONLY a matched_skill if it is EXPLICITLY stated in RESUME_TEXT. Do NOT infer, assume, or guess a skill. (e.g., if RESUME_TEXT says "REST API", do not assume "Microservices" unless that word is actually in RESUME_TEXT).
-4. Identify matched_skills: ONLY skills that are (a) extracted from JOB_DESCRIPTION AND (b) explicitly present in RESUME_TEXT. Source is always JOB_DESCRIPTION — never add a RESUME_TEXT-only skill here.
-5. Identify missing_skills: ONLY skills extracted from JOB_DESCRIPTION that are NOT present in RESUME_TEXT. One entry per slot; OR groups shown as single "x/y" entry.
+   SCAN ALL SECTIONS: Read RESUME_TEXT top to bottom — Summary, Skills, Projects (titles, tech stacks, bullets), Work Experience (bullets), Education, and Certifications. A keyword found in ANY section counts as matched.
+4. Identify matched_skills: (don't forget) ONLY skills that are (a) extracted from JOB_DESCRIPTION AND (b) explicitly present in RESUME_TEXT (any section). Source is always JOB_DESCRIPTION — never add a RESUME_TEXT-only skill here.
+5. Identify missing_skills: (don't forget)ONLY skills extracted from JOB_DESCRIPTION that are NOT present in RESUME_TEXT. One entry per slot; OR groups shown as single "x/y" entry.
 6. HARD EXCLUSION: A skill CANNOT appear in both matched_skills and missing_skills. If it matched, it is matched only. If it is missing, it is missing only.
 7. HARD EXCLUSION: Do NOT add any skill to matched_skills that is not present in JOB_DESCRIPTION, even if it appears in RESUME_TEXT.
 8. Calculate ATS score: (count of matched_skills / (count of matched_skills + count of missing_skills)) * 100

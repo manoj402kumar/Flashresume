@@ -191,8 +191,37 @@ function HighlightedText({ text, matched, missing, showHighlights, style }: { te
   const wordTypes = new Map<string, "matched" | "missing">();
   const allWords: string[] = [];
 
+  // Stop words to skip when generating single-word sub-phrases (avoids false positives)
+  const STOP_WORDS = new Set(["knowledge", "experience", "understanding", "proficiency", "skills", "ability", "strong", "good", "basic", "advanced", "demonstrated", "via", "using", "with", "and", "the", "for", "any", "one", "of", "in", "a", "an", "to", "on", "or", "is", "at", "by"]);
+
   const normalizeKeywords = (keywords: string[]) => {
-    return keywords.flatMap(k => k.split(/\s*\/\s*|\s+[Oo][Rr]\s+|\s*,\s*|\|/).map(w => w.trim()).filter(Boolean));
+    const result: string[] = [];
+    for (const k of keywords) {
+      // Step 1: Split OR groups (e.g., "java/python" → ["java", "python"])
+      const orParts = k.split(/\s*\/\s*|\s+[Oo][Rr]\s+|\|/).map(w => w.trim()).filter(Boolean);
+      for (const part of orParts) {
+        const words = part.split(/\s+/);
+        if (words.length <= 2) {
+          // Short keyword — add as-is (e.g., "REST APIs", "Docker", "CI/CD")
+          result.push(part);
+        } else {
+          // Multi-word phrase — generate sub-phrases (longest first, min 2 words)
+          // e.g., "NoSQL database knowledge" → ["NoSQL database knowledge", "NoSQL database", "database knowledge"]
+          for (let len = words.length; len >= 2; len--) {
+            for (let start = 0; start <= words.length - len; start++) {
+              result.push(words.slice(start, start + len).join(" "));
+            }
+          }
+          // Also add meaningful single words (skip stop words)
+          for (const w of words) {
+            if (!STOP_WORDS.has(w.toLowerCase()) && w.length > 2) {
+              result.push(w);
+            }
+          }
+        }
+      }
+    }
+    return result;
   };
 
   normalizeKeywords(matched || []).forEach(word => {
