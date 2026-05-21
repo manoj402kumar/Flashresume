@@ -286,7 +286,7 @@ export default function ResultPage() {
         parsed.heading.github_url_href = `https://${parsed.heading.github_url}`;
       }
       // Now set clean display text — visual only, href is already saved above
-      parsed.heading.linkedin_url = "Linkedin";
+      parsed.heading.linkedin_url = "linkedin";
       parsed.heading.github_url = cleanDisplayUrl(parsed.heading.github_url, "github.com/username");
 
       // Load analysis keywords for PDF highlighting
@@ -965,7 +965,7 @@ export default function ResultPage() {
                               <p className="text-xs text-on-surface-variant font-semibold uppercase tracking-wide">LinkedIn</p>
                               <input
                                 type="text"
-                                value={cleanDisplayUrl(resume.heading.linkedin_url, "Linkedin")}
+                                value={cleanDisplayUrl(resume.heading.linkedin_url, "linkedin")}
                                 onChange={(e) => updateResume({ heading: { ...resume.heading, linkedin_url: e.target.value } })}
                                 className="w-full rounded-xl px-4 py-3 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm"
                                 placeholder="linkedin"
@@ -1014,7 +1014,7 @@ export default function ResultPage() {
                                     rel="noopener noreferrer"
                                     className="text-primary hover:underline"
                                   >
-                                    {cleanDisplayUrl(resume.heading.linkedin_url, "Linkedin")}
+                                    {cleanDisplayUrl(resume.heading.linkedin_url, "linkedin")}
                                   </a>
                                 </p>
                                 <p className="flex items-center gap-2">

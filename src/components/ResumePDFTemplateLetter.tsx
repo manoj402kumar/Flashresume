@@ -247,7 +247,7 @@ export default function ResumePDFTemplateLetter({ resume, showHighlights = false
             </Link>
             {" | "}
             <Link src={resume.heading.linkedin_url_href || getValidUrl(resume.heading.linkedin_url, "linkedin.com/in/username")} style={{ ...styles.link, textDecoration: "underline" }}>
-              {cleanDisplayUrl(resume.heading.linkedin_url, "Linkedin")}
+              {cleanDisplayUrl(resume.heading.linkedin_url, "linkedin")}
             </Link>
             {" | "}
             <Link src={getValidUrl(resume.heading.github_url, "github.com/username")} style={{ ...styles.link, textDecoration: "underline" }}>

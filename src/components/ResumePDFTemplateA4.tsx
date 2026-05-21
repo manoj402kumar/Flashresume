@@ -275,7 +275,7 @@ export default function ResumePDFTemplateA4({ resume, showHighlights = false, ma
             </Link>
             {" • "}
             <Link src={resume.heading.linkedin_url_href || getValidUrl(resume.heading.linkedin_url, "linkedin.com/in/username")} style={styles.link}>
-              {cleanDisplayUrl(resume.heading.linkedin_url, "Linkedin")}
+              {cleanDisplayUrl(resume.heading.linkedin_url, "linkedin")}
             </Link>
             {" • "}
             <Link src={getValidUrl(resume.heading.github_url, "github.com/username")} style={styles.link}>
