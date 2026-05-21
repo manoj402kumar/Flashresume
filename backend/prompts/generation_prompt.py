@@ -300,8 +300,9 @@ OUTPUT FORMAT (Template v1):
     "Rewrote Summary: [old summary] → [new summary]",
     "Enhanced Project Food Delivery App bullet 1: 'Built app' → 'Developed scalable food delivery platform using React and Node.js serving 500+ users'",
     "Added Docker to developer_tools",
-    "Removed non-relevant certification: Basic Excel",
+    "Removed non-relevant skill: Basic Excel",
     "Removed least relevant project: Portfolio Website"
+    "describe any changes that you made"
   ],
   "ats_score_before": {ats_score_before},
   "ats_score_after": 0

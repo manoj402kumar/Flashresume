@@ -57,9 +57,9 @@ CASE 2 — New project needed:
   Second project = most JOB_DESCRIPTION-relevant existing RESUME_TEXT project (if one exists — ALWAYS include it in selected_projects; do NOT drop it).
 
 ────────────────────────────────────────────────────
-STEP 4: Build suggested_project (Case 2 only)
+STEP 4: Build suggested_project (for Case 2 only)
 ────────────────────────────────────────────────────
-
+select project idea which is achievable by a fresher.
 title: creative domain-specific product name — NOT a tech stack description like "Django REST App".
   Pattern: domain-action word + product suffix.
   🚨 IMPORTANT: INVENT a unique name. Do NOT reuse the examples provided in this prompt (e.g., "VitalTrack", "SpendLens", "CartEngine", "TaskFlow").
