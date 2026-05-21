@@ -474,8 +474,8 @@ export default function ScratchPage() {
             </a>
             <div>
               <h1 className="font-headline text-lg font-bold text-on-background leading-tight">Build From Scratch</h1>
-              <p className="text-xs text-on-surface-variant leading-tight flex items-center gap-1">
-                <Sparkles className="w-3 h-3 text-primary" /> Blank template — fill in your details
+              <p className="text-xs text-on-surface-variant leading-tight flex items-center gap-1 whitespace-nowrap">
+                <Sparkles className="w-3 h-3 text-primary flex-shrink-0" /> Blank template — fill in your details
               </p>
             </div>
           </div>
