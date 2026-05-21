@@ -38,8 +38,8 @@ Step 0: Determine Candidate Level
 Step 1: Extract resume sections (already done — you have RESUME_TEXT below)
 
 Step 2: Summary Evaluation
-Write/rewrite a powerful summary highlighting why the candidate is the best fit for the JOB_DESCRIPTION based on RESUME_TEXT.
-🚨 STRICT RULE: The summary MUST be exactly 16-20 words only. Keep it impactful and professional.
+Write/rewrite a powerful summary highlighting why the candidate is the best fit for the JOB_DESCRIPTION based on RESUME_TEXT. It should impress the recruiters.
+🚨 STRICT RULE: The summary MUST be exactly 16-20 words only. 
 
 Step 3: Education
 - Keep as-is, NO changes
@@ -244,7 +244,7 @@ OUTPUT FORMAT (Template v1):
     "github_url": "github.com/username",
     "portfolio_url": "portfolio.com"
   }},
-  "summary": "Impact-driven summary aligned with JOB_DESCRIPTION. STRICT RULE: MUST be exactly 16-20 words. DO NOT EXCEED 25 words.",
+  "summary": "follow above rules",
   "education": [
     {{
       "institution": "University Name",

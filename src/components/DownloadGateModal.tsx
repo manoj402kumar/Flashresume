@@ -168,13 +168,13 @@ export default function DownloadGateModal({
           }
         });
         if (error) throw error;
-        
+
         if (data.user?.identities?.length === 0) {
           setError("An account with this email already exists. Try logging in instead.");
           setLoading(false);
           return;
         }
-        
+
         if (data.user) {
           if (!data.session) {
             setError("Account created! Please check your email to verify your account before paying.");
@@ -343,8 +343,8 @@ export default function DownloadGateModal({
               {(["auth", "plan"] as Step[]).map((s, idx) => (
                 <div key={s} className="flex items-center gap-2">
                   <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all ${step === s ? "bg-primary text-white" :
-                      authDone && s === "auth" ? "bg-primary/20 text-primary" :
-                        "bg-surface-container-low text-on-surface-variant"
+                    authDone && s === "auth" ? "bg-primary/20 text-primary" :
+                      "bg-surface-container-low text-on-surface-variant"
                     }`}>
                     {authDone && s === "auth" ? <CheckCircle2 className="w-4 h-4" /> : idx + 1}
                   </div>
@@ -565,7 +565,7 @@ export default function DownloadGateModal({
                       </span>
                       EXCLUSIVE
                     </div>
-                    
+
                     <div className="mb-4">
                       <div className="flex items-center gap-3 mb-3">
                         <div className="w-9 h-9 rounded-xl bg-tertiary/20 flex items-center justify-center flex-shrink-0">
@@ -680,13 +680,13 @@ export default function DownloadGateModal({
           </AnimatePresence>
         </div>
       </motion.div>
-      <StudentVerificationModal 
-        isOpen={showVerificationModal} 
-        onClose={() => setShowVerificationModal(false)} 
+      <StudentVerificationModal
+        isOpen={showVerificationModal}
+        onClose={() => setShowVerificationModal(false)}
         onSuccess={() => {
           setShowVerificationModal(false);
           handleProceedToPayment();
-        }} 
+        }}
       />
     </div>
   );
