@@ -429,7 +429,7 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
 
         <div className="px-6 pt-6 pb-3 border-b border-surface-container-low text-center">
           <h2 className="text-2xl font-headline font-bold text-on-background">
-            {step === "initializing" ? "Loading..." : step === "auth" ? "Login / Signup" : step === "processing" ? "Processing..." : step === "student_verify" ? "Student Verification" : "Invest in Your Career"}
+            {step === "initializing" ? "Loading..." : step === "auth" ? "Login / Signup" : step === "processing" ? "Processing..." : step === "student_verify" ? "Student Verification" : "Invest in Yourself"}
           </h2>
           <p className="text-sm text-on-surface-variant mt-1 max-w-lg mx-auto">
             {step === "initializing" ? "Please wait a moment." : step === "auth" ? "Access your account to download." : step === "processing" ? "Securely setting up Razorpay..." : step === "student_verify" ? "Verify to unlock the ₹99 plan." : "Increase the probability of getting shortlisted"}

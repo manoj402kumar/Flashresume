@@ -769,30 +769,25 @@ export default function App() {
               <h2 className="font-headline text-4xl md:text-5xl font-bold text-on-background mb-4">Invest in yourself</h2>
               <p className="text-on-surface-variant text-lg">Premium features, student-friendly pricing.</p>
             </div>
-            <div className="max-w-6xl mx-auto px-4 md:px-6 flex flex-col md:grid md:grid-cols-3 gap-4 md:gap-8 pt-6 pb-4 items-stretch">
+            <div className="max-w-6xl mx-auto px-4 md:px-6 flex overflow-x-auto snap-x snap-mandatory gap-6 pt-6 pb-4 md:grid md:grid-cols-3 md:gap-8 items-stretch hide-scrollbar">
+              {/* One-Time */}
               <div 
                 onMouseEnter={() => setHoveredPlan("pay_per_use")}
                 onClick={() => { setSelectedPricingPlan("pay_per_use"); setShowDownloadGate(true); }}
-                className={`w-full md:w-auto p-5 md:p-10 rounded-[2rem] flex flex-col cursor-pointer transition-all duration-300 relative border-2 ${hoveredPlan === "pay_per_use" ? "border-transparent bg-gradient-to-b from-[#006859] to-[#12f8d7] shadow-2xl md:scale-105 z-10 text-white" : "bg-surface-container-low border-surface-container-high text-on-background"}`}
+                className={`flex-shrink-0 w-[280px] md:w-auto snap-center p-8 md:p-10 rounded-[2rem] flex flex-col cursor-pointer transition-all duration-300 relative border-2 ${hoveredPlan === "pay_per_use" ? "border-transparent bg-gradient-to-b from-[#006859] to-[#12f8d7] shadow-2xl md:scale-105 z-10 text-white" : "bg-surface-container-low border-surface-container-high text-on-background"}`}
               >
                 {/* Selection Indicator */}
-                <div className={`absolute top-4 right-4 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-200 hidden md:flex ${hoveredPlan === "pay_per_use" ? 'border-white bg-white scale-110' : 'border-on-surface-variant/30'}`}>
+                <div className={`absolute top-4 right-4 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-200 ${hoveredPlan === "pay_per_use" ? 'border-white bg-white scale-110' : 'border-on-surface-variant/30'}`}>
                   {hoveredPlan === "pay_per_use" && <CheckCircle2 className="w-4 h-4 text-[#006859]" />}
                 </div>
 
-                <div className="flex flex-row md:flex-col items-center md:items-start text-left gap-4 md:gap-0 mb-4 md:mb-0">
-                  <div className={`w-10 h-10 rounded-xl flex-shrink-0 flex items-center justify-center md:mb-4 transition-colors ${hoveredPlan === "pay_per_use" ? "bg-white/20 text-white" : "bg-surface-container-high"}`}>
-                    <CheckCircle2 className={`w-5 h-5 ${hoveredPlan === "pay_per_use" ? "text-white opacity-90" : "text-on-surface-variant"}`} />
-                  </div>
-                  <div className="flex-1 md:w-full">
-                    <h3 className="font-headline text-xl md:text-2xl font-bold mb-0 md:mb-1">One-Time</h3>
-                    <p className={`text-[11px] md:text-sm md:mb-4 ${hoveredPlan === "pay_per_use" ? "text-white/90" : "text-on-surface-variant"}`}>2 resume downloads</p>
-                  </div>
-                  <div className="flex flex-col text-right md:text-left">
-                    <div className="text-2xl md:text-4xl font-black mb-0 md:mb-1">₹29</div>
-                    <p className={`text-[10px] md:text-sm md:mb-8 ${hoveredPlan === "pay_per_use" ? "text-white/90" : "text-on-surface-variant"}`}>20 Credits</p>
-                  </div>
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-4 transition-colors ${hoveredPlan === "pay_per_use" ? "bg-white/20 text-white" : "bg-surface-container-high"}`}>
+                  <CheckCircle2 className={`w-5 h-5 ${hoveredPlan === "pay_per_use" ? "text-white opacity-90" : "text-on-surface-variant"}`} />
                 </div>
+                <h3 className="font-headline text-2xl font-bold mb-1">One-Time</h3>
+                <p className={`text-sm mb-4 ${hoveredPlan === "pay_per_use" ? "text-white/90" : "text-on-surface-variant"}`}>2 resume downloads</p>
+                <div className="text-4xl font-black mb-1">₹29</div>
+                <p className={`text-sm mb-8 ${hoveredPlan === "pay_per_use" ? "text-white/90" : "text-on-surface-variant"}`}>20 Credits</p>
                 <ul className="space-y-3 mb-10 text-left flex-grow">
                   <li className={`flex items-center gap-3 ${hoveredPlan === "pay_per_use" ? "text-white" : "text-on-surface-variant"}`}>
                     <CheckCircle2 className={`w-4 h-4 flex-shrink-0 ${hoveredPlan === "pay_per_use" ? "text-white" : "text-primary"}`} />
@@ -812,30 +807,23 @@ export default function App() {
               <div 
                 onMouseEnter={() => setHoveredPlan("regular")}
                 onClick={() => { setSelectedPricingPlan("regular"); setShowDownloadGate(true); }}
-                className={`w-full md:w-auto p-5 md:p-10 rounded-[2rem] flex flex-col relative border-2 cursor-pointer transition-all duration-300 ${hoveredPlan === "regular" ? "border-transparent bg-gradient-to-b from-[#006859] to-[#12f8d7] shadow-2xl shadow-primary/30 md:scale-105 z-10 text-white" : "bg-surface-container-lowest border-primary shadow-lg shadow-primary/5 text-on-background"}`}
+                className={`flex-shrink-0 w-[280px] md:w-auto snap-center p-8 md:p-10 rounded-[2rem] flex flex-col relative border-2 cursor-pointer transition-all duration-300 ${hoveredPlan === "regular" ? "border-transparent bg-gradient-to-b from-[#006859] to-[#12f8d7] shadow-2xl shadow-primary/30 md:scale-105 z-10 text-white" : "bg-surface-container-lowest border-primary shadow-lg shadow-primary/5 text-on-background"}`}
               >
                 {/* Selection Indicator */}
-                <div className={`absolute top-4 right-4 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-200 z-20 hidden md:flex ${hoveredPlan === "regular" ? 'border-white bg-white scale-110' : 'border-primary/30'}`}>
+                <div className={`absolute top-4 right-4 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-200 z-20 ${hoveredPlan === "regular" ? 'border-white bg-white scale-110' : 'border-primary/30'}`}>
                   {hoveredPlan === "regular" && <CheckCircle2 className="w-4 h-4 text-[#006859]" />}
                 </div>
 
                 <div className={`absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full text-xs font-black uppercase tracking-widest whitespace-nowrap shadow-sm transition-colors ${hoveredPlan === "regular" ? "bg-white text-[#006859]" : "flash-gradient text-white"}`}>
                   Standard
                 </div>
-
-                <div className="flex flex-row md:flex-col items-center md:items-start text-left gap-4 md:gap-0 mb-4 md:mb-0">
-                  <div className={`w-10 h-10 rounded-xl flex-shrink-0 flex items-center justify-center md:mb-4 transition-colors ${hoveredPlan === "regular" ? "bg-white/20" : "bg-primary/10"}`}>
-                    <Star className={`w-5 h-5 transition-colors ${hoveredPlan === "regular" ? "text-white fill-white/80" : "text-primary fill-primary/30"}`} />
-                  </div>
-                  <div className="flex-1 md:w-full">
-                    <h3 className="font-headline text-xl md:text-2xl font-bold mb-0 md:mb-1">Most Popular</h3>
-                    <p className={`text-[11px] md:text-sm md:mb-4 transition-colors ${hoveredPlan === "regular" ? "text-white/90" : "text-on-surface-variant"}`}>300 Credits (30 Resumes)</p>
-                  </div>
-                  <div className="flex flex-col text-right md:text-left">
-                    <div className="text-2xl md:text-4xl font-black mb-0 md:mb-1">₹199</div>
-                    <p className={`text-[10px] md:text-sm md:mb-8 transition-colors ${hoveredPlan === "regular" ? "text-white/90" : "text-on-surface-variant"}`}>/2 Months</p>
-                  </div>
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-4 transition-colors ${hoveredPlan === "regular" ? "bg-white/20" : "bg-primary/10"}`}>
+                  <Star className={`w-5 h-5 transition-colors ${hoveredPlan === "regular" ? "text-white fill-white/80" : "text-primary fill-primary/30"}`} />
                 </div>
+                <h3 className="font-headline text-2xl font-bold mb-1">Most Popular</h3>
+                <p className={`text-sm mb-4 transition-colors ${hoveredPlan === "regular" ? "text-white/90" : "text-on-surface-variant"}`}>300 Credits (30 Resumes)</p>
+                <div className="text-4xl font-black mb-1">₹199</div>
+                <p className={`text-sm mb-8 transition-colors ${hoveredPlan === "regular" ? "text-white/90" : "text-on-surface-variant"}`}>/2 Months</p>
                 <ul className="space-y-3 mb-10 text-left flex-grow">
                   <li className={`flex items-center gap-3 transition-colors ${hoveredPlan === "regular" ? "text-white" : "text-on-background"}`}>
                     <CheckCircle2 className={`w-4 h-4 flex-shrink-0 transition-colors ${hoveredPlan === "regular" ? "text-white" : "text-primary"}`} />
@@ -859,33 +847,23 @@ export default function App() {
               <div 
                 onMouseEnter={() => setHoveredPlan("student")}
                 onClick={() => { setSelectedPricingPlan("student"); setShowDownloadGate(true); }}
-                className={`w-full md:w-auto p-5 md:p-10 rounded-[2rem] flex flex-col relative border-2 cursor-pointer transition-all duration-300 ${hoveredPlan === "student" ? "border-transparent bg-gradient-to-b from-[#006859] to-[#12f8d7] shadow-2xl md:scale-105 z-10 text-white" : "bg-surface-container-low border-amber-400/60 text-on-background"}`}
+                className={`flex-shrink-0 w-[280px] md:w-auto snap-center p-8 md:p-10 rounded-[2rem] flex flex-col relative border-2 cursor-pointer transition-all duration-300 ${hoveredPlan === "student" ? "border-transparent bg-gradient-to-b from-[#006859] to-[#12f8d7] shadow-2xl md:scale-105 z-10 text-white" : "bg-surface-container-low border-amber-400/60 text-on-background"}`}
               >
                 {/* Selection Indicator */}
-                <div className={`absolute top-4 right-4 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-200 z-20 hidden md:flex ${hoveredPlan === "student" ? 'border-white bg-white scale-110' : 'border-amber-400/30'}`}>
+                <div className={`absolute top-4 right-4 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-200 z-20 ${hoveredPlan === "student" ? 'border-white bg-white scale-110' : 'border-amber-400/30'}`}>
                   {hoveredPlan === "student" && <CheckCircle2 className="w-4 h-4 text-[#006859]" />}
                 </div>
 
                 <div className={`absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full text-xs font-black uppercase tracking-widest whitespace-nowrap shadow-md transition-colors ${hoveredPlan === "student" ? "bg-white text-orange-500 shadow-orange-500/10" : "bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-orange-500/30"}`}>
                   STUDENT OFFER
                 </div>
-
-                <div className="flex flex-row md:flex-col items-center md:items-start text-left gap-4 md:gap-0 mb-4 md:mb-0">
-                  <div className={`w-10 h-10 rounded-xl flex-shrink-0 flex items-center justify-center md:mb-4 transition-colors ${hoveredPlan === "student" ? "bg-white/20 text-white" : "bg-amber-50 text-amber-500"}`}>
-                    <Verified className={`w-5 h-5 ${hoveredPlan === "student" ? "text-white opacity-90" : "text-amber-500"}`} />
-                  </div>
-                  <div className="flex-1 md:w-full">
-                    <h3 className="font-headline text-xl md:text-2xl font-bold mb-0 md:mb-1">Student Plan</h3>
-                    <p className={`text-[11px] md:text-sm md:mb-4 transition-colors ${hoveredPlan === "student" ? "text-white/90" : "text-on-surface-variant"}`}>400 Credits (40 Resumes)</p>
-                  </div>
-                  <div className="flex flex-col text-right md:text-left">
-                    <div className="flex items-end justify-end md:justify-start gap-1">
-                      <p className="text-2xl md:text-4xl font-black mb-0 md:mb-1">₹99</p>
-                      <p className={`text-[10px] md:text-sm line-through mb-0.5 md:mb-2 ${hoveredPlan === "student" ? "text-white/60" : "text-on-surface-variant opacity-60"}`}>₹199</p>
-                    </div>
-                    <p className={`text-[10px] md:text-sm md:mb-8 transition-colors ${hoveredPlan === "student" ? "text-white/90" : "text-on-surface-variant"}`}>/3 months</p>
-                  </div>
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-4 transition-colors ${hoveredPlan === "student" ? "bg-white/20 text-white" : "bg-amber-50 text-amber-500"}`}>
+                  <Verified className={`w-5 h-5 ${hoveredPlan === "student" ? "text-white opacity-90" : "text-amber-500"}`} />
                 </div>
+                <h3 className="font-headline text-2xl font-bold mb-1">Student Plan</h3>
+                <p className={`text-sm mb-4 transition-colors ${hoveredPlan === "student" ? "text-white/90" : "text-on-surface-variant"}`}>400 Credits (40 Resumes)</p>
+                <div className="text-4xl font-black mb-1">₹99</div>
+                <p className={`text-sm mb-8 transition-colors ${hoveredPlan === "student" ? "text-white/90" : "text-on-surface-variant"}`}>/3 months</p>
                 <ul className="space-y-3 mb-10 text-left flex-grow">
                   <li className={`flex items-center gap-3 transition-colors ${hoveredPlan === "student" ? "text-white" : "text-on-surface-variant"}`}>
                     <CheckCircle2 className={`w-4 h-4 flex-shrink-0 transition-colors ${hoveredPlan === "student" ? "text-white" : "text-primary"}`} />
