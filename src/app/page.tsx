@@ -525,7 +525,7 @@ export default function App() {
                         activeCls: "bg-surface-container-lowest text-primary shadow-sm border border-surface-container-highest",
                         radioBorder: "border-primary",
                         radioDot: "bg-primary",
-                        label: "With JD",
+                        label: "JD",
                       },
                       {
                         id: "no_jd" as const,

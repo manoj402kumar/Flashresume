@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "motion/react";
 import { pdf } from "@react-pdf/renderer";
@@ -178,6 +178,9 @@ export default function ResultPage() {
   // Section drag-and-drop: track insertion gap index for reliable ordering
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [insertionIndex, setInsertionIndex] = useState<number | null>(null);
+  // Touch drag refs — needed so touch handlers can read latest state without stale closures
+  const draggingIdRef = useRef<string | null>(null);
+  const insertionIndexRef = useRef<number | null>(null);
   const [showPricingPopup, setShowPricingPopup] = useState(false);
   const [pricingTrigger, setPricingTrigger] = useState<"download" | "buy_more">("download");
   const [hasPaidAccess, setHasPaidAccess] = useState(false);
@@ -194,6 +197,7 @@ export default function ResultPage() {
 
   const handleSectionDragStart = (e: React.DragEvent, sectionId: string) => {
     setDraggingId(sectionId);
+    draggingIdRef.current = sectionId;
     e.dataTransfer.effectAllowed = "move";
   };
 
@@ -228,13 +232,60 @@ export default function ResultPage() {
       const newOrder = arrayMove(currentOrder, fromIdx, rawTo);
       updateResume({ section_order: newOrder });
     }
-    setDraggingId(null);
-    setInsertionIndex(null);
+    setDraggingId(null); draggingIdRef.current = null;
+    setInsertionIndex(null); insertionIndexRef.current = null;
   };
 
   const handleSectionDragEnd = () => {
-    setDraggingId(null);
-    setInsertionIndex(null);
+    setDraggingId(null); draggingIdRef.current = null;
+    setInsertionIndex(null); insertionIndexRef.current = null;
+  };
+
+  // ── Touch drag support (mobile) ──────────────────────────────────────────
+  const handleSectionTouchStart = (e: React.TouchEvent, sectionId: string) => {
+    draggingIdRef.current = sectionId;
+    setDraggingId(sectionId);
+  };
+
+  const handleSectionTouchMove = (e: React.TouchEvent) => {
+    // Prevent page scroll while dragging
+    e.preventDefault();
+    const touch = e.touches[0];
+    const el = document.elementFromPoint(touch.clientX, touch.clientY);
+    if (!el) return;
+    // Walk up DOM to find the [data-section-index] marker we put on each row
+    const row = (el as HTMLElement).closest('[data-section-index]') as HTMLElement | null;
+    if (!row) return;
+    const itemIndex = parseInt(row.dataset.sectionIndex || "0", 10);
+    const hoveredId = row.dataset.sectionId || "";
+    if (hoveredId === draggingIdRef.current) return;
+    const rect = row.getBoundingClientRect();
+    const newIdx = touch.clientY < rect.top + rect.height / 2 ? itemIndex : itemIndex + 1;
+    if (newIdx !== insertionIndexRef.current) {
+      insertionIndexRef.current = newIdx;
+      setInsertionIndex(newIdx);
+    }
+  };
+
+  const handleSectionTouchEnd = () => {
+    const currentDraggingId = draggingIdRef.current;
+    const currentInsertionIndex = insertionIndexRef.current;
+    if (!currentDraggingId || currentInsertionIndex === null || !resume) {
+      setDraggingId(null); draggingIdRef.current = null;
+      setInsertionIndex(null); insertionIndexRef.current = null;
+      return;
+    }
+    const currentOrder = resume.section_order || ["summary", "education", "experience", "projects", "skills", "certifications"];
+    const fromIdx = currentOrder.indexOf(currentDraggingId);
+    if (fromIdx !== -1) {
+      const rawTo = Math.max(0, Math.min(currentInsertionIndex, currentOrder.length));
+      if (rawTo !== fromIdx && rawTo !== fromIdx + 1) {
+        const newOrder = arrayMove(currentOrder, fromIdx, rawTo);
+        updateResume({ section_order: newOrder });
+      }
+    }
+    setDraggingId(null); draggingIdRef.current = null;
+    setInsertionIndex(null); insertionIndexRef.current = null;
   };
 
   // Track Result Page Visit
@@ -843,7 +894,7 @@ export default function ResultPage() {
                   >
                     <div className="flex items-center justify-between mb-2">
                       <h3 className="font-headline font-bold text-on-background text-sm">Reorder Sections</h3>
-                      <span className="text-xs text-on-surface-variant bg-surface-container px-2 py-0.5 rounded-full">Drag to reorder</span>
+                      <span className="text-xs text-on-surface-variant bg-surface-container px-2 py-0.5 rounded-full">Drag / hold &amp; drag to reorder</span>
                     </div>
                     <div className="flex flex-col">
                       {(resume.section_order || []).map((sectionId, index) => {
@@ -875,10 +926,15 @@ export default function ResultPage() {
                               }`} />
                             <div
                               draggable
+                              data-section-index={index}
+                              data-section-id={sectionId}
                               onDragStart={(e) => handleSectionDragStart(e, sectionId)}
                               onDragEnter={(e) => handleSectionDragEnter(e, index, sectionId)}
                               onDragOver={(e) => handleSectionDragOver(e, index, sectionId)}
                               onDragEnd={handleSectionDragEnd}
+                              onTouchStart={(e) => handleSectionTouchStart(e, sectionId)}
+                              onTouchMove={handleSectionTouchMove}
+                              onTouchEnd={handleSectionTouchEnd}
                               className={`flex items-center gap-3 px-3 py-1.5 rounded-xl cursor-grab active:cursor-grabbing transition-all duration-150 shadow-sm select-none mb-1 ${isDragging
                                 ? "opacity-25 scale-[0.97] bg-surface-container-high border-2 border-dashed border-primary/30"
                                 : "bg-surface-container border-2 border-transparent hover:border-primary/20 hover:shadow-md"
