@@ -11,7 +11,6 @@ import {
   Edit3,
   Eye,
   Sparkles,
-  Save,
   TrendingUp,
   CheckCircle2,
   Home,
@@ -168,7 +167,6 @@ export default function ResultPage() {
   const [copied, setCopied] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [openEditSection, setOpenEditSection] = useState<string>("contact");
-  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [showHighlights, setShowHighlights] = useState(true);
   const [downloadingPDF, setDownloadingPDF] = useState(false);
   const [missingKeywords, setMissingKeywords] = useState<string[]>([]);
@@ -320,14 +318,31 @@ export default function ResultPage() {
       if (sessionId) setSessionGuid(sessionId);
 
       let parsed = null;
+      let isFreshFromAPI = false;
 
-      if (sessionId) {
+      // ── STEP 1: Always try localStorage FIRST ────────────────────────────
+      // localStorage holds the user's latest edits (auto-saved on every change).
+      // It must take priority over the API so refreshing never erases edits.
+      const localData = localStorage.getItem("generated_resume");
+      if (localData) {
+        try {
+          parsed = JSON.parse(localData);
+        } catch (e) {
+          // Corrupt data — fall through to API
+        }
+      }
+
+      // ── STEP 2: Only fetch from API if localStorage is empty ──────────────
+      // This only happens on the very first load right after generation,
+      // before anything has been saved to localStorage yet.
+      if (!parsed && sessionId) {
         try {
           const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
           const res = await fetch(`${apiUrl}/api/sessions/${sessionId}`);
           if (res.ok) {
             const data = await res.json();
             parsed = data.generated_output;
+            isFreshFromAPI = true;
           }
         } catch (e) {
           console.error("Failed to fetch session", e);
@@ -335,25 +350,29 @@ export default function ResultPage() {
       }
 
       if (!parsed) {
-        const resumeData = localStorage.getItem("generated_resume");
-        if (!resumeData) {
-          router.push("/");
-          return;
+        router.push("/");
+        return;
+      }
+
+      // ── STEP 3: One-time display normalization — only for fresh API data ──
+      // When loading from localStorage these values are already correct;
+      // running them again would overwrite any user edits to those fields.
+      if (isFreshFromAPI) {
+        // Build hrefs from raw LLM output FIRST (before sanitizing display text)
+        if (!parsed.heading.linkedin_url_href) {
+          const rawLinkedin = parsed.heading.linkedin_url || "";
+          const linkedinUrl = rawLinkedin.replace(/^https?:\/\//i, "");
+          parsed.heading.linkedin_url_href = linkedinUrl.includes("linkedin.com")
+            ? `https://${linkedinUrl}`
+            : `https://linkedin.com/in/username`;
         }
-        parsed = JSON.parse(resumeData);
+        if (!parsed.heading.github_url_href) {
+          parsed.heading.github_url_href = `https://${parsed.heading.github_url}`;
+        }
+        // Set clean display text — visual only, href is already saved above
+        parsed.heading.linkedin_url = "linkedin";
+        parsed.heading.github_url = cleanDisplayUrl(parsed.heading.github_url, "github.com/username");
       }
-      // Build hrefs from raw LLM output FIRST (before sanitizing display text)
-      if (!parsed.heading.linkedin_url_href) {
-        const rawLinkedin = parsed.heading.linkedin_url || "";
-        const linkedinUrl = rawLinkedin.replace(/^https?:\/\//i, "");
-        parsed.heading.linkedin_url_href = linkedinUrl.includes("linkedin.com") ? `https://${linkedinUrl}` : `https://linkedin.com/in/username`;
-      }
-      if (!parsed.heading.github_url_href) {
-        parsed.heading.github_url_href = `https://${parsed.heading.github_url}`;
-      }
-      // Now set clean display text — visual only, href is already saved above
-      parsed.heading.linkedin_url = "linkedin";
-      parsed.heading.github_url = cleanDisplayUrl(parsed.heading.github_url, "github.com/username");
 
       // Load analysis keywords for PDF highlighting
       const analysisData = localStorage.getItem("analysis");
@@ -390,6 +409,7 @@ export default function ResultPage() {
 
     fetchSession();
   }, [router]);
+
 
   const checkAccess = async () => {
     setCheckingAccess(true);
@@ -457,17 +477,16 @@ export default function ResultPage() {
     router.push("/");
   };
 
-  const handleSaveChanges = () => {
-    if (resume) {
-      localStorage.setItem("generated_resume", JSON.stringify(resume));
-      setHasUnsavedChanges(false);
-    }
-  };
-
   const updateResume = (updates: Partial<TemplateV1>) => {
     setResume((prev) => prev ? { ...prev, ...updates } : null);
-    setHasUnsavedChanges(true);
   };
+
+  // Auto-save: persist resume to localStorage whenever it changes
+  useEffect(() => {
+    if (resume) {
+      localStorage.setItem("generated_resume", JSON.stringify(resume));
+    }
+  }, [resume]);
 
   const handleDownloadPDF = async () => {
     if (!resume) return;
@@ -595,24 +614,6 @@ export default function ResultPage() {
           </div>
 
           <div className="flex items-center gap-2 sm:gap-4">
-            <AnimatePresence>
-              {hasUnsavedChanges && (
-                <motion.button
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.9 }}
-                  onClick={handleSaveChanges}
-                  className="flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl bg-green-500 text-white font-semibold hover:bg-green-600 transition-all shadow-md text-sm"
-                  title="Save changes"
-                >
-                  <Save className="w-4 h-4" />
-                  <span className="hidden sm:inline">Save</span>
-                </motion.button>
-              )}
-            </AnimatePresence>
-
-
-
             <button
               onClick={handleStartOver}
               className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-xl text-sm font-semibold text-on-surface-variant bg-surface-container-low hover:bg-surface-container-high transition-colors"
@@ -815,9 +816,6 @@ export default function ResultPage() {
               >
                 <Edit3 className={`w-4 h-4 ${editMode ? 'text-white' : 'text-on-surface-variant'}`} />
                 Edit Form
-                {hasUnsavedChanges && !editMode && (
-                  <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
-                )}
               </button>
               <button
                 onClick={() => { setShowChanges(true); setEditMode(false); setShowMissedKeywords(false); }}

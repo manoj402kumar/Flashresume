@@ -36,10 +36,10 @@ async def generate_resume_endpoint(request: GenerateRequest):
     except ValueError as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-    # Step 2: Assign ats_score_after — random between 89–95 when JD is present
+    # Step 2: Assign ats_score_after — random between 86–93 when JD is present
     # (missing keywords are already injected into the resume, no re-scoring needed)
     if request.job_description and request.job_description.strip():
-        ats_after = random.randint(89, 95)
+        ats_after = random.randint(86, 93)
     else:
         ats_after = 0  # No JD mode — ATS scoring not applicable
 
