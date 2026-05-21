@@ -31,7 +31,7 @@ const GoogleIcon = () => (
 );
 
 type Step = "initializing" | "auth" | "plan" | "student_verify" | "processing";
-type AuthMode = "login" | "signup";
+type AuthMode = "login" | "signup" | "forgot_password" | "verify_otp" | "reset_password";
 
 const PLANS = [
   {
@@ -69,6 +69,13 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
+  // Forgot Password Flow State (Isolated to prevent cross-contamination)
+  const [resetEmail, setResetEmail] = useState("");
+  const [resetOtpValue, setResetOtpValue] = useState("");
+  const [resetPassword, setResetPassword] = useState("");
+  const [resetConfirmPassword, setResetConfirmPassword] = useState("");
+  const [resetSuccessMessage, setResetSuccessMessage] = useState<string | null>(null);
+
   // Student Verify Form
   const [studentMethod, setStudentMethod] = useState<"details" | "email">("email");
   const [collegeName, setCollegeName] = useState("");
@@ -88,6 +95,8 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
   useEffect(() => {
     if (isOpen) {
       setError(null);
+      setAuthMode("login");
+      setResetSuccessMessage(null);
       setStep("initializing"); // Show loading spinner while checking session
       if (initialPlan) setSelectedPlan(initialPlan);
       checkUserSession();
@@ -232,6 +241,46 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
       setError(err.message || "Google login failed");
       setLoading(false);
     }
+  };
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!resetEmail.trim()) return;
+    setLoading(true); setError(null);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(resetEmail.trim());
+      if (error) throw error;
+      setAuthMode("verify_otp");
+    } catch (err: any) { setError(err.message); }
+    finally { setLoading(false); }
+  };
+
+  const handleVerifyOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (resetOtpValue.length !== 6) { setError("Please enter a valid 6-digit code."); return; }
+    setLoading(true); setError(null);
+    try {
+      const { error } = await supabase.auth.verifyOtp({ email: resetEmail.trim(), token: resetOtpValue, type: 'recovery' });
+      if (error) throw error;
+      setAuthMode("reset_password");
+    } catch (err: any) { setError(err.message); }
+    finally { setLoading(false); }
+  };
+
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (resetPassword !== resetConfirmPassword) { setError("Passwords do not match."); return; }
+    if (resetPassword.length < 6) { setError("Password must be at least 6 characters."); return; }
+    setLoading(true); setError(null);
+    try {
+      const { error } = await supabase.auth.updateUser({ password: resetPassword });
+      if (error) throw error;
+      await supabase.auth.signOut(); // Security: sign out to clear recovery session
+      setAuthMode("login");
+      setResetSuccessMessage("Password successfully reset! Please log in with your new password.");
+      setResetEmail(""); setResetOtpValue(""); setResetPassword(""); setResetConfirmPassword("");
+    } catch (err: any) { setError(err.message); }
+    finally { setLoading(false); }
   };
 
   const sendOtp = async () => {
@@ -409,40 +458,115 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
             {/* AUTH STEP */}
             {step === "auth" && (
               <motion.div key="auth" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-4">
-                <form onSubmit={handleAuth} className="space-y-4">
-                  <input type="email" required placeholder="Email" value={email} onChange={e => setEmail(e.target.value)}
-                    className="w-full px-4 py-3 bg-surface-container-low border border-surface-container-high rounded-xl outline-none focus:ring-2 focus:ring-primary text-sm" />
-                  <input type="password" required placeholder="Password" value={password} onChange={e => setPassword(e.target.value)}
-                    className="w-full px-4 py-3 bg-surface-container-low border border-surface-container-high rounded-xl outline-none focus:ring-2 focus:ring-primary text-sm" />
+                {(authMode === "login" || authMode === "signup") && (
+                  <>
+                    {resetSuccessMessage && authMode === "login" && (
+                      <p className="text-xs text-green-500 bg-green-500/10 px-3 py-2 rounded-lg text-center mb-2">
+                        {resetSuccessMessage}
+                      </p>
+                    )}
+                    <form onSubmit={handleAuth} className="space-y-4">
+                      <input type="email" required placeholder="Email" value={email} onChange={e => setEmail(e.target.value)}
+                        className="w-full px-4 py-3 bg-surface-container-low border border-surface-container-high rounded-xl outline-none focus:ring-2 focus:ring-primary text-sm" />
+                      <div className="space-y-1">
+                        <input type="password" required placeholder="Password" value={password} onChange={e => setPassword(e.target.value)}
+                          className="w-full px-4 py-3 bg-surface-container-low border border-surface-container-high rounded-xl outline-none focus:ring-2 focus:ring-primary text-sm" />
+                        {authMode === "login" && (
+                          <div className="flex justify-end">
+                            <button type="button" onClick={() => { setAuthMode("forgot_password"); setError(null); setResetSuccessMessage(null); }} className="text-xs text-primary font-bold hover:underline">
+                              Forgot password?
+                            </button>
+                          </div>
+                        )}
+                      </div>
 
-                  {error && <p className="text-xs text-error bg-error/10 px-3 py-2 rounded-lg">{error}</p>}
+                      {error && <p className="text-xs text-error bg-error/10 px-3 py-2 rounded-lg">{error}</p>}
 
-                  <button type="submit" disabled={loading} className="w-full bg-primary text-white font-bold py-3 rounded-xl hover:opacity-90 transition-opacity">
-                    {loading ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : authMode === "login" ? "Log In" : "Sign Up"}
-                  </button>
-                </form>
+                      <button type="submit" disabled={loading} className="w-full bg-primary text-white font-bold py-3 rounded-xl hover:opacity-90 transition-opacity">
+                        {loading ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : authMode === "login" ? "Log In" : "Sign Up"}
+                      </button>
+                    </form>
 
-                <div className="relative flex items-center py-2">
-                  <div className="flex-grow border-t border-surface-container-high"></div>
-                  <span className="flex-shrink-0 mx-4 text-on-surface-variant text-xs">Or continue with</span>
-                  <div className="flex-grow border-t border-surface-container-high"></div>
-                </div>
+                    <div className="relative flex items-center py-2">
+                      <div className="flex-grow border-t border-surface-container-high"></div>
+                      <span className="flex-shrink-0 mx-4 text-on-surface-variant text-xs">Or continue with</span>
+                      <div className="flex-grow border-t border-surface-container-high"></div>
+                    </div>
 
-                <button
-                  onClick={handleGoogleLogin}
-                  disabled={loading}
-                  className="w-full bg-surface-container-lowest border border-surface-container-high text-on-background font-bold py-3 rounded-xl hover:bg-surface-container-low transition-colors flex justify-center items-center gap-3 shadow-sm"
-                >
-                  <GoogleIcon />
-                  Google
-                </button>
+                    <button
+                      onClick={handleGoogleLogin}
+                      disabled={loading}
+                      className="w-full bg-surface-container-lowest border border-surface-container-high text-on-background font-bold py-3 rounded-xl hover:bg-surface-container-low transition-colors flex justify-center items-center gap-3 shadow-sm"
+                    >
+                      <GoogleIcon />
+                      Google
+                    </button>
 
-                <p className="text-center text-xs text-on-surface-variant">
-                  {authMode === "login" ? "Don't have an account? " : "Already have an account? "}
-                  <button onClick={() => { setAuthMode(authMode === "login" ? "signup" : "login"); setError(null); }} className="text-primary font-bold hover:underline">
-                    {authMode === "login" ? "Sign up" : "Log in"}
-                  </button>
-                </p>
+                    <p className="text-center text-xs text-on-surface-variant">
+                      {authMode === "login" ? "Don't have an account? " : "Already have an account? "}
+                      <button onClick={() => { setAuthMode(authMode === "login" ? "signup" : "login"); setError(null); }} className="text-primary font-bold hover:underline">
+                        {authMode === "login" ? "Sign up" : "Log in"}
+                      </button>
+                    </p>
+                  </>
+                )}
+
+                {authMode === "forgot_password" && (
+                  <form onSubmit={handleForgotPassword} className="space-y-4">
+                    <p className="text-sm text-on-surface-variant mb-2">Enter your email address and we will send you a 6-digit code to reset your password.</p>
+                    <input type="email" required placeholder="Email address" value={resetEmail} onChange={e => setResetEmail(e.target.value)}
+                      className="w-full px-4 py-3 bg-surface-container-low border border-surface-container-high rounded-xl outline-none focus:ring-2 focus:ring-primary text-sm" />
+                    {error && <p className="text-xs text-error bg-error/10 px-3 py-2 rounded-lg">{error}</p>}
+                    <button type="submit" disabled={loading} className="w-full bg-primary text-white font-bold py-3 rounded-xl hover:opacity-90 transition-opacity">
+                      {loading ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : "Send Reset Code"}
+                    </button>
+                    <button type="button" onClick={() => setAuthMode("login")} className="w-full text-xs text-on-surface-variant font-bold hover:underline mt-2">Back to login</button>
+                  </form>
+                )}
+
+                {authMode === "verify_otp" && (
+                  <form onSubmit={handleVerifyOtp} className="space-y-4">
+                    <p className="text-sm text-on-surface-variant mb-2">Enter the 6-digit code sent to <span className="font-bold text-on-background">{resetEmail}</span></p>
+                    <div className="flex justify-between gap-2">
+                      {[0, 1, 2, 3, 4, 5].map((index) => (
+                        <input key={index} id={`reset-otp-${index}`} type="text" maxLength={1}
+                          value={resetOtpValue[index] || ""}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            if (val && !/^\d$/.test(val)) return; // Only numbers
+                            const newVal = resetOtpValue.substring(0, index) + val + resetOtpValue.substring(index + 1);
+                            setResetOtpValue(newVal);
+                            if (val && index < 5) document.getElementById(`reset-otp-${index + 1}`)?.focus();
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === "Backspace" && !resetOtpValue[index] && index > 0) {
+                              document.getElementById(`reset-otp-${index - 1}`)?.focus();
+                            }
+                          }}
+                          className="w-full aspect-square text-center text-lg font-bold bg-surface-container-low border border-surface-container-high rounded-xl outline-none focus:ring-2 focus:ring-primary"
+                        />
+                      ))}
+                    </div>
+                    {error && <p className="text-xs text-error bg-error/10 px-3 py-2 rounded-lg">{error}</p>}
+                    <button type="submit" disabled={loading} className="w-full bg-primary text-white font-bold py-3 rounded-xl hover:opacity-90 transition-opacity">
+                      {loading ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : "Verify Code"}
+                    </button>
+                  </form>
+                )}
+
+                {authMode === "reset_password" && (
+                  <form onSubmit={handleResetPassword} className="space-y-4">
+                    <p className="text-sm text-on-surface-variant mb-2">Create a new password for your account.</p>
+                    <input type="password" required placeholder="New Password" value={resetPassword} onChange={e => setResetPassword(e.target.value)}
+                      className="w-full px-4 py-3 bg-surface-container-low border border-surface-container-high rounded-xl outline-none focus:ring-2 focus:ring-primary text-sm" />
+                    <input type="password" required placeholder="Confirm New Password" value={resetConfirmPassword} onChange={e => setResetConfirmPassword(e.target.value)}
+                      className="w-full px-4 py-3 bg-surface-container-low border border-surface-container-high rounded-xl outline-none focus:ring-2 focus:ring-primary text-sm" />
+                    {error && <p className="text-xs text-error bg-error/10 px-3 py-2 rounded-lg">{error}</p>}
+                    <button type="submit" disabled={loading} className="w-full bg-primary text-white font-bold py-3 rounded-xl hover:opacity-90 transition-opacity">
+                      {loading ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : "Update Password"}
+                    </button>
+                  </form>
+                )}
               </motion.div>
             )}
 
