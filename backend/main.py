@@ -70,7 +70,17 @@ def root():
 
 @app.get("/health")
 def health():
-    return {"status": "ok"}
+    """Keep-alive endpoint for Render and Supabase."""
+    db_status = "inactive"
+    if _supabase:
+        try:
+            # The lightest possible query to keep Supabase awake (prevents 7-day pause)
+            _supabase.table("resume_sessions").select("id").limit(1).execute()
+            db_status = "active"
+        except Exception as e:
+            db_status = f"error: {str(e)}"
+            
+    return {"status": "ok", "supabase": db_status}
 
 @app.get("/health/queue")
 async def get_queue_status():
