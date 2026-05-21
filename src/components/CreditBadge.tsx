@@ -73,15 +73,14 @@ export default function CreditBadge({ onTopUpClick }: CreditBadgeProps) {
   if (!user || credits === null) return null;
 
   return (
-    <button
-      onClick={onTopUpClick}
-      className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-surface-container-low border border-primary/20 hover:bg-surface-container-high transition-colors"
-      title="Click to get more credits"
+    <div
+      className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-surface-container-low border border-primary/20"
+      title="Available credits"
     >
       <Zap className="w-4 h-4 text-primary fill-primary/20" />
       <span className="text-sm font-bold text-on-surface-variant">
         {credits} credits
       </span>
-    </button>
+    </div>
   );
 }
