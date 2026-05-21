@@ -181,6 +181,9 @@ export default function ResultPage() {
   // Touch drag refs — needed so touch handlers can read latest state without stale closures
   const draggingIdRef = useRef<string | null>(null);
   const insertionIndexRef = useRef<number | null>(null);
+  // Ref on the section-list container — used to attach a native passive:false touchmove
+  // listener, which is the ONLY way iOS Safari allows e.preventDefault() during touch
+  const dragListRef = useRef<HTMLDivElement>(null);
   const [showPricingPopup, setShowPricingPopup] = useState(false);
   const [pricingTrigger, setPricingTrigger] = useState<"download" | "buy_more">("download");
   const [hasPaidAccess, setHasPaidAccess] = useState(false);
@@ -247,13 +250,14 @@ export default function ResultPage() {
     setDraggingId(sectionId);
   };
 
-  const handleSectionTouchMove = (e: React.TouchEvent) => {
-    // Prevent page scroll while dragging
-    e.preventDefault();
+  // This is called by the NATIVE touchmove listener (see useEffect below).
+  // We keep the logic here so it can also be called from the effect.
+  const handleNativeTouchMove = (e: TouchEvent) => {
+    if (!draggingIdRef.current) return; // not dragging, let scroll pass
+    e.preventDefault(); // block page scroll — works on iOS because listener is { passive: false }
     const touch = e.touches[0];
     const el = document.elementFromPoint(touch.clientX, touch.clientY);
     if (!el) return;
-    // Walk up DOM to find the [data-section-index] marker we put on each row
     const row = (el as HTMLElement).closest('[data-section-index]') as HTMLElement | null;
     if (!row) return;
     const itemIndex = parseInt(row.dataset.sectionIndex || "0", 10);
@@ -266,6 +270,17 @@ export default function ResultPage() {
       setInsertionIndex(newIdx);
     }
   };
+
+  // Attach native { passive: false } touchmove to the drag-list container.
+  // This is required for iOS Safari — React’s synthetic onTouchMove is always
+  // passive in modern React, so e.preventDefault() inside it is silently ignored.
+  useEffect(() => {
+    const el = dragListRef.current;
+    if (!el) return;
+    el.addEventListener("touchmove", handleNativeTouchMove, { passive: false });
+    return () => el.removeEventListener("touchmove", handleNativeTouchMove);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleSectionTouchEnd = () => {
     const currentDraggingId = draggingIdRef.current;
@@ -896,7 +911,7 @@ export default function ResultPage() {
                       <h3 className="font-headline font-bold text-on-background text-sm">Reorder Sections</h3>
                       <span className="text-xs text-on-surface-variant bg-surface-container px-2 py-0.5 rounded-full">Drag / hold &amp; drag to reorder</span>
                     </div>
-                    <div className="flex flex-col">
+                    <div ref={dragListRef} className="flex flex-col">
                       {(resume.section_order || []).map((sectionId, index) => {
                         const getSectionMeta = (sId: string) => {
                           if (SECTION_LABELS[sId]) return SECTION_LABELS[sId];
@@ -933,7 +948,6 @@ export default function ResultPage() {
                               onDragOver={(e) => handleSectionDragOver(e, index, sectionId)}
                               onDragEnd={handleSectionDragEnd}
                               onTouchStart={(e) => handleSectionTouchStart(e, sectionId)}
-                              onTouchMove={handleSectionTouchMove}
                               onTouchEnd={handleSectionTouchEnd}
                               className={`flex items-center gap-3 px-3 py-1.5 rounded-xl cursor-grab active:cursor-grabbing transition-all duration-150 shadow-sm select-none mb-1 ${isDragging
                                 ? "opacity-25 scale-[0.97] bg-surface-container-high border-2 border-dashed border-primary/30"
