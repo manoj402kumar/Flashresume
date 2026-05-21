@@ -568,7 +568,7 @@ export default function App() {
                         activeCls: "bg-surface-container-lowest text-primary shadow-sm border border-surface-container-highest",
                         radioBorder: "border-primary",
                         radioDot: "bg-primary",
-                        label: "No Change",
+                        label: "No Changes",
                       }
                     ] as const).map((opt) => {
                       const isActive = optimizeMode === opt.id;
@@ -585,7 +585,7 @@ export default function App() {
                           <div className={`w-3 h-3 sm:w-3.5 sm:h-3.5 rounded-full border-[1.5px] flex-shrink-0 flex items-center justify-center transition-colors ${isActive ? opt.radioBorder : "border-on-surface-variant/60"}`}>
                             {isActive && <div className={`w-1.5 h-1.5 rounded-full ${opt.radioDot}`} />}
                           </div>
-                          <span className="text-[10px] sm:text-xs font-bold whitespace-nowrap">
+                          <span className="text-[9px] min-[375px]:text-[10px] sm:text-xs font-bold leading-tight text-left sm:text-center sm:whitespace-nowrap">
                             {opt.label}
                           </span>
                         </button>
@@ -658,14 +658,14 @@ export default function App() {
                   {loading && optimizeMode === "jd" && analysisCountdown !== null
                     ? `Analyzing... [${analysisCountdown}s]`
                     : loading
-                    ? "Processing..."
-                    : !optimizeMode
-                    ? "Select an option first"
-                    : optimizeMode === "jd"
-                    ? "Optimize for JD"
-                    : optimizeMode === "no_jd"
-                    ? "Optimize Resume"
-                    : "Continue to Editor"}
+                      ? "Processing..."
+                      : !optimizeMode
+                        ? "Select an option first"
+                        : optimizeMode === "jd"
+                          ? "Optimize for JD"
+                          : optimizeMode === "no_jd"
+                            ? "Optimize Resume"
+                            : "Continue to Editor"}
                 </button>
               </div>
             </div>
