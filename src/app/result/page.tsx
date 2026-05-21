@@ -276,16 +276,18 @@ export default function ResultPage() {
         }
         parsed = JSON.parse(resumeData);
       }
-      // Sanitize junk LLM values on load so edit fields show clean defaults
-      parsed.heading.linkedin_url = cleanDisplayUrl(parsed.heading.linkedin_url, "linkedin");
-      parsed.heading.github_url = cleanDisplayUrl(parsed.heading.github_url, "github.com/username");
-      // Build hrefs from display text if not already set
+      // Build hrefs from raw LLM output FIRST (before sanitizing display text)
       if (!parsed.heading.linkedin_url_href) {
-        parsed.heading.linkedin_url_href = `https://${parsed.heading.linkedin_url}`;
+        const rawLinkedin = parsed.heading.linkedin_url || "";
+        const linkedinUrl = rawLinkedin.replace(/^https?:\/\//i, "");
+        parsed.heading.linkedin_url_href = linkedinUrl.includes("linkedin.com") ? `https://${linkedinUrl}` : `https://linkedin.com/in/username`;
       }
       if (!parsed.heading.github_url_href) {
         parsed.heading.github_url_href = `https://${parsed.heading.github_url}`;
       }
+      // Now set clean display text — visual only, href is already saved above
+      parsed.heading.linkedin_url = "Linkedin";
+      parsed.heading.github_url = cleanDisplayUrl(parsed.heading.github_url, "github.com/username");
 
       // Load analysis keywords for PDF highlighting
       const analysisData = localStorage.getItem("analysis");
@@ -963,7 +965,7 @@ export default function ResultPage() {
                               <p className="text-xs text-on-surface-variant font-semibold uppercase tracking-wide">LinkedIn</p>
                               <input
                                 type="text"
-                                value={cleanDisplayUrl(resume.heading.linkedin_url, "linkedin")}
+                                value={cleanDisplayUrl(resume.heading.linkedin_url, "Linkedin")}
                                 onChange={(e) => updateResume({ heading: { ...resume.heading, linkedin_url: e.target.value } })}
                                 className="w-full rounded-xl px-4 py-3 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm"
                                 placeholder="linkedin"
@@ -1012,7 +1014,7 @@ export default function ResultPage() {
                                     rel="noopener noreferrer"
                                     className="text-primary hover:underline"
                                   >
-                                    {cleanDisplayUrl(resume.heading.linkedin_url, "linkedin")}
+                                    {cleanDisplayUrl(resume.heading.linkedin_url, "Linkedin")}
                                   </a>
                                 </p>
                                 <p className="flex items-center gap-2">

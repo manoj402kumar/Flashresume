@@ -243,7 +243,7 @@ export default function ScratchPage() {
         name: "Your Full Name",
         phone: "+91-XXXXXXXXXX",
         email: "youremail@example.com",
-        linkedin_url: "linkedin.com/in/username",
+        linkedin_url: "Linkedin",
         github_url: "github.com/username",
         linkedin_url_href: "https://linkedin.com/in/username",
         github_url_href: "https://github.com/username",
@@ -918,7 +918,7 @@ export default function ScratchPage() {
                               <p className="text-xs text-on-surface-variant font-semibold uppercase tracking-wide">LinkedIn</p>
                               <input
                                 type="text"
-                                value={cleanDisplayUrl(resume.heading.linkedin_url, "linkedin")}
+                                value={cleanDisplayUrl(resume.heading.linkedin_url, "Linkedin")}
                                 onChange={(e) => updateResume({ heading: { ...resume.heading, linkedin_url: e.target.value } })}
                                 className="w-full rounded-xl px-4 py-3 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm"
                                 placeholder="linkedin"
@@ -967,7 +967,7 @@ export default function ScratchPage() {
                                     rel="noopener noreferrer"
                                     className="text-primary hover:underline"
                                   >
-                                    {cleanDisplayUrl(resume.heading.linkedin_url, "linkedin")}
+                                    {cleanDisplayUrl(resume.heading.linkedin_url, "Linkedin")}
                                   </a>
                                 </p>
                                 <p className="flex items-center gap-2">

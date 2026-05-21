@@ -30,6 +30,7 @@ Examples of correct OR behavior:
   JD: "mysql/postgresql", Resume has MySQL → matched_skills: ["mysql"]     (postgresql is NOT in missing_skills)
   JD: "proficiency in any one of Python, Java", Resume has Python → matched_skills: ["python"]  (java is NOT in missing_skills)
   JD: "proficiency in any one of Python, Java", Resume has neither → missing_skills: ["python/java"]  (one entry, not two)
+  JD: "REST API deployment (Flask or FastAPI)", Resume has FastAPI → matched_skills: ["fastapi"]  (flask is NOT in missing_skills)
 
 CRITICAL INSTRUCTION - DEFINITION OF A "SKILL/KEYWORD":
 Do NOT restrict your extraction to just tools and frameworks (like React, Java, MongoDB). You MUST comprehensively extract all ATS-relevant keywords from the ENTIRE Job Description (both "Responsibilities" and "Qualifications" sections).
@@ -49,6 +50,11 @@ Analysis Rules:
 6. HARD EXCLUSION: A skill CANNOT appear in both matched_skills and missing_skills. If it matched, it is matched only. If it is missing, it is missing only.
 7. HARD EXCLUSION: Do NOT add any skill to matched_skills that is not present in JOB_DESCRIPTION, even if it appears in RESUME_TEXT.
 8. Calculate ATS score: (count of matched_skills / (count of matched_skills + count of missing_skills)) * 100
+
+⚠️ MANDATORY SELF-VALIDATION (before outputting JSON):
+For each skill in your missing_skills list, re-scan the ENTIRE RESUME_TEXT one more time.
+If the skill (or any OR alternative) appears ANYWHERE in the resume — move it to matched_skills.
+This catches accidental misses, especially for skills in the Technical Skills section or project tech stacks.
 
 Required format:
 {{
