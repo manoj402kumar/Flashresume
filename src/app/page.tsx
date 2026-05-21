@@ -49,6 +49,7 @@ export default function App() {
   const [parsing, setParsing] = useState(false);
   const [showDownloadGate, setShowDownloadGate] = useState(false);
   const [selectedPricingPlan, setSelectedPricingPlan] = useState<"pay_per_use" | "regular" | "student" | null>(null);
+  const [hoveredPlan, setHoveredPlan] = useState<string>("regular");
   const [showLoginOnly, setShowLoginOnly] = useState(false);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [showAccountDropdown, setShowAccountDropdown] = useState(false);
@@ -768,101 +769,119 @@ export default function App() {
               <h2 className="font-headline text-4xl md:text-5xl font-bold text-on-background mb-4">Invest in yourself</h2>
               <p className="text-on-surface-variant text-lg">Premium features, student-friendly pricing.</p>
             </div>
-            <div className="max-w-6xl mx-auto px-6 grid md:grid-cols-3 gap-8 items-stretch">
+            <div className="max-w-6xl mx-auto px-4 md:px-6 flex overflow-x-auto snap-x snap-mandatory gap-6 pt-6 pb-4 md:grid md:grid-cols-3 md:gap-8 items-stretch hide-scrollbar">
               {/* One-Time */}
-              <div className="bg-surface-container-low p-10 rounded-[2rem] flex flex-col border border-surface-container-high">
-                <div className="w-10 h-10 rounded-xl bg-surface-container-high flex items-center justify-center mb-4">
-                  <CheckCircle2 className="w-5 h-5 text-on-surface-variant" />
+              <div 
+                onMouseEnter={() => setHoveredPlan("pay_per_use")}
+                onClick={() => { setSelectedPricingPlan("pay_per_use"); setShowDownloadGate(true); }}
+                className={`flex-shrink-0 w-[280px] md:w-auto snap-center p-8 md:p-10 rounded-[2rem] flex flex-col cursor-pointer transition-all duration-300 relative border-2 ${hoveredPlan === "pay_per_use" ? "border-transparent bg-gradient-to-b from-[#006859] to-[#12f8d7] shadow-2xl md:scale-105 z-10 text-white" : "bg-surface-container-low border-surface-container-high text-on-background"}`}
+              >
+                {/* Selection Indicator */}
+                <div className={`absolute top-4 right-4 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-200 ${hoveredPlan === "pay_per_use" ? 'border-white bg-white scale-110' : 'border-on-surface-variant/30'}`}>
+                  {hoveredPlan === "pay_per_use" && <CheckCircle2 className="w-4 h-4 text-[#006859]" />}
+                </div>
+
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-4 transition-colors ${hoveredPlan === "pay_per_use" ? "bg-white/20 text-white" : "bg-surface-container-high"}`}>
+                  <CheckCircle2 className={`w-5 h-5 ${hoveredPlan === "pay_per_use" ? "text-white opacity-90" : "text-on-surface-variant"}`} />
                 </div>
                 <h3 className="font-headline text-2xl font-bold mb-1">One-Time</h3>
-                <p className="text-sm text-on-surface-variant mb-4">2 resume downloads</p>
+                <p className={`text-sm mb-4 ${hoveredPlan === "pay_per_use" ? "text-white/90" : "text-on-surface-variant"}`}>2 resume downloads</p>
                 <div className="text-4xl font-black mb-1">₹29</div>
-                <p className="text-sm text-on-surface-variant mb-8">20 Credits</p>
+                <p className={`text-sm mb-8 ${hoveredPlan === "pay_per_use" ? "text-white/90" : "text-on-surface-variant"}`}>20 Credits</p>
                 <ul className="space-y-3 mb-10 text-left flex-grow">
-                  <li className="flex items-center gap-3 text-on-surface-variant">
-                    <CheckCircle2 className="text-primary w-4 h-4 flex-shrink-0" />
+                  <li className={`flex items-center gap-3 ${hoveredPlan === "pay_per_use" ? "text-white" : "text-on-surface-variant"}`}>
+                    <CheckCircle2 className={`w-4 h-4 flex-shrink-0 ${hoveredPlan === "pay_per_use" ? "text-white" : "text-primary"}`} />
                     20 Credits
                   </li>
-                  <li className="flex items-center gap-3 text-on-surface-variant">
-                    <CheckCircle2 className="text-primary w-4 h-4 flex-shrink-0" />
+                  <li className={`flex items-center gap-3 ${hoveredPlan === "pay_per_use" ? "text-white" : "text-on-surface-variant"}`}>
+                    <CheckCircle2 className={`w-4 h-4 flex-shrink-0 ${hoveredPlan === "pay_per_use" ? "text-white" : "text-primary"}`} />
                     Best plan to verify
                   </li>
                 </ul>
-                <button
-                  onClick={() => { setSelectedPricingPlan("pay_per_use"); setShowDownloadGate(true); }}
-                  className="w-full py-4 rounded-xl border border-on-surface-variant/20 font-bold hover:bg-surface-container-high transition-colors"
-                >
+                <button className={`w-full py-4 rounded-xl font-bold transition-colors ${hoveredPlan === "pay_per_use" ? "bg-white text-[#006859] shadow-lg shadow-black/5 hover:bg-white/90" : "border border-on-surface-variant/20 hover:bg-surface-container-high"}`}>
                   Get Started
                 </button>
               </div>
 
               {/* Most Popular — BEST VALUE */}
-              <div className="bg-surface-container-lowest p-10 rounded-[2rem] flex flex-col relative border-2 border-primary shadow-2xl shadow-primary/10 scale-105 z-10">
-                <div className="absolute -top-4 left-1/2 -translate-x-1/2 flash-gradient text-white px-4 py-1 rounded-full text-xs font-black uppercase tracking-widest whitespace-nowrap">
-                  BEST VALUE
+              <div 
+                onMouseEnter={() => setHoveredPlan("regular")}
+                onClick={() => { setSelectedPricingPlan("regular"); setShowDownloadGate(true); }}
+                className={`flex-shrink-0 w-[280px] md:w-auto snap-center p-8 md:p-10 rounded-[2rem] flex flex-col relative border-2 cursor-pointer transition-all duration-300 ${hoveredPlan === "regular" ? "border-transparent bg-gradient-to-b from-[#006859] to-[#12f8d7] shadow-2xl shadow-primary/30 md:scale-105 z-10 text-white" : "bg-surface-container-lowest border-primary shadow-lg shadow-primary/5 text-on-background"}`}
+              >
+                {/* Selection Indicator */}
+                <div className={`absolute top-4 right-4 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-200 z-20 ${hoveredPlan === "regular" ? 'border-white bg-white scale-110' : 'border-primary/30'}`}>
+                  {hoveredPlan === "regular" && <CheckCircle2 className="w-4 h-4 text-[#006859]" />}
                 </div>
-                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
-                  <Star className="w-5 h-5 text-primary fill-primary/30" />
+
+                <div className={`absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full text-xs font-black uppercase tracking-widest whitespace-nowrap shadow-sm transition-colors ${hoveredPlan === "regular" ? "bg-white text-[#006859]" : "flash-gradient text-white"}`}>
+                  Standard
+                </div>
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-4 transition-colors ${hoveredPlan === "regular" ? "bg-white/20" : "bg-primary/10"}`}>
+                  <Star className={`w-5 h-5 transition-colors ${hoveredPlan === "regular" ? "text-white fill-white/80" : "text-primary fill-primary/30"}`} />
                 </div>
                 <h3 className="font-headline text-2xl font-bold mb-1">Most Popular</h3>
-                <p className="text-sm text-on-surface-variant mb-4">300 Credits (30 Resumes)</p>
+                <p className={`text-sm mb-4 transition-colors ${hoveredPlan === "regular" ? "text-white/90" : "text-on-surface-variant"}`}>300 Credits (30 Resumes)</p>
                 <div className="text-4xl font-black mb-1">₹199</div>
-                <p className="text-sm text-on-surface-variant mb-8">/2 Months</p>
+                <p className={`text-sm mb-8 transition-colors ${hoveredPlan === "regular" ? "text-white/90" : "text-on-surface-variant"}`}>/2 Months</p>
                 <ul className="space-y-3 mb-10 text-left flex-grow">
-                  <li className="flex items-center gap-3">
-                    <CheckCircle2 className="text-primary w-4 h-4 flex-shrink-0" />
-                    300 Credits
+                  <li className={`flex items-center gap-3 transition-colors ${hoveredPlan === "regular" ? "text-white" : "text-on-background"}`}>
+                    <CheckCircle2 className={`w-4 h-4 flex-shrink-0 transition-colors ${hoveredPlan === "regular" ? "text-white" : "text-primary"}`} />
+                    <span>300 Credits</span>
                   </li>
-                  <li className="flex items-center gap-3">
-                    <CheckCircle2 className="text-primary w-4 h-4 flex-shrink-0" />
-                    Valid for 2 Months
+                  <li className={`flex items-center gap-3 transition-colors ${hoveredPlan === "regular" ? "text-white" : "text-on-background"}`}>
+                    <CheckCircle2 className={`w-4 h-4 flex-shrink-0 transition-colors ${hoveredPlan === "regular" ? "text-white" : "text-primary"}`} />
+                    <span>Valid for 2 Months</span>
                   </li>
-                  <li className="flex items-center gap-3">
-                    <CheckCircle2 className="text-primary w-4 h-4 flex-shrink-0" />
-                    All Premium Features
+                  <li className={`flex items-center gap-3 transition-colors ${hoveredPlan === "regular" ? "text-white" : "text-on-background"}`}>
+                    <CheckCircle2 className={`w-4 h-4 flex-shrink-0 transition-colors ${hoveredPlan === "regular" ? "text-white" : "text-primary"}`} />
+                    <span>All Premium Features</span>
                   </li>
                 </ul>
-                <button
-                  onClick={() => { setSelectedPricingPlan("regular"); setShowDownloadGate(true); }}
-                  className="w-full flash-gradient text-white py-4 rounded-xl font-bold hover:opacity-90 transition-opacity"
-                >
+                <button className={`w-full py-4 rounded-xl font-bold transition-all ${hoveredPlan === "regular" ? "bg-white text-[#006859] shadow-lg shadow-black/5 hover:bg-white/90" : "flash-gradient text-white hover:opacity-90"}`}>
                   Pay & Continue →
                 </button>
               </div>
 
               {/* Student Plan — STUDENT OFFER */}
-              <div className="bg-surface-container-low p-10 rounded-[2rem] flex flex-col relative border-2 border-amber-400/60">
-                <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-gradient-to-r from-orange-500 to-amber-500 text-white px-4 py-1 rounded-full text-xs font-black uppercase tracking-widest whitespace-nowrap shadow-md shadow-orange-500/30">
+              <div 
+                onMouseEnter={() => setHoveredPlan("student")}
+                onClick={() => { setSelectedPricingPlan("student"); setShowDownloadGate(true); }}
+                className={`flex-shrink-0 w-[280px] md:w-auto snap-center p-8 md:p-10 rounded-[2rem] flex flex-col relative border-2 cursor-pointer transition-all duration-300 ${hoveredPlan === "student" ? "border-transparent bg-gradient-to-b from-[#006859] to-[#12f8d7] shadow-2xl md:scale-105 z-10 text-white" : "bg-surface-container-low border-amber-400/60 text-on-background"}`}
+              >
+                {/* Selection Indicator */}
+                <div className={`absolute top-4 right-4 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-200 z-20 ${hoveredPlan === "student" ? 'border-white bg-white scale-110' : 'border-amber-400/30'}`}>
+                  {hoveredPlan === "student" && <CheckCircle2 className="w-4 h-4 text-[#006859]" />}
+                </div>
+
+                <div className={`absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full text-xs font-black uppercase tracking-widest whitespace-nowrap shadow-md transition-colors ${hoveredPlan === "student" ? "bg-white text-orange-500 shadow-orange-500/10" : "bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-orange-500/30"}`}>
                   STUDENT OFFER
                 </div>
-                <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center mb-4">
-                  <Verified className="w-5 h-5 text-amber-500" />
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-4 transition-colors ${hoveredPlan === "student" ? "bg-white/20 text-white" : "bg-amber-50 text-amber-500"}`}>
+                  <Verified className={`w-5 h-5 ${hoveredPlan === "student" ? "text-white opacity-90" : "text-amber-500"}`} />
                 </div>
                 <h3 className="font-headline text-2xl font-bold mb-1">Student Plan</h3>
-                <p className="text-sm text-on-surface-variant mb-4">400 Credits (40 Resumes)</p>
+                <p className={`text-sm mb-4 transition-colors ${hoveredPlan === "student" ? "text-white/90" : "text-on-surface-variant"}`}>400 Credits (40 Resumes)</p>
                 <div className="text-4xl font-black mb-1">₹99</div>
-                <p className="text-sm text-on-surface-variant mb-8">/3 months</p>
+                <p className={`text-sm mb-8 transition-colors ${hoveredPlan === "student" ? "text-white/90" : "text-on-surface-variant"}`}>/3 months</p>
                 <ul className="space-y-3 mb-10 text-left flex-grow">
-                  <li className="flex items-center gap-3 text-on-surface-variant">
-                    <CheckCircle2 className="text-primary w-4 h-4 flex-shrink-0" />
+                  <li className={`flex items-center gap-3 transition-colors ${hoveredPlan === "student" ? "text-white" : "text-on-surface-variant"}`}>
+                    <CheckCircle2 className={`w-4 h-4 flex-shrink-0 transition-colors ${hoveredPlan === "student" ? "text-white" : "text-primary"}`} />
                     400 Credits
                   </li>
-                  <li className="flex items-center gap-3 text-on-surface-variant">
-                    <CheckCircle2 className="text-primary w-4 h-4 flex-shrink-0" />
+                  <li className={`flex items-center gap-3 transition-colors ${hoveredPlan === "student" ? "text-white" : "text-on-surface-variant"}`}>
+                    <CheckCircle2 className={`w-4 h-4 flex-shrink-0 transition-colors ${hoveredPlan === "student" ? "text-white" : "text-primary"}`} />
                     Valid for 3 Months
                   </li>
-                  <li className="flex items-center gap-3 text-on-surface-variant">
-                    <CheckCircle2 className="text-primary w-4 h-4 flex-shrink-0" />
+                  <li className={`flex items-center gap-3 transition-colors ${hoveredPlan === "student" ? "text-white" : "text-on-surface-variant"}`}>
+                    <CheckCircle2 className={`w-4 h-4 flex-shrink-0 transition-colors ${hoveredPlan === "student" ? "text-white" : "text-primary"}`} />
                     All Premium Features
                   </li>
-                  <li className="flex items-center gap-3 text-amber-600 font-bold text-sm">
+                  <li className={`flex items-center gap-3 font-bold text-sm transition-colors ${hoveredPlan === "student" ? "text-white" : "text-amber-600"}`}>
                     ✓ Verified Student
                   </li>
                 </ul>
-                <button
-                  onClick={() => { setSelectedPricingPlan("student"); setShowDownloadGate(true); }}
-                  className="w-full py-4 rounded-xl border-2 border-amber-400 bg-amber-50 text-amber-700 font-bold hover:bg-amber-100 transition-colors"
-                >
+                <button className={`w-full py-4 rounded-xl font-bold transition-all ${hoveredPlan === "student" ? "bg-white text-[#006859] shadow-lg shadow-black/5 hover:bg-white/90" : "border-2 border-amber-400 bg-amber-50 text-amber-700 hover:bg-amber-100"}`}>
                   Claim Student Offer
                 </button>
               </div>
