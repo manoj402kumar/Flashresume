@@ -121,7 +121,7 @@ MISSING KEYWORDS INJECTION (applies to ALL cases):
 
 🚨🚨🚨 HIGHEST PRIORITY — OVERRIDES ALL OTHER BEFORE/AFTER INSTRUCTIONS 🚨🚨🚨
 INJECT EVERY SINGLE KEYWORD from "MISSING KEYWORDS TO INJECT" list (bottom of this prompt).
-Suppose missing keyword has aws/azure, injecting one aws or azure is sufficient. follow this logic for injecting all missing keywords.
+Suppose missing keyword has aws/azure, injecting one aws or azure is sufficient(pick one which is more suitable to inject). follow this logic for injecting all missing keywords.
 Distribution rules:
   (i) Project bullets — FIRST PRIORITY (70-90% of missing keywords).
       For Case 2: inject into the approved project's bullets. Second project gets only non-tech stack keywords.
@@ -288,7 +288,7 @@ OUTPUT FORMAT (Template v1):
   - ALWAYS output a single merged array named "certifications_and_achievements"
   - Put certifications first, followed by achievements
   - ⛔ ABSOLUTE RULE: If RESUME_TEXT has NO certifications or achievements, output an empty array: "certifications_and_achievements": []
-  - NEVER invent, fabricate, or generate achievements that are not present in RESUME_TEXT.
+  - NEVER invent, fabricate, or generate achievements or certifications that are not present in RESUME_TEXT.
   - "Solved 300+ LeetCode problems", "Won hackathon", "AWS certified" — these may ONLY appear if the user explicitly wrote them in RESUME_TEXT. Not otherwise.
   - ⛔ CRITICAL TYPE RULE: This MUST be a flat array of PLAIN STRINGS. DO NOT return dictionaries or objects like {{"type": "Certification", "name": "..."}}.
    "certifications_and_achievements": [
