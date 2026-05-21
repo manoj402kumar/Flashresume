@@ -53,6 +53,8 @@ export default function App() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [showAccountDropdown, setShowAccountDropdown] = useState(false);
   const [credits, setCredits] = useState<number>(0);
+  const [analysisCountdown, setAnalysisCountdown] = useState<number | null>(null);
+  const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [subscriptionData, setSubscriptionData] = useState<any>(null);
   const [optimizeMode, setOptimizeMode] = useState<"jd" | "no_jd" | "manual" | null>("jd");
   const [showModeDropdown, setShowModeDropdown] = useState(false);
@@ -228,8 +230,14 @@ export default function App() {
       let finalResumeText = resumeText;
 
       if (inputType === "file" && file) {
-        const parseResult = await parseResume(file);
-        finalResumeText = parseResult.resume_text;
+        // Use auto-parsed text if already available (parsed on upload)
+        // Only re-parse if auto-parse didn't finish yet (e.g. user clicked very fast)
+        if (parsedText) {
+          finalResumeText = parsedText;
+        } else {
+          const parseResult = await parseResume(file);
+          finalResumeText = parseResult.resume_text;
+        }
       }
 
       localStorage.setItem("resume_text", finalResumeText);
@@ -251,11 +259,32 @@ export default function App() {
           setLoading(false);
           return;
         }
-        // Read R1 model preference (set by the R1 ModelSelector on this page)
-        const r1Model = localStorage.getItem("r1_preferred_model") ?? "";
-        const analysisResult = await analyzeResume(finalResumeText, jobDescription, r1Model);
-        localStorage.setItem("analysis", JSON.stringify(analysisResult));
-        router.push("/analyze");
+
+        // Start 15-second countdown for UX feedback
+        setAnalysisCountdown(15);
+        countdownRef.current = setInterval(() => {
+          setAnalysisCountdown((prev) => {
+            if (prev === null || prev <= 1) {
+              if (countdownRef.current) clearInterval(countdownRef.current);
+              return null;
+            }
+            return prev - 1;
+          });
+        }, 1000);
+
+        try {
+          // Read R1 model preference (set by the R1 ModelSelector on this page)
+          const r1Model = localStorage.getItem("r1_preferred_model") ?? "";
+          const analysisResult = await analyzeResume(finalResumeText, jobDescription, r1Model);
+          localStorage.setItem("analysis", JSON.stringify(analysisResult));
+          if (countdownRef.current) clearInterval(countdownRef.current);
+          setAnalysisCountdown(null);
+          router.push("/analyze");
+        } catch (err: any) {
+          if (countdownRef.current) clearInterval(countdownRef.current);
+          setAnalysisCountdown(null);
+          throw err; // re-throw to outer catch
+        }
       } else {
         // No-JD mode or Manual: skip analysis, go straight to preview
         const dummyAnalysis = {
@@ -514,11 +543,11 @@ export default function App() {
                   </a>
                 </div>
                 {/* ── Optimize Mode Selection ── */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 bg-surface-container-low rounded-2xl p-2 sm:p-1.5 sm:pl-5">
-                  <p className="font-sans text-[11px] font-bold uppercase tracking-wider text-on-surface-variant pl-2 sm:pl-0 pt-1 sm:pt-0">
-                    Select an option
+                <div className="flex flex-row items-center justify-between gap-2 sm:gap-4 bg-surface-container-low rounded-2xl p-1.5 pl-4 sm:pl-5">
+                  <p className="font-sans text-[11px] font-bold uppercase tracking-wider text-on-surface-variant flex-shrink-0">
+                    Options
                   </p>
-                  <div className="grid grid-cols-3 sm:flex w-full sm:w-auto gap-1.5 sm:gap-1">
+                  <div className="flex flex-1 sm:flex-none w-full sm:w-auto gap-1 justify-end">
                     {([
                       {
                         id: "jd" as const,
@@ -548,7 +577,7 @@ export default function App() {
                           key={opt.id}
                           type="button"
                           onClick={() => setOptimizeMode(opt.id)}
-                          className={`flex items-center justify-center gap-1.5 sm:gap-2 px-1 sm:px-3 py-2.5 rounded-xl transition-all duration-200 border border-transparent ${isActive
+                          className={`flex-1 sm:flex-none flex items-center justify-center gap-1 sm:gap-2 px-1 sm:px-3 py-2.5 rounded-xl transition-all duration-200 border border-transparent ${isActive
                             ? opt.activeCls
                             : "text-on-surface-variant hover:bg-surface-container-high hover:text-on-background"
                             }`}
@@ -626,7 +655,17 @@ export default function App() {
                   className="w-full bg-on-background text-white py-4 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-primary transition-colors group disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Bolt className="text-primary-container w-5 h-5 fill-primary-container" />
-                  {loading ? "Processing..." : !optimizeMode ? "Select an option first" : optimizeMode === "jd" ? "Optimize for JD" : optimizeMode === "no_jd" ? "Optimize Resume" : "Continue to Editor"}
+                  {loading && optimizeMode === "jd" && analysisCountdown !== null
+                    ? `Analyzing... [${analysisCountdown}s]`
+                    : loading
+                    ? "Processing..."
+                    : !optimizeMode
+                    ? "Select an option first"
+                    : optimizeMode === "jd"
+                    ? "Optimize for JD"
+                    : optimizeMode === "no_jd"
+                    ? "Optimize Resume"
+                    : "Continue to Editor"}
                 </button>
               </div>
             </div>
