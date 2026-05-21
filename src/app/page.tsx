@@ -163,6 +163,17 @@ export default function App() {
       setFile(droppedFile);
       setResumeText("");
       setError("");
+      setParsedText("");
+
+      // Auto-parse for better UX (silent background parsing)
+      setParsing(true);
+      parseResume(droppedFile).then(parseResult => {
+        setParsedText(parseResult.resume_text);
+      }).catch(err => {
+        console.log("Auto-parse failed:", err.message);
+      }).finally(() => {
+        setParsing(false);
+      });
     } else {
       setError("Please upload PDF, DOCX, JPG, or PNG file");
     }
@@ -223,8 +234,10 @@ export default function App() {
     setLoading(true);
     setError("");
 
-    // Clear stale flags from any previous session
+    // Clear stale flags and cache from any previous session
     localStorage.removeItem("no_jd_mode");
+    localStorage.removeItem("generated_resume");
+    localStorage.removeItem("analysis");
 
     try {
       let finalResumeText = resumeText;

@@ -20,24 +20,7 @@ STEP-BY-STEP ALGORITHM:
 Step 1: Extract resume sections (already done — you have RESUME_TEXT below)
 
 Step 2: Summary Evaluation
-Evaluate the summary in RESUME_TEXT. REWRITE ONLY if it has ANY of these issues:
-- Generic phrases: "hardworking", "passionate", "looking for opportunities"
-- First-person: "I am", "My goal is", "I want to"
-- More than 2 lines
-- Mentions "fresher" or "entry-level" (when candidate has actual work experience)
-
-First determine if the person is a FRESHER or EXPERIENCED:
-- FRESHER: Has NO full-time work experience (only internships, projects, or coursework)
-- EXPERIENCED: Has 1+ years of full-time work experience
-
-If rewriting for FRESHER, format as:
-"[Target Role] with a strong foundation in [Core Tech Stack from RESUME_TEXT], demonstrated through [X projects/internships]."
-
-If rewriting for EXPERIENCED, format as:
-"[Current/Target Role] with [X]+ years of experience in [Core Domain/Tech Stack from RESUME_TEXT]. [One sentence on key impact, achievements, or specialization backed by RESUME_TEXT only.]"
-- Highlight years of experience, domain expertise, and measurable impact.
-- DO NOT use fresher-style phrasing like 'strong foundation' or 'looking to contribute'.
-- Keep it exactly 2 lines max, professional, and achievement-oriented.
+If summary in RESUME_TEXT has 16-20 words and It is professional keep it as-is, else rewrite it in 16-20 words only.
 
 Step 3: Education
 - Keep as-is, NO changes. Include all educational qualifications present in RESUME_TEXT (B.Tech, XII, Diploma, etc.)
@@ -106,7 +89,7 @@ Format:
     "github_url": "github.com/username",
     "portfolio_url": "portfolio.com"
   }},
-  "summary": "Freshers: 2-line foundation-focused summary based on skills/projects in RESUME_TEXT. Experienced: 2-3 line impact-driven summary highlighting years of experience, domain expertise, and key achievements from RESUME_TEXT only.",
+  "summary": "Freshers: 16-20 words summary based on skills/projects in RESUME_TEXT. Experienced: 16-20 words impact-driven summary highlighting years of experience, domain expertise, and key achievements from RESUME_TEXT only.",
   "education": [
     {{
       "institution": "University Name",

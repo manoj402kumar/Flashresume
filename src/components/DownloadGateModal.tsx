@@ -491,86 +491,109 @@ export default function DownloadGateModal({
                   </div>
                 )}
 
-                {/* Standard plans */}
-                {PLANS.map((plan) => (
-                  <div key={plan.id} onClick={() => setSelectedPlan(plan.id)}
-                    className={`p-4 rounded-2xl border-2 cursor-pointer transition-all ${selectedPlan === plan.id ? "border-primary bg-primary/5 shadow-md" : plan.borderClass + " bg-surface-container-lowest hover:border-primary/40"
-                      }`}>
-                    <div className="flex items-start justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${selectedPlan === plan.id ? "bg-primary/20" : "bg-surface-container-low"}`}>
-                          {plan.icon}
+                {/* ── Pricing Cards (Horizontal Scroll on Mobile) ── */}
+                <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-2 -mx-2 px-2 sm:grid sm:grid-cols-3 sm:overflow-visible sm:snap-none hide-scrollbar">
+                  {/* Standard plans */}
+                  {PLANS.map((plan) => (
+                    <div key={plan.id} onClick={() => setSelectedPlan(plan.id)}
+                      className={`relative flex-shrink-0 w-[240px] sm:w-auto snap-center flex flex-col p-4 rounded-2xl border-2 cursor-pointer transition-all ${selectedPlan === plan.id ? "border-primary bg-primary/5 shadow-md" : plan.borderClass + " bg-surface-container-lowest hover:border-primary/40"
+                        }`}>
+                      {/* Selection Indicator */}
+                      <div className={`absolute top-3 right-3 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${selectedPlan === plan.id ? 'border-primary bg-primary' : 'border-on-surface-variant/40'}`}>
+                        {selectedPlan === plan.id && <CheckCircle2 className="w-3 h-3 text-white" />}
+                      </div>
+
+                      <div className="mb-4">
+                        <div className="flex items-center gap-2 mb-3">
+                          <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${selectedPlan === plan.id ? "bg-primary/20" : "bg-surface-container-low"}`}>
+                            {plan.icon}
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <h4 className="font-bold text-sm text-on-background">{plan.name}</h4>
+                              {plan.badge && <span className="text-[9px] font-black bg-primary text-white px-1.5 py-0.5 rounded-full">{plan.badge}</span>}
+                            </div>
+                            <p className="text-[11px] text-on-surface-variant leading-tight">{plan.description}</p>
+                          </div>
                         </div>
                         <div>
-                          <div className="flex items-center gap-2">
-                            <h4 className="font-bold text-sm text-on-background">{plan.name}</h4>
-                            {plan.badge && <span className="text-[10px] font-black bg-primary text-white px-2 py-0.5 rounded-full">{plan.badge}</span>}
-                          </div>
-                          <p className="text-xs text-on-surface-variant">{plan.description}</p>
+                          <p className="font-black text-2xl text-on-background">{plan.priceDisplay}</p>
+                          <p className="text-[10px] text-on-surface-variant">{plan.period}</p>
                         </div>
                       </div>
-                      <div className="text-right">
-                        <p className="font-black text-xl text-on-background">{plan.priceDisplay}</p>
-                        <p className="text-[10px] text-on-surface-variant">{plan.period}</p>
+                      <div className="mt-auto pt-3 border-t border-surface-container-low">
+                        <ul className="space-y-1.5">
+                          {plan.features.map((f, i) => (
+                            <li key={i} className="flex items-center gap-1.5 text-[11px] text-on-surface-variant">
+                              <CheckCircle2 className="w-3.5 h-3.5 text-primary flex-shrink-0" />{f}
+                            </li>
+                          ))}
+                        </ul>
                       </div>
                     </div>
-                    <ul className="space-y-1 mt-2">
-                      {plan.features.map((f, i) => (
-                        <li key={i} className="flex items-center gap-1.5 text-xs text-on-surface-variant">
-                          <CheckCircle2 className="w-3.5 h-3.5 text-primary flex-shrink-0" />{f}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                ))}
+                  ))}
 
-                {/* FIX #1: Student plan — always visible, attention-grabbing ── */}
-                <div
-                  onClick={() => {
-                    if (!user) {
-                      setStep("auth");
-                      setAuthMode("student_signup");
-                      return;
-                    }
-                    if (!isStudent) {
-                      setStep("student_upgrade");
-                      return;
-                    }
-                    setSelectedPlan("student");
-                  }}
-                  className={`relative p-4 rounded-2xl border-2 cursor-pointer transition-all overflow-hidden ${selectedPlan === "student"
+                  {/* FIX #1: Student plan — always visible, attention-grabbing ── */}
+                  <div
+                    onClick={() => {
+                      if (!user) {
+                        setStep("auth");
+                        setAuthMode("student_signup");
+                        return;
+                      }
+                      if (!isStudent) {
+                        setStep("student_upgrade");
+                        return;
+                      }
+                      setSelectedPlan("student");
+                    }}
+                    className={`relative flex-shrink-0 w-[240px] sm:w-auto snap-center flex flex-col p-4 rounded-2xl border-2 cursor-pointer transition-all overflow-hidden ${selectedPlan === "student"
                       ? "border-tertiary bg-tertiary-container/30 shadow-md shadow-tertiary/10"
                       : "border-tertiary/50 bg-gradient-to-br from-tertiary-container/20 to-surface-container-lowest hover:border-tertiary"
-                    }`}
-                >
-                  {/* Pulse badge */}
-                  <div className="absolute top-3 right-3 flex items-center gap-1 bg-tertiary text-white text-[10px] font-black px-2 py-0.5 rounded-full">
-                    <span className="relative flex h-2 w-2">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-60"></span>
-                      <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
-                    </span>
-                    EXCLUSIVE
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-tertiary/20 flex items-center justify-center flex-shrink-0">
-                      <GraduationCap className="w-5 h-5 text-tertiary" />
+                      }`}
+                  >
+                    {/* Selection Indicator */}
+                    <div className={`absolute top-3 right-3 w-5 h-5 rounded-full border-2 z-10 flex items-center justify-center transition-colors ${selectedPlan === "student" ? 'border-tertiary bg-tertiary' : 'border-on-surface-variant/40'}`}>
+                      {selectedPlan === "student" && <CheckCircle2 className="w-3 h-3 text-white" />}
                     </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-0.5">
-                        <h4 className="font-bold text-sm text-on-background">🎓 Student Plan</h4>
-                        <span className="text-[10px] font-black bg-tertiary/20 text-tertiary px-2 py-0.5 rounded-full">₹99/60d</span>
+
+                    {/* Pulse badge */}
+                    <div className="absolute top-10 right-3 flex items-center gap-1 bg-tertiary text-white text-[9px] font-black px-1.5 py-0.5 rounded-full">
+                      <span className="relative flex h-1.5 w-1.5">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-60"></span>
+                        <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-white"></span>
+                      </span>
+                      EXCLUSIVE
+                    </div>
+                    
+                    <div className="mb-4">
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className="w-9 h-9 rounded-xl bg-tertiary/20 flex items-center justify-center flex-shrink-0">
+                          <GraduationCap className="w-4 h-4 text-tertiary" />
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-1.5 mb-0.5">
+                            <h4 className="font-bold text-sm text-on-background">Student Plan</h4>
+                          </div>
+                          <p className="text-[11px] text-on-surface-variant leading-tight">60-day access · 300 credits</p>
+                        </div>
                       </div>
-                      <p className="text-xs text-on-surface-variant">60-day access · 300 credits</p>
+                      <div>
+                        <div className="flex items-end gap-1">
+                          <p className="font-black text-2xl text-tertiary">₹99</p>
+                          <p className="text-xs text-on-surface-variant line-through mb-1 opacity-60">₹199</p>
+                        </div>
+                        <p className="text-[10px] text-on-surface-variant">/60 days</p>
+                      </div>
+                    </div>
+
+                    <div className="mt-auto pt-3 border-t border-tertiary/20">
                       {!isStudent && (
-                        <p className="text-xs text-tertiary font-semibold mt-1">Sign up with college ID to unlock →</p>
+                        <p className="text-[11px] text-tertiary font-bold leading-tight">Sign up with college ID to unlock →</p>
                       )}
                       {isStudent && (
-                        <p className="text-xs text-tertiary font-semibold mt-1">✓ You're eligible! Save ₹100</p>
+                        <p className="text-[11px] text-tertiary font-bold leading-tight">✓ You're eligible! Save ₹100</p>
                       )}
-                    </div>
-                    <div className="text-right self-center">
-                      <p className="font-black text-xl text-tertiary">₹99</p>
-                      <p className="text-[10px] text-on-surface-variant">/60 days</p>
                     </div>
                   </div>
                 </div>
