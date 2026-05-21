@@ -601,6 +601,13 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
                               </li>
                             ))}
                           </ul>
+                          {/* Mobile-only inline Continue button */}
+                          {isSelected && (
+                            <button onClick={(e) => { e.stopPropagation(); handleProceedToPayment(); }} disabled={loading}
+                              className="md:hidden w-full mt-5 bg-white text-[#006859] font-bold py-3.5 rounded-xl transition-all shadow-lg shadow-black/10 flex justify-center items-center gap-2 hover:scale-[1.02] active:scale-95">
+                              {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <>Continue <ArrowRight className="w-4 h-4" /></>}
+                            </button>
+                          )}
                         </div>
                       </div>
                     );
@@ -657,13 +664,25 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
                           <p className={`text-[11px] font-bold text-center py-1.5 rounded-lg ${selectedPlan === "student" ? "bg-white/20 text-white" : "bg-tertiary/10 text-tertiary"}`}>Requires Verification →</p>
                         )}
                       </div>
+                      
+                      {/* Mobile-only inline Continue button */}
+                      {selectedPlan === "student" && (
+                        <button onClick={(e) => { e.stopPropagation(); handleProceedToPayment(); }} disabled={loading}
+                          className="md:hidden w-full mt-5 bg-white text-[#006859] font-bold py-3.5 rounded-xl transition-all shadow-lg shadow-black/10 flex justify-center items-center gap-2 hover:scale-[1.02] active:scale-95">
+                          {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : (
+                            isStudent
+                              ? <>Pay ₹99 <ArrowRight className="w-4 h-4" /></>
+                              : <>Continue <ArrowRight className="w-4 h-4" /></>
+                          )}
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>
 
                 {error && <p className="text-xs font-semibold text-error text-center mt-3 bg-error/10 py-2 rounded-lg">{error}</p>}
 
-                <div className="flex justify-center mt-5">
+                <div className="hidden md:flex justify-center mt-5">
                   <button onClick={() => handleProceedToPayment()} disabled={loading}
                     className="w-full max-w-sm bg-primary text-white font-bold py-3.5 rounded-2xl hover:opacity-90 transition-opacity flex justify-center items-center gap-2 shadow-lg shadow-primary/20">
                     {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : (
