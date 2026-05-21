@@ -480,15 +480,15 @@ export default function App() {
                       onDrop={handleDrop}
                       onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
                       onDragLeave={() => setIsDragging(false)}
-                      className={`p-8 border-2 border-dashed rounded-2xl flex flex-col items-center justify-center cursor-pointer transition-colors ${isDragging
+                      className={`p-8 border-2 border-dashed rounded-2xl flex flex-col items-center justify-center cursor-pointer transition-colors w-full overflow-hidden ${isDragging
                         ? "border-primary bg-primary/5"
                         : file
                           ? "border-primary-container bg-primary-container/10"
                           : "border-primary-container/50 bg-surface-container-low hover:bg-surface-container-lowest"
                         }`}
                     >
-                      <CloudUpload className="text-primary w-12 h-12 mb-4" />
-                      <span className="font-headline text-on-background font-bold text-center">
+                      <CloudUpload className="text-primary w-12 h-12 mb-4 flex-shrink-0" />
+                      <span className="font-headline text-on-background font-bold text-center truncate w-full px-2">
                         {file ? file.name : "Drop your current resume"}
                       </span>
                       <span className="text-sm text-on-surface-variant mt-2 text-center">PDF, DOCX, JPG, PNG (Max 10MB)</span>

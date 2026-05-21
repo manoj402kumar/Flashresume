@@ -277,7 +277,7 @@ export default function ResultPage() {
     if (!el) return;
     el.addEventListener("touchmove", handleNativeTouchMove, { passive: false });
     return () => el.removeEventListener("touchmove", handleNativeTouchMove);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleSectionTouchEnd = () => {
@@ -308,7 +308,7 @@ export default function ResultPage() {
       method: "POST",
       body: JSON.stringify({ page_type: "result" }),
       headers: { "Content-Type": "application/json" }
-    }).catch(() => {});
+    }).catch(() => { });
   }, []);
 
   useEffect(() => {
@@ -1684,7 +1684,7 @@ export default function ResultPage() {
                                                 className="w-full font-bold rounded-xl px-4 py-2 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm"
                                                 placeholder="Project Title"
                                               />
-                                              <div className="flex gap-2">
+                                              <div className="flex flex-col sm:flex-row gap-2">
                                                 <input
                                                   type="text"
                                                   value={proj.link || ''}
@@ -1693,8 +1693,8 @@ export default function ResultPage() {
                                                     newProjects[idx].link = e.target.value;
                                                     updateResume({ projects: newProjects });
                                                   }}
-                                                  className="flex-[1] text-sm rounded-xl px-4 py-2 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm"
-                                                  placeholder="Display Text (Link/GitHub)"
+                                                  className="sm:w-24 w-full flex-shrink-0 text-sm rounded-xl px-3 py-2 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm"
+                                                  placeholder="Link"
                                                 />
                                                 <input
                                                   type="url"
@@ -1704,8 +1704,8 @@ export default function ResultPage() {
                                                     newProjects[idx].link_href = e.target.value;
                                                     updateResume({ projects: newProjects });
                                                   }}
-                                                  className="flex-[2] text-sm rounded-xl px-4 py-2 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm"
-                                                  placeholder="Actual Repo URL"
+                                                  className="flex-1 text-sm rounded-xl px-3 py-2 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm"
+                                                  placeholder="https://github.com/..."
                                                 />
                                               </div>
                                             </div>

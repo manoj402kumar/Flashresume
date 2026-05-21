@@ -104,17 +104,8 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
   }, [isOpen, initialPlan]);
 
   const applyStudentStatus = (uData: any) => {
-    if (uData?.is_student && uData?.student_verified_at) {
-      const verifiedAt = new Date(uData.student_verified_at);
-      const daysSince = (new Date().getTime() - verifiedAt.getTime()) / (1000 * 3600 * 24);
-      if (daysSince <= 365) {
-        setIsStudent(true);
-      } else {
-        setIsStudent(false);
-      }
-    } else {
-      setIsStudent(false);
-    }
+    // Simple check: just use the is_student flag — no date math needed
+    setIsStudent(!!uData?.is_student);
   };
 
   const checkUserSession = async () => {
@@ -136,7 +127,7 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
     const { data: { session } } = await supabase.auth.getSession();
     if (session?.user) {
       setUser(session.user);
-      const { data } = await supabase.from("users").select("is_student, student_verified_at, credits_balance").eq("id", session.user.id).single();
+      const { data } = await supabase.from("users").select("is_student, credits_balance").eq("id", session.user.id).single();
       applyStudentStatus(data);
       if (directPay && initialPlan) {
         // Skip plan selection — go straight to payment
@@ -163,7 +154,7 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
         if (error) throw error;
         if (data.user) {
           setUser(data.user);
-          const { data: uData } = await supabase.from("users").select("is_student, student_verified_at, credits_balance").eq("id", data.user.id).single();
+          const { data: uData } = await supabase.from("users").select("is_student, credits_balance").eq("id", data.user.id).single();
           applyStudentStatus(uData);
           if (directPay && initialPlan) {
             setStep("processing");

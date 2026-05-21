@@ -250,7 +250,13 @@ export default function DownloadGateModal({
           { amount: 29, plan_type: "pay_per_use" };
 
     if (planDetails.plan_type === "student") {
-      const { data: userData } = await supabase.from("users").select("student_verified").eq("id", serverUser.id).single();
+      // Simple check: is student_verified flag set on their account?
+      const { data: userData } = await supabase
+        .from("users")
+        .select("student_verified")
+        .eq("id", serverUser.id)
+        .single();
+
       if (!userData?.student_verified) {
         setShowVerificationModal(true);
         setLoading(false);

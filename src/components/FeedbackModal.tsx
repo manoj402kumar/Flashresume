@@ -90,7 +90,7 @@ export default function FeedbackModal({ userId, sessionId, onClose }: Props) {
             <textarea
               value={suggestion}
               onChange={(e) => setSuggestion(e.target.value)}
-              placeholder="Any suggestions? (optional)"
+              placeholder="Any suggestions / feedback?"
               rows={3}
               className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm
                          text-gray-700 resize-none focus:outline-none focus:ring-2
