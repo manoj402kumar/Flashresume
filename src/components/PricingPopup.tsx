@@ -564,12 +564,12 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
             {/* PLAN STEP */}
             {step === "plan" && (
               <motion.div key="plan" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-4">
-                <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 pt-4 pb-3 px-1 md:grid md:grid-cols-3 md:overflow-visible md:snap-none hide-scrollbar">
+                <div className="flex flex-col md:grid md:grid-cols-3 gap-3 md:gap-4 pt-4 pb-3 px-1">
                   {PLANS.map((plan) => {
                     const isSelected = selectedPlan === plan.id;
                     return (
                       <div key={plan.id} onClick={() => setSelectedPlan(plan.id)}
-                        className={`relative flex-shrink-0 w-[220px] md:w-auto snap-center flex flex-col p-5 rounded-3xl border-2 cursor-pointer transition-all duration-300 ${isSelected ? "border-transparent bg-gradient-to-b from-[#006859] to-[#12f8d7] shadow-xl scale-[1.02] md:scale-105 text-white" : plan.borderClass + " bg-surface-container-lowest text-on-background hover:border-primary/40 hover:shadow-md"}`}>
+                        className={`relative w-full md:w-auto flex flex-col p-4 md:p-5 rounded-2xl md:rounded-3xl border-2 cursor-pointer transition-all duration-300 ${isSelected ? "border-transparent bg-gradient-to-b from-[#006859] to-[#12f8d7] shadow-xl md:scale-105 text-white" : plan.borderClass + " bg-surface-container-lowest text-on-background hover:border-primary/40 hover:shadow-md"}`}>
 
                         {/* Selection indicator top-right */}
                         <div className={`absolute top-3 right-3 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-200 ${isSelected ? "border-white bg-white scale-110" : "border-on-surface-variant/30"}`}>
@@ -578,15 +578,17 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
 
                         {plan.badge && <div className={`absolute -top-3 left-1/2 -translate-x-1/2 text-[9px] font-black px-2 py-0.5 rounded-full whitespace-nowrap shadow-sm tracking-wider ${isSelected ? "bg-white text-[#006859]" : "bg-primary text-white"}`}>{plan.badge}</div>}
 
-                        <div className="flex flex-col items-center text-center mb-4 pr-4">
-                          <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-2 transition-colors ${isSelected ? "bg-white/20" : "bg-surface-container-low"}`}>
+                        <div className="flex flex-row md:flex-col items-center md:text-center gap-3 md:gap-0 mb-3 md:mb-4 pr-6 md:pr-4">
+                          <div className={`w-10 h-10 rounded-xl flex-shrink-0 flex items-center justify-center md:mb-2 transition-colors ${isSelected ? "bg-white/20" : "bg-surface-container-low"}`}>
                             {isSelected ? <div className="text-white opacity-90">{plan.icon}</div> : plan.icon}
                           </div>
-                          <h4 className="font-bold text-base mb-0.5">{plan.name}</h4>
-                          <p className={`text-[11px] mb-2 ${isSelected ? "text-white/90" : "text-on-surface-variant"}`}>{plan.description}</p>
-                          <div className="flex flex-col mb-1">
-                            <p className="font-black text-3xl">{plan.priceDisplay}</p>
-                            <p className={`text-[11px] font-medium mt-0.5 ${isSelected ? "text-white/90" : "text-on-surface-variant"}`}>{plan.period}</p>
+                          <div className="flex-1 text-left md:text-center">
+                            <h4 className="font-bold text-base mb-0 md:mb-0.5">{plan.name}</h4>
+                            <p className={`text-[11px] md:mb-2 ${isSelected ? "text-white/90" : "text-on-surface-variant"}`}>{plan.description}</p>
+                          </div>
+                          <div className="flex flex-col text-right md:text-center md:mb-1">
+                            <p className="font-black text-xl md:text-3xl">{plan.priceDisplay}</p>
+                            <p className={`text-[10px] md:text-[11px] font-medium mt-0.5 ${isSelected ? "text-white/90" : "text-on-surface-variant"}`}>{plan.period}</p>
                           </div>
                         </div>
 
@@ -606,7 +608,7 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
 
                   {/* Student card */}
                   <div onClick={() => setSelectedPlan("student")}
-                    className={`relative flex-shrink-0 w-[220px] md:w-auto snap-center flex flex-col p-5 rounded-3xl border-2 cursor-pointer transition-all duration-300 ${selectedPlan === "student" ? "border-transparent bg-gradient-to-b from-[#006859] to-[#12f8d7] shadow-xl scale-[1.02] md:scale-105 text-white" : "border-tertiary/50 bg-gradient-to-br from-tertiary-container/20 to-surface-container-lowest hover:border-tertiary hover:shadow-md"}`}>
+                    className={`relative w-full md:w-auto flex flex-col p-4 md:p-5 rounded-2xl md:rounded-3xl border-2 cursor-pointer transition-all duration-300 ${selectedPlan === "student" ? "border-transparent bg-gradient-to-b from-[#006859] to-[#12f8d7] shadow-xl md:scale-105 text-white" : "border-tertiary/50 bg-gradient-to-br from-tertiary-container/20 to-surface-container-lowest hover:border-tertiary hover:shadow-md"}`}>
 
                     {/* Selection indicator top-right */}
                     <div className={`absolute top-3 right-3 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-200 z-10 ${selectedPlan === "student" ? "border-white bg-white scale-110" : "border-on-surface-variant/30"}`}>
@@ -616,18 +618,20 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
                     <div className={`absolute -top-3 left-1/2 -translate-x-1/2 flex items-center gap-1 text-[10px] font-black px-3 py-0.5 rounded-full shadow-md whitespace-nowrap tracking-wider border z-20 ${selectedPlan === "student" ? "bg-white text-orange-500 border-white" : "bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-orange-500/30 border-orange-400/50"}`}>
                       STUDENT OFFER
                     </div>
-                    <div className="flex flex-col items-center text-center mb-4 pr-4">
-                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-2 transition-colors ${selectedPlan === "student" ? "bg-white/20 text-white" : "bg-tertiary/20"}`}>
+                    <div className="flex flex-row md:flex-col items-center md:text-center gap-3 md:gap-0 mb-3 md:mb-4 pr-6 md:pr-4">
+                      <div className={`w-10 h-10 rounded-xl flex-shrink-0 flex items-center justify-center md:mb-2 transition-colors ${selectedPlan === "student" ? "bg-white/20 text-white" : "bg-tertiary/20"}`}>
                         <GraduationCap className={`w-5 h-5 ${selectedPlan === "student" ? "text-white opacity-90" : "text-tertiary"}`} />
                       </div>
-                      <h4 className="font-bold text-base mb-0.5">Student Plan</h4>
-                      <p className={`text-[11px] mb-2 ${selectedPlan === "student" ? "text-white/90" : "text-on-surface-variant"}`}>400 Credits (40 Resumes)</p>
-                      <div className="flex flex-col mb-1">
-                        <div className="flex items-end justify-center gap-1">
-                          <p className={`font-black text-3xl ${selectedPlan === "student" ? "text-white" : "text-tertiary"}`}>₹99</p>
-                          <p className={`text-sm line-through mb-1 ${selectedPlan === "student" ? "text-white/60" : "text-on-surface-variant opacity-60"}`}>₹199</p>
+                      <div className="flex-1 text-left md:text-center">
+                        <h4 className="font-bold text-base mb-0 md:mb-0.5">Student Plan</h4>
+                        <p className={`text-[11px] md:mb-2 ${selectedPlan === "student" ? "text-white/90" : "text-on-surface-variant"}`}>400 Credits (40 Resumes)</p>
+                      </div>
+                      <div className="flex flex-col text-right md:text-center md:mb-1">
+                        <div className="flex items-end justify-end md:justify-center gap-1">
+                          <p className={`font-black text-xl md:text-3xl ${selectedPlan === "student" ? "text-white" : "text-tertiary"}`}>₹99</p>
+                          <p className={`text-[10px] md:text-sm line-through mb-0.5 md:mb-1 ${selectedPlan === "student" ? "text-white/60" : "text-on-surface-variant opacity-60"}`}>₹199</p>
                         </div>
-                        <p className={`text-[11px] font-medium mt-0.5 ${selectedPlan === "student" ? "text-white/90" : "text-on-surface-variant"}`}>/3 months</p>
+                        <p className={`text-[10px] md:text-[11px] font-medium mt-0.5 ${selectedPlan === "student" ? "text-white/90" : "text-on-surface-variant"}`}>/3 months</p>
                       </div>
                     </div>
 
