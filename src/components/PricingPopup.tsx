@@ -89,7 +89,7 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
   // UI State
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [selectedPlan, setSelectedPlan] = useState<string>("regular");
+  const [selectedPlan, setSelectedPlan] = useState<string>(initialPlan || "pay_per_use");
   const [isStudent, setIsStudent] = useState(false);
 
   useEffect(() => {
@@ -564,7 +564,7 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
             {/* PLAN STEP */}
             {step === "plan" && (
               <motion.div key="plan" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-4">
-                <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-3 -mx-1 px-1 md:grid md:grid-cols-3 md:overflow-visible md:snap-none hide-scrollbar">
+                <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 pt-4 pb-3 -mx-1 px-1 md:grid md:grid-cols-3 md:overflow-visible md:snap-none hide-scrollbar">
                   {PLANS.map((plan) => {
                     const isSelected = selectedPlan === plan.id;
                     return (

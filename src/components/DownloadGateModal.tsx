@@ -492,7 +492,7 @@ export default function DownloadGateModal({
                 )}
 
                 {/* ── Pricing Cards (Horizontal Scroll on Mobile) ── */}
-                <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-2 -mx-2 px-2 sm:grid sm:grid-cols-3 sm:overflow-visible sm:snap-none hide-scrollbar">
+                <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 pt-4 pb-2 -mx-2 px-2 sm:grid sm:grid-cols-3 sm:overflow-visible sm:snap-none hide-scrollbar">
                   
                   {PLANS.map((plan) => {
                     const isSelected = selectedPlan === plan.id;
