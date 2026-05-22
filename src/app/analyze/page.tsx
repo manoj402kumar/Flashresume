@@ -69,19 +69,23 @@ export default function AnalyzePage() {
   }
 
   return (
-    <div className="min-h-screen bg-surface font-sans py-12 px-4">
-      <div className="max-w-5xl mx-auto">
+    <div className="min-h-screen bg-surface font-sans py-10 px-4 md:py-16 md:px-8">
+      <div className="max-w-5xl mx-auto space-y-8">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-12"
+          className="text-center max-w-2xl mx-auto"
         >
-          <h1 className="font-headline text-4xl md:text-5xl font-bold text-on-background mb-4">
-            Resume Analysis
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-bold tracking-wide uppercase mb-4">
+            <Sparkles className="w-3.5 h-3.5" />
+            Analysis Complete
+          </div>
+          <h1 className="font-headline text-4xl md:text-5xl font-extrabold text-on-background mb-4 tracking-tight">
+            Resume Match Analysis
           </h1>
-          <p className="text-lg text-on-surface-variant">
-            Here's how your resume matches the job description
+          <p className="text-lg text-on-surface-variant font-medium">
+            Here's how your resume stacks up against the job description.
           </p>
         </motion.div>
 
@@ -90,108 +94,124 @@ export default function AnalyzePage() {
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.1 }}
-          className="bg-gradient-to-br from-primary/20 to-primary-container/20 rounded-[3rem] p-12 mb-8 relative overflow-hidden"
+          className="relative bg-gradient-to-br from-surface-container-lowest to-surface-container-low rounded-[2rem] md:rounded-[3rem] p-8 md:p-12 shadow-2xl border border-surface-container-high overflow-hidden flex flex-col items-center justify-center text-center"
         >
-          <div className="absolute -top-20 -right-20 w-64 h-64 bg-primary-container/30 blur-3xl rounded-full"></div>
-          <div className="relative z-10 text-center">
-            <div className="inline-flex items-center gap-3 mb-4">
-              <Target className="w-8 h-8 text-primary" />
-              <h2 className="font-headline text-2xl font-bold text-on-background">
-                Current ATS Score
-              </h2>
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[120%] h-40 bg-[#006859]/20 blur-[80px] rounded-[100%] pointer-events-none"></div>
+
+          <div className="relative z-10 flex flex-col items-center">
+            <div className="inline-flex items-center gap-2 mb-2 text-on-surface-variant font-semibold tracking-wide uppercase text-sm">
+              <Target className="w-4 h-4 text-[#006859]" />
+              Current ATS Score
             </div>
-            <div className="text-7xl font-black text-primary mb-4">
+
+            <div className="text-[6rem] md:text-[8rem] font-black text-transparent bg-clip-text bg-gradient-to-b from-[#006859] to-[#12f8d7] leading-none drop-shadow-sm mb-4">
               {analysis.ats_score}%
             </div>
-            <p className="text-on-surface-variant text-lg">
-              {analysis.ats_score >= 70
-                ? "Good match! We'll optimize it further."
-                : "Needs improvement. Our AI will enhance it."}
-            </p>
+
+            <div className="flex items-center justify-center gap-2 mb-6">
+              <div className={`h-2.5 w-2.5 rounded-full ${analysis.ats_score >= 70 ? 'bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.6)]' : 'bg-amber-500 shadow-[0_0_10px_rgba(245,158,11,0.6)]'}`}></div>
+              <p className="text-on-background font-bold text-lg md:text-xl">
+                {analysis.ats_score >= 70
+                  ? "Great start! We'll push it to perfection."
+                  : "Room for growth. Our AI will boost this significantly."}
+              </p>
+            </div>
+
             {analysis.model_used && (
-              <div className="mt-4 inline-flex items-center gap-2 px-3 py-1.5 bg-surface-container-high rounded-full text-xs text-on-surface-variant border border-surface-container-high">
-                <Sparkles className="w-3 h-3 text-primary" />
-                <span>Analyzed by <span className="font-semibold text-on-background">{analysis.model_used}</span></span>
+              <div className="inline-flex items-center gap-2 px-4 py-2 bg-surface rounded-2xl shadow-sm border border-surface-container-high text-xs text-on-surface-variant font-medium">
+                <Sparkles className="w-3.5 h-3.5 text-[#006859]" />
+                Analyzed by <span className="font-bold text-[#006859]">{analysis.model_used}</span>
               </div>
             )}
           </div>
         </motion.div>
 
-        {/* Matched Skills */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="bg-surface-container-lowest rounded-[2rem] p-8 mb-8 shadow-xl"
-        >
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-12 h-12 rounded-2xl bg-primary-container/20 flex items-center justify-center">
-              <CheckCircle2 className="w-6 h-6 text-primary" />
+        {/* Keywords Grid (Matched vs Missing) */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Matched Keywords */}
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.2 }}
+            className="bg-surface-container-lowest rounded-[2rem] p-6 md:p-8 shadow-lg border border-surface-container-low flex flex-col h-full"
+          >
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+                  <CheckCircle2 className="w-5 h-5" />
+                </div>
+                <h3 className="font-headline text-xl font-bold text-on-background">
+                  Matched Skills
+                </h3>
+              </div>
+              <span className="bg-primary/10 px-3 py-1 rounded-full text-primary font-bold text-sm">
+                {analysis.matched_skills.length}
+              </span>
             </div>
-            <h3 className="font-headline text-2xl font-bold text-on-background">
-              Matched Keywords
-            </h3>
-            <span className="ml-auto bg-primary-container/20 px-4 py-2 rounded-full text-primary font-bold">
-              {analysis.matched_skills.length}
-            </span>
-          </div>
-          <div className="flex flex-wrap gap-3">
-            {analysis.matched_skills.map((skill, idx) => (
-              <motion.span
-                key={idx}
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.3 + idx * 0.02 }}
-                className="px-4 py-2 bg-primary-container/20 text-primary rounded-full text-sm font-medium flex items-center gap-2"
-              >
-                <CheckCircle2 className="w-4 h-4" />
-                {skill}
-              </motion.span>
-            ))}
-          </div>
-        </motion.div>
+            <div className="flex flex-wrap gap-2.5 flex-1 content-start">
+              {analysis.matched_skills.length > 0 ? (
+                analysis.matched_skills.map((skill, idx) => (
+                  <motion.span
+                    key={idx}
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.3 + idx * 0.02 }}
+                    className="px-3.5 py-1.5 bg-primary/10 text-primary rounded-xl text-sm font-semibold border border-primary/20 hover:bg-primary/20 transition-colors"
+                  >
+                    {skill}
+                  </motion.span>
+                ))
+              ) : (
+                <p className="text-sm text-on-surface-variant italic w-full text-center py-4">No exact matches found.</p>
+              )}
+            </div>
+          </motion.div>
 
-        {/* Missing Skills */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="bg-surface-container-lowest rounded-[2rem] p-8 mb-8 shadow-xl"
-        >
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-12 h-12 rounded-2xl bg-error/20 flex items-center justify-center">
-              <XCircle className="w-6 h-6 text-error" />
+          {/* Missing Keywords */}
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.3 }}
+            className="bg-surface-container-lowest rounded-[2rem] p-6 md:p-8 shadow-lg border border-surface-container-low flex flex-col h-full"
+          >
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-error/10 flex items-center justify-center text-error">
+                  <XCircle className="w-5 h-5" />
+                </div>
+                <h3 className="font-headline text-xl font-bold text-on-background">
+                  Missing Skills
+                </h3>
+              </div>
+              <span className="bg-error/10 px-3 py-1 rounded-full text-error font-bold text-sm">
+                {(analysis.all_missing_skills ?? analysis.missing_skills).length}
+              </span>
             </div>
-            <h3 className="font-headline text-2xl font-bold text-on-background">
-              Missing Keywords
-            </h3>
-            <span className="ml-auto bg-error/20 px-4 py-2 rounded-full text-error font-bold">
-              {(analysis.all_missing_skills ?? analysis.missing_skills).length}
-            </span>
-          </div>
-          <div className="flex flex-wrap gap-3">
-            {(analysis.all_missing_skills ?? analysis.missing_skills).map((skill, idx) => (
-              <motion.span
-                key={idx}
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.4 + idx * 0.02 }}
-                className="px-4 py-2 bg-error/10 text-error rounded-full text-sm font-medium flex items-center gap-2"
-              >
-                <AlertCircle className="w-4 h-4" />
-                {skill}
-              </motion.span>
-            ))}
-          </div>
-          <div className="mt-6 p-4 bg-tertiary-container/10 border border-tertiary-container/20 rounded-xl">
-            <div className="flex items-start gap-3">
-              <Lightbulb className="w-5 h-5 text-tertiary-container flex-shrink-0 mt-0.5" />
-              <p className="text-sm text-on-surface-variant">
-                Our AI will naturally integrate these missing keywords into your resume where relevant.
+            <div className="flex flex-wrap gap-2.5 flex-1 content-start mb-6">
+              {(analysis.all_missing_skills ?? analysis.missing_skills).length > 0 ? (
+                (analysis.all_missing_skills ?? analysis.missing_skills).map((skill, idx) => (
+                  <motion.span
+                    key={idx}
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.4 + idx * 0.02 }}
+                    className="px-3.5 py-1.5 bg-error/10 text-error rounded-xl text-sm font-semibold border border-error/20 hover:bg-error/20 transition-colors"
+                  >
+                    {skill}
+                  </motion.span>
+                ))
+              ) : (
+                <p className="text-sm text-on-surface-variant italic w-full text-center py-4">You have all the required skills!</p>
+              )}
+            </div>
+            <div className="mt-auto p-4 bg-tertiary-container/10 border border-tertiary-container/30 rounded-2xl flex items-start gap-3">
+              <Lightbulb className="w-5 h-5 text-tertiary flex-shrink-0 mt-0.5" />
+              <p className="text-xs md:text-sm text-on-surface-variant font-medium">
+                Our AI will seamlessly weave these missing keywords into your resume bullet points where contextually relevant.
               </p>
             </div>
-          </div>
-        </motion.div>
+          </motion.div>
+        </div>
 
         {/* Project Approval (if needed) */}
         {analysis.requires_consent && analysis.suggested_project && (
@@ -199,111 +219,112 @@ export default function AnalyzePage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
-            className="bg-surface-container-lowest rounded-[2rem] p-8 mb-8 shadow-xl border-2 border-primary/20"
+            className={`relative rounded-[2rem] p-1 shadow-2xl transition-all duration-300 ${projectApproved ? 'bg-gradient-to-r from-[#006859] to-[#12f8d7] shadow-[#006859]/20' : 'bg-surface-container-high border border-surface-container-highest'}`}
           >
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-12 h-12 rounded-2xl bg-primary-container/20 flex items-center justify-center">
-                <FolderGit2 className="w-6 h-6 text-primary" />
-              </div>
-              <h3 className="font-headline text-2xl font-bold text-on-background">
-                Project Suggestion
-              </h3>
-            </div>
-
-            <div className="bg-primary-container/10 rounded-xl p-6 mb-6">
-              <div className="flex items-start gap-4">
-                <div className="w-10 h-10 rounded-xl bg-primary-container/20 flex items-center justify-center flex-shrink-0">
-                  <Code className="w-5 h-5 text-primary" />
+            <div className="bg-surface-container-lowest rounded-[1.9rem] p-6 md:p-8 h-full">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+                <div className="flex items-center gap-3">
+                  <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${projectApproved ? 'bg-[#006859]/10 text-[#006859]' : 'bg-surface-container-high text-on-surface-variant'}`}>
+                    <FolderGit2 className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h3 className="font-headline text-2xl font-bold text-on-background">
+                      Strategic Project Suggestion
+                    </h3>
+                    <p className="text-sm text-on-surface-variant font-medium">Boost your technical match instantly</p>
+                  </div>
                 </div>
-                <div className="flex-1">
-                  <h4 className="font-bold text-lg text-on-background mb-2">
-                    {analysis.suggested_project.title}
-                  </h4>
-                  <p className="text-sm text-on-surface-variant mb-3">
-                    <strong>Tech Stack:</strong> {analysis.suggested_project.tech_stack}
-                  </p>
-                  <p className="text-sm text-on-surface-variant leading-relaxed">
-                    {analysis.suggested_project.description}
-                  </p>
+
+                {/* Custom Toggle/Checkbox */}
+                <label className="flex items-center gap-3 cursor-pointer group bg-surface p-2 pr-4 rounded-full border border-surface-container-high hover:border-[#006859]/50 transition-colors">
+                  <div className="relative flex items-center justify-center">
+                    <input
+                      type="checkbox"
+                      checked={projectApproved}
+                      onChange={(e) => setProjectApproved(e.target.checked)}
+                      className="peer sr-only"
+                    />
+                    <div className="w-12 h-6 bg-surface-container-high rounded-full peer-checked:bg-[#006859] transition-colors duration-300"></div>
+                    <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full shadow-md transform peer-checked:translate-x-6 transition-transform duration-300 flex items-center justify-center">
+                      {projectApproved && <CheckCircle2 className="w-3 h-3 text-[#006859]" />}
+                    </div>
+                  </div>
+                  <span className={`text-sm font-bold ${projectApproved ? 'text-[#006859]' : 'text-on-surface-variant'}`}>
+                    {projectApproved ? 'Include Project' : 'Skip Project'}
+                  </span>
+                </label>
+              </div>
+
+              <div className={`rounded-2xl p-6 transition-colors duration-300 ${projectApproved ? 'bg-[#006859]/5 border border-[#006859]/10' : 'bg-surface-container-low border border-transparent'}`}>
+                <div className="flex items-start gap-4">
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${projectApproved ? 'bg-white shadow-sm text-[#006859]' : 'bg-surface text-on-surface-variant'}`}>
+                    <Code className="w-5 h-5" />
+                  </div>
+                  <div className="flex-1">
+                    <h4 className={`font-bold text-lg mb-1.5 ${projectApproved ? 'text-on-background' : 'text-on-surface-variant'}`}>
+                      {analysis.suggested_project.title}
+                    </h4>
+                    <div className="flex flex-wrap items-center gap-2 mb-3">
+                      <span className="text-xs font-bold uppercase tracking-wider text-on-surface-variant">Tech Stack:</span>
+                      <span className={`text-xs px-2 py-1 rounded-md font-semibold ${projectApproved ? 'bg-[#006859]/10 text-[#006859]' : 'bg-surface text-on-surface-variant border border-surface-container-high'}`}>
+                        {analysis.suggested_project.tech_stack}
+                      </span>
+                    </div>
+                    <p className={`text-sm leading-relaxed ${projectApproved ? 'text-on-surface-variant' : 'text-on-surface-variant/70'}`}>
+                      {analysis.suggested_project.description}
+                    </p>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            <div className="bg-tertiary-container/10 border border-tertiary-container/20 rounded-xl p-4 mb-6">
-              <div className="flex items-start gap-3">
-                <AlertCircle className="w-5 h-5 text-tertiary-container flex-shrink-0 mt-0.5" />
-                <div className="text-sm text-on-surface-variant">
-                  <p className="font-semibold mb-1">Why this suggestion?</p>
-                  <p>Your resume lacks projects relevant to this job description. Adding this project will significantly improve your ATS score.</p>
-                </div>
-              </div>
+              {!projectApproved && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  className="mt-4 overflow-hidden"
+                >
+                  <div className="bg-error/10 border border-error/20 rounded-xl p-4 flex items-start gap-3">
+                    <AlertCircle className="w-5 h-5 text-error flex-shrink-0 mt-0.5" />
+                    <p className="text-sm text-error font-medium">
+                      <strong className="block mb-1">Warning: Low Relevance</strong>
+                      Without a relavant project there is no point of applying and get shorlisted. Don't worry You can always build the project later.
+                    </p>
+                  </div>
+                </motion.div>
+              )}
             </div>
-
-            <label className="flex items-center gap-3 cursor-pointer p-4 bg-surface-container-low rounded-xl hover:bg-surface-container-lowest transition-colors">
-              <input
-                type="checkbox"
-                checked={projectApproved}
-                onChange={(e) => setProjectApproved(e.target.checked)}
-                className="w-5 h-5 rounded border-2 border-primary text-primary focus:ring-2 focus:ring-primary"
-              />
-              <span className="text-on-background font-medium">
-                Yes, add this project to my resume
-              </span>
-            </label>
-            {!projectApproved && (
-              <motion.div
-                initial={{ opacity: 0, y: -5 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="mt-3 text-sm text-error flex items-start gap-2 px-1"
-              >
-                <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
-                <span>
-                  <strong>Warning:</strong> There is no JD relavant project in your resume. If you uncheck this there is no point applying for this job and get shorlisted. But dont worry you can build this later.
-                </span>
-              </motion.div>
-            )}
           </motion.div>
         )}
 
-        {/* Info Box */}
+        {/* Action Bottom Bar */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
-          className="bg-primary-container/10 border border-primary-container/20 rounded-2xl p-6 mb-8"
+          className="bg-surface-container-lowest rounded-[2rem] p-6 shadow-xl border border-surface-container-high flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden"
         >
-          <div className="flex items-start gap-4">
-            <Sparkles className="w-6 h-6 text-primary flex-shrink-0 mt-1" />
-            <div>
-              <h4 className="font-bold text-on-background mb-2">What happens next?</h4>
-              <p className="text-sm text-on-surface-variant leading-relaxed">
-                Our AI will analyze your Work Experience and Projects sections, then show you exactly what will be enhanced before generating the final resume. You'll have full control over the changes.
-              </p>
-            </div>
-          </div>
-        </motion.div>
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[#006859]/5 to-transparent skew-x-12 translate-x-[-100%] animate-[shimmer_3s_infinite]"></div>
 
-        {/* Action Button */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.6 }}
-          className="flex flex-col items-center gap-6"
-        >
-          <div className="w-full max-w-md bg-surface-container-lowest p-6 rounded-2xl shadow-sm border border-surface-container-low">
+          <div className="flex-1 w-full md:w-auto relative z-10">
+            <p className="text-sm font-bold text-on-background mb-2 flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-[#006859]" /> Select Generation Model
+            </p>
             <ModelSelector storageKey="preferred_model" label="R2 Model (Generation)" />
           </div>
-          <button
-            onClick={handleProceed}
-            disabled={!!(analysis.requires_consent && !projectApproved)}
-            className={`text-white text-lg font-bold px-12 py-5 rounded-full flex items-center gap-3 transition-all shadow-xl ${analysis.requires_consent && !projectApproved
-              ? "bg-surface-container-high text-on-surface-variant cursor-not-allowed opacity-50 shadow-none"
-              : "flash-gradient hover:opacity-90 shadow-primary/25 active:scale-95"
-              }`}
-          >
-            Continue to Generate
-            <ArrowRight className="w-6 h-6" />
-          </button>
+
+          <div className="w-full md:w-auto relative z-10">
+            <button
+              onClick={handleProceed}
+              disabled={!!(analysis.requires_consent && !projectApproved)}
+              className={`w-full md:w-auto text-white text-lg font-bold px-10 py-4 rounded-2xl flex items-center justify-center gap-3 transition-all duration-300 ${analysis.requires_consent && !projectApproved
+                ? "bg-surface-container-high text-on-surface-variant cursor-not-allowed border border-surface-container-highest"
+                : "bg-gradient-to-r from-[#006859] to-[#12f8d7] shadow-[0_8px_30px_rgba(0,104,89,0.3)] hover:shadow-[0_8px_30px_rgba(18,248,215,0.4)] hover:-translate-y-0.5 hover:opacity-90 active:translate-y-0 active:shadow-none"
+                }`}
+            >
+              Generate
+              <ArrowRight className="w-5 h-5" />
+            </button>
+          </div>
         </motion.div>
       </div>
     </div>

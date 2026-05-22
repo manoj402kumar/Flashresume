@@ -176,7 +176,7 @@ export default function App() {
         setParsing(false);
       });
     } else {
-      setError("Please upload PDF, DOCX, JPG, or PNG file");
+      setError("Please upload PDF, DOCX file");
     }
   };
 
@@ -463,52 +463,72 @@ export default function App() {
 
       <main className="pt-24">
         {/* Hero Section */}
-        <section className="max-w-5xl mx-auto px-6 py-20 md:py-32 flex flex-col items-center">
+        <section className="max-w-5xl mx-auto px-4 sm:px-6 py-12 md:py-16 flex flex-col items-center">
+
+          {/* Heading block */}
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="text-center mb-16"
+            transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
+            className="text-center mb-8 max-w-3xl mx-auto"
           >
-            <h1 className="font-headline text-5xl md:text-7xl font-bold tracking-tight text-on-background leading-[1.1] mb-6">
-              Your resume, <br className="md:hidden" />
-              <span className="text-primary italic">rebuilt</span> in <span className="bg-primary-container/30 px-3 rounded-xl mx-1">60 seconds.</span>
+            {/* Pill badge removed */}
+
+            <h1 className="font-headline text-5xl sm:text-6xl md:text-7xl font-extrabold tracking-tight text-on-background leading-[1.08] mb-5">
+              Your resume,{" "}
+              <br className="md:hidden" />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#006859] to-[#12f8d7] italic">rebuilt</span>{" "}
+              in{" "}
+              <span className="relative inline-block">
+                <span className="relative z-10">60 seconds.</span>
+                <span className="absolute inset-x-0 bottom-1 h-3 bg-[#006859]/12 rounded-md -z-0 skew-x-1"></span>
+              </span>
             </h1>
-            <p className="text-xl text-on-surface-variant max-w-2xl mx-auto leading-relaxed">
+            <p className="text-lg md:text-xl text-on-surface-variant leading-relaxed font-medium max-w-xl mx-auto">
               Just put your resume and we take the rest.
             </p>
           </motion.div>
 
+          {/* Upload Card */}
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 28 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
+            transition={{ duration: 0.65, delay: 0.18, ease: [0.22, 1, 0.36, 1] }}
             className="w-full max-w-2xl relative mx-auto"
           >
-            <div id="upload-card" className="bg-surface-container-lowest rounded-[2rem] p-8 shadow-2xl shadow-primary/5 border border-primary/5">
-              <div className="space-y-6">
-                <div className="flex gap-2 p-1.5 bg-surface-container-low rounded-xl">
+            {/* Glow halos */}
+            <div className="absolute -top-10 -right-10 w-48 h-48 bg-[#006859]/15 blur-[70px] rounded-full -z-10 pointer-events-none"></div>
+            <div className="absolute -bottom-10 -left-10 w-48 h-48 bg-[#12f8d7]/10 blur-[70px] rounded-full -z-10 pointer-events-none"></div>
+
+            <div
+              id="upload-card"
+              className="bg-surface-container-lowest rounded-[2rem] p-5 sm:p-6 shadow-[0_20px_70px_rgba(0,104,89,0.08)] border border-[#006859]/10"
+            >
+              <div className="space-y-4">
+
+                {/* Tab switcher — Upload / Paste */}
+                <div className="flex gap-1.5 p-1.5 bg-surface-container-low rounded-2xl">
                   <button
                     onClick={() => setInputType("file")}
-                    className={`flex-1 py-2.5 rounded-lg font-bold text-sm transition-all focus:outline-none focus:ring-2 focus:ring-primary ${inputType === "file"
-                      ? "bg-surface-container-lowest text-primary shadow-sm"
-                      : "text-on-surface-variant hover:text-on-background hover:bg-surface-container-low/50"
+                    className={`flex-1 py-2.5 rounded-xl font-bold text-sm transition-all duration-200 focus:outline-none ${inputType === "file"
+                      ? "bg-surface-container-lowest text-[#006859] shadow-sm"
+                      : "text-on-surface-variant hover:text-on-background"
                       }`}
                   >
                     Upload File
                   </button>
                   <button
                     onClick={() => setInputType("text")}
-                    className={`flex-1 py-2.5 rounded-lg font-bold text-sm transition-all focus:outline-none focus:ring-2 focus:ring-primary ${inputType === "text"
-                      ? "bg-surface-container-lowest text-primary shadow-sm"
-                      : "text-on-surface-variant hover:text-on-background hover:bg-surface-container-low/50"
+                    className={`flex-1 py-2.5 rounded-xl font-bold text-sm transition-all duration-200 focus:outline-none ${inputType === "text"
+                      ? "bg-surface-container-lowest text-[#006859] shadow-sm"
+                      : "text-on-surface-variant hover:text-on-background"
                       }`}
                   >
                     Paste Text
                   </button>
                 </div>
 
-
+                {/* File drop zone / Paste textarea */}
                 {inputType === "file" ? (
                   <>
                     <input
@@ -523,31 +543,39 @@ export default function App() {
                       onDrop={handleDrop}
                       onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
                       onDragLeave={() => setIsDragging(false)}
-                      className={`p-8 border-2 border-dashed rounded-2xl flex flex-col items-center justify-center cursor-pointer transition-colors w-full overflow-hidden ${isDragging
-                        ? "border-primary bg-primary/5"
-                        : file
-                          ? "border-primary-container bg-primary-container/10"
-                          : "border-primary-container/50 bg-surface-container-low hover:bg-surface-container-lowest"
+                      className={`flex flex-col items-center justify-center cursor-pointer rounded-2xl border-2 border-dashed py-6 px-6 transition-all duration-200 w-full overflow-hidden
+                        ${isDragging
+                          ? "border-[#006859] bg-[#006859]/8 scale-[1.01]"
+                          : file
+                            ? "border-[#006859]/60 bg-[#006859]/5"
+                            : "border-surface-container-highest hover:border-[#006859]/40 bg-surface-container-low hover:bg-surface-container-lowest"
                         }`}
                     >
-                      <CloudUpload className="text-primary w-12 h-12 mb-4 flex-shrink-0" />
-                      <span className="font-headline text-on-background font-bold text-center truncate w-full px-2">
+                      <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-3 transition-colors ${file ? 'bg-[#006859]/10' : 'bg-surface-container-high'}`}>
+                        <CloudUpload className={`w-6 h-6 ${file ? 'text-[#006859]' : 'text-on-surface-variant'}`} />
+                      </div>
+                      <span className="font-headline text-on-background font-bold text-center text-base truncate w-full px-2 mb-1">
                         {file ? file.name : "Drop your current resume"}
                       </span>
-                      <span className="text-sm text-on-surface-variant mt-2 text-center">PDF, DOCX, JPG, PNG (Max 10MB)</span>
+                      <span className="text-sm text-on-surface-variant text-center">PDF, DOCX (Max 10MB)</span>
+                      {!file && (
+                        <span className="mt-3 text-xs font-bold text-[#006859] bg-[#006859]/10 px-3 py-1.5 rounded-full">
+                          Browse files
+                        </span>
+                      )}
                     </label>
                   </>
                 ) : (
-                  <div className="space-y-2">
-                    <textarea
-                      value={resumeText}
-                      onChange={(e) => setResumeText(e.target.value)}
-                      className="w-full px-6 py-4 rounded-xl bg-surface-container-low border-none focus:ring-2 focus:ring-primary-container transition-all placeholder:text-on-surface-variant/50 min-h-[224px] resize-none"
-                      placeholder="Paste your current resume text here... (Experience, Education, Skills, etc.)"
-                    />
-                  </div>
+                  <textarea
+                    value={resumeText}
+                    onChange={(e) => setResumeText(e.target.value)}
+                    className="w-full px-5 py-4 rounded-2xl bg-surface-container-low border-2 border-transparent focus:border-[#006859]/30 focus:ring-0 focus:outline-none transition-all placeholder:text-on-surface-variant/50 min-h-[140px] resize-none text-sm leading-relaxed"
+                    placeholder="Paste your current resume text here... (Experience, Education, Skills, etc.)"
+                  />
                 )}
-                <div className="flex justify-end mt-1">
+
+                {/* No resume link */}
+                <div className="flex justify-end -mt-1">
                   <a
                     href="/scratch"
                     className="text-xs font-semibold text-tertiary hover:text-tertiary-container transition-colors flex items-center gap-1.5"
@@ -556,7 +584,8 @@ export default function App() {
                     No old resume?
                   </a>
                 </div>
-                {/* ── Optimize Mode Selection ── */}
+
+                {/* Optimize Mode Selection */}
                 <div className="flex flex-row items-center justify-between gap-2 sm:gap-4 bg-surface-container-low rounded-2xl p-1.5 pl-4 sm:pl-5">
                   <p className="font-sans text-[11px] font-bold uppercase tracking-wider text-on-surface-variant flex-shrink-0">
                     Options
@@ -565,23 +594,23 @@ export default function App() {
                     {([
                       {
                         id: "jd" as const,
-                        activeCls: "bg-surface-container-lowest text-primary shadow-sm border border-surface-container-highest",
-                        radioBorder: "border-primary",
-                        radioDot: "bg-primary",
+                        activeCls: "bg-surface-container-lowest text-[#006859] shadow-sm border border-surface-container-highest",
+                        radioBorder: "border-[#006859]",
+                        radioDot: "bg-[#006859]",
                         label: "JD",
                       },
                       {
                         id: "no_jd" as const,
-                        activeCls: "bg-surface-container-lowest text-primary shadow-sm border border-surface-container-highest",
-                        radioBorder: "border-primary",
-                        radioDot: "bg-primary",
+                        activeCls: "bg-surface-container-lowest text-[#006859] shadow-sm border border-surface-container-highest",
+                        radioBorder: "border-[#006859]",
+                        radioDot: "bg-[#006859]",
                         label: "No JD",
                       },
                       {
                         id: "manual" as const,
-                        activeCls: "bg-surface-container-lowest text-primary shadow-sm border border-surface-container-highest",
-                        radioBorder: "border-primary",
-                        radioDot: "bg-primary",
+                        activeCls: "bg-surface-container-lowest text-[#006859] shadow-sm border border-surface-container-highest",
+                        radioBorder: "border-[#006859]",
+                        radioDot: "bg-[#006859]",
                         label: "No Changes",
                       }
                     ] as const).map((opt) => {
@@ -608,67 +637,65 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* JD textarea — only shown in JD mode */}
+                {/* JD textarea */}
                 {optimizeMode === "jd" && (
                   <motion.div
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: "auto" }}
                     exit={{ opacity: 0, height: 0 }}
                     transition={{ duration: 0.25 }}
-                    className="space-y-2 overflow-hidden pt-2"
+                    className="space-y-2 overflow-hidden"
                   >
-                    <label className="font-sans text-xs font-semibold uppercase tracking-wider text-on-surface-variant ml-1">
+                    <label className="font-sans text-[10px] font-black uppercase tracking-widest text-on-surface-variant ml-1">
                       PASTE JOB DESCRIPTION
                     </label>
                     <textarea
                       value={jobDescription}
                       onChange={(e) => setJobDescription(e.target.value)}
-                      className="w-full px-6 py-4 rounded-xl bg-surface-container-low border-none focus:ring-2 focus:ring-primary-container transition-all placeholder:text-on-surface-variant/50 min-h-[120px] resize-none"
+                      className="w-full px-5 py-3 rounded-2xl bg-surface-container-low border-2 border-transparent focus:border-[#006859]/30 focus:ring-0 focus:outline-none transition-all placeholder:text-on-surface-variant/50 min-h-[80px] resize-none text-sm"
                       placeholder="Paste the job description here..."
                     />
                   </motion.div>
                 )}
 
+                {/* Error */}
                 {error && (
-                  <div className="text-error text-sm font-medium flex items-center gap-2">
-                    <AlertTriangle className="w-4 h-4" />
+                  <div className="text-error text-sm font-medium flex items-center gap-2 bg-error/5 border border-error/15 rounded-xl px-4 py-3">
+                    <AlertTriangle className="w-4 h-4 flex-shrink-0" />
                     {error}
                   </div>
                 )}
+
+                {/* See Parsed Text */}
                 {inputType === "file" && file && (
                   <button
                     onClick={handleSeeParsedText}
                     disabled={parsing}
-                    className="w-full bg-surface-container-high text-on-background py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-surface-container-highest transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full bg-surface-container-high text-on-background py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-surface-container-highest transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm"
                   >
-                    <FileText className="w-5 h-5" />
+                    <FileText className="w-4 h-4" />
                     {parsing ? "Parsing..." : "See Parsed Text"}
                   </button>
                 )}
 
-                {/* ── Model Selectors ── */}
-
-                {/* With JD: R1 selector above the submit button */}
+                {/* Model Selectors */}
                 {optimizeMode === "jd" && (
                   <ModelSelector storageKey="r1_preferred_model" label="R1 Model (Analysis)" />
                 )}
-
-                {/* No JD: R2 selector above the submit button */}
                 {optimizeMode === "no_jd" && (
                   <ModelSelector storageKey="preferred_model" label="R2 Model (Generation)" />
                 )}
-
-                {/* No Change: R2 selector above the submit button */}
                 {optimizeMode === "manual" && (
                   <ModelSelector storageKey="preferred_model" label="R2 Model (Generation)" />
                 )}
 
+                {/* Main CTA */}
                 <button
                   onClick={handleGenerate}
                   disabled={loading}
-                  className="w-full bg-on-background text-white py-4 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-primary transition-colors group disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full bg-gradient-to-r from-[#006859] to-[#12f8d7] text-white py-3.5 rounded-2xl font-bold text-base flex items-center justify-center gap-2.5 shadow-[0_8px_30px_rgba(0,104,89,0.3)] hover:shadow-[0_8px_30px_rgba(18,248,215,0.4)] hover:-translate-y-0.5 hover:opacity-90 active:translate-y-0 active:shadow-none transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none"
                 >
-                  <Bolt className="text-primary-container w-5 h-5 fill-primary-container" />
+                  <Bolt className="text-white w-5 h-5 fill-white opacity-80" />
                   {loading && optimizeMode === "jd" && analysisCountdown !== null
                     ? `Analyzing... [${analysisCountdown}s]`
                     : loading
@@ -681,11 +708,9 @@ export default function App() {
                             ? "Optimize Resume"
                             : "Continue to Editor"}
                 </button>
+
               </div>
             </div>
-            {/* Decorative Elements */}
-            <div className="absolute -top-6 -right-6 w-24 h-24 bg-primary-container/20 blur-3xl rounded-full -z-10"></div>
-            <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-tertiary-container/10 blur-3xl rounded-full -z-10"></div>
           </motion.div>
         </section>
 
@@ -771,7 +796,7 @@ export default function App() {
             </div>
             <div className="max-w-6xl mx-auto px-4 md:px-6 flex overflow-x-auto snap-x snap-mandatory gap-6 pt-6 pb-4 md:grid md:grid-cols-3 md:gap-8 items-stretch hide-scrollbar">
               {/* One-Time */}
-              <div 
+              <div
                 onMouseEnter={() => setHoveredPlan("pay_per_use")}
                 onClick={() => { setSelectedPricingPlan("pay_per_use"); setShowDownloadGate(true); }}
                 className={`flex-shrink-0 w-[280px] md:w-auto snap-center p-8 md:p-10 rounded-[2rem] flex flex-col cursor-pointer transition-all duration-300 relative border-2 ${hoveredPlan === "pay_per_use" ? "border-transparent bg-gradient-to-b from-[#006859] to-[#12f8d7] shadow-2xl md:scale-105 z-10 text-white" : "bg-surface-container-low border-surface-container-high text-on-background"}`}
@@ -804,7 +829,7 @@ export default function App() {
               </div>
 
               {/* Most Popular — BEST VALUE */}
-              <div 
+              <div
                 onMouseEnter={() => setHoveredPlan("regular")}
                 onClick={() => { setSelectedPricingPlan("regular"); setShowDownloadGate(true); }}
                 className={`flex-shrink-0 w-[280px] md:w-auto snap-center p-8 md:p-10 rounded-[2rem] flex flex-col relative border-2 cursor-pointer transition-all duration-300 ${hoveredPlan === "regular" ? "border-transparent bg-gradient-to-b from-[#006859] to-[#12f8d7] shadow-2xl shadow-primary/30 md:scale-105 z-10 text-white" : "bg-surface-container-lowest border-primary shadow-lg shadow-primary/5 text-on-background"}`}
@@ -844,7 +869,7 @@ export default function App() {
               </div>
 
               {/* Student Plan — STUDENT OFFER */}
-              <div 
+              <div
                 onMouseEnter={() => setHoveredPlan("student")}
                 onClick={() => { setSelectedPricingPlan("student"); setShowDownloadGate(true); }}
                 className={`flex-shrink-0 w-[280px] md:w-auto snap-center p-8 md:p-10 rounded-[2rem] flex flex-col relative border-2 cursor-pointer transition-all duration-300 ${hoveredPlan === "student" ? "border-transparent bg-gradient-to-b from-[#006859] to-[#12f8d7] shadow-2xl md:scale-105 z-10 text-white" : "bg-surface-container-low border-amber-400/60 text-on-background"}`}
