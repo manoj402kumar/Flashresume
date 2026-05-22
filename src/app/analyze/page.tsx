@@ -301,9 +301,11 @@ export default function AnalyzePage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
-          className="bg-surface-container-lowest rounded-[2rem] p-6 shadow-xl border border-surface-container-high flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden"
+          className="bg-surface-container-lowest rounded-[2rem] p-6 shadow-xl border border-surface-container-high flex flex-col md:flex-row items-center justify-between gap-6 relative z-[60]"
         >
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[#006859]/5 to-transparent skew-x-12 translate-x-[-100%] animate-[shimmer_3s_infinite]"></div>
+          <div className="absolute inset-0 overflow-hidden rounded-[2rem] pointer-events-none">
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[#006859]/5 to-transparent skew-x-12 translate-x-[-100%] animate-[shimmer_3s_infinite]"></div>
+          </div>
 
           <div className="flex-1 w-full md:w-auto relative z-10">
             <p className="text-sm font-bold text-on-background mb-2 flex items-center gap-2">

@@ -15,8 +15,8 @@ class CombinedAnalysisResponse(BaseModel):
     """Combined response with both ATS analysis and project check"""
     ats_score: int
     matched_skills: List[str]
-    missing_skills: List[str]
-    all_missing_skills: List[str] = []
+    missing_skills: List[str]          # filtered (updated_missing_skills from LLM) — passed to generation
+    all_missing_skills: List[str] = []  # full unfiltered — shown to user
     has_relevant_projects: bool
     relevant_projects: List[str]
     total_projects_count: int

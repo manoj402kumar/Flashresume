@@ -66,7 +66,8 @@ export interface CombinedAnalysisResponse {
   // ATS Analysis
   ats_score: number;
   matched_skills: string[];
-  missing_skills: string[];
+  missing_skills: string[];       // legacy field (Pydantic model key) — mapped from updated_missing_skills
+  updated_missing_skills?: string[];
   all_missing_skills: string[];
   // Project Check
   has_relevant_projects: boolean;

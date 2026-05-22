@@ -317,6 +317,7 @@ export default function App() {
           ats_score: 0,
           matched_skills: [],
           missing_skills: [],
+          updated_missing_skills: [],
           has_relevant_projects: true,
           relevant_projects: [],
           total_projects_count: 0,
