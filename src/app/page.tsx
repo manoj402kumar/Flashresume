@@ -22,7 +22,8 @@ import {
   PenLine,
   SlidersHorizontal,
   GraduationCap,
-  Briefcase
+  Briefcase,
+  Info
 } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
@@ -62,6 +63,7 @@ export default function App() {
   const [copied, setCopied] = useState(false);
   const [showModeDropdown, setShowModeDropdown] = useState(false);
   const [purchaseSuccess, setPurchaseSuccess] = useState(false);
+  const [activeTooltip, setActiveTooltip] = useState<"nav" | "dropdown" | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -119,13 +121,18 @@ export default function App() {
   }, [currentUser]);
 
   useEffect(() => {
-    const handler = (e: MouseEvent) => {
+    const handler = (e: MouseEvent | TouchEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
         setShowModeDropdown(false);
       }
+      setActiveTooltip(null);
     };
     document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
+    document.addEventListener("touchstart", handler);
+    return () => {
+      document.removeEventListener("mousedown", handler);
+      document.removeEventListener("touchstart", handler);
+    };
   }, []);
 
   useEffect(() => {
@@ -330,12 +337,12 @@ export default function App() {
   const handleShare = async () => {
     if (!referralCode) return;
     const url = `${window.location.origin}/?ref=${referralCode}`;
-    
+
     if (navigator.share) {
       try {
         await navigator.share({
           title: "Flashresume",
-          text: "Get your resume rebuilt in 60 seconds! Use my link to get +20 free credits.",
+          text: "I used Flashresume to rebuild my resume in 60 seconds! Must try.",
           url: url,
         });
         return;
@@ -343,7 +350,7 @@ export default function App() {
         if (err.name === "AbortError") return;
       }
     }
-    
+
     navigator.clipboard.writeText(url);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
@@ -394,11 +401,26 @@ export default function App() {
             {currentUser ? (
               <div className="flex items-center gap-2 sm:gap-3">
                 <div className="hidden sm:flex items-center mr-1">
-                  <button 
+                  <button
                     onClick={handleShare}
-                    className="flex items-center gap-1.5 bg-[#006859] text-white hover:bg-[#005145] px-3 py-1.5 rounded-xl text-sm font-bold transition-all shadow-sm active:scale-95"
+                    className="flex items-center gap-1 bg-[#006859] text-white hover:bg-[#005145] pl-3 pr-2 py-1.5 rounded-xl text-sm font-bold transition-all shadow-sm active:scale-95"
                   >
                     🎁 <span className="hidden md:inline">{copied ? "Copied!" : "Invite & Earn"}</span>
+                    <div 
+                      className="relative group/tooltip inline-flex items-center" 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setActiveTooltip(activeTooltip === "nav" ? null : "nav");
+                      }}
+                      onMouseEnter={() => setActiveTooltip("nav")}
+                      onMouseLeave={() => setActiveTooltip(null)}
+                    >
+                      <Info className="w-3.5 h-3.5 opacity-70 hover:opacity-100 transition-opacity ml-1 cursor-help" />
+                      <span className={`absolute top-full mt-2 left-1/2 -translate-x-1/2 ${activeTooltip === "nav" ? "block" : "hidden group-hover/tooltip:block"} bg-[#1a1a1f] text-white text-[10px] font-semibold leading-normal rounded-lg px-2.5 py-1.5 w-48 shadow-xl text-center pointer-events-none z-50`}>
+                        You will be credited +20 credits after your friend downloads his/her first resume. Hurry up!
+                        <span className="absolute bottom-full left-1/2 -translate-x-1/2 border-[4px] border-transparent border-b-[#1a1a1f]"></span>
+                      </span>
+                    </div>
                   </button>
                 </div>
                 <CreditBadge onTopUpClick={() => { setSelectedPricingPlan(null); setShowDownloadGate(true); }} />
@@ -449,9 +471,24 @@ export default function App() {
                             <div className="pt-2 space-y-2 border-t border-surface-container-low mt-2">
                               <button
                                 onClick={handleShare}
-                                className="w-full py-2.5 bg-[#006859] text-white hover:bg-[#005145] text-sm font-bold rounded-xl transition-all flex items-center justify-center gap-2 shadow-sm active:scale-95"
+                                className="w-full py-2.5 bg-[#006859] text-white hover:bg-[#005145] text-sm font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 shadow-sm active:scale-95"
                               >
                                 🎁 {copied ? "Link Copied!" : "Invite Friends (+20 Credits)"}
+                                <div 
+                                  className="relative group/tooltip inline-flex items-center" 
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setActiveTooltip(activeTooltip === "dropdown" ? null : "dropdown");
+                                  }}
+                                  onMouseEnter={() => setActiveTooltip("dropdown")}
+                                  onMouseLeave={() => setActiveTooltip(null)}
+                                >
+                                  <Info className="w-3.5 h-3.5 opacity-70 hover:opacity-100 transition-opacity ml-1 cursor-help" />
+                                  <span className={`absolute right-full mr-2 top-1/2 -translate-y-1/2 ${activeTooltip === "dropdown" ? "block" : "hidden group-hover/tooltip:block"} bg-[#1a1a1f] text-white text-[10px] font-semibold leading-normal rounded-lg px-2.5 py-1.5 w-48 shadow-xl text-center pointer-events-none z-50`}>
+                                    You will be credited +20 credits after your friend downloads his/her first resume. Hurry up!
+                                    <span className="absolute left-full top-1/2 -translate-y-1/2 border-[4px] border-transparent border-l-[#1a1a1f]"></span>
+                                  </span>
+                                </div>
                               </button>
                               <button
                                 onClick={() => {
@@ -863,7 +900,7 @@ export default function App() {
                     Best plan to verify
                   </li>
                 </ul>
-                <button 
+                <button
                   onClick={() => { setSelectedPricingPlan("pay_per_use"); setShowDownloadGate(true); }}
                   className={`w-full py-4 rounded-xl font-bold transition-colors ${hoveredPlan === "pay_per_use" ? "bg-white text-[#006859] shadow-lg shadow-black/5 hover:bg-white/90" : "border border-on-surface-variant/20 hover:bg-surface-container-high"}`}
                 >
@@ -905,7 +942,7 @@ export default function App() {
                     <span>All Premium Features</span>
                   </li>
                 </ul>
-                <button 
+                <button
                   onClick={() => { setSelectedPricingPlan("regular"); setShowDownloadGate(true); }}
                   className={`w-full py-4 rounded-xl font-bold transition-all ${hoveredPlan === "regular" ? "bg-white text-[#006859] shadow-lg shadow-black/5 hover:bg-white/90" : "flash-gradient text-white hover:opacity-90"}`}
                 >
@@ -950,7 +987,7 @@ export default function App() {
                     ✓ Verified Student
                   </li>
                 </ul>
-                <button 
+                <button
                   onClick={() => { setSelectedPricingPlan("student"); setShowDownloadGate(true); }}
                   className={`w-full py-4 rounded-xl font-bold transition-all ${hoveredPlan === "student" ? "bg-white text-[#006859] shadow-lg shadow-black/5 hover:bg-white/90" : "border-2 border-amber-400 bg-amber-50 text-amber-700 hover:bg-amber-100"}`}
                 >
