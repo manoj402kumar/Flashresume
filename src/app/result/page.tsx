@@ -25,7 +25,8 @@ import {
   PlusCircle,
   ChevronDown,
   ChevronUp,
-  User
+  User,
+  Trash2
 } from "lucide-react";
 
 // Utility: move element in array from index `from` to index `to`
@@ -2096,9 +2097,9 @@ export default function ResultPage() {
                                                     achievements: []
                                                   });
                                                 }}
-                                                className="px-3 py-1 text-sm text-red-500 hover:bg-red-50 rounded-lg transition-colors font-semibold self-start mt-1"
+                                                className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition-colors self-start mt-1"
                                               >
-                                                Remove
+                                                <Trash2 className="w-4 h-4" />
                                               </button>
                                             </div>
                                           ) : (
