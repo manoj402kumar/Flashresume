@@ -2230,49 +2230,54 @@ export default function ResultPage() {
                   )}
 
                   {/* AI Changes Card */}
-                  <div className="soothing-light-theme text-on-background bg-surface-container-lowest rounded-[2rem] p-8 shadow-2xl border border-secondary-container/10">
-                    <div className="flex items-center justify-between mb-6">
-                      <div className="flex items-center gap-3">
-                        <Sparkles className="w-6 h-6 text-secondary-container" />
-                        <h3 className="font-headline text-2xl font-bold text-on-background">AI Changes</h3>
+                  <div className="rounded-[2rem] overflow-hidden shadow-xl border border-[#006859]/15">
+                    {/* Header */}
+                    <div className="bg-gradient-to-r from-[#006859] to-[#0a9980] px-6 py-4 flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0">
+                        <Sparkles className="w-4 h-4 text-white" />
                       </div>
-                      <span className="bg-secondary-container/20 px-3 py-1 rounded-full text-sm font-bold text-secondary-container">
+                      <div>
+                        <h3 className="text-white font-bold text-base leading-tight">AI Changes</h3>
+                        <p className="text-white/70 text-xs">What the AI improved in your resume</p>
+                      </div>
+                      <span className="ml-auto bg-white/20 text-white text-xs font-bold px-2.5 py-1 rounded-full">
                         {resume.changes.length}
                       </span>
                     </div>
 
-                    {/* Statistics */}
-                    <div className="grid grid-cols-2 gap-4 mb-6">
-                      <div className="bg-primary-container/10 p-4 rounded-xl text-center">
-                        <p className="text-3xl font-bold text-primary">+{scoreImprovement}</p>
-                        <p className="text-xs text-on-surface-variant mt-1">Points Gained</p>
+                    <div className="bg-surface-container-lowest px-6 py-5">
+                      {/* Statistics */}
+                      <div className="grid grid-cols-2 gap-4 mb-5">
+                        <div className="bg-[#006859]/8 p-4 rounded-xl text-center border border-[#006859]/10">
+                          <p className="text-3xl font-bold text-[#006859]">+{scoreImprovement}</p>
+                          <p className="text-xs text-on-surface-variant mt-1">Points Gained</p>
+                        </div>
+                        <div className="bg-[#006859]/8 p-4 rounded-xl text-center border border-[#006859]/10">
+                          <p className="text-3xl font-bold text-[#006859]">{resume.changes.length}</p>
+                          <p className="text-xs text-on-surface-variant mt-1">Improvements</p>
+                        </div>
                       </div>
-                      <div className="bg-secondary-container/10 p-4 rounded-xl text-center">
-                        <p className="text-3xl font-bold text-secondary-container">{resume.changes.length}</p>
-                        <p className="text-xs text-on-surface-variant mt-1">Improvements</p>
-                      </div>
-                    </div>
 
-                    {/* Change List */}
-                    <div className="space-y-3 max-h-96 overflow-y-auto pr-2">
-                      {resume.changes.map((change, idx) => (
-                        <motion.div
-                          key={idx}
-                          initial={{ opacity: 0, x: -20 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          transition={{ delay: 0.2 + idx * 0.05 }}
-                          className="p-4 bg-primary-container/5 border border-primary-container/20 rounded-xl hover:bg-primary-container/10 transition-colors"
-                        >
-                          <div className="flex items-start gap-3">
-                            <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center text-white text-xs font-bold flex-shrink-0 mt-0.5">
+                      {/* Change List — scrollable */}
+                      <div className="space-y-3 max-h-96 overflow-y-auto pr-2">
+                        {resume.changes.map((change, idx) => (
+                          <motion.div
+                            key={idx}
+                            initial={{ opacity: 0, x: -16 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: 0.1 + idx * 0.05 }}
+                            className="flex items-start gap-3 p-3 rounded-xl bg-[#006859]/5 border border-[#006859]/10 hover:bg-[#006859]/10 transition-colors"
+                          >
+                            <div className="w-5 h-5 rounded-full bg-gradient-to-br from-[#006859] to-[#12f8d7] flex items-center justify-center text-white text-[10px] font-black flex-shrink-0 mt-0.5">
                               {idx + 1}
                             </div>
                             <p className="text-sm text-on-background leading-relaxed flex-1">{change}</p>
-                          </div>
-                        </motion.div>
-                      ))}
+                          </motion.div>
+                        ))}
+                      </div>
                     </div>
                   </div>
+
                 </motion.div>
               )}
 
