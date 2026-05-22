@@ -21,5 +21,5 @@ COPY . .
 # Expose port
 EXPOSE 8000
 
-# Run Uvicorn
-CMD uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000}
+# Run Uvicorn with 2 workers for better concurrency
+CMD uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000} --workers 2
