@@ -166,7 +166,7 @@ export default function ResultPage() {
   const [showChanges, setShowChanges] = useState(false);
   const [showMissedKeywords, setShowMissedKeywords] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [editMode, setEditMode] = useState(false);
+  const [editMode, setEditMode] = useState(true);
   const [openEditSection, setOpenEditSection] = useState<string>("contact");
   const [showHighlights, setShowHighlights] = useState(true);
   const [downloadingPDF, setDownloadingPDF] = useState(false);
@@ -811,7 +811,7 @@ export default function ResultPage() {
               <button
                 onClick={() => { setEditMode(true); setShowChanges(false); setShowMissedKeywords(false); }}
                 className={`relative flex-1 py-3 px-3 text-sm font-bold transition-all duration-200 rounded-2xl flex items-center justify-center gap-2 active:scale-95 ${editMode
-                  ? "bg-primary text-white shadow-lg shadow-primary/30 border border-primary"
+                  ? "bg-[#006859] text-white shadow-lg shadow-[#006859]/30 border border-[#006859]"
                   : "bg-surface-container-low text-on-surface-variant border border-surface-container-high hover:bg-surface-container-high hover:text-on-background"
                   }`}
               >
@@ -821,7 +821,7 @@ export default function ResultPage() {
               <button
                 onClick={() => { setShowChanges(true); setEditMode(false); setShowMissedKeywords(false); }}
                 className={`flex-1 py-3 px-3 text-sm font-bold transition-all duration-200 rounded-2xl flex items-center justify-center gap-2 active:scale-95 ${showChanges
-                  ? "bg-secondary text-white shadow-lg shadow-secondary/30 border border-secondary"
+                  ? "bg-[#006859] text-white shadow-lg shadow-[#006859]/30 border border-[#006859]"
                   : "bg-surface-container-low text-on-surface-variant border border-surface-container-high hover:bg-surface-container-high hover:text-on-background"
                   }`}
               >
@@ -854,30 +854,48 @@ export default function ResultPage() {
                   exit={{ opacity: 0, height: 0, marginTop: 0 }}
                   className="overflow-hidden"
                 >
-                  <div className="flex items-center justify-between bg-primary-container/20 border border-primary/20 px-5 py-3 rounded-xl shadow-sm">
+                  <div className="relative overflow-hidden flex items-center justify-between bg-gradient-to-br from-[#006859]/5 to-[#12f8d7]/5 border border-[#006859]/15 px-6 py-5 rounded-3xl shadow-sm mb-2">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-[#12f8d7]/10 blur-[50px] rounded-full pointer-events-none -z-10"></div>
+                    <div className="absolute bottom-0 left-0 w-32 h-32 bg-[#006859]/10 blur-[50px] rounded-full pointer-events-none -z-10"></div>
+                    
                     {noJdMode ? (
-                      <div className="flex items-center justify-center w-full gap-3 py-1">
-                        <TrendingUp className="w-5 h-5 text-primary animate-pulse" />
-                        <span className="font-bold text-primary text-sm uppercase tracking-wider">ATS formatting score after optimization:</span>
-                        <span className="text-2xl font-black text-primary">100%</span>
+                      <div className="flex items-center justify-center w-full gap-4 relative z-10">
+                        <div className="w-10 h-10 rounded-full bg-[#006859]/10 flex items-center justify-center">
+                          <TrendingUp className="w-5 h-5 text-[#006859]" />
+                        </div>
+                        <div className="flex flex-col">
+                           <span className="font-extrabold text-[#006859] text-xs uppercase tracking-widest opacity-80">ATS Formatting Score</span>
+                           <span className="font-bold text-on-surface-variant text-sm">After Optimization</span>
+                        </div>
+                        <div className="ml-auto text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-[#006859] to-[#12f8d7]">
+                           100%
+                        </div>
                       </div>
                     ) : (
-                      <>
-                        <div className="text-center">
-                          <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider">Before</p>
-                          <p className="text-xl font-black text-on-surface-variant">{resume.ats_score_before}</p>
+                      <div className="w-full flex items-center relative z-10">
+                        <div className="flex flex-col items-start min-w-[60px]">
+                          <span className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant/60 mb-1">Before</span>
+                          <span className="text-3xl font-black text-on-surface-variant/80 leading-none">{resume.ats_score_before}</span>
                         </div>
-                        <div className="flex flex-col items-center flex-1 px-4">
-                          <TrendingUp className="w-5 h-5 text-primary mb-1 animate-pulse" />
+                        
+                        <div className="flex-1 flex items-center justify-center px-4 relative">
+                           <div className="h-[2px] w-full bg-gradient-to-r from-transparent via-[#006859]/20 to-[#12f8d7]/40 relative">
+                             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-surface border border-[#006859]/10 flex items-center justify-center shadow-sm">
+                               <TrendingUp className="w-4 h-4 text-[#006859]" />
+                             </div>
+                           </div>
                         </div>
-                        <div className="text-center relative">
-                          <p className="text-[10px] font-bold text-primary uppercase tracking-wider">After</p>
-                          <p className="text-xl font-black text-primary">{resume.ats_score_after}</p>
+
+                        <div className="flex flex-col items-end min-w-[60px]">
+                          <span className="text-[10px] font-black uppercase tracking-widest text-[#006859] mb-1">After</span>
+                          <span className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-br from-[#006859] to-[#12f8d7] leading-none drop-shadow-sm">{resume.ats_score_after}</span>
                         </div>
-                        <div className="ml-4 bg-primary text-white px-3 py-1 rounded-lg text-sm font-bold shadow-sm whitespace-nowrap">
-                          +{scoreImprovement} Points
+
+                        <div className="ml-6 bg-gradient-to-r from-[#006859] to-[#12f8d7] text-white px-4 py-2 rounded-2xl text-sm font-black tracking-wide shadow-lg shadow-[#006859]/25 whitespace-nowrap flex items-center gap-1.5">
+                          <span>+{scoreImprovement}</span>
+                          <span className="opacity-80 font-bold text-[10px]">PTS</span>
                         </div>
-                      </>
+                      </div>
                     )}
                   </div>
                 </motion.div>

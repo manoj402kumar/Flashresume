@@ -195,57 +195,7 @@ export default function AccountSection({ onTopUpClick }: AccountSectionProps) {
             </div>
           </div>
 
-          {/* ── Refer & Earn Section ── */}
-          <div className="mt-8 pt-8 border-t border-surface-container-high">
-            <div className="flex flex-col md:flex-row gap-6 md:items-center justify-between">
-              <div>
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                    <Share2 className="w-4 h-4 text-primary" />
-                  </div>
-                  <h3 className="font-headline text-xl font-bold text-on-background">Refer &amp; Earn</h3>
-                </div>
-                <p className="text-on-surface-variant text-sm max-w-sm">
-                  Share your link. When a friend purchases any plan, you get{" "}
-                  <span className="font-bold text-primary">+20 Credits</span> automatically!
-                </p>
-                <div className="flex items-center gap-6 mt-3 text-sm font-semibold">
-                  <p className="text-on-surface-variant">
-                    Friends Referred:{" "}
-                    <span className="text-on-background font-black">{referralStats.count}</span>
-                  </p>
-                  <p className="text-on-surface-variant">
-                    Credits Earned:{" "}
-                    <span className="text-primary font-black">+{referralStats.earned}</span>
-                  </p>
-                </div>
-              </div>
 
-              <div className="flex flex-col gap-2 w-full md:w-80 flex-shrink-0">
-                <p className="text-xs font-bold text-on-surface-variant uppercase tracking-wider">Your Referral Link</p>
-                <div className="flex items-center bg-surface-container-lowest border border-primary/20 rounded-xl overflow-hidden">
-                  <div className="px-4 py-3 text-primary font-mono text-xs font-bold border-r border-primary/20 truncate flex-1">
-                    {referralLink ?? "Generating your link..."}
-                  </div>
-                  <button
-                    onClick={handleCopyLink}
-                    disabled={!referralLink}
-                    className="px-4 py-3 hover:bg-primary/10 transition-colors text-primary flex items-center justify-center flex-shrink-0 disabled:opacity-40"
-                    title="Copy Link"
-                  >
-                    {copied
-                      ? <CheckCircle2 className="w-5 h-5 text-green-500" />
-                      : <Copy className="w-5 h-5" />}
-                  </button>
-                </div>
-                {referralCode && (
-                  <p className="text-xs text-on-surface-variant text-center">
-                    Code: <span className="font-mono font-black text-on-background tracking-widest">{referralCode}</span>
-                  </p>
-                )}
-              </div>
-            </div>
-          </div>
         </motion.div>
       </div>
     </section>

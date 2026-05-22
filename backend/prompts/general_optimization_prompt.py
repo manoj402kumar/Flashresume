@@ -20,7 +20,7 @@ STEP-BY-STEP ALGORITHM:
 Step 1: Extract resume sections (already done — you have RESUME_TEXT below)
 
 Step 2: Summary Evaluation
-If summary in RESUME_TEXT has 16-20 words and It is professional keep it as-is, else rewrite it in 16-20 words only.
+If summary in RESUME_TEXT has 16-20 words and It is professional keep it as-is, else rewrite it in 16-20 words only to impress recruiter.
 
 Step 3: Education
 - Keep as-is, NO changes. Include all educational qualifications present in RESUME_TEXT (B.Tech, XII, Diploma, etc.)

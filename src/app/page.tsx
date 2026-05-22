@@ -31,7 +31,7 @@ import PricingPopup from "@/components/PricingPopup";
 import { supabase } from "@/lib/supabase";
 import { User } from "@supabase/supabase-js";
 import CreditBadge from "@/components/CreditBadge";
-import AccountSection from "@/components/AccountSection";
+
 import LiveDemoSection from "@/components/LiveDemoSection";
 import ModelSelector from "@/components/ModelSelector";
 
@@ -58,6 +58,8 @@ export default function App() {
   const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [subscriptionData, setSubscriptionData] = useState<any>(null);
   const [optimizeMode, setOptimizeMode] = useState<"jd" | "no_jd" | "manual" | null>("jd");
+  const [referralCode, setReferralCode] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
   const [showModeDropdown, setShowModeDropdown] = useState(false);
   const [purchaseSuccess, setPurchaseSuccess] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -130,8 +132,11 @@ export default function App() {
     if (!currentUser) return;
 
     const fetchAccountData = async () => {
-      const { data: userData } = await supabase.from("users").select("credits_balance").eq("id", currentUser.id).single();
-      if (userData) setCredits(userData.credits_balance);
+      const { data: userData } = await supabase.from("users").select("credits_balance, referral_code").eq("id", currentUser.id).single();
+      if (userData) {
+        setCredits(userData.credits_balance);
+        setReferralCode(userData.referral_code);
+      }
 
       const { data: subData } = await supabase.from("subscriptions").select("*").eq("user_id", currentUser.id).eq("is_active", true).order("created_at", { ascending: false }).limit(1).maybeSingle();
       setSubscriptionData(subData);
@@ -366,6 +371,20 @@ export default function App() {
           <div className="flex items-center gap-2 sm:gap-3 shrink-0">
             {currentUser ? (
               <div className="flex items-center gap-2 sm:gap-3">
+                <div className="hidden sm:flex items-center mr-1">
+                  <button 
+                    onClick={() => {
+                      if (referralCode) {
+                        navigator.clipboard.writeText(`${window.location.origin}/?ref=${referralCode}`);
+                        setCopied(true);
+                        setTimeout(() => setCopied(false), 2000);
+                      }
+                    }}
+                    className="flex items-center gap-1.5 bg-[#006859] text-white hover:bg-[#005145] px-3 py-1.5 rounded-xl text-sm font-bold transition-all shadow-sm active:scale-95"
+                  >
+                    🎁 <span className="hidden md:inline">{copied ? "Copied!" : "Invite & Earn"}</span>
+                  </button>
+                </div>
                 <CreditBadge onTopUpClick={() => { setSelectedPricingPlan(null); setShowDownloadGate(true); }} />
 
                 {/* Account Dropdown */}
@@ -411,7 +430,19 @@ export default function App() {
                               </div>
                             )}
 
-                            <div className="pt-2 space-y-2">
+                            <div className="pt-2 space-y-2 border-t border-surface-container-low mt-2">
+                              <button
+                                onClick={() => {
+                                  if (referralCode) {
+                                    navigator.clipboard.writeText(`${window.location.origin}/?ref=${referralCode}`);
+                                    setCopied(true);
+                                    setTimeout(() => setCopied(false), 2000);
+                                  }
+                                }}
+                                className="w-full py-2.5 bg-[#006859] text-white hover:bg-[#005145] text-sm font-bold rounded-xl transition-all flex items-center justify-center gap-2 shadow-sm active:scale-95"
+                              >
+                                🎁 {copied ? "Link Copied!" : "Invite Friends (+20 Credits)"}
+                              </button>
                               <button
                                 onClick={() => {
                                   setShowAccountDropdown(false);
@@ -754,7 +785,7 @@ export default function App() {
                   number: "03",
                   icon: <PenLine className="w-6 h-6 text-tertiary" />,
                   title: "First-Time Builders",
-                  desc: "Students who have never written a resume and need a clean starting point - no blank page paralysis.",
+                  desc: "Students who are building their first resume with proper inspiration and guidance.",
                   accent: "from-tertiary/10 to-tertiary/5",
                   border: "border-tertiary/20",
                   numColor: "text-tertiary",
@@ -798,8 +829,7 @@ export default function App() {
               {/* One-Time */}
               <div
                 onMouseEnter={() => setHoveredPlan("pay_per_use")}
-                onClick={() => { setSelectedPricingPlan("pay_per_use"); setShowDownloadGate(true); }}
-                className={`flex-shrink-0 w-[280px] md:w-auto snap-center p-8 md:p-10 rounded-[2rem] flex flex-col cursor-pointer transition-all duration-300 relative border-2 ${hoveredPlan === "pay_per_use" ? "border-transparent bg-gradient-to-b from-[#006859] to-[#12f8d7] shadow-2xl md:scale-105 z-10 text-white" : "bg-surface-container-low border-surface-container-high text-on-background"}`}
+                className={`flex-shrink-0 w-[280px] md:w-auto snap-center p-8 md:p-10 rounded-[2rem] flex flex-col transition-all duration-300 relative border-2 ${hoveredPlan === "pay_per_use" ? "border-transparent bg-gradient-to-b from-[#006859] to-[#12f8d7] shadow-2xl md:scale-105 z-10 text-white" : "bg-surface-container-low border-surface-container-high text-on-background"}`}
               >
                 {/* Selection Indicator */}
                 <div className={`absolute top-4 right-4 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-200 ${hoveredPlan === "pay_per_use" ? 'border-white bg-white scale-110' : 'border-on-surface-variant/30'}`}>
@@ -823,7 +853,10 @@ export default function App() {
                     Best plan to verify
                   </li>
                 </ul>
-                <button className={`w-full py-4 rounded-xl font-bold transition-colors ${hoveredPlan === "pay_per_use" ? "bg-white text-[#006859] shadow-lg shadow-black/5 hover:bg-white/90" : "border border-on-surface-variant/20 hover:bg-surface-container-high"}`}>
+                <button 
+                  onClick={() => { setSelectedPricingPlan("pay_per_use"); setShowDownloadGate(true); }}
+                  className={`w-full py-4 rounded-xl font-bold transition-colors ${hoveredPlan === "pay_per_use" ? "bg-white text-[#006859] shadow-lg shadow-black/5 hover:bg-white/90" : "border border-on-surface-variant/20 hover:bg-surface-container-high"}`}
+                >
                   Get Started
                 </button>
               </div>
@@ -831,8 +864,7 @@ export default function App() {
               {/* Most Popular — BEST VALUE */}
               <div
                 onMouseEnter={() => setHoveredPlan("regular")}
-                onClick={() => { setSelectedPricingPlan("regular"); setShowDownloadGate(true); }}
-                className={`flex-shrink-0 w-[280px] md:w-auto snap-center p-8 md:p-10 rounded-[2rem] flex flex-col relative border-2 cursor-pointer transition-all duration-300 ${hoveredPlan === "regular" ? "border-transparent bg-gradient-to-b from-[#006859] to-[#12f8d7] shadow-2xl shadow-primary/30 md:scale-105 z-10 text-white" : "bg-surface-container-lowest border-primary shadow-lg shadow-primary/5 text-on-background"}`}
+                className={`flex-shrink-0 w-[280px] md:w-auto snap-center p-8 md:p-10 rounded-[2rem] flex flex-col relative border-2 transition-all duration-300 ${hoveredPlan === "regular" ? "border-transparent bg-gradient-to-b from-[#006859] to-[#12f8d7] shadow-2xl shadow-primary/30 md:scale-105 z-10 text-white" : "bg-surface-container-lowest border-primary shadow-lg shadow-primary/5 text-on-background"}`}
               >
                 {/* Selection Indicator */}
                 <div className={`absolute top-4 right-4 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-200 z-20 ${hoveredPlan === "regular" ? 'border-white bg-white scale-110' : 'border-primary/30'}`}>
@@ -863,7 +895,10 @@ export default function App() {
                     <span>All Premium Features</span>
                   </li>
                 </ul>
-                <button className={`w-full py-4 rounded-xl font-bold transition-all ${hoveredPlan === "regular" ? "bg-white text-[#006859] shadow-lg shadow-black/5 hover:bg-white/90" : "flash-gradient text-white hover:opacity-90"}`}>
+                <button 
+                  onClick={() => { setSelectedPricingPlan("regular"); setShowDownloadGate(true); }}
+                  className={`w-full py-4 rounded-xl font-bold transition-all ${hoveredPlan === "regular" ? "bg-white text-[#006859] shadow-lg shadow-black/5 hover:bg-white/90" : "flash-gradient text-white hover:opacity-90"}`}
+                >
                   Pay & Continue →
                 </button>
               </div>
@@ -871,8 +906,7 @@ export default function App() {
               {/* Student Plan — STUDENT OFFER */}
               <div
                 onMouseEnter={() => setHoveredPlan("student")}
-                onClick={() => { setSelectedPricingPlan("student"); setShowDownloadGate(true); }}
-                className={`flex-shrink-0 w-[280px] md:w-auto snap-center p-8 md:p-10 rounded-[2rem] flex flex-col relative border-2 cursor-pointer transition-all duration-300 ${hoveredPlan === "student" ? "border-transparent bg-gradient-to-b from-[#006859] to-[#12f8d7] shadow-2xl md:scale-105 z-10 text-white" : "bg-surface-container-low border-amber-400/60 text-on-background"}`}
+                className={`flex-shrink-0 w-[280px] md:w-auto snap-center p-8 md:p-10 rounded-[2rem] flex flex-col relative border-2 transition-all duration-300 ${hoveredPlan === "student" ? "border-transparent bg-gradient-to-b from-[#006859] to-[#12f8d7] shadow-2xl md:scale-105 z-10 text-white" : "bg-surface-container-low border-amber-400/60 text-on-background"}`}
               >
                 {/* Selection Indicator */}
                 <div className={`absolute top-4 right-4 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-200 z-20 ${hoveredPlan === "student" ? 'border-white bg-white scale-110' : 'border-amber-400/30'}`}>
@@ -906,7 +940,10 @@ export default function App() {
                     ✓ Verified Student
                   </li>
                 </ul>
-                <button className={`w-full py-4 rounded-xl font-bold transition-all ${hoveredPlan === "student" ? "bg-white text-[#006859] shadow-lg shadow-black/5 hover:bg-white/90" : "border-2 border-amber-400 bg-amber-50 text-amber-700 hover:bg-amber-100"}`}>
+                <button 
+                  onClick={() => { setSelectedPricingPlan("student"); setShowDownloadGate(true); }}
+                  className={`w-full py-4 rounded-xl font-bold transition-all ${hoveredPlan === "student" ? "bg-white text-[#006859] shadow-lg shadow-black/5 hover:bg-white/90" : "border-2 border-amber-400 bg-amber-50 text-amber-700 hover:bg-amber-100"}`}
+                >
                   Claim Student Offer
                 </button>
               </div>
@@ -914,10 +951,7 @@ export default function App() {
           </section>
         )}
 
-        {/* Account & Refer Earn Section */}
-        {currentUser && (
-          <AccountSection onTopUpClick={() => { setSelectedPricingPlan(null); setShowDownloadGate(true); }} />
-        )}
+
 
         {/* Reviews Section */}
         <section id="reviews" className="py-32">

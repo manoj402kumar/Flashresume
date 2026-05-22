@@ -16,7 +16,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body suppressHydrationWarning>
         {children}
-        <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="afterInteractive" />
+        <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="beforeInteractive" />
       </body>
     </html>
   );
