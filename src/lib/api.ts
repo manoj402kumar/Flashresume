@@ -173,6 +173,7 @@ export interface TemplateV1 {
     miscellaneous: string[];
   };
   changes: string[];
+  ai_suggestions?: string[] | null;
   section_order?: string[];
   custom_sections?: Array<{
     id: string;

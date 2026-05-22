@@ -2189,8 +2189,47 @@ export default function ResultPage() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -20 }}
                   transition={{ duration: 0.3 }}
-                  className="w-full max-w-2xl mx-auto"
+                  className="w-full max-w-2xl mx-auto space-y-5"
                 >
+                  {/* AI Suggestions Card */}
+                  {resume.ai_suggestions && resume.ai_suggestions.length > 0 && (
+                    <div className="rounded-[2rem] overflow-hidden shadow-xl border border-[#006859]/15">
+                      {/* Header */}
+                      <div className="bg-gradient-to-r from-[#006859] to-[#0a9980] px-6 py-4 flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a2 2 0 0 1-2 2H10a2 2 0 0 1-2-2v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7z"/><line x1="9" y1="21" x2="15" y2="21"/>
+                          </svg>
+                        </div>
+                        <div>
+                          <h3 className="text-white font-bold text-base leading-tight">AI Suggestions</h3>
+                          <p className="text-white/70 text-xs">Personalized growth tips for your next steps</p>
+                        </div>
+                        <span className="ml-auto bg-white/20 text-white text-xs font-bold px-2.5 py-1 rounded-full">
+                          {resume.ai_suggestions.length}
+                        </span>
+                      </div>
+                      {/* Suggestions List */}
+                      <div className="bg-surface-container-lowest px-6 py-5 space-y-3">
+                        {resume.ai_suggestions.map((tip, idx) => (
+                          <motion.div
+                            key={idx}
+                            initial={{ opacity: 0, x: -16 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: 0.1 + idx * 0.06 }}
+                            className="flex items-start gap-3 p-3 rounded-xl bg-[#006859]/5 border border-[#006859]/10 hover:bg-[#006859]/10 transition-colors"
+                          >
+                            <div className="w-5 h-5 rounded-full bg-gradient-to-br from-[#006859] to-[#12f8d7] flex items-center justify-center text-white text-[10px] font-black flex-shrink-0 mt-0.5">
+                              {idx + 1}
+                            </div>
+                            <p className="text-sm text-on-background leading-relaxed flex-1">{tip}</p>
+                          </motion.div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* AI Changes Card */}
                   <div className="soothing-light-theme text-on-background bg-surface-container-lowest rounded-[2rem] p-8 shadow-2xl border border-secondary-container/10">
                     <div className="flex items-center justify-between mb-6">
                       <div className="flex items-center gap-3">
@@ -2236,6 +2275,7 @@ export default function ResultPage() {
                   </div>
                 </motion.div>
               )}
+
 
               {showMissedKeywords && (
                 <motion.div

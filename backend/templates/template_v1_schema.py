@@ -49,5 +49,6 @@ class TemplateV1(BaseModel):
     certifications_and_achievements: Optional[list[str]] = None  # If 1 certification (merged)
     technical_skills: TechnicalSkills
     changes: list[str]
+    ai_suggestions: Optional[list[str]] = None
     ats_score_before: int
     ats_score_after: int

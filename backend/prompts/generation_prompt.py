@@ -220,6 +220,17 @@ RULES (MUST FOLLOW):
 1. Return ONLY valid JSON. No markdown code blocks. No **bold**, no *italics*, no # headers inside JSON string values. Plain text only. No explanation outside the JSON and inside it.
 2. NEVER output null for string fields (degree, company, job_title, etc.). Use empty string "" if information is missing.
 3. In "changes" field, list EVERY modification: "Enhanced [section] bullet X: [old] → [new]", "Injected 'keyword' into Project X bullet Y", "Added X to developer_tools", etc.
+4. In "ai_suggestions" field, generate 5–7 honest, personalized, actionable career growth tips based on this specific candidate's resume gaps and the JD requirements.
+   Rules for ai_suggestions:
+   - Be specific to THIS candidate — mention actual JD tech stack and their specific gaps, not generic advice.
+   - Use direct, encouraging tone. Address the user as "you".
+   - Cover a mix from: internships/experience gaps, specific skills to learn for interviews, relevant certifications (name them), DSA practice, open source contribution, hackathon participation, building the approved project.
+   - DSA tip is ALWAYS included: "Solve 150+ DSA problems on LeetCode focusing on Arrays, Trees, DP, and Graphs. Aim for 1700+ contest rating to stand out in coding interviews."
+   - If approved_project was suggested → remind them to build it: "Build the [project title] project using [tech stack] — this directly fills your [JD tech] gap and gives you something concrete to show recruiters."
+   - Certifications tip: suggest 1 specific cert relevant to the JD tech stack.
+   - Output as flat array of plain strings only.
+   - only give suggestions when there is only genuinely required to tell the user. dont give if not required.
+
 
 ⚠️ MANDATORY SELF-VALIDATION (Run this BEFORE writing your JSON output):
 Before you output the final JSON, you MUST mentally go through this checklist:
@@ -300,6 +311,13 @@ OUTPUT FORMAT (Template v1):
     "AWS Certified Cloud Practitioner (2024)",
     "Solved 300+ problems on LeetCode (Rating: 1650)",
     "Contributed to 3 open-source projects on GitHub"
+  ],
+  "ai_suggestions": [
+    "<Personalized suggestion 1 — based on JD gaps and resume weaknesses>",
+    "<Personalized suggestion 2>",
+    "<Personalized suggestion 3>",
+    "<Personalized suggestion 4>",
+    "<Personalized suggestion 5>"
   ],
   "changes": [
     "Rewrote Summary: [old summary] → [new summary]",

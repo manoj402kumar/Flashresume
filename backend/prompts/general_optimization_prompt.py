@@ -125,6 +125,14 @@ Format:
     "<List of strings ONLY. NO DICTIONARIES OR OBJECTS. Extract EXACTLY as written in RESUME_TEXT.>",
     "<If none exist, use an empty array []>"
   ],
+
+  "ai_suggestions": [
+    "<Personalized career growth tip 1 based on resume gaps>",
+    "<Personalized career growth tip 2>",
+    "<Personalized career growth tip 3>",
+    "<Personalized career growth tip 4>",
+    "<Personalized career growth tip 5>"
+  ],
   
   "technical_skills": {{
     "languages": ["<only extract from dedicated Skills section of RESUME_TEXT, NEVER from projects/experience>"],
@@ -143,6 +151,18 @@ Format:
   "ats_score_before": {ats_score_before},
   "ats_score_after": 0
 }}
+
+AI SUGGESTIONS RULES (for the ai_suggestions field above):
+Generate 5–7 honest, personalized, actionable career growth tips based purely on this candidate's resume (no JD available).
+- Look at their current skill set, experience level, and projects to identify the biggest growth opportunities.
+- Use direct, encouraging tone. Address the user as "you".
+- ALWAYS include DSA: "Solve 150+ DSA problems on LeetCode focusing on Arrays, Trees, DP, and Graphs. Aim for 1700+ contest rating — this alone differentiates you from most candidates."
+- ALWAYS include open source: "Explore GitHub and contribute to open-source projects in your current tech stack — it proves real-world collaborative skills that recruiters value highly."
+- ALWAYS include hackathons: "Participate in hackathons on Devfolio or HackerEarth — they build project instincts fast and create great networking opportunities."
+- If 0 internships found in RESUME_TEXT: "Apply for internships in your domain — even a 2-month internship significantly strengthens your resume for full-time roles."
+- Suggest 1 specific certification relevant to their existing tech stack (e.g., "AWS Cloud Practitioner" for cloud skills, "Meta React Developer" for React, "Google Associate Android Developer" for mobile).
+- Output as flat array of plain strings only.
+- only give suggestions when there is only genuinely required to tell the user. don't give if not required.
 
 RESUME_TEXT:
 {resume_text}
