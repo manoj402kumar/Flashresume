@@ -28,7 +28,7 @@ async def generate_resume(resume_text: str, job_description: str, ats_score_befo
             job_description=job_description,
             ats_score_before=ats_score_before,
             missing_keywords=", ".join(missing_keywords) if missing_keywords else "None",
-            selected_projects=", ".join(selected_projects) if selected_projects else "All projects from resume",
+            selected_projects=", ".join(selected_projects) if selected_projects else "(No pre-selection — pick the 2 most JD-relevant projects from RESUME_TEXT only. Max 2.)",
             approved_project=approved_project if approved_project else "none"
         )
 

@@ -19,9 +19,12 @@ OUTPUT SECTION ORDER (STRICT — MANDATORY, applies to the entire resume):
 Target length: 1 page. 2 projects fit cleanly; 1 project is also acceptable.
 
 INPUT LABELS (referred throughout this prompt):
-- RESUME_TEXT → The raw original resume text uploaded by the user (see bottom of this prompt)
-- JOB_DESCRIPTION → The target job description (see bottom of this prompt)
-- MISSING KEYWORDS TO INJECT → keywords missing in RESUME_TEXT but present in JOB_DESCRIPTION, which you must inject.(see bottom of this prompt)
+- RESUME_TEXT        → The raw original resume text uploaded by the user (see bottom of this prompt)
+- JOB_DESCRIPTION   → The target job description (see bottom of this prompt)
+- MISSING KEYWORDS TO INJECT → The filtered list of keywords missing in RESUME_TEXT but required by JOB_DESCRIPTION. You must inject every one of these. (see bottom of this prompt)
+- SELECTED_PROJECTS → The pre-determined list of project titles to include in the final output (max 2). For Case 2, the first entry is the APPROVED_PROJECT title. (see bottom of this prompt)
+- APPROVED_PROJECT  → For Case 2 only: the new project to write fresh bullets for, provided as "Title | Tech Stack: ... | Description: ...". "none" means Case 1. (see bottom of this prompt)
+- ATS_SCORE_BEFORE  → The ATS score of the original RESUME_TEXT before optimization. Output it as-is in ats_score_before field. (see bottom of this prompt)
 
 KEYWORD DEFINITIONS (applies throughout this prompt):
 - Tech Stack Keywords: Programming languages (Java, Python, C++), Frameworks (React, Spring Boot, Django, Express.js, node.js), Libraries (NumPy, Pandas), Databases (MongoDB, PostgreSQL), Cloud Services (AWS, Azure), and Developer Tools (Docker, Kubernetes).
@@ -85,6 +88,7 @@ Case 2 — APPROVED_PROJECT is present (not "none"):
 ────────────────────────────────────────────────────
 
 The approved project (new) is provided as APPROVED_PROJECT at the bottom of this prompt with title, tech_stack, and description.
+Its title is the FIRST entry in SELECTED_PROJECTS. Do NOT look for it in RESUME_TEXT — it does not exist there yet.
 
 For the APPROVED PROJECT:
   - Use the EXACT title and tech_stack from APPROVED_PROJECT. Do NOT change them.
