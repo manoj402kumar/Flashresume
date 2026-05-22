@@ -327,6 +327,28 @@ export default function App() {
     }
   };
 
+  const handleShare = async () => {
+    if (!referralCode) return;
+    const url = `${window.location.origin}/?ref=${referralCode}`;
+    
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: "Flashresume",
+          text: "Get your resume rebuilt in 60 seconds! Use my link to get +20 free credits.",
+          url: url,
+        });
+        return;
+      } catch (err: any) {
+        if (err.name === "AbortError") return;
+      }
+    }
+    
+    navigator.clipboard.writeText(url);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
   return (
     <div className="min-h-screen font-sans" suppressHydrationWarning>
       {/* TopNavBar */}
@@ -373,13 +395,7 @@ export default function App() {
               <div className="flex items-center gap-2 sm:gap-3">
                 <div className="hidden sm:flex items-center mr-1">
                   <button 
-                    onClick={() => {
-                      if (referralCode) {
-                        navigator.clipboard.writeText(`${window.location.origin}/?ref=${referralCode}`);
-                        setCopied(true);
-                        setTimeout(() => setCopied(false), 2000);
-                      }
-                    }}
+                    onClick={handleShare}
                     className="flex items-center gap-1.5 bg-[#006859] text-white hover:bg-[#005145] px-3 py-1.5 rounded-xl text-sm font-bold transition-all shadow-sm active:scale-95"
                   >
                     🎁 <span className="hidden md:inline">{copied ? "Copied!" : "Invite & Earn"}</span>
@@ -432,13 +448,7 @@ export default function App() {
 
                             <div className="pt-2 space-y-2 border-t border-surface-container-low mt-2">
                               <button
-                                onClick={() => {
-                                  if (referralCode) {
-                                    navigator.clipboard.writeText(`${window.location.origin}/?ref=${referralCode}`);
-                                    setCopied(true);
-                                    setTimeout(() => setCopied(false), 2000);
-                                  }
-                                }}
+                                onClick={handleShare}
                                 className="w-full py-2.5 bg-[#006859] text-white hover:bg-[#005145] text-sm font-bold rounded-xl transition-all flex items-center justify-center gap-2 shadow-sm active:scale-95"
                               >
                                 🎁 {copied ? "Link Copied!" : "Invite Friends (+20 Credits)"}
