@@ -301,24 +301,24 @@ export default function AnalyzePage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
-          className="bg-surface-container-lowest rounded-[2rem] p-6 shadow-xl border border-surface-container-high flex flex-col md:flex-row items-center justify-between gap-6 relative z-[60]"
+          className="bg-surface-container-lowest rounded-[2rem] p-6 shadow-xl border border-surface-container-high flex flex-col items-center gap-6 relative z-[60]"
         >
           <div className="absolute inset-0 overflow-hidden rounded-[2rem] pointer-events-none">
             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[#006859]/5 to-transparent skew-x-12 translate-x-[-100%] animate-[shimmer_3s_infinite]"></div>
           </div>
 
-          <div className="flex-1 w-full md:w-auto relative z-10">
-            <p className="text-sm font-bold text-on-background mb-2 flex items-center gap-2">
+          <div className="w-full max-w-md relative z-10">
+            <p className="text-sm font-bold text-on-background mb-2 flex items-center justify-center gap-2">
               <Sparkles className="w-4 h-4 text-[#006859]" /> Select Generation Model
             </p>
             <ModelSelector storageKey="preferred_model" label="R2 Model (Generation)" />
           </div>
 
-          <div className="w-full md:w-auto relative z-10">
+          <div className="relative z-10">
             <button
               onClick={handleProceed}
               disabled={!!(analysis.requires_consent && !projectApproved)}
-              className={`w-full md:w-auto text-white text-lg font-bold px-10 py-4 rounded-2xl flex items-center justify-center gap-3 transition-all duration-300 ${analysis.requires_consent && !projectApproved
+              className={`text-white text-lg font-bold px-14 py-4 rounded-2xl flex items-center justify-center gap-3 transition-all duration-300 ${analysis.requires_consent && !projectApproved
                 ? "bg-surface-container-high text-on-surface-variant cursor-not-allowed border border-surface-container-highest"
                 : "bg-gradient-to-r from-[#006859] to-[#12f8d7] shadow-[0_8px_30px_rgba(0,104,89,0.3)] hover:shadow-[0_8px_30px_rgba(18,248,215,0.4)] hover:-translate-y-0.5 hover:opacity-90 active:translate-y-0 active:shadow-none"
                 }`}
