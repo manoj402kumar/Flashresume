@@ -136,7 +136,7 @@ STEP 5: Build the two missing-skills lists
 ────────────────────────────────────────────────────
 You must produce TWO separate missing-skills lists:
 
-a) all_missing_skills — every skill from JOB_DESCRIPTION that is NOT in RESUME_TEXT.
+a) all_missing_skills — You already extracted this in task1, every skill from JOB_DESCRIPTION that is NOT in RESUME_TEXT.
    This is the full unfiltered list shown to the user on the results page so they can cross-check.
    Use the exact same OR-group entries as Task 1 (e.g. "java/python" as one entry).
 
@@ -159,7 +159,7 @@ Example A — Case 1 (both existing projects cover the core JD stack):
   RESUME_TEXT: Project 1 "API Backend" uses Python, Django.
           Project 2 "Dashboard" uses React, Node.js
   JD: "python/nodejs, django, postgresql, REST APIs, agile"
-  ATS Task: all_missing_skills: ["postgresql"] (REST APIs and Agile are concepts/methodologies)
+  ATS Task: all_missing_skills: ["postgresql", "REST APIs", "agile"]
   Project Task: selected projects cover python/nodejs, django — Case 1.
   STEP 5: "python/nodejs" OR slot is covered by Project 1 (Python) AND Project 2 (Node.js) → remove from updated_missing_skills.
           "postgresql" is a database not covered by any project → keep in updated_missing_skills.

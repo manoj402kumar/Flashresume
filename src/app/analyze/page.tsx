@@ -287,7 +287,7 @@ export default function AnalyzePage() {
                     <AlertCircle className="w-5 h-5 text-error flex-shrink-0 mt-0.5" />
                     <p className="text-sm text-error font-medium">
                       <strong className="block mb-1">Warning: Low Relevance</strong>
-                      Without a relavant project there is no point of applying and get shorlisted. Don't worry You can always build the project later.
+                      Without a relavant project there is no point of applying and get shortlisted. Don't worry You can always build this project later.
                     </p>
                   </div>
                 </motion.div>

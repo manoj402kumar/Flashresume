@@ -202,6 +202,14 @@ Format examples:
 ✅ "Won 2nd place in XYZ Hackathon (50+ teams)"
 ✅ "Contributed to 3 open-source projects on GitHub (50+ commits)"
 
+CERTIFICATIONS & ACHIEVEMENTS RULES (MANDATORY — apply when filling the JSON below):
+- ALWAYS output a single merged array named "certifications_and_achievements"
+- Put certifications first, followed by achievements
+- ⛔ ABSOLUTE RULE: If RESUME_TEXT has NO certifications or achievements, output an empty array: "certifications_and_achievements": []
+- NEVER invent, fabricate, or generate achievements or certifications that are not present in RESUME_TEXT.
+- "Solved 300+ LeetCode problems", "Won hackathon", "AWS certified" — these may ONLY appear if the user explicitly wrote them in RESUME_TEXT. Not otherwise.
+- ⛔ CRITICAL TYPE RULE: This MUST be a flat array of PLAIN STRINGS. DO NOT return dictionaries or objects like {{"type": "Certification", "name": "..."}}.
+--------------------------------
 
 
 RULES (MUST FOLLOW):
@@ -233,6 +241,7 @@ HEADING FIELD RULES (apply when filling the heading object below):
 - portfolio_url: Optional — include only if deployed portfolio with live projects. Format: "portfolio.com" or "username.github.io". Omit if under construction.
 - linkedin_url: Format: "linkedin.com/in/username" (no https://).
 
+
 OUTPUT FORMAT (Template v1):
 {{
   "template_id": "v1",
@@ -251,7 +260,7 @@ OUTPUT FORMAT (Template v1):
       "location": "City, State",
       "degree": "B.Tech Computer Science",
       "duration": "Aug 2018 -- May 2022",
-      "cgpa": "8.5/10" or null
+      "cgpa": "8.5/10"
     }}
   ],
   "experience": [
@@ -271,7 +280,7 @@ OUTPUT FORMAT (Template v1):
       "tech_stack": "<exact tech stack from RESUME_TEXT limit to 7 prioritized>",
       "link": "Link",
       "bullets": [
-        "<follow the algprithm step4>"
+        "<follow the algorithm step4>"
       ]
     }}
   ],
@@ -283,16 +292,7 @@ OUTPUT FORMAT (Template v1):
     "developer_tools": ["Skill 1", "Skill 2", "...(STRICT MAX 5 ITEMS)"],
     "miscellaneous": ["Skill 1", "Skill 2", "...(STRICT MAX 5 ITEMS)"]
   }},
-  
-  CERTIFICATIONS & ACHIEVEMENTS RULES (MANDATORY):
-  
-  - ALWAYS output a single merged array named "certifications_and_achievements"
-  - Put certifications first, followed by achievements
-  - ⛔ ABSOLUTE RULE: If RESUME_TEXT has NO certifications or achievements, output an empty array: "certifications_and_achievements": []
-  - NEVER invent, fabricate, or generate achievements or certifications that are not present in RESUME_TEXT.
-  - "Solved 300+ LeetCode problems", "Won hackathon", "AWS certified" — these may ONLY appear if the user explicitly wrote them in RESUME_TEXT. Not otherwise.
-  - ⛔ CRITICAL TYPE RULE: This MUST be a flat array of PLAIN STRINGS. DO NOT return dictionaries or objects like {{"type": "Certification", "name": "..."}}.
-   "certifications_and_achievements": [
+  "certifications_and_achievements": [
     "AWS Certified Cloud Practitioner (2024)",
     "Solved 300+ problems on LeetCode (Rating: 1650)",
     "Contributed to 3 open-source projects on GitHub"
@@ -302,7 +302,7 @@ OUTPUT FORMAT (Template v1):
     "Enhanced Project Food Delivery App bullet 1: 'Built app' → 'Developed scalable food delivery platform using React and Node.js serving 500+ users'",
     "Added Docker to developer_tools",
     "Removed non-relevant skill: Basic Excel",
-    "Removed least relevant project: Portfolio Website"
+    "Removed least relevant project: Portfolio Website",
     "describe any changes that you made"
   ],
   "ats_score_before": {ats_score_before},

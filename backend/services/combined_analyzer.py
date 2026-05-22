@@ -61,8 +61,19 @@ async def analyze_resume_combined(resume_text: str, job_description: str, prefer
     if "selected_projects" in data and len(data["selected_projects"]) > 2:
         data["selected_projects"] = data["selected_projects"][:2]
 
+    # ── Normalize ats_score to int (0-100) ──
+    try:
+        data["ats_score"] = max(0, min(100, int(float(data.get("ats_score", 0)))))
+    except (ValueError, TypeError):
+        data["ats_score"] = 0
+
     # ── Backward compat: map case → has_relevant_projects and relevant_projects ──
-    case = data.get("case", 1)
+    # Normalize case to int — LLM may return "1" or "2" (string) instead of 1 or 2 (integer)
+    try:
+        data["case"] = int(data.get("case", 1))
+    except (ValueError, TypeError):
+        data["case"] = 1
+    case = data["case"]
     data["has_relevant_projects"] = (case != 2)
     data["relevant_projects"] = data.get("selected_projects", [])
 
