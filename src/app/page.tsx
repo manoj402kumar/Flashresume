@@ -23,7 +23,8 @@ import {
   SlidersHorizontal,
   GraduationCap,
   Briefcase,
-  Info
+  Info,
+  Laptop
 } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
@@ -407,8 +408,8 @@ export default function App() {
                     className="flex items-center gap-1 bg-[#006859] text-white hover:bg-[#005145] pl-3 pr-2 py-1.5 rounded-xl text-sm font-bold transition-all shadow-sm active:scale-95"
                   >
                     🎁 <span className="hidden md:inline">{copied ? "Copied!" : "Invite & Earn"}</span>
-                    <div 
-                      className="relative group/tooltip inline-flex items-center" 
+                    <div
+                      className="relative group/tooltip inline-flex items-center"
                       onClick={(e) => {
                         e.stopPropagation();
                         setActiveTooltip(activeTooltip === "nav" ? null : "nav");
@@ -475,8 +476,8 @@ export default function App() {
                                 className="w-full py-2.5 bg-[#006859] text-white hover:bg-[#005145] text-sm font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 shadow-sm active:scale-95"
                               >
                                 🎁 {copied ? "Link Copied!" : "Invite Friends (+20 Credits)"}
-                                <div 
-                                  className="relative group/tooltip inline-flex items-center" 
+                                <div
+                                  className="relative group/tooltip inline-flex items-center"
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     setActiveTooltip(activeTooltip === "dropdown" ? null : "dropdown");
@@ -800,6 +801,12 @@ export default function App() {
                             ? "Optimize Resume"
                             : "Continue to Editor"}
                 </button>
+
+                {/* Mobile-only notice */}
+                <p className="text-center text-[11px] font-medium text-on-surface-variant/80 flex items-center justify-center gap-1.5 mt-2 sm:hidden">
+                  <Laptop className="w-3.5 h-3.5 opacity-70" />
+                  Use laptop for best experience
+                </p>
 
               </div>
             </div>
