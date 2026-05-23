@@ -12,6 +12,7 @@ export const metadata: Metadata = {
     "Rebuild your resume in 60 seconds. Flashresume is India's most advanced ATS resume builder. Upload your CV and beat the Applicant Tracking System instantly.",
   keywords: [
     "ATS resume builder",
+    "AI resume builder",
     "resume builder India",
     "free resume maker",
     "AI resume optimizer",
@@ -19,6 +20,9 @@ export const metadata: Metadata = {
     "Overleaf resume template ai builder",
     "TCS ninja resume format",
     "best resume formats 2026",
+    "edit pdf resume online free",
+    "modify pdf resume text",
+    "resume pdf to editable format",
   ],
   authors: [{ name: "Flashresume" }],
   creator: "Flashresume",
@@ -57,7 +61,43 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        {/* Google Tag Manager */}
+        <Script id="google-tag-manager" strategy="afterInteractive">
+          {`
+            (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+            new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+            j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+            'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+            })(window,document,'script','dataLayer','GTM-MFXM63VQ');
+          `}
+        </Script>
+
+        {/* Google Analytics 4 */}
+        <Script
+          src="https://www.googletagmanager.com/gtag/js?id=G-T4SV743LWL"
+          strategy="afterInteractive"
+        />
+        <Script id="google-analytics" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'G-T4SV743LWL');
+          `}
+        </Script>
+      </head>
       <body suppressHydrationWarning>
+        {/* Google Tag Manager (noscript) */}
+        <noscript>
+          <iframe
+            src="https://www.googletagmanager.com/ns.html?id=GTM-MFXM63VQ"
+            height="0"
+            width="0"
+            style={{ display: "none", visibility: "hidden" }}
+          />
+        </noscript>
+
         {children}
         <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="beforeInteractive" />
 
