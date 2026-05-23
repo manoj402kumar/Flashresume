@@ -1,4 +1,5 @@
 import os
+import asyncio
 import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -70,29 +71,34 @@ def root():
 
 @app.get("/health")
 def health():
-    """Keep-alive endpoint for Render and Supabase."""
+    """Keep-alive endpoint — pinged by cron jobs to prevent Render sleep.
+    Also pings Supabase to prevent 7-day free-tier inactivity pause.
+    This is a sync def, so FastAPI runs it in a thread pool — never blocks the event loop.
+    """
     db_status = "inactive"
     if _supabase:
         try:
-            # The lightest possible query to keep Supabase awake (prevents 7-day pause)
             _supabase.table("resume_sessions").select("id").limit(1).execute()
             db_status = "active"
         except Exception as e:
             db_status = f"error: {str(e)}"
-            
     return {"status": "ok", "supabase": db_status}
 
 @app.get("/health/queue")
 async def get_queue_status():
-    """Active sessions count — polled every 5s by the Admin Dashboard."""
+    """Active sessions count — polled every 5s by the Admin Dashboard.
+    Uses asyncio.to_thread so the Supabase query never blocks the event loop.
+    """
     if not _supabase:
         return {"processing": 0}
     try:
         five_mins_ago = (datetime.now(timezone.utc) - timedelta(minutes=5)).isoformat()
-        res = _supabase.table("resume_sessions") \
-            .select("id", count="exact") \
-            .gte("created_at", five_mins_ago) \
-            .execute()
+        res = await asyncio.to_thread(
+            lambda: _supabase.table("resume_sessions")
+                .select("id", count="exact")
+                .gte("created_at", five_mins_ago)
+                .execute()
+        )
         active_count = (
             res.count if hasattr(res, "count") and res.count is not None
             else (len(res.data) if res.data else 0)

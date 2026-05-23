@@ -9,6 +9,14 @@ from .groq_fallback       import call_single_groq_r1,       call_single_groq_r2
 from .cloudflare_fallback import call_single_cloudflare_r1, call_single_cloudflare_r2
 from .nvidia_fallback     import call_single_nvidia_r1,     call_single_nvidia_r2
 
+# ── Concurrency guard ────────────────────────────────────────────────────────
+# Limits simultaneous LLM operations to 8 per worker process.
+# Requests beyond this wait in an async queue (non-blocking) instead of
+# all hammering providers at once and causing mass 429 rate-limit storms.
+# With 2 Uvicorn workers this means max 16 concurrent LLM calls total.
+_LLM_SEMAPHORE = asyncio.Semaphore(8)
+# ─────────────────────────────────────────────────────────────────────────────
+
 load_dotenv()
 
 SUPABASE_URL = os.getenv("SUPABASE_URL", "https://your-project.supabase.co")
@@ -195,6 +203,7 @@ async def call_llm_r1(prompt: str, preferred_model: str = "") -> dict:
     Uses R1-dedicated API keys (Account/Email 1). Independent from R2 quota.
     All callers are async. Timeout per model: 30s.
     If preferred_model is set, starts the chain from that model.
+    Acquires _LLM_SEMAPHORE — max 8 concurrent LLM ops per worker.
     Chain (16 models, interleaved by provider):
       mistral-medium -> nvidia/mistral-nemotron -> mistral-large ->
       nvidia/mistral-medium-3.5 -> ministral-8b -> nvidia/ministral-14b ->
@@ -204,7 +213,8 @@ async def call_llm_r1(prompt: str, preferred_model: str = "") -> dict:
       gemini-2.5-flash-lite
     max_tokens: 2500
     """
-    result = await _run_flat_chain(prompt, _R1_FLAT, _R1_MAX_TOKENS, preferred_model)
+    async with _LLM_SEMAPHORE:
+        result = await _run_flat_chain(prompt, _R1_FLAT, _R1_MAX_TOKENS, preferred_model)
     _log_to_supabase("r1", result)
     return result
 
@@ -215,6 +225,7 @@ async def call_llm_r2(prompt: str, preferred_model: str = "") -> dict:
     Uses R2-dedicated API keys (Account/Email 2). Independent from R1 quota.
     All callers are async. Timeout per model: 90s.
     If preferred_model is set, starts the chain from that model.
+    Acquires _LLM_SEMAPHORE — max 8 concurrent LLM ops per worker.
     Chain (16 models, interleaved by provider):
       mistral-medium -> nvidia/mistral-nemotron -> mistral-large ->
       nvidia/mistral-medium-3.5 -> ministral-8b -> nvidia/ministral-14b ->
@@ -224,6 +235,7 @@ async def call_llm_r2(prompt: str, preferred_model: str = "") -> dict:
       gemini-2.5-flash-lite
     max_tokens: 4500
     """
-    result = await _run_flat_chain(prompt, _R2_FLAT, _R2_MAX_TOKENS, preferred_model)
+    async with _LLM_SEMAPHORE:
+        result = await _run_flat_chain(prompt, _R2_FLAT, _R2_MAX_TOKENS, preferred_model)
     _log_to_supabase("r2", result)
     return result

@@ -156,7 +156,7 @@ AI SUGGESTIONS RULES (for the ai_suggestions field above):
 Generate 5–7 honest, personalized, actionable career growth tips based purely on this candidate's resume (no JD available).
 - Look at their current skill set, experience level, and projects to identify the biggest growth opportunities.
 - Use direct, encouraging tone. Address the user as "you".
-- ALWAYS include DSA: "Solve 150+ DSA problems on LeetCode focusing on Arrays, Trees, DP, and Graphs. Aim for 1700+ contest rating — this alone differentiates you from most candidates."
+- ALWAYS include DSA: "Solve top interview 150 DSA problems on LeetCode focusing on Arrays, Strings, Trees, DP, and Graphs. Aim for 1700+ contest rating — this alone differentiates you from most candidates."
 - ALWAYS include open source: "Explore GitHub and contribute to open-source projects in your current tech stack — it proves real-world collaborative skills that recruiters value highly."
 - ALWAYS include hackathons: "Participate in hackathons on Devfolio or HackerEarth — they build project instincts fast and create great networking opportunities."
 - If 0 internships found in RESUME_TEXT: "Apply for internships in your domain — even a 2-month internship significantly strengthens your resume for full-time roles."

@@ -225,11 +225,11 @@ RULES (MUST FOLLOW):
    - Be specific to THIS candidate — mention actual JD tech stack and their specific gaps, not generic advice.
    - Use direct, encouraging tone. Address the user as "you".
    - Cover a mix from: internships/experience gaps, specific skills to learn for interviews, relevant certifications (name them), DSA practice, open source contribution, hackathon participation, building the approved project.
-   - DSA tip is ALWAYS included: "Solve 150+ DSA problems on LeetCode focusing on Arrays, Trees, DP, and Graphs. Aim for 1700+ contest rating to stand out in coding interviews."
+   - DSA tip is ALWAYS included: "Solve top interview 150 DSA problems on LeetCode focusing on Arrays, Strings, Trees, DP, and Graphs. Aim for 1700+ contest rating to clear most coding interviews."
    - If approved_project was suggested → remind them to build it: "Build the [project title] project using [tech stack] — this directly fills your [JD tech] gap and gives you something concrete to show recruiters."
    - Certifications tip: suggest 1 specific cert relevant to the JD tech stack.
    - Output as flat array of plain strings only.
-   - only give suggestions when there is only genuinely required to tell the user. dont give if not required.
+   - only give suggestions when there is only genuinely required to tell the user. don't give if not required.
 
 
 ⚠️ MANDATORY SELF-VALIDATION (Run this BEFORE writing your JSON output):

@@ -21,8 +21,8 @@ async def analyze_resume_combined(resume_text: str, job_description: str, prefer
 
     raw_response = result["text"]
 
-    # Layer 1: Strip <think> tags and markdown reasoning preamble
-    raw_response = re.sub(r'<think>.*?</think>', '', raw_response, flags=re.DOTALL).strip()
+    # Layer 1: Strip any leading non-JSON preamble (e.g. "Here is the JSON:")
+    # Note: <think> tags are already stripped by each provider's _extract_text() function.
     raw_response = re.sub(r'^[\s\S]*?(?=\{)', '', raw_response, count=1).strip()
 
     # Layer 2: Strip markdown code fences

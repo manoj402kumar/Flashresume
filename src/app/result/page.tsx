@@ -167,7 +167,8 @@ export default function ResultPage() {
   const [showMissedKeywords, setShowMissedKeywords] = useState(false);
   const [copied, setCopied] = useState(false);
   const [editMode, setEditMode] = useState(true);
-  const [openEditSection, setOpenEditSection] = useState<string>("contact");
+  const [openEditSections, setOpenEditSections] = useState<Record<string, boolean>>({ contact: true });
+  const toggleSection = (sec: string) => setOpenEditSections(p => ({ ...p, [sec]: ! p.get(sec) }));
   const [showHighlights, setShowHighlights] = useState(true);
   const [downloadingPDF, setDownloadingPDF] = useState(false);
   const [missingKeywords, setMissingKeywords] = useState<string[]>([]);
@@ -241,6 +242,19 @@ export default function ResultPage() {
   const handleSectionDragEnd = () => {
     setDraggingId(null); draggingIdRef.current = null;
     setInsertionIndex(null); insertionIndexRef.current = null;
+  };
+
+  const moveSectionUp = (idx: number) => {
+    if (idx === 0 || !resume) return;
+    const currentOrder = resume.section_order || ["summary", "education", "experience", "projects", "skills", "certifications"];
+    updateResume({ section_order: arrayMove(currentOrder, idx, idx - 1) });
+  };
+
+  const moveSectionDown = (idx: number) => {
+    if (!resume) return;
+    const currentOrder = resume.section_order || ["summary", "education", "experience", "projects", "skills", "certifications"];
+    if (idx >= currentOrder.length - 1) return;
+    updateResume({ section_order: arrayMove(currentOrder, idx, idx + 2) });
   };
 
   // ── Touch drag support (mobile) ──────────────────────────────────────────
@@ -978,7 +992,24 @@ export default function ResultPage() {
                                 </div>
                                 <span className="font-semibold text-on-background text-sm">{sectionMeta.label}</span>
                               </div>
-                              <span className="text-xs text-on-surface-variant/30 font-mono tabular-nums">{index + 1}</span>
+                              <div className="flex items-center gap-1 bg-surface-container rounded-lg p-0.5">
+                                <button
+                                  type="button"
+                                  onClick={() => moveSectionUp(index)}
+                                  disabled={index === 0}
+                                  className="p-1 text-on-surface-variant hover:text-primary hover:bg-white rounded-md disabled:opacity-30 disabled:hover:bg-transparent"
+                                >
+                                  <ChevronUp className="w-4 h-4" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => moveSectionDown(index)}
+                                  disabled={index === (resume.section_order?.length || 0) - 1}
+                                  className="p-1 text-on-surface-variant hover:text-primary hover:bg-white rounded-md disabled:opacity-30 disabled:hover:bg-transparent"
+                                >
+                                  <ChevronDown className="w-4 h-4" />
+                                </button>
+                              </div>
                             </div>
                             {/* Blue insertion line BELOW (only for last item) */}
                             {showLineBelow && (
@@ -1000,7 +1031,7 @@ export default function ResultPage() {
                   >
                     <div
                       className={`flex items-center justify-between ${editMode ? 'cursor-pointer hover:opacity-80 transition-opacity mb-4' : 'mb-6'}`}
-                      onClick={() => editMode && setOpenEditSection(openEditSection === "contact" ? "" : "contact")}
+                      onClick={() => editMode && toggleSection("contact")}
                     >
                       <div className="flex items-center gap-3">
                         <div className="w-12 h-12 rounded-2xl bg-primary-container/20 flex items-center justify-center">
@@ -1009,14 +1040,14 @@ export default function ResultPage() {
                         <h3 className="font-headline text-2xl font-bold text-on-background">Contact Information</h3>
                       </div>
                       {editMode && (
-                        <motion.div className="p-2 hover:bg-surface-container rounded-full transition-colors" animate={{ rotate: openEditSection === "contact" ? 180 : 0 }} transition={{ type: "spring", stiffness: 300, damping: 25 }}>
+                        <motion.div className="p-2 hover:bg-surface-container rounded-full transition-colors" animate={{ rotate: openEditSections["contact"] ? 180 : 0 }} transition={{ type: "spring", stiffness: 300, damping: 25 }}>
                           <ChevronDown className="w-5 h-5 text-on-surface-variant" />
                         </motion.div>
                       )}
                     </div>
 
                     <AnimatePresence initial={false}>
-                      {(!editMode || openEditSection === "contact") && (
+                      {(!editMode || openEditSections["contact"]) && (
                         <motion.div
                           key="contact-content"
                           initial={{ height: 0, opacity: 0 }}
@@ -1141,7 +1172,7 @@ export default function ResultPage() {
                         >
                           <div
                             className={`flex items-center justify-between ${editMode ? 'cursor-pointer hover:opacity-80 transition-opacity mb-4' : 'mb-6'}`}
-                            onClick={() => editMode && setOpenEditSection(openEditSection === sectionId ? "" : sectionId)}
+                            onClick={() => editMode && toggleSection(sectionId)}
                           >
                             <div className="flex items-center gap-3">
                               <div className="w-12 h-12 rounded-2xl bg-primary-container/20 flex items-center justify-center">
@@ -1165,14 +1196,14 @@ export default function ResultPage() {
                               )}
                             </div>
                             {editMode && (
-                              <motion.div className="p-2 hover:bg-surface-container rounded-full transition-colors flex-shrink-0" animate={{ rotate: openEditSection === sectionId ? 180 : 0 }} transition={{ type: "spring", stiffness: 300, damping: 25 }}>
+                              <motion.div className="p-2 hover:bg-surface-container rounded-full transition-colors flex-shrink-0" animate={{ rotate: openEditSections[sectionId] ? 180 : 0 }} transition={{ type: "spring", stiffness: 300, damping: 25 }}>
                                 <ChevronDown className="w-5 h-5 text-on-surface-variant" />
                               </motion.div>
                             )}
                           </div>
 
                           <AnimatePresence initial={false}>
-                            {(!editMode || openEditSection === sectionId) && (
+                            {(!editMode || openEditSections[sectionId]) && (
                               <motion.div
                                 key={`${sectionId}-content`}
                                 initial={{ height: 0, opacity: 0 }}
@@ -1255,7 +1286,7 @@ export default function ResultPage() {
                                         const newOrder = (resume.section_order || []).filter(id => id !== sectionId);
                                         updateResume({ custom_sections: newCustoms, section_order: newOrder });
                                       }}
-                                      className="px-3 py-1 text-sm text-red-500 hover:bg-red-50 rounded-lg transition-colors font-semibold"
+                                      className="flex-shrink-0 px-3 py-1 text-sm text-red-500 hover:bg-red-50 rounded-lg transition-colors font-semibold"
                                     >
                                       Remove Section
                                     </button>
@@ -1283,7 +1314,7 @@ export default function ResultPage() {
                           >
                             <div
                               className={`flex items-center justify-between ${editMode ? 'cursor-pointer hover:opacity-80 transition-opacity mb-4' : 'mb-6'}`}
-                              onClick={() => editMode && setOpenEditSection(openEditSection === "summary" ? "" : "summary")}
+                              onClick={() => editMode && toggleSection("summary")}
                             >
                               <div className="flex items-center gap-3">
                                 <div className="w-12 h-12 rounded-2xl bg-primary-container/20 flex items-center justify-center">
@@ -1292,14 +1323,14 @@ export default function ResultPage() {
                                 <h3 className="font-headline text-2xl font-bold text-on-background">Summary</h3>
                               </div>
                               {editMode && (
-                                <motion.div className="p-2 hover:bg-surface-container rounded-full transition-colors" animate={{ rotate: openEditSection === "summary" ? 180 : 0 }} transition={{ type: "spring", stiffness: 300, damping: 25 }}>
+                                <motion.div className="p-2 hover:bg-surface-container rounded-full transition-colors" animate={{ rotate: openEditSections["summary"] ? 180 : 0 }} transition={{ type: "spring", stiffness: 300, damping: 25 }}>
                                   <ChevronDown className="w-5 h-5 text-on-surface-variant" />
                                 </motion.div>
                               )}
                             </div>
 
                             <AnimatePresence initial={false}>
-                              {(!editMode || openEditSection === "summary") && (
+                              {(!editMode || openEditSections["summary"]) && (
                                 <motion.div
                                   key="summary-content"
                                   initial={{ height: 0, opacity: 0 }}
@@ -1340,7 +1371,7 @@ export default function ResultPage() {
                           >
                             <div
                               className={`flex items-center justify-between ${editMode ? 'cursor-pointer hover:opacity-80 transition-opacity mb-4' : 'mb-6'}`}
-                              onClick={() => editMode && setOpenEditSection(openEditSection === "education" ? "" : "education")}
+                              onClick={() => editMode && toggleSection("education")}
                             >
                               <div className="flex items-center gap-3">
                                 <div className="w-12 h-12 rounded-2xl bg-secondary-container/20 flex items-center justify-center">
@@ -1349,14 +1380,14 @@ export default function ResultPage() {
                                 <h3 className="font-headline text-2xl font-bold text-on-background">Education</h3>
                               </div>
                               {editMode && (
-                                <motion.div className="p-2 hover:bg-surface-container rounded-full transition-colors" animate={{ rotate: openEditSection === "education" ? 180 : 0 }} transition={{ type: "spring", stiffness: 300, damping: 25 }}>
+                                <motion.div className="p-2 hover:bg-surface-container rounded-full transition-colors" animate={{ rotate: openEditSections["education"] ? 180 : 0 }} transition={{ type: "spring", stiffness: 300, damping: 25 }}>
                                   <ChevronDown className="w-5 h-5 text-on-surface-variant" />
                                 </motion.div>
                               )}
                             </div>
 
                             <AnimatePresence initial={false}>
-                              {(!editMode || openEditSection === "education") && (
+                              {(!editMode || openEditSections["education"]) && (
                                 <motion.div
                                   key="education-content"
                                   initial={{ height: 0, opacity: 0 }}
@@ -1425,7 +1456,7 @@ export default function ResultPage() {
                                                   newEducation[idx].cgpa = e.target.value;
                                                   updateResume({ education: newEducation });
                                                 }}
-                                                className="flex-1 rounded-xl px-4 py-2 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm mr-4"
+                                                className="flex-1 min-w-0 rounded-xl px-4 py-2 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm mr-2"
                                                 placeholder="CGPA / Score"
                                               />
                                               <button
@@ -1434,7 +1465,7 @@ export default function ResultPage() {
                                                   const newEducation = resume.education.filter((_, i) => i !== idx);
                                                   updateResume({ education: newEducation });
                                                 }}
-                                                className="px-3 py-1 text-sm text-red-500 hover:bg-red-50 rounded-lg transition-colors font-semibold"
+                                                className="flex-shrink-0 px-3 py-1 text-sm text-red-500 hover:bg-red-50 rounded-lg transition-colors font-semibold"
                                               >
                                                 Remove
                                               </button>
@@ -1483,7 +1514,7 @@ export default function ResultPage() {
                           >
                             <div
                               className={`flex items-center justify-between ${editMode ? 'cursor-pointer hover:opacity-80 transition-opacity mb-4' : 'mb-6'}`}
-                              onClick={() => editMode && setOpenEditSection(openEditSection === "experience" ? "" : "experience")}
+                              onClick={() => editMode && toggleSection("experience")}
                             >
                               <div className="flex items-center gap-3">
                                 <div className="w-12 h-12 rounded-2xl bg-tertiary-container/20 flex items-center justify-center">
@@ -1492,14 +1523,14 @@ export default function ResultPage() {
                                 <h3 className="font-headline text-2xl font-bold text-on-background">Experience</h3>
                               </div>
                               {editMode && (
-                                <motion.div className="p-2 hover:bg-surface-container rounded-full transition-colors" animate={{ rotate: openEditSection === "experience" ? 180 : 0 }} transition={{ type: "spring", stiffness: 300, damping: 25 }}>
+                                <motion.div className="p-2 hover:bg-surface-container rounded-full transition-colors" animate={{ rotate: openEditSections["experience"] ? 180 : 0 }} transition={{ type: "spring", stiffness: 300, damping: 25 }}>
                                   <ChevronDown className="w-5 h-5 text-on-surface-variant" />
                                 </motion.div>
                               )}
                             </div>
 
                             <AnimatePresence initial={false}>
-                              {(!editMode || openEditSection === "experience") && (
+                              {(!editMode || openEditSections["experience"]) && (
                                 <motion.div
                                   key="experience-content"
                                   initial={{ height: 0, opacity: 0 }}
@@ -1618,7 +1649,7 @@ export default function ResultPage() {
                                                 const newExperience = resume.experience.filter((_, i) => i !== idx);
                                                 updateResume({ experience: newExperience });
                                               }}
-                                              className="px-3 py-1 text-sm text-red-500 hover:bg-red-50 rounded-lg transition-colors font-semibold"
+                                              className="flex-shrink-0 px-3 py-1 text-sm text-red-500 hover:bg-red-50 rounded-lg transition-colors font-semibold"
                                             >
                                               Remove Experience
                                             </button>
@@ -1660,7 +1691,7 @@ export default function ResultPage() {
                           >
                             <div
                               className={`flex items-center justify-between ${editMode ? 'cursor-pointer hover:opacity-80 transition-opacity mb-4' : 'mb-6'}`}
-                              onClick={() => editMode && setOpenEditSection(openEditSection === "projects" ? "" : "projects")}
+                              onClick={() => editMode && toggleSection("projects")}
                             >
                               <div className="flex items-center gap-3">
                                 <div className="w-12 h-12 rounded-2xl bg-primary-container/20 flex items-center justify-center">
@@ -1669,14 +1700,14 @@ export default function ResultPage() {
                                 <h3 className="font-headline text-2xl font-bold text-on-background">Projects</h3>
                               </div>
                               {editMode && (
-                                <motion.div className="p-2 hover:bg-surface-container rounded-full transition-colors" animate={{ rotate: openEditSection === "projects" ? 180 : 0 }} transition={{ type: "spring", stiffness: 300, damping: 25 }}>
+                                <motion.div className="p-2 hover:bg-surface-container rounded-full transition-colors" animate={{ rotate: openEditSections["projects"] ? 180 : 0 }} transition={{ type: "spring", stiffness: 300, damping: 25 }}>
                                   <ChevronDown className="w-5 h-5 text-on-surface-variant" />
                                 </motion.div>
                               )}
                             </div>
 
                             <AnimatePresence initial={false}>
-                              {(!editMode || openEditSection === "projects") && (
+                              {(!editMode || openEditSections["projects"]) && (
                                 <motion.div
                                   key="projects-content"
                                   initial={{ height: 0, opacity: 0 }}
@@ -1807,7 +1838,7 @@ export default function ResultPage() {
                                                 const newProjects = resume.projects.filter((_, i) => i !== idx);
                                                 updateResume({ projects: newProjects });
                                               }}
-                                              className="px-3 py-1 text-sm text-red-500 hover:bg-red-50 rounded-lg transition-colors font-semibold"
+                                              className="flex-shrink-0 px-3 py-1 text-sm text-red-500 hover:bg-red-50 rounded-lg transition-colors font-semibold"
                                             >
                                               Remove Project
                                             </button>
@@ -1848,7 +1879,7 @@ export default function ResultPage() {
                           >
                             <div
                               className={`flex items-center justify-between ${editMode ? 'cursor-pointer hover:opacity-80 transition-opacity mb-4' : 'mb-6'}`}
-                              onClick={() => editMode && setOpenEditSection(openEditSection === "skills" ? "" : "skills")}
+                              onClick={() => editMode && toggleSection("skills")}
                             >
                               <div className="flex items-center gap-3">
                                 <div className="w-12 h-12 rounded-2xl bg-secondary-container/20 flex items-center justify-center">
@@ -1857,14 +1888,14 @@ export default function ResultPage() {
                                 <h3 className="font-headline text-2xl font-bold text-on-background">Technical Skills</h3>
                               </div>
                               {editMode && (
-                                <motion.div className="p-2 hover:bg-surface-container rounded-full transition-colors" animate={{ rotate: openEditSection === "skills" ? 180 : 0 }} transition={{ type: "spring", stiffness: 300, damping: 25 }}>
+                                <motion.div className="p-2 hover:bg-surface-container rounded-full transition-colors" animate={{ rotate: openEditSections["skills"] ? 180 : 0 }} transition={{ type: "spring", stiffness: 300, damping: 25 }}>
                                   <ChevronDown className="w-5 h-5 text-on-surface-variant" />
                                 </motion.div>
                               )}
                             </div>
 
                             <AnimatePresence initial={false}>
-                              {(!editMode || openEditSection === "skills") && (
+                              {(!editMode || openEditSections["skills"]) && (
                                 <motion.div
                                   key="skills-content"
                                   initial={{ height: 0, opacity: 0 }}
@@ -2059,7 +2090,7 @@ export default function ResultPage() {
                           >
                             <div
                               className={`flex items-center justify-between ${editMode ? 'cursor-pointer hover:opacity-80 transition-opacity mb-4' : 'mb-6'}`}
-                              onClick={() => editMode && setOpenEditSection(openEditSection === "certifications" ? "" : "certifications")}
+                              onClick={() => editMode && toggleSection("certifications")}
                             >
                               <div className="flex items-center gap-3">
                                 <div className="w-12 h-12 rounded-2xl bg-secondary-container/20 flex items-center justify-center">
@@ -2068,14 +2099,14 @@ export default function ResultPage() {
                                 <h3 className="font-headline text-2xl font-bold text-on-background">Certifications & Achievements</h3>
                               </div>
                               {editMode && (
-                                <motion.div className="p-2 hover:bg-surface-container rounded-full transition-colors" animate={{ rotate: openEditSection === "certifications" ? 180 : 0 }} transition={{ type: "spring", stiffness: 300, damping: 25 }}>
+                                <motion.div className="p-2 hover:bg-surface-container rounded-full transition-colors" animate={{ rotate: openEditSections["certifications"] ? 180 : 0 }} transition={{ type: "spring", stiffness: 300, damping: 25 }}>
                                   <ChevronDown className="w-5 h-5 text-on-surface-variant" />
                                 </motion.div>
                               )}
                             </div>
 
                             <AnimatePresence initial={false}>
-                              {(!editMode || openEditSection === "certifications") && (
+                              {(!editMode || openEditSections["certifications"]) && (
                                 <motion.div
                                   key="certifications-content"
                                   initial={{ height: 0, opacity: 0 }}

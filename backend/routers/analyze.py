@@ -5,6 +5,10 @@ from services.combined_analyzer import analyze_resume_combined
 
 router = APIRouter()
 
+# P2-3: Request size limits — prevents oversized inputs from consuming LLM quota
+_MAX_RESUME_CHARS = 15_000   # ~4,000 tokens; a 2-page resume is ~3,000–6,000 chars
+_MAX_JD_CHARS     = 8_000    # ~2,000 tokens; normal JDs are 1,000–4,000 chars
+
 @router.post("/analyze", response_model=CombinedAnalysisResponse)
 async def analyze_resume(request: AnalyzeRequest):
     """
@@ -16,6 +20,21 @@ async def analyze_resume(request: AnalyzeRequest):
     - Project case (1/2), selected_projects, suggested_project (if needed)
     - requires_consent flag (true for Case 2)
     """
+    # Size validation — reject before spending any LLM tokens
+    if len(request.resume_text) > _MAX_RESUME_CHARS:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Resume text is too large ({len(request.resume_text):,} characters). "
+                   f"Maximum allowed is {_MAX_RESUME_CHARS:,} characters. "
+                   f"Please trim your resume to 2 pages or less."
+        )
+    if request.job_description and len(request.job_description) > _MAX_JD_CHARS:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Job description is too large ({len(request.job_description):,} characters). "
+                   f"Maximum allowed is {_MAX_JD_CHARS:,} characters."
+        )
+
     try:
         result = await analyze_resume_combined(
             request.resume_text,
@@ -40,3 +59,4 @@ async def analyze_resume(request: AnalyzeRequest):
         )
     except ValueError as e:
         raise HTTPException(status_code=500, detail=str(e))
+

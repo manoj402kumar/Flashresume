@@ -1,10 +1,16 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, BackgroundTasks
 from pydantic import BaseModel
 from typing import Optional
 import os
 import time
+import asyncio
 from dotenv import load_dotenv
 from supabase import create_client, Client
+
+# Helper: run a synchronous supabase query on a thread pool so it
+# never blocks the async event loop.
+async def _sb(query):
+    return await asyncio.to_thread(query.execute)
 
 load_dotenv()
 
@@ -40,20 +46,21 @@ async def get_admin_stats():
         return stats
         
     try:
-        # 1. Total Revenue (sum of all successful payments)
-        payments_res = supabase.table("payments").select("amount").eq("status", "success").execute()
+        # Run all 3 DB queries in parallel — non-blocking
+        payments_res, downloads, subs = await asyncio.gather(
+            _sb(supabase.table("payments").select("amount").eq("status", "success")),
+            _sb(supabase.table("resume_downloads").select("id", count="exact")),
+            _sb(supabase.table("subscriptions").select("id", count="exact").eq("is_active", True)),
+        )
+
         if payments_res.data:
             stats["total_revenue"] = sum(p["amount"] for p in payments_res.data) // 100
-            
-        # 2. Total Downloads (using resume_downloads table)
-        downloads = supabase.table("resume_downloads").select("id", count="exact").execute()
+
         if hasattr(downloads, 'count') and downloads.count is not None:
             stats["total_downloads"] = downloads.count
         else:
             stats["total_downloads"] = len(downloads.data) if downloads.data else 0
-            
-        # 3. Active Subscribers
-        subs = supabase.table("subscriptions").select("id", count="exact").eq("is_active", True).execute()
+
         if hasattr(subs, 'count') and subs.count is not None:
             stats["active_subs"] = subs.count
         else:
@@ -62,7 +69,6 @@ async def get_admin_stats():
         return stats
     except Exception as e:
         print(f"Admin Stats Error: {str(e)}")
-        # Return partial stats so UI doesn't crash
         return stats
 
 
@@ -105,10 +111,7 @@ async def get_analytics_revenue(
         if plan_filter != "all":
             payments_query = payments_query.eq("plan_type", plan_filter)
             
-        payments_res = payments_query.execute()
-        payments = payments_res.data or []
-        
-        # Fetch Subscriptions (Active only)
+        # Build both queries, then fire in parallel — non-blocking
         subs_query = supabase.table("subscriptions").select("plan_type, created_at").eq("is_active", True)
         if dt_start:
             subs_query = subs_query.gte("created_at", dt_start.isoformat())
@@ -116,8 +119,12 @@ async def get_analytics_revenue(
             subs_query = subs_query.lte("created_at", dt_end.isoformat())
         if plan_filter != "all":
             subs_query = subs_query.eq("plan_type", plan_filter)
-            
-        subs_res = subs_query.execute()
+
+        payments_res, subs_res = await asyncio.gather(
+            _sb(payments_query),
+            _sb(subs_query),
+        )
+        payments = payments_res.data or []
         subs = subs_res.data or []
         
         # Calculate Totals
@@ -144,7 +151,7 @@ async def get_analytics_revenue(
             users_query = supabase.table("users").select("id", count="exact")
             if dt_start: users_query = users_query.gte("created_at", dt_start.isoformat())
             if dt_end: users_query = users_query.lte("created_at", dt_end.isoformat())
-            u_res = users_query.execute()
+            u_res = await _sb(users_query)
             total_users = u_res.count if hasattr(u_res, 'count') and u_res.count is not None else len(u_res.data or [])
             free_users = max(0, total_users - sum(plan_counts.values()))
             
@@ -290,25 +297,24 @@ async def get_analytics_downloads(
 
     try:
         # Fetch downloads with LIMIT 10000 (Blocker 1 Fix)
-        dl_query = supabase.table("resume_downloads").select("user_id, downloaded_at").limit(10000).order("downloaded_at", desc=True)
+        dl_query = supabase.table("resume_downloads").select("user_id, session_id, downloaded_at").limit(10000).order("downloaded_at", desc=True)
         if dt_start: dl_query = dl_query.gte("downloaded_at", dt_start.isoformat())
         if dt_end: dl_query = dl_query.lte("downloaded_at", dt_end.isoformat())
         
-        dl_res = dl_query.execute()
+        dl_res = await _sb(dl_query)
         downloads = dl_res.data or []
         
         user_ids = list(set(d.get("user_id") for d in downloads if d.get("user_id")))
         
         user_plans = {}
         if user_ids:
-            # Batch if large, but IN can usually handle 1000s
-            subs_res = supabase.table("subscriptions").select("user_id, plan_type").in_("user_id", user_ids).eq("is_active", True).execute()
+            subs_res = await _sb(supabase.table("subscriptions").select("user_id, plan_type").in_("user_id", user_ids).eq("is_active", True))
             for s in subs_res.data or []:
                 user_plans[s["user_id"]] = s["plan_type"]
                 
             missing_users = [uid for uid in user_ids if uid not in user_plans]
             if missing_users:
-                pmt_res = supabase.table("payments").select("user_id, plan_type").in_("user_id", missing_users).eq("status", "success").eq("plan_type", "pay_per_use").execute()
+                pmt_res = await _sb(supabase.table("payments").select("user_id, plan_type").in_("user_id", missing_users).eq("status", "success").eq("plan_type", "pay_per_use"))
                 for p in pmt_res.data or []:
                     user_plans[p["user_id"]] = "pay_per_use"
                     
@@ -324,12 +330,37 @@ async def get_analytics_downloads(
             if ptype in plan_counts: plan_counts[ptype] += 1
             else: plan_counts[ptype] = 1
             
+        # Determine categories from sessions
+        session_ids = list(set(d.get("session_id") for d in downloads if d.get("session_id")))
+        session_categories = {}
+        if session_ids:
+            chunk_size = 200
+            for i in range(0, len(session_ids), chunk_size):
+                chunk = session_ids[i:i+chunk_size]
+                s_res = await _sb(supabase.table("resume_sessions").select("id, generated_output").in_("id", chunk))
+                for s in s_res.data or []:
+                    output = s.get("generated_output") or {}
+                    cat = output.get("_category")
+                    if not cat:
+                        # Legacy fallback: check score
+                        score = output.get("ats_score_after", 0)
+                        cat = "jd_optimized" if score > 0 else "unknown"
+                    session_categories[s["id"]] = cat
+
+        category_counts = {"jd_optimized": 0, "no_jd": 0, "no_changes": 0, "unknown": 0}
+        for d in downloads:
+            sid = d.get("session_id")
+            cat = session_categories.get(sid, "unknown") if sid else "unknown"
+            if cat in category_counts: category_counts[cat] += 1
+            else: category_counts[cat] = 1
+            
         trend = build_trend_data(downloads, dt_start, dt_end, time_filter)
         
         return {
             "total_downloads": len(downloads),
             "unique_users": unique_users,
             "downloads_by_plan": plan_counts,
+            "downloads_by_category": category_counts,
             "trend": trend
         }
     except Exception as e:
@@ -341,20 +372,23 @@ class TrackVisitRequest(BaseModel):
     session_id: str | None = None
     user_id: str | None = None
 
+def _do_track_visit(body: TrackVisitRequest):
+    """Sync insert — runs in background thread, never blocks the event loop."""
+    if supabase:
+        try:
+            supabase.table("page_visits").insert({
+                "page_type": body.page_type,
+                "session_id": body.session_id,
+                "user_id": body.user_id
+            }).execute()
+        except Exception as e:
+            print(f"Track Visit Error: {str(e)}")
+
 @router.post("/analytics/track-visit")
-async def track_visit(body: TrackVisitRequest):
-    if not supabase:
-        return {"status": "skipped"}
-    try:
-        supabase.table("page_visits").insert({
-            "page_type": body.page_type,
-            "session_id": body.session_id,
-            "user_id": body.user_id
-        }).execute()
-        return {"status": "ok"}
-    except Exception as e:
-        print(f"Track Visit Error: {str(e)}")
-        return {"status": "error"}
+async def track_visit(body: TrackVisitRequest, background_tasks: BackgroundTasks):
+    """Returns instantly — actual DB insert happens in the background."""
+    background_tasks.add_task(_do_track_visit, body)
+    return {"status": "ok"}
 
 @router.get("/admin/funnel-stats")
 async def get_funnel_stats():
@@ -362,16 +396,18 @@ async def get_funnel_stats():
         return {"landing": 0, "result": 0, "purchases": 0}
         
     try:
-        landing = supabase.table("page_visits").select("id", count="exact").eq("page_type", "landing").execute()
-        result = supabase.table("page_visits").select("id", count="exact").eq("page_type", "result").execute()
-        
-        purchases = supabase.table("payments").select("id", count="exact").eq("status", "success").execute()
-        
+        # All 3 queries in parallel — non-blocking
+        landing, result, purchases = await asyncio.gather(
+            _sb(supabase.table("page_visits").select("id", count="exact").eq("page_type", "landing")),
+            _sb(supabase.table("page_visits").select("id", count="exact").eq("page_type", "result")),
+            _sb(supabase.table("payments").select("id", count="exact").eq("status", "success")),
+        )
+
         def extract_count(res):
             if hasattr(res, 'count') and res.count is not None:
                 return res.count
             return len(res.data) if res.data else 0
-            
+
         return {
             "landing": extract_count(landing),
             "result": extract_count(result),
@@ -393,20 +429,18 @@ async def apply_referral(body: ApplyReferralRequest):
     
     try:
         # Find referrer user by code
-        ref_res = supabase.table("users").select("id").eq("referral_code", body.referral_code).execute()
+        ref_res = await _sb(supabase.table("users").select("id").eq("referral_code", body.referral_code))
         if not ref_res.data:
             return {"status": "error", "message": "Invalid referral code"}
             
         referrer_id = ref_res.data[0]["id"]
         
-        # Don't allow self-referral
         if referrer_id == body.user_id:
             return {"status": "error", "message": "Cannot refer yourself"}
             
-        # Update user's referred_by ONLY if it's currently null
-        user_res = supabase.table("users").select("referred_by").eq("id", body.user_id).execute()
+        user_res = await _sb(supabase.table("users").select("referred_by").eq("id", body.user_id))
         if user_res.data and user_res.data[0].get("referred_by") is None:
-            supabase.table("users").update({"referred_by": referrer_id}).eq("id", body.user_id).execute()
+            await _sb(supabase.table("users").update({"referred_by": referrer_id}).eq("id", body.user_id))
             return {"status": "ok"}
             
         return {"status": "skipped", "message": "Already referred"}

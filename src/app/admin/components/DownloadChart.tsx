@@ -15,6 +15,12 @@ interface AnalyticsData {
     pay_per_use: number;
     free: number;
   };
+  downloads_by_category?: {
+    jd_optimized: number;
+    no_jd: number;
+    no_changes: number;
+    unknown: number;
+  };
   trend: TrendPoint[];
 }
 
@@ -191,6 +197,27 @@ export default function DownloadChart() {
             <div className="bg-[#eff1f2]/50 rounded-xl p-3">
               <div className="text-xs text-[#595c5d] mb-1">Free</div>
               <div className="font-bold text-[#2c2f30]">{dByPlan.free.toLocaleString("en-IN")}</div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Category Breakdown */}
+      {data?.downloads_by_category && (
+        <div className="pt-2">
+          <h3 className="text-sm font-bold text-[#2c2f30] mb-3">Downloads by AI Mode</h3>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            <div className="bg-[#eff1f2]/50 rounded-xl p-3 border-l-4 border-[#006859]">
+              <div className="text-xs text-[#595c5d] mb-1">JD Optimized</div>
+              <div className="font-bold text-[#2c2f30]">{data.downloads_by_category.jd_optimized.toLocaleString("en-IN")}</div>
+            </div>
+            <div className="bg-[#eff1f2]/50 rounded-xl p-3 border-l-4 border-blue-500">
+              <div className="text-xs text-[#595c5d] mb-1">No JD</div>
+              <div className="font-bold text-[#2c2f30]">{data.downloads_by_category.no_jd.toLocaleString("en-IN")}</div>
+            </div>
+            <div className="bg-[#eff1f2]/50 rounded-xl p-3 border-l-4 border-amber-500">
+              <div className="text-xs text-[#595c5d] mb-1">No AI Changes</div>
+              <div className="font-bold text-[#2c2f30]">{data.downloads_by_category.no_changes.toLocaleString("en-IN")}</div>
             </div>
           </div>
         </div>
