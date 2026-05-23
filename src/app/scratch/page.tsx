@@ -897,7 +897,7 @@ export default function ScratchPage() {
                   >
                     <div
                       className={`flex items-center justify-between ${editMode ? 'cursor-pointer hover:opacity-80 transition-opacity mb-4' : 'mb-6'}`}
-                      onClick={() => editMode && toggleSection("contact")}
+                      role={editMode ? 'button' : undefined} tabIndex={editMode ? 0 : undefined} onClick={() => editMode && toggleSection("contact")}
                     >
                       <div className="flex items-center gap-3">
                         <div className="w-12 h-12 rounded-2xl bg-primary-container/20 flex items-center justify-center">
@@ -1038,13 +1038,13 @@ export default function ScratchPage() {
                         >
                           <div
                             className={`flex items-center justify-between ${editMode ? 'cursor-pointer hover:opacity-80 transition-opacity mb-4' : 'mb-6'}`}
-                            onClick={() => editMode && toggleSection(sectionId)}
+                            role={editMode ? 'button' : undefined} tabIndex={editMode ? 0 : undefined} onClick={() => editMode && toggleSection(sectionId)}
                           >
                             <div className="flex items-center gap-3">
                               <div className="w-12 h-12 rounded-2xl bg-primary-container/20 flex items-center justify-center">
                                 <FileText className="w-6 h-6 text-primary" />
                               </div>
-                              {editMode && openEditSections[sectionId] ? (
+                              {editMode && openEditSection === sectionId ? (
                                 <input
                                   type="text"
                                   value={customSection.heading}
@@ -1180,7 +1180,7 @@ export default function ScratchPage() {
                           >
                             <div
                               className={`flex items-center justify-between ${editMode ? 'cursor-pointer hover:opacity-80 transition-opacity mb-4' : 'mb-6'}`}
-                              onClick={() => editMode && toggleSection("summary")}
+                              role={editMode ? 'button' : undefined} tabIndex={editMode ? 0 : undefined} onClick={() => editMode && toggleSection("summary")}
                             >
                               <div className="flex items-center gap-3">
                                 <div className="w-12 h-12 rounded-2xl bg-primary-container/20 flex items-center justify-center">
@@ -1237,7 +1237,7 @@ export default function ScratchPage() {
                           >
                             <div
                               className={`flex items-center justify-between ${editMode ? 'cursor-pointer hover:opacity-80 transition-opacity mb-4' : 'mb-6'}`}
-                              onClick={() => editMode && toggleSection("education")}
+                              role={editMode ? 'button' : undefined} tabIndex={editMode ? 0 : undefined} onClick={() => editMode && toggleSection("education")}
                             >
                               <div className="flex items-center gap-3">
                                 <div className="w-12 h-12 rounded-2xl bg-secondary-container/20 flex items-center justify-center">
@@ -1380,7 +1380,7 @@ export default function ScratchPage() {
                           >
                             <div
                               className={`flex items-center justify-between ${editMode ? 'cursor-pointer hover:opacity-80 transition-opacity mb-4' : 'mb-6'}`}
-                              onClick={() => editMode && toggleSection("experience")}
+                              role={editMode ? 'button' : undefined} tabIndex={editMode ? 0 : undefined} onClick={() => editMode && toggleSection("experience")}
                             >
                               <div className="flex items-center gap-3">
                                 <div className="w-12 h-12 rounded-2xl bg-tertiary-container/20 flex items-center justify-center">
@@ -1557,7 +1557,7 @@ export default function ScratchPage() {
                           >
                             <div
                               className={`flex items-center justify-between ${editMode ? 'cursor-pointer hover:opacity-80 transition-opacity mb-4' : 'mb-6'}`}
-                              onClick={() => editMode && toggleSection("projects")}
+                              role={editMode ? 'button' : undefined} tabIndex={editMode ? 0 : undefined} onClick={() => editMode && toggleSection("projects")}
                             >
                               <div className="flex items-center gap-3">
                                 <div className="w-12 h-12 rounded-2xl bg-primary-container/20 flex items-center justify-center">
@@ -1745,7 +1745,7 @@ export default function ScratchPage() {
                           >
                             <div
                               className={`flex items-center justify-between ${editMode ? 'cursor-pointer hover:opacity-80 transition-opacity mb-4' : 'mb-6'}`}
-                              onClick={() => editMode && toggleSection("skills")}
+                              role={editMode ? 'button' : undefined} tabIndex={editMode ? 0 : undefined} onClick={() => editMode && toggleSection("skills")}
                             >
                               <div className="flex items-center gap-3">
                                 <div className="w-12 h-12 rounded-2xl bg-secondary-container/20 flex items-center justify-center">
@@ -1956,7 +1956,7 @@ export default function ScratchPage() {
                           >
                             <div
                               className={`flex items-center justify-between ${editMode ? 'cursor-pointer hover:opacity-80 transition-opacity mb-4' : 'mb-6'}`}
-                              onClick={() => editMode && toggleSection("certifications")}
+                              role={editMode ? 'button' : undefined} tabIndex={editMode ? 0 : undefined} onClick={() => editMode && toggleSection("certifications")}
                             >
                               <div className="flex items-center gap-3">
                                 <div className="w-12 h-12 rounded-2xl bg-secondary-container/20 flex items-center justify-center">

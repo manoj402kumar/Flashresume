@@ -409,7 +409,10 @@ export default function App() {
                   >
                     🎁 <span className="hidden md:inline">{copied ? "Copied!" : "Invite & Earn"}</span>
                     <div
-                      className="relative group/tooltip inline-flex items-center"
+                      role="button"
+                      tabIndex={0}
+                      aria-label="View tooltip"
+                      className="relative group/tooltip inline-flex items-center cursor-pointer"
                       onClick={(e) => {
                         e.stopPropagation();
                         setActiveTooltip(activeTooltip === "nav" ? null : "nav");
@@ -440,7 +443,7 @@ export default function App() {
                   <AnimatePresence>
                     {showAccountDropdown && (
                       <>
-                        <div className="fixed inset-0 z-40" onClick={() => setShowAccountDropdown(false)}></div>
+                        <div className="fixed inset-0 z-40" aria-hidden="true" onClick={() => setShowAccountDropdown(false)}></div>
                         <motion.div
                           initial={{ opacity: 0, y: 10, scale: 0.95 }}
                           animate={{ opacity: 1, y: 0, scale: 1 }}

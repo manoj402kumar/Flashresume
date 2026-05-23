@@ -23,6 +23,15 @@ export const metadata: Metadata = {
     "edit pdf resume online free",
     "modify pdf resume text",
     "resume pdf to editable format",
+    "single column ATS resume template",
+    "resume maker for campus placements",
+    "Taleo Greenhouse resume formatter",
+    "bypass Workday ATS filters",
+    "Free resume builder",
+    "Resume maker online",
+    "CV builder free",
+    "Best resume builder for freshers India",
+    "Resume format for job application",
   ],
   authors: [{ name: "Flashresume" }],
   creator: "Flashresume",
@@ -120,7 +129,19 @@ export default function RootLayout({
               "priceCurrency": "INR"
             },
             "description": "India's No.1 ATS Resume Builder. Optimize and rebuild your resume for Applicant Tracking Systems in 60 seconds.",
-            "url": "https://flashresume.in"
+            "url": "https://flashresume.in",
+            "applicationSubCategory": "Resume Builder",
+            "featureList": [
+              "ATS Resume Score Checker",
+              "Job Description Keyword Matching",
+              "Single Column ATS Formatting",
+              "PDF Text Editor",
+              "TCS Ninja Fresher Templates"
+            ],
+            "audience": {
+              "@type": "Audience",
+              "audienceType": "Job Seekers, Freshers, Software Engineers in India"
+            }
           })
         }} />
       </body>
