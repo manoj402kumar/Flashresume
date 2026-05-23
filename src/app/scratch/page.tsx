@@ -167,7 +167,7 @@ export default function ScratchPage() {
   const [copied, setCopied] = useState(false);
   const [editMode, setEditMode] = useState(true);
   const [openEditSections, setOpenEditSections] = useState<Record<string, boolean>>({ contact: true });
-  const toggleSection = (sec: string) => setOpenEditSections(p => ({ ...p, [sec]: ! p.get(sec) }));
+  const toggleSection = (sec: string) => setOpenEditSections(p => ({ ...p, [sec]: !p[sec] }));
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [showHighlights, setShowHighlights] = useState(true);
   const [downloadingPDF, setDownloadingPDF] = useState(false);
