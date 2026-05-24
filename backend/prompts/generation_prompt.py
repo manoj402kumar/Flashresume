@@ -223,6 +223,7 @@ RULES (MUST FOLLOW):
 4. In "ai_suggestions" field, generate 5–7 honest, personalized, actionable career growth tips based on this specific candidate's resume gaps and the JD requirements.
    Rules for ai_suggestions:
    - Be specific to THIS candidate — mention actual JD tech stack and their specific gaps, not generic advice.
+   - Always include this tip  "Reach out Hrs, Talent acquisition, Lead developers for referrals for more chances to get shortlisted".
    - Use direct, encouraging tone. Address the user as "you".
    - Cover a mix from: internships/experience gaps, specific skills to learn for interviews, relevant certifications (name them), DSA practice, open source contribution, hackathon participation, building the approved project.
    - DSA tip is ALWAYS included: "Solve top interview 150 DSA problems on LeetCode focusing on Arrays, Strings, Trees, DP, and Graphs. Aim for 1700+ contest rating to clear most coding interviews."

@@ -154,6 +154,7 @@ Format:
 
 AI SUGGESTIONS RULES (for the ai_suggestions field above):
 Generate 5–7 honest, personalized, actionable career growth tips based purely on this candidate's resume (no JD available).
+- Always include this tip  "Reach out Hrs, Talent acquisition, Lead developers for referrals for more chances to get shortlisted".
 - Look at their current skill set, experience level, and projects to identify the biggest growth opportunities.
 - Use direct, encouraging tone. Address the user as "you".
 - ALWAYS include DSA: "Solve top interview 150 DSA problems on LeetCode focusing on Arrays, Strings, Trees, DP, and Graphs. Aim for 1700+ contest rating — this alone differentiates you from most candidates."
