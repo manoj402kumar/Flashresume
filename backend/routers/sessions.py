@@ -1,18 +1,9 @@
 import os
 import asyncio
 from fastapi import APIRouter, HTTPException
-from supabase import create_client, Client
+from supabase_client import supabase
 
 router = APIRouter()
-
-SUPABASE_URL = os.getenv("SUPABASE_URL", "https://your-project.supabase.co")
-SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY") or os.getenv("SUPABASE_ANON_KEY")
-
-try:
-    supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
-except Exception as e:
-    print(f"Supabase init error in sessions.py: {e}")
-    supabase = None
 
 @router.get("/sessions/{session_id}")
 async def get_session(session_id: str):

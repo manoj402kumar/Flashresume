@@ -1,8 +1,5 @@
-import os
 import asyncio
-from supabase import create_client, Client
-# pyrefly: ignore [missing-import]
-from dotenv import load_dotenv
+from supabase_client import supabase
 from .mistral_fallback    import call_single_mistral_r1,    call_single_mistral_r2
 from .groq_fallback       import call_single_groq_r1,       call_single_groq_r2
 from .nvidia_fallback     import call_single_nvidia_r1,     call_single_nvidia_r2
@@ -12,17 +9,10 @@ from .nvidia_fallback     import call_single_nvidia_r1,     call_single_nvidia_r
 # Requests beyond this wait in an async queue (non-blocking) instead of
 # all hammering providers at once and causing mass 429 rate-limit storms.
 # With 2 Uvicorn workers this means max 16 concurrent LLM calls total.
-_LLM_SEMAPHORE = asyncio.Semaphore(8)
+_LLM_SEMAPHORE = asyncio.Semaphore(4)
 # ─────────────────────────────────────────────────────────────────────────────
 
-load_dotenv()
 
-SUPABASE_URL = os.getenv("SUPABASE_URL", "https://your-project.supabase.co")
-SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY") or os.getenv("SUPABASE_ANON_KEY")
-try:
-    supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
-except Exception:
-    supabase = None
 
 # R1 (ATS score JSON + project check): response is small ~200-600 tokens
 # R2 (full resume JSON): response is large ~2500-3200 tokens
@@ -206,7 +196,7 @@ async def call_llm_r1(prompt: str, preferred_model: str = "") -> dict:
     """
     async with _LLM_SEMAPHORE:
         result = await _run_flat_chain(prompt, _R1_FLAT, _R1_MAX_TOKENS, preferred_model)
-    _log_to_supabase("r1", result)
+    asyncio.create_task(asyncio.to_thread(_log_to_supabase, "r1", result))
     return result
 
 
@@ -227,5 +217,5 @@ async def call_llm_r2(prompt: str, preferred_model: str = "") -> dict:
     """
     async with _LLM_SEMAPHORE:
         result = await _run_flat_chain(prompt, _R2_FLAT, _R2_MAX_TOKENS, preferred_model)
-    _log_to_supabase("r2", result)
+    asyncio.create_task(asyncio.to_thread(_log_to_supabase, "r2", result))
     return result

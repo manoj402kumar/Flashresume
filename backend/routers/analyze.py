@@ -1,7 +1,8 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from models.request_models import AnalyzeRequest
 from models.response_models import CombinedAnalysisResponse
 from services.combined_analyzer import analyze_resume_combined
+from rate_limiter import limiter
 
 router = APIRouter()
 
@@ -10,7 +11,8 @@ _MAX_RESUME_CHARS = 15_000   # ~4,000 tokens; a 2-page resume is ~3,000–6,000 
 _MAX_JD_CHARS     = 8_000    # ~2,000 tokens; normal JDs are 1,000–4,000 chars
 
 @router.post("/analyze", response_model=CombinedAnalysisResponse)
-async def analyze_resume(request: AnalyzeRequest):
+@limiter.limit("5/minute")
+async def analyze_resume(request: Request, payload: AnalyzeRequest):
     """
     Combined endpoint: Analyze resume against JD for ATS score AND check project relevance.
     Uses a SINGLE LLM call (combined prompt) instead of two parallel calls.
@@ -21,25 +23,25 @@ async def analyze_resume(request: AnalyzeRequest):
     - requires_consent flag (true for Case 2)
     """
     # Size validation — reject before spending any LLM tokens
-    if len(request.resume_text) > _MAX_RESUME_CHARS:
+    if len(payload.resume_text) > _MAX_RESUME_CHARS:
         raise HTTPException(
             status_code=400,
-            detail=f"Resume text is too large ({len(request.resume_text):,} characters). "
+            detail=f"Resume text is too large ({len(payload.resume_text):,} characters). "
                    f"Maximum allowed is {_MAX_RESUME_CHARS:,} characters. "
                    f"Please trim your resume to 2 pages or less."
         )
-    if request.job_description and len(request.job_description) > _MAX_JD_CHARS:
+    if payload.job_description and len(payload.job_description) > _MAX_JD_CHARS:
         raise HTTPException(
             status_code=400,
-            detail=f"Job description is too large ({len(request.job_description):,} characters). "
+            detail=f"Job description is too large ({len(payload.job_description):,} characters). "
                    f"Maximum allowed is {_MAX_JD_CHARS:,} characters."
         )
 
     try:
         result = await analyze_resume_combined(
-            request.resume_text,
-            request.job_description,
-            request.preferred_model or ""
+            payload.resume_text,
+            payload.job_description,
+            payload.preferred_model or ""
         )
 
         return CombinedAnalysisResponse(

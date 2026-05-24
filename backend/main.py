@@ -10,17 +10,15 @@ from datetime import datetime, timedelta, timezone
 load_dotenv()
 
 from routers import parse, analyze, generate, payments, admin, sessions, feedback
-from supabase import create_client, Client as SupabaseClient
-
-# Supabase client for main.py endpoints
-_SUPABASE_URL = os.getenv("SUPABASE_URL", "")
-_SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY") or os.getenv("SUPABASE_ANON_KEY", "")
-try:
-    _supabase: SupabaseClient = create_client(_SUPABASE_URL, _SUPABASE_KEY)
-except Exception:
-    _supabase = None  # type: ignore
+from supabase_client import supabase
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from rate_limiter import limiter
 
 app = FastAPI(title="FlashResume API", version="1.0.0")
+
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 ALLOWED_ORIGINS = [
     "http://localhost:3000",
@@ -76,9 +74,9 @@ def health():
     This is a sync def, so FastAPI runs it in a thread pool — never blocks the event loop.
     """
     db_status = "inactive"
-    if _supabase:
+    if supabase:
         try:
-            _supabase.table("resume_sessions").select("id").limit(1).execute()
+            supabase.table("resume_sessions").select("id").limit(1).execute()
             db_status = "active"
         except Exception as e:
             db_status = f"error: {str(e)}"
@@ -89,12 +87,12 @@ async def get_queue_status():
     """Active sessions count — polled every 5s by the Admin Dashboard.
     Uses asyncio.to_thread so the Supabase query never blocks the event loop.
     """
-    if not _supabase:
+    if not supabase:
         return {"processing": 0}
     try:
         five_mins_ago = (datetime.now(timezone.utc) - timedelta(minutes=5)).isoformat()
         res = await asyncio.to_thread(
-            lambda: _supabase.table("resume_sessions")
+            lambda: supabase.table("resume_sessions")
                 .select("id", count="exact")
                 .gte("created_at", five_mins_ago)
                 .execute()

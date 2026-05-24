@@ -5,7 +5,7 @@ import os
 import time
 import asyncio
 from dotenv import load_dotenv
-from supabase import create_client, Client
+from supabase_client import supabase
 
 # Helper: run a synchronous supabase query on a thread pool so it
 # never blocks the async event loop.
@@ -18,15 +18,6 @@ router = APIRouter()
 
 # Server start time for uptime tracking
 SERVER_START_TIME = time.time()
-
-SUPABASE_URL = os.getenv("SUPABASE_URL", "https://your-project.supabase.co")
-SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY") or os.getenv("SUPABASE_ANON_KEY")
-
-try:
-    supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
-except Exception as e:
-    print(f"Supabase client initialization failed: {e}")
-    supabase = None
 
 from datetime import datetime, timedelta, timezone
 
