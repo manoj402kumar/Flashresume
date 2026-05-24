@@ -2,11 +2,11 @@
 
 import { useState } from "react";
 import { motion } from "motion/react";
-import { Mail, Lock, Loader2, ShieldCheck } from "lucide-react";
+import { User, Lock, Loader2, ShieldCheck } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 export default function AdminLoginPage() {
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -21,7 +21,7 @@ export default function AdminLoginPage() {
       const res = await fetch("/api/admin/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ username, password }),
       });
 
       const data = await res.json();
@@ -63,13 +63,13 @@ export default function AdminLoginPage() {
           <form onSubmit={handleAuth} className="space-y-4">
             <div className="space-y-4">
               <div className="relative">
-                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-on-surface-variant/50" />
+                <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-on-surface-variant/50" />
                 <input
-                  type="email"
+                  type="text"
                   required
-                  placeholder="Admin Email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="Admin Username"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
                   className="w-full pl-12 pr-4 py-3 bg-surface-container-low border border-surface-container-high rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
                 />
               </div>

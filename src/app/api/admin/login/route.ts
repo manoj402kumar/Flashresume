@@ -13,21 +13,19 @@ function secureCompare(input: string, secret: string): boolean {
 
 export async function POST(request: Request) {
   try {
-    const { email, password } = await request.json();
+    const { username, password } = await request.json();
 
-    if (!email || !password) {
+    if (!username || !password) {
       return NextResponse.json(
-        { error: "Email and password are required" },
+        { error: "Username and password are required" },
         { status: 400 }
       );
     }
 
-    const admin1Email = process.env.ADMIN_USER_1_EMAIL;
-    const admin1Password = process.env.ADMIN_USER_1_PASSWORD;
-    const admin2Email = process.env.ADMIN_USER_2_EMAIL;
-    const admin2Password = process.env.ADMIN_USER_2_PASSWORD;
+    const adminUsername = process.env.ADMIN_USERNAME;
+    const adminPassword = process.env.ADMIN_PASSWORD;
 
-    if (!admin1Email || !admin1Password || !admin2Email || !admin2Password) {
+    if (!adminUsername || !adminPassword) {
       console.error("Admin credentials are not configured in environment variables");
       return NextResponse.json(
         { error: "Authentication system configuration error" },
@@ -35,13 +33,12 @@ export async function POST(request: Request) {
       );
     }
 
-    // Secure timing-safe comparison for Admin 1 or Admin 2
-    const isAdmin1 = secureCompare(email, admin1Email) && secureCompare(password, admin1Password);
-    const isAdmin2 = secureCompare(email, admin2Email) && secureCompare(password, admin2Password);
+    // Secure timing-safe comparison
+    const isValid = secureCompare(username, adminUsername) && secureCompare(password, adminPassword);
 
-    if (!isAdmin1 && !isAdmin2) {
+    if (!isValid) {
       return NextResponse.json(
-        { error: "Invalid email or password" },
+        { error: "Invalid username or password" },
         { status: 401 }
       );
     }
