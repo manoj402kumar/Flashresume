@@ -1159,10 +1159,11 @@ export default function App() {
       <footer className="bg-surface-container-low w-full py-12 border-t border-on-surface-variant/10">
         <div className="flex flex-col md:flex-row justify-between items-center px-8 max-w-7xl mx-auto gap-8">
           <div className="text-lg font-black text-on-background font-headline">Flashresume</div>
-          <div className="flex gap-8 font-sans text-xs tracking-wide uppercase font-bold">
-            <a href="#" className="text-on-surface-variant hover:text-primary transition-colors">Privacy Policy</a>
-            <a href="#" className="text-on-surface-variant hover:text-primary transition-colors">Terms of Service</a>
-            <a href="#" className="text-on-surface-variant hover:text-primary transition-colors">Contact Support</a>
+          <div className="flex flex-wrap justify-center gap-6 md:gap-8 font-sans text-[10px] md:text-xs tracking-wide uppercase font-bold">
+            <a href="/privacy" className="text-on-surface-variant hover:text-primary transition-colors">Privacy Policy</a>
+            <a href="/terms" className="text-on-surface-variant hover:text-primary transition-colors">Terms of Service</a>
+            <a href="/refund-policy" className="text-on-surface-variant hover:text-primary transition-colors">Refund Policy</a>
+            <a href="/contact" className="text-on-surface-variant hover:text-primary transition-colors">Contact Support</a>
           </div>
           <div className="text-on-surface-variant text-xs font-sans uppercase tracking-wide">
             © 2024 Flashresume. All rights reserved.
