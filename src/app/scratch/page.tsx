@@ -1044,7 +1044,7 @@ export default function ScratchPage() {
                               <div className="w-12 h-12 rounded-2xl bg-primary-container/20 flex items-center justify-center">
                                 <FileText className="w-6 h-6 text-primary" />
                               </div>
-                              {editMode && openEditSection === sectionId ? (
+                              {editMode && openEditSections[sectionId] ? (
                                 <input
                                   type="text"
                                   value={customSection.heading}
