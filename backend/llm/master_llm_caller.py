@@ -3,10 +3,8 @@ import asyncio
 from supabase import create_client, Client
 # pyrefly: ignore [missing-import]
 from dotenv import load_dotenv
-from .gemini_fallback     import call_single_gemini_r1,     call_single_gemini_r2
 from .mistral_fallback    import call_single_mistral_r1,    call_single_mistral_r2
 from .groq_fallback       import call_single_groq_r1,       call_single_groq_r2
-from .cloudflare_fallback import call_single_cloudflare_r1, call_single_cloudflare_r2
 from .nvidia_fallback     import call_single_nvidia_r1,     call_single_nvidia_r2
 
 # ── Concurrency guard ────────────────────────────────────────────────────────
@@ -85,9 +83,6 @@ _R1_FLAT = [
     ("nvidia",     "mistralai/mistral-small-4-119b-2603",        call_single_nvidia_r1),       # #11
     ("mistral",    "mistral-tiny-latest",                         call_single_mistral_r1),      # #12
     ("mistral",    "open-mistral-nemo",                           call_single_mistral_r1),      # #13
-    ("nvidia",     "meta/llama-3.3-70b-instruct",                call_single_nvidia_r1),       # #14
-    ("cloudflare", "@cf/meta/llama-3.1-8b-instruct",            call_single_cloudflare_r1),   # #15
-    ("gemini",     "gemini-2.5-flash-lite",                      call_single_gemini_r1),       # #16
 ]
 
 # -----------------------------------------------------------------------------
@@ -107,9 +102,6 @@ _R2_FLAT = [
     ("nvidia",     "mistralai/mistral-small-4-119b-2603",        call_single_nvidia_r2),       # #11
     ("mistral",    "mistral-tiny-latest",                         call_single_mistral_r2),      # #12
     ("mistral",    "open-mistral-nemo",                           call_single_mistral_r2),      # #13
-    ("nvidia",     "meta/llama-3.3-70b-instruct",                call_single_nvidia_r2),       # #14
-    ("cloudflare", "@cf/meta/llama-3.1-8b-instruct",            call_single_cloudflare_r2),   # #15
-    ("gemini",     "gemini-2.5-flash-lite",                      call_single_gemini_r2),       # #16
 ]
 
 # Rate-limit signal strings — used to detect 429-type failures across all providers
@@ -204,13 +196,12 @@ async def call_llm_r1(prompt: str, preferred_model: str = "") -> dict:
     All callers are async. Timeout per model: 30s.
     If preferred_model is set, starts the chain from that model.
     Acquires _LLM_SEMAPHORE — max 8 concurrent LLM ops per worker.
-    Chain (16 models, interleaved by provider):
+    Chain (13 models, interleaved by provider):
       mistral-medium -> nvidia/mistral-nemotron -> mistral-large ->
       nvidia/mistral-medium-3.5 -> ministral-8b -> nvidia/ministral-14b ->
       groq/llama-3.3-70b -> nvidia/mixtral-8x22b -> groq/llama-4-scout ->
       mistral-small -> nvidia/mistral-small-4 -> mistral-tiny ->
-      open-mistral-nemo -> nvidia/llama-3.3-70b -> cf/llama-3.1-8b ->
-      gemini-2.5-flash-lite
+      open-mistral-nemo
     max_tokens: 2500
     """
     async with _LLM_SEMAPHORE:
@@ -226,13 +217,12 @@ async def call_llm_r2(prompt: str, preferred_model: str = "") -> dict:
     All callers are async. Timeout per model: 90s.
     If preferred_model is set, starts the chain from that model.
     Acquires _LLM_SEMAPHORE — max 8 concurrent LLM ops per worker.
-    Chain (16 models, interleaved by provider):
+    Chain (13 models, interleaved by provider):
       mistral-medium -> nvidia/mistral-nemotron -> mistral-large ->
       nvidia/mistral-medium-3.5 -> ministral-8b -> nvidia/ministral-14b ->
       groq/llama-3.3-70b -> nvidia/mixtral-8x22b -> groq/llama-4-scout ->
       mistral-small -> nvidia/mistral-small-4 -> mistral-tiny ->
-      open-mistral-nemo -> nvidia/llama-3.3-70b -> cf/llama-3.1-8b ->
-      gemini-2.5-flash-lite
+      open-mistral-nemo
     max_tokens: 4500
     """
     async with _LLM_SEMAPHORE:
