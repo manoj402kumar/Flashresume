@@ -1,0 +1,20 @@
+<svg viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path
+    d="M18 2L32 10V26L18 34L4 26V10L18 2Z"
+    fill="url(#hex-grad)"
+    stroke="rgba(0,104,89,0.3)"
+    stroke-width="0.8"
+  />
+  <defs>
+    <linearGradient id="hex-grad" x1="4" y1="2" x2="32" y2="34" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#006859" />
+      <stop offset="1" stop-color="#12f8d7" />
+    </linearGradient>
+  </defs>
+  <path
+    d="M20 8L13 20h6l-1 8 8-12h-6l1-8z"
+    fill="white"
+    fill-opacity="0.95"
+    transform="translate(-1.5, 0)"
+  />
+</svg>
