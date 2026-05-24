@@ -9,7 +9,7 @@ export const metadata: Metadata = {
     template: "%s | Flashresume",
   },
   description:
-    "Rebuild your resume in 60 seconds. Flashresume is India's most advanced ATS resume builder. Upload your CV and beat the Applicant Tracking System instantly.",
+    "Rebuild your resume in 60 seconds. Flashresume is India's most advanced ATS resume builder. Upload your CV, job description and beat the Applicant Tracking System instantly.",
   keywords: [
     "ATS resume builder",
     "AI resume builder",
