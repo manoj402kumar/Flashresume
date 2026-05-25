@@ -7,7 +7,7 @@ import {
   ArrowUpRight, Activity,
 } from "lucide-react";
 
-// ── Animated counter hook ──────────────────────────────────────────────────
+// -- Animated counter hook --------------------------------------------------
 function useCountUp(target: number, duration = 1400) {
   const [count, setCount] = useState(0);
   useEffect(() => {

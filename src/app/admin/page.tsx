@@ -246,7 +246,7 @@ export default function AdminPage() {
         {/* Page body */}
         <main className="flex-1 px-6 py-8 space-y-14 max-w-7xl w-full mx-auto">
 
-          {/* ── Overview ─────────────────────────────────────────── */}
+          {/* -- Overview ------------------------------------------- */}
           <section id="overview" ref={setRef("overview")}>
             <SectionTitle
               title="Overview"
@@ -255,27 +255,27 @@ export default function AdminPage() {
             <KPICards activeSessions={activeSessions} stats={stats} />
           </section>
 
-          {/* ── Revenue ──────────────────────────────────────────── */}
+          {/* -- Revenue -------------------------------------------- */}
           <section id="revenue" ref={setRef("revenue")}>
             <RevenuePanel />
           </section>
 
-          {/* ── Downloads ─────────────────────────────────────────── */}
+          {/* -- Downloads ------------------------------------------- */}
           <section id="downloads" ref={setRef("downloads")}>
             <DownloadChart />
           </section>
 
-          {/* ── LLM Usage ────────────────────────────────────────── */}
+          {/* -- LLM Usage ------------------------------------------ */}
           <section id="llm" ref={setRef("llm")}>
             <LLMPanel />
           </section>
 
-          {/* ── Conversion Funnel ─────────────────────────────────── */}
+          {/* -- Conversion Funnel ----------------------------------- */}
           <section id="funnel" ref={setRef("funnel")}>
             <FunnelChart />
           </section>
 
-          {/* ── Feedback ─────────────────────────────────────────── */}
+          {/* -- Feedback ------------------------------------------- */}
           <section id="feedback" ref={setRef("feedback")}>
             <FeedbackPanel />
           </section>

@@ -22,7 +22,7 @@ export default function FeedbackPanel() {
         const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
         const res = await fetch(`/api/admin-proxy/feedback`);
         const data = await res.json();
-        setFeedbacks(data || []);
+        setFeedbacks(Array.isArray(data) ? data : []);
       } catch (e) {
         console.error(e);
       } finally {

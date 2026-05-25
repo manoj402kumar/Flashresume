@@ -14,7 +14,7 @@ export default function FunnelChart() {
     fetch(`/api/admin-proxy/funnel-stats`)
       .then(res => res.json())
       .then(data => {
-        setStats(data);
+        setStats(data.landing !== undefined ? data : { landing: 0, result: 0, purchases: 0 });
         setLoading(false);
       })
       .catch(e => {
