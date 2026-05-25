@@ -383,20 +383,26 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
         prefill: { email: user.email },
         theme: { color: "#6750A4" },
         handler: async (response: any) => {
-          const verifyRes = await fetch(`${apiUrl}/api/payments/verify`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              razorpay_order_id: response.razorpay_order_id,
-              razorpay_payment_id: response.razorpay_payment_id,
-              razorpay_signature: response.razorpay_signature,
-              user_id: user.id,
-              plan_type: planDetails.plan_type,
-              amount: planDetails.amount,
-            }),
-          });
-          if (!verifyRes.ok) throw new Error("Payment verification failed.");
-          onSuccess();
+          try {
+            const verifyRes = await fetch(`${apiUrl}/api/payments/verify`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+                user_id: user.id,
+                plan_type: planDetails.plan_type,
+                amount: planDetails.amount,
+              }),
+            });
+            if (!verifyRes.ok) throw new Error("Payment verification failed on the server.");
+            onSuccess();
+          } catch (err: any) {
+            setError(err.message || "Payment verification failed.");
+            setStep("plan");
+            setLoading(false);
+          }
         },
         modal: {
           ondismiss: () => { setStep("plan"); setLoading(false); },
