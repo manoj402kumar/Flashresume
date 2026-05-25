@@ -35,6 +35,7 @@ import { User } from "@supabase/supabase-js";
 import CreditBadge from "@/components/CreditBadge";
 
 import LiveDemoSection from "@/components/LiveDemoSection";
+import TemplatesCarousel from "@/components/TemplatesCarousel";
 import ModelSelector from "@/components/ModelSelector";
 
 export default function App() {
@@ -885,6 +886,9 @@ export default function App() {
             </div>
           </div>
         </section>
+
+        {/* ── Templates Section ──────────────────────────────────────── */}
+        <TemplatesCarousel />
 
         {/* Live Demo Section */}
         <LiveDemoSection />
