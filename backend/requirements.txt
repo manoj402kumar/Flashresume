@@ -19,3 +19,4 @@ supabase>=2.0.0
 razorpay
 httpx
 google-generativeai
+aiosmtplib

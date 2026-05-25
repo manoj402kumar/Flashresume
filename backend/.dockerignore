@@ -1,0 +1,11 @@
+# Development artifacts — never ship to production
+src/app/scratch/
+scratch/
+benchmark.py
+tests/
+**/__pycache__/
+**/*.pyc
+**/*.pyo
+.env
+.env.*
+*.log

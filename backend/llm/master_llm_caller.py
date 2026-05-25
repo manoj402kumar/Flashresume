@@ -164,17 +164,19 @@ async def _run_flat_chain(prompt: str, flat_chain: list, max_tokens: int, prefer
     }
 
 
-def _log_to_supabase(request_type: str, result: dict):
-    """Fire-and-forget Supabase usage log. Errors are silent — never block the response."""
+async def _log_to_supabase(request_type: str, result: dict):
+    """Fire-and-forget async Supabase log. Never blocks the response."""
     if supabase and result.get("provider"):
         try:
-            supabase.table("llm_usage").insert({
-                "request_type": request_type,
-                "provider": result["provider"],
-                "model": result["model"],
-                "success": result["success"],
-                "speed_secs": result["speed"]
-            }).execute()
+            await asyncio.to_thread(
+                lambda: supabase.table("llm_usage").insert({
+                    "request_type": request_type,
+                    "provider": result["provider"],
+                    "model": result["model"],
+                    "success": result["success"],
+                    "speed_secs": result["speed"]
+                }).execute()
+            )
         except Exception:
             pass
 
@@ -196,7 +198,7 @@ async def call_llm_r1(prompt: str, preferred_model: str = "") -> dict:
     """
     async with _LLM_SEMAPHORE:
         result = await _run_flat_chain(prompt, _R1_FLAT, _R1_MAX_TOKENS, preferred_model)
-    asyncio.create_task(asyncio.to_thread(_log_to_supabase, "r1", result))
+    asyncio.create_task(_log_to_supabase("r1", result))
     return result
 
 
@@ -217,5 +219,5 @@ async def call_llm_r2(prompt: str, preferred_model: str = "") -> dict:
     """
     async with _LLM_SEMAPHORE:
         result = await _run_flat_chain(prompt, _R2_FLAT, _R2_MAX_TOKENS, preferred_model)
-    asyncio.create_task(asyncio.to_thread(_log_to_supabase, "r2", result))
+    asyncio.create_task(_log_to_supabase("r2", result))
     return result
