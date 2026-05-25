@@ -68,7 +68,7 @@ export default function RevenuePanel() {
       setDateError("");
     }
 
-    let url = `${API_URL}/api/admin/analytics/revenue?time_filter=${timeFilter}&plan_filter=${planFilter}`;
+    let url = `/api/admin-proxy/analytics/revenue?time_filter=${timeFilter}&plan_filter=${planFilter}`;
     if (timeFilter === "custom" && startDate && endDate) {
       url += `&start_date=${startDate}T00:00:00Z&end_date=${endDate}T23:59:59Z`;
     }

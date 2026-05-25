@@ -66,7 +66,7 @@ export default function DownloadChart() {
       setDateError("");
     }
 
-    let url = `${API_URL}/api/admin/analytics/downloads?time_filter=${timeFilter}&plan_filter=${planFilter}`;
+    let url = `/api/admin-proxy/analytics/downloads?time_filter=${timeFilter}&plan_filter=${planFilter}`;
     if (timeFilter === "custom" && startDate && endDate) {
       url += `&start_date=${startDate}T00:00:00Z&end_date=${endDate}T23:59:59Z`;
     }

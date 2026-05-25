@@ -1,4 +1,6 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
+import asyncio
+import hmac
 from pydantic import BaseModel
 import razorpay
 import os
@@ -92,11 +94,20 @@ async def verify_payment(body: VerifyRequest):
         })
         
         if supabase:
-            # 1. Update payment status to success
-            supabase.table("payments").update({
-                "status": "success",
-                "razorpay_payment_id": body.razorpay_payment_id
-            }).eq("razorpay_order_id", body.razorpay_order_id).execute()
+            # 1. Update payment status to success idempotently
+            update_res = await asyncio.to_thread(
+                lambda: supabase.table("payments").update({
+                    "status": "success",
+                    "razorpay_payment_id": body.razorpay_payment_id,
+                    "razorpay_signature": body.razorpay_signature,
+                })
+                .eq("razorpay_order_id", body.razorpay_order_id)
+                .eq("status", "pending")
+                .execute()
+            )
+            
+            if not update_res.data:
+                return {"status": "already_processed", "message": "Payment already verified"}
             
             # 2. Add Credits and Subscription Record
             PLAN_CREDITS = {
@@ -280,32 +291,38 @@ class VerifyOtpRequest(BaseModel):
     email: str
     otp: str
 
+from rate_limiter import limiter
+
 @router.post("/payments/verify-otp")
-async def verify_otp(body: VerifyOtpRequest):
+@limiter.limit("5/minute")
+async def verify_otp(request: Request, body: VerifyOtpRequest):
     if not supabase:
         raise HTTPException(status_code=500, detail="Database not configured")
     
     email = body.email.strip().lower()
-    now = datetime.now(timezone.utc).isoformat()
     
-    try:
-        result = supabase.table("otp_verifications") \
-            .select("otp, expires_at, verified") \
-            .eq("email", email).single().execute()
-    except Exception:
-        raise HTTPException(status_code=400, detail="No OTP found for this email. Please request a new one.")
+    record_res = supabase.table("otp_verifications") \
+        .select("otp, expires_at, failed_attempts") \
+        .eq("email", email).single().execute()
+
+    if not record_res.data:
+        raise HTTPException(404, "No OTP found for this email. Please request a new one.")
+
+    record = record_res.data
     
-    record = result.data
-    if not record:
-        raise HTTPException(status_code=400, detail="No OTP found. Please request a new one.")
-    if record["verified"]:
-        raise HTTPException(status_code=400, detail="OTP already used. Please request a new one.")
-    if record["expires_at"] < now:
-        raise HTTPException(status_code=400, detail="OTP expired. Please request a new one.")
-    if record["otp"] != body.otp.strip():
-        raise HTTPException(status_code=400, detail="Incorrect OTP. Please try again.")
-    
-    # Mark as verified
-    supabase.table("otp_verifications").update({"verified": True}).eq("email", email).execute()
-    
+    if record.get("failed_attempts", 0) >= 5:
+        raise HTTPException(429, "Too many failed attempts. Request a new OTP.")
+
+    if datetime.fromisoformat(record["expires_at"]) < datetime.now(timezone.utc):
+        raise HTTPException(400, "OTP expired")
+
+    if not hmac.compare_digest(str(record["otp"]).strip(), str(body.otp).strip()):
+        # Increment failed counter
+        supabase.table("otp_verifications") \
+            .update({"failed_attempts": record.get("failed_attempts", 0) + 1}) \
+            .eq("email", email).execute()
+        raise HTTPException(400, "Invalid OTP")
+
+    # Success — clean up
+    supabase.table("otp_verifications").delete().eq("email", email).execute()
     return {"status": "ok", "verified": True}

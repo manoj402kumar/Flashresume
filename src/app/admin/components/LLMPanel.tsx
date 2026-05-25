@@ -96,7 +96,7 @@ export default function LLMPanel() {
 
   const fetchData = async () => {
     try {
-      const res = await fetch(`${API_URL}/api/admin/llm-stats`);
+      const res = await fetch(`/api/admin-proxy/llm-stats`);
       const rows: LLMUsageRow[] = await res.json();
       
       const aggregated: Record<string, ProviderStats> = {};

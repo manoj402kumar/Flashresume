@@ -1,4 +1,5 @@
-from fastapi import APIRouter, HTTPException, BackgroundTasks
+from fastapi import APIRouter, HTTPException, BackgroundTasks, Depends, Security
+from fastapi.security import APIKeyHeader
 from pydantic import BaseModel
 from typing import Optional
 import os
@@ -16,13 +17,20 @@ load_dotenv()
 
 router = APIRouter()
 
+_ADMIN_KEY_HEADER = APIKeyHeader(name="X-Admin-Key", auto_error=False)
+
+async def require_admin(key: str = Security(_ADMIN_KEY_HEADER)):
+    expected = os.getenv("ADMIN_SECRET_KEY")
+    if not expected or key != expected:
+        raise HTTPException(status_code=403, detail="Forbidden")
+
 # Server start time for uptime tracking
 SERVER_START_TIME = time.time()
 
 from datetime import datetime, timedelta, timezone
 
 
-@router.get("/admin/stats")
+@router.get("/admin/stats", dependencies=[Depends(require_admin)])
 async def get_admin_stats():
     uptime_seconds = int(time.time() - SERVER_START_TIME)
     
@@ -63,7 +71,7 @@ async def get_admin_stats():
         return stats
 
 
-@router.get("/admin/analytics/revenue")
+@router.get("/admin/analytics/revenue", dependencies=[Depends(require_admin)])
 async def get_analytics_revenue(
     time_filter: str = "all", 
     plan_filter: str = "all",
@@ -258,7 +266,7 @@ def build_trend_data(records, dt_start, dt_end, time_filter, value_key=None, tra
         
     return trend
 
-@router.get("/admin/analytics/downloads")
+@router.get("/admin/analytics/downloads", dependencies=[Depends(require_admin)])
 async def get_analytics_downloads(
     time_filter: str = "all", 
     plan_filter: str = "all",
@@ -381,7 +389,7 @@ async def track_visit(body: TrackVisitRequest, background_tasks: BackgroundTasks
     background_tasks.add_task(_do_track_visit, body)
     return {"status": "ok"}
 
-@router.get("/admin/funnel-stats")
+@router.get("/admin/funnel-stats", dependencies=[Depends(require_admin)])
 async def get_funnel_stats():
     if not supabase:
         return {"landing": 0, "result": 0, "purchases": 0}

@@ -1,4 +1,5 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
+from routers.admin import require_admin
 from pydantic import BaseModel
 from supabase_client import supabase
 
@@ -35,7 +36,7 @@ async def submit_feedback(body: FeedbackRequest):
     
     return {"success": True}
 
-@router.get("/admin/feedback")
+@router.get("/admin/feedback", dependencies=[Depends(require_admin)])
 async def get_feedback():
     if not supabase:
         return []
@@ -82,7 +83,7 @@ async def increment_download(body: IncrementDownloadRequest):
         "total_platform_downloads": global_count
     }
 
-@router.get("/admin/llm-stats")
+@router.get("/admin/llm-stats", dependencies=[Depends(require_admin)])
 async def llm_stats():
     if not supabase:
         return []

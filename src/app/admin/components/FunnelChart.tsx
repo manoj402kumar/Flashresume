@@ -11,7 +11,7 @@ export default function FunnelChart() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch(`${API_URL}/api/admin/funnel-stats`)
+    fetch(`/api/admin-proxy/funnel-stats`)
       .then(res => res.json())
       .then(data => {
         setStats(data);
