@@ -721,8 +721,7 @@ export default function ResultPage() {
                         <button
                           onClick={() => {
                             setShowAccountDropdown(false);
-                            setPricingTrigger("buy_more");
-                            setShowPricingPopup(true);
+                            window.location.href = '/#pricing';
                           }}
                           className="w-full py-2.5 bg-surface-container-low hover:bg-surface-container-high text-on-background text-sm font-bold rounded-xl transition-colors"
                         >
