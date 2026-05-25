@@ -2440,9 +2440,6 @@ export default function ResultPage() {
         onSuccess={() => {
           checkAccess();
           setShowPricingPopup(false);
-          if (pricingTrigger === "download") {
-            handleDownloadPDF();
-          }
         }}
       />
       {showFeedback && (
