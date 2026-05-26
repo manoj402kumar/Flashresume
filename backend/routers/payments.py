@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, HTTPException, Request, Header
 import asyncio
 import hmac
 from pydantic import BaseModel
@@ -13,6 +13,7 @@ from datetime import datetime, timedelta, timezone
 load_dotenv()
 
 router = APIRouter()
+from rate_limiter import limiter
 
 # Initialize Razorpay client
 RAZORPAY_KEY_ID = os.getenv("RAZORPAY_KEY_ID", "rzp_test_xxxxxxxxxxxxxxx")
@@ -26,7 +27,8 @@ class OrderRequest(BaseModel):
     email: str = None
 
 @router.post("/payments/create-order")
-async def create_order(body: OrderRequest):
+@limiter.limit("10/minute")
+async def create_order(request: Request, body: OrderRequest):
     amount_in_paise = body.amount * 100
     
     # Ensure user exists in public.users to prevent foreign key constraint violations
@@ -187,9 +189,22 @@ class DeductRequest(BaseModel):
     session_id: str | None = None
 
 @router.post("/payments/deduct-credit")
-async def deduct_credit(body: DeductRequest):
+async def deduct_credit(body: DeductRequest, authorization: str = Header(None)):
     if not supabase:
         raise HTTPException(status_code=500, detail="Database not configured")
+        
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Missing or invalid Authorization header")
+    
+    try:
+        token = authorization.split(" ")[1]
+        user_res = supabase.auth.get_user(token)
+        if not user_res or not user_res.user:
+            raise HTTPException(status_code=401, detail="Invalid token")
+        if user_res.user.id != body.user_id:
+            raise HTTPException(status_code=403, detail="Not authorized for this user")
+    except Exception as e:
+        raise HTTPException(status_code=401, detail="Invalid token")
         
     try:
         result = await sb(lambda: supabase.rpc("deduct_credits", {
@@ -215,13 +230,7 @@ async def deduct_credit(body: DeductRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-class StudentVerifyRequest(BaseModel):
-    email: str
 
-@router.post("/payments/verify-student")
-async def verify_student(body: StudentVerifyRequest):
-    # Open to all emails - OTP flow is the real verification gate
-    return {"status": "success", "verified": True}
 
 # ── OTP Routes ──────────────────────────────────────────────
 
@@ -236,7 +245,8 @@ class SendOtpRequest(BaseModel):
     email: str
 
 @router.post("/payments/send-otp")
-async def send_otp(body: SendOtpRequest):
+@limiter.limit("3/minute")
+async def send_otp(request: Request, body: SendOtpRequest):
     if not supabase:
         raise HTTPException(status_code=500, detail="Database not configured")
     if not BREVO_SMTP_USER or not BREVO_SMTP_PASS:
@@ -296,7 +306,7 @@ class VerifyOtpRequest(BaseModel):
     email: str
     otp: str
 
-from rate_limiter import limiter
+
 
 @router.post("/payments/verify-otp")
 @limiter.limit("5/minute")

@@ -59,8 +59,7 @@ async def increment_download(body: IncrementDownloadRequest):
         .eq("id", body.session_id).single().execute())
     if not session.data:
         raise HTTPException(404, "Session not found")
-        
-    actual_user_id = body.user_id or session.data.get("user_id")
+    actual_user_id = session.data.get("user_id")
 
     # 2. Atomic DB-side increment — no Python read-then-write race
     updated = await sb(lambda: supabase.rpc("increment_download_count",

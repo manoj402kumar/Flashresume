@@ -412,7 +412,10 @@ export default function ScratchPage() {
         try {
           await fetch(`${apiUrl}/api/payments/deduct-credit`, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: { 
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${session.access_token}`
+            },
             body: JSON.stringify({ user_id: session.user.id })
           });
           // Re-evaluate access silently

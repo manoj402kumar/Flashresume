@@ -536,7 +536,10 @@ export default function ResultPage() {
         try {
           await fetch(`${apiUrl}/api/payments/deduct-credit`, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: { 
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${session.access_token}`
+            },
             body: JSON.stringify({ user_id: session.user.id, session_id: sessionGuid })
           });
           // Re-evaluate access silently
@@ -552,7 +555,7 @@ export default function ResultPage() {
         try {
           const res = await fetch(`${apiUrl}/api/resume/increment-download`, {
             method: "POST",
-            body: JSON.stringify({ session_id: sessionGuid, user_id: currentUserId }),
+            body: JSON.stringify({ session_id: sessionGuid }),
             headers: { "Content-Type": "application/json" }
           });
           if (res.ok) {

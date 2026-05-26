@@ -1,7 +1,7 @@
 import os
 import asyncio
 import logging
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 from datetime import datetime, timedelta, timezone
@@ -68,7 +68,8 @@ def root():
     return {"message": "FlashResume API is running", "version": "1.0.0"}
 
 @app.get("/health")
-def health():
+@limiter.limit("60/minute")
+def health(request: Request):
     """Keep-alive endpoint — pinged by cron jobs to prevent Render sleep.
     Also pings Supabase to prevent 7-day free-tier inactivity pause.
     This is a sync def, so FastAPI runs it in a thread pool — never blocks the event loop.
@@ -83,7 +84,8 @@ def health():
     return {"status": "ok", "supabase": db_status}
 
 @app.get("/health/queue")
-async def get_queue_status():
+@limiter.limit("60/minute")
+async def get_queue_status(request: Request):
     """Active sessions count — polled every 5s by the Admin Dashboard.
     Uses asyncio.to_thread so the Supabase query never blocks the event loop.
     """

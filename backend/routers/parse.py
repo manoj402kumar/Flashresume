@@ -1,14 +1,16 @@
-from fastapi import APIRouter, UploadFile, File, HTTPException
+from fastapi import APIRouter, UploadFile, File, HTTPException, Request
 import asyncio
 from services.parse_orchestrator import extract_resume_text, extract_from_image, extract_from_docx
 from models.response_models import ParseResponse
+from rate_limiter import limiter
 
 MAX_FILE_BYTES = 10 * 1024 * 1024  # 10 MB hard cap
 
 router = APIRouter()
 
 @router.post("/parse", response_model=ParseResponse)
-async def parse_resume(file: UploadFile = File(...)):
+@limiter.limit("10/minute")
+async def parse_resume(request: Request, file: UploadFile = File(...)):
     """
     Parse resume from multiple formats: PDF, DOCX, JPG, PNG.
     
