@@ -1086,7 +1086,7 @@ export default function ScratchPage() {
                                     <li key={bidx} className="text-on-background text-sm flex items-start gap-3 rounded-lg p-3 transition-all">
                                       <span className="text-primary mt-1 font-bold">•</span>
                                       {editMode ? (
-                                        <div className="flex-1 flex gap-2 items-start">
+                                        <div className="flex-1 flex flex-col sm:flex-row gap-2 items-stretch sm:items-start w-full min-w-0">
                                           <textarea
                                             value={typeof bulletObj === 'string' ? bulletObj : bulletObj.text}
                                             onChange={(e) => {
@@ -1098,7 +1098,7 @@ export default function ScratchPage() {
                                               }
                                               updateResume({ custom_sections: newCustoms });
                                             }}
-                                            className="flex-[2] rounded-lg px-3 py-2 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm resize-none"
+                                            className="w-full sm:flex-[2] rounded-lg px-3 py-2 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm resize-none min-w-0"
                                             rows={2}
                                             placeholder="Bullet text..."
                                           />
@@ -1114,7 +1114,7 @@ export default function ScratchPage() {
                                               }
                                               updateResume({ custom_sections: newCustoms });
                                             }}
-                                            className="flex-[1] text-xs rounded-lg px-3 py-2 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm"
+                                            className="w-full sm:flex-[1] text-xs rounded-lg px-3 py-2 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm min-w-0"
                                             placeholder="Behind URL (e.g., LeetCode)"
                                           />
                                         </div>
@@ -1134,7 +1134,7 @@ export default function ScratchPage() {
                                 </ul>
 
                                 {editMode && (
-                                  <div className="flex justify-between items-center mt-3">
+                                  <div className="flex flex-wrap justify-between items-center gap-3 mt-3">
                                     <button
                                       type="button"
                                       onClick={() => {
