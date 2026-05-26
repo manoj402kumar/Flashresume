@@ -13,6 +13,7 @@ import DownloadChart from "./components/DownloadChart";
 import RevenuePanel from "./components/RevenuePanel";
 import FunnelChart from "./components/FunnelChart";
 import FeedbackPanel from "./components/FeedbackPanel";
+import { supabase } from "@/lib/supabase";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -130,6 +131,7 @@ export default function AdminPage() {
   const [activeSection, setActiveSection] = useState("overview");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeSessions, setActiveSessions] = useState(0);
+  const [onlineUsers, setOnlineUsers] = useState(0);
   const [stats, setStats] = useState({ revenue: 0, downloads: 0, subscribers: 0 });
   const [uptime, setUptime] = useState("—");
   const [time, setTime] = useState("");
@@ -141,6 +143,22 @@ export default function AdminPage() {
     tick();
     const id = setInterval(tick, 1000);
     return () => clearInterval(id);
+  }, []);
+
+  // Track online users via Supabase Presence
+  useEffect(() => {
+    const channel = supabase.channel("public:online-users");
+    channel
+      .on("presence", { event: "sync" }, () => {
+        const state = channel.presenceState();
+        // Count unique users
+        setOnlineUsers(Object.keys(state).length);
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   // Fetch queue stats for active sessions
@@ -252,7 +270,7 @@ export default function AdminPage() {
               title="Overview"
               subtitle="Platform health at a glance"
             />
-            <KPICards activeSessions={activeSessions} stats={stats} />
+            <KPICards activeSessions={activeSessions} onlineUsers={onlineUsers} stats={stats} />
           </section>
 
           {/* -- Revenue -------------------------------------------- */}

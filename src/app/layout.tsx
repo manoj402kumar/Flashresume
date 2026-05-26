@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Script from "next/script";
 import "./globals.css";
+import PresenceTracker from "@/components/PresenceTracker";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://flashresume.in"),
@@ -106,6 +107,9 @@ export default function RootLayout({
             style={{ display: "none", visibility: "hidden" }}
           />
         </noscript>
+
+        {/* Global Presence Tracker */}
+        <PresenceTracker />
 
         {children}
         <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="beforeInteractive" />

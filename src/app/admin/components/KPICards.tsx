@@ -78,10 +78,19 @@ function KPICard({ kpi, delay }: { kpi: KPI; delay: number }) {
   );
 }
 
-export default function KPICards({ activeSessions, stats }: { activeSessions: number, stats?: { revenue: number, downloads: number, subscribers: number } }) {
+export default function KPICards({ activeSessions, onlineUsers, stats }: { activeSessions: number, onlineUsers: number, stats?: { revenue: number, downloads: number, subscribers: number } }) {
   const kpis: KPI[] = [
     {
-      label: "Active Sessions",
+      label: "Online Visitors",
+      value: onlineUsers,
+      icon: <Users className="w-5 h-5 text-blue-600" />,
+      iconBg: "bg-blue-50",
+      delta: "Live",
+      deltaPositive: true,
+      note: "Currently browsing the site",
+    },
+    {
+      label: "Queue Processing",
       value: activeSessions,
       icon: <Activity className="w-5 h-5 text-[#006859]" />,
       iconBg: "bg-[#12f8d7]/15",
@@ -102,8 +111,8 @@ export default function KPICards({ activeSessions, stats }: { activeSessions: nu
     {
       label: "Total Downloads",
       value: stats?.downloads || 0,
-      icon: <Download className="w-5 h-5 text-blue-600" />,
-      iconBg: "bg-blue-50",
+      icon: <Download className="w-5 h-5 text-indigo-600" />,
+      iconBg: "bg-indigo-50",
       delta: "All Time",
       deltaPositive: true,
     },
@@ -119,7 +128,7 @@ export default function KPICards({ activeSessions, stats }: { activeSessions: nu
   ];
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
+    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-5">
       {kpis.map((kpi, i) => (
         <KPICard key={kpi.label} kpi={kpi} delay={i * 0.08} />
       ))}
