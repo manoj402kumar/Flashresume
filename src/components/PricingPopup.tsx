@@ -783,9 +783,12 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
 
           {/* PROCESSING STEP */}
           {step === "processing" && (
-            <div className="flex flex-col items-center justify-center py-12 gap-4">
+            <div className="flex flex-col items-center justify-center py-12 gap-4 text-center px-4">
               <Loader2 className="w-10 h-10 text-primary animate-spin" />
               <p className="text-on-surface-variant text-sm font-bold">Setting up secure payment...</p>
+              <p className="text-on-surface-variant/70 text-xs max-w-[250px]">
+                (This can take up to 30 seconds on the first try. Please do not close this window.)
+              </p>
             </div>
           )}
 
