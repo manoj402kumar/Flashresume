@@ -108,7 +108,7 @@ export default function RootLayout({
         </noscript>
 
         {children}
-        <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="afterInteractive" />
+        <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="beforeInteractive" />
 
         {/* Schema Markup for Google Rich Results */}
         <Script id="schema-software" type="application/ld+json" strategy="afterInteractive" dangerouslySetInnerHTML={{
