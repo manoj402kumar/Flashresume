@@ -823,7 +823,7 @@ export default function ResultPage() {
             <div className="flex gap-2">
               <button
                 onClick={() => { setEditMode(true); setShowChanges(false); setShowMissedKeywords(false); }}
-                className={`relative flex-1 py-3 px-3 text-sm font-bold transition-all duration-200 rounded-2xl flex items-center justify-center gap-2 active:scale-95 ${editMode
+                className={`relative flex-1 py-3 px-1 sm:px-3 text-xs sm:text-sm whitespace-nowrap font-bold transition-all duration-200 rounded-2xl flex items-center justify-center gap-1 sm:gap-2 active:scale-95 ${editMode
                   ? "bg-[#006859] text-white shadow-lg shadow-[#006859]/30 border border-[#006859]"
                   : "bg-surface-container-low text-on-surface-variant border border-surface-container-high hover:bg-surface-container-high hover:text-on-background"
                   }`}
@@ -833,7 +833,7 @@ export default function ResultPage() {
               </button>
               <button
                 onClick={() => { setShowChanges(true); setEditMode(false); setShowMissedKeywords(false); }}
-                className={`flex-1 py-3 px-3 text-sm font-bold transition-all duration-200 rounded-2xl flex items-center justify-center gap-2 active:scale-95 ${showChanges
+                className={`flex-1 py-3 px-1 sm:px-3 text-xs sm:text-sm whitespace-nowrap font-bold transition-all duration-200 rounded-2xl flex items-center justify-center gap-1 sm:gap-2 active:scale-95 ${showChanges
                   ? "bg-[#006859] text-white shadow-lg shadow-[#006859]/30 border border-[#006859]"
                   : "bg-surface-container-low text-on-surface-variant border border-surface-container-high hover:bg-surface-container-high hover:text-on-background"
                   }`}
@@ -844,7 +844,7 @@ export default function ResultPage() {
               {!noJdMode && (
                 <button
                   onClick={() => { setShowMissedKeywords(true); setEditMode(false); setShowChanges(false); }}
-                  className={`relative flex-1 py-3 px-3 text-sm font-bold transition-all duration-200 rounded-2xl flex items-center justify-center gap-2 active:scale-95 ${showMissedKeywords
+                  className={`relative flex-1 py-3 px-1 sm:px-3 text-xs sm:text-sm whitespace-nowrap font-bold transition-all duration-200 rounded-2xl flex items-center justify-center gap-1 sm:gap-2 active:scale-95 ${showMissedKeywords
                     ? "bg-error text-white shadow-lg shadow-error/30 border border-error"
                     : "bg-surface-container-low text-on-surface-variant border border-surface-container-high hover:bg-surface-container-high hover:text-on-background"
                     }`}
