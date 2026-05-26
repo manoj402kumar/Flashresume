@@ -103,6 +103,7 @@ async def verify_payment(body: VerifyRequest):
                 })
                 .eq("razorpay_order_id", body.razorpay_order_id)
                 .eq("status", "pending")
+                .select()
                 .execute()
             )
             
@@ -330,3 +331,107 @@ async def verify_otp(request: Request, body: VerifyOtpRequest):
     # Success — clean up
     await sb(lambda: supabase.table("otp_verifications").delete().eq("email", email).execute())
     return {"status": "ok", "verified": True}
+
+@router.post("/payments/webhook")
+async def razorpay_webhook(request: Request):
+    """
+    Server-to-Server webhook for Razorpay.
+    Crucial for UPI payments where the frontend might be backgrounded/suspended.
+    """
+    body = await request.body()
+    signature = request.headers.get("x-razorpay-signature")
+    
+    # In Razorpay dashboard, when creating the webhook, set this secret
+    WEBHOOK_SECRET = os.getenv("RAZORPAY_WEBHOOK_SECRET", RAZORPAY_KEY_SECRET)
+    
+    if not signature:
+        raise HTTPException(status_code=400, detail="Missing signature")
+        
+    try:
+        # Verify the signature
+        client.utility.verify_webhook_signature(body.decode("utf-8"), signature, WEBHOOK_SECRET)
+        
+        payload = await request.json()
+        event = payload.get("event")
+        
+        if event == "order.paid" or event == "payment.captured":
+            payment_entity = payload.get('payload', {}).get('payment', {}).get('entity', {})
+            order_id = payment_entity.get('order_id')
+            payment_id = payment_entity.get('id')
+            
+            if not order_id or not supabase:
+                return {"status": "ignored"}
+                
+            # Find the pending payment
+            pending_res = await sb(
+                lambda: supabase.table("payments").select("*")
+                .eq("razorpay_order_id", order_id)
+                .eq("status", "pending")
+                .execute()
+            )
+            
+            if not pending_res.data:
+                # Already processed or not found
+                return {"status": "already_processed"}
+                
+            payment_record = pending_res.data[0]
+            user_id = payment_record["user_id"]
+            plan_type = payment_record["plan_type"]
+            
+            # Update to success
+            update_res = await sb(
+                lambda: supabase.table("payments").update({
+                    "status": "success",
+                    "razorpay_payment_id": payment_id,
+                    "razorpay_signature": "webhook_verified",
+                })
+                .eq("razorpay_order_id", order_id)
+                .eq("status", "pending")
+                .select()
+                .execute()
+            )
+            
+            if update_res.data:
+                # Add Credits
+                PLAN_CREDITS = {
+                    "pay_per_use": 20,
+                    "regular": 300,
+                    "student": 400,
+                }
+                credits_to_add = PLAN_CREDITS.get(plan_type, 0)
+                
+                await sb(lambda: supabase.rpc("add_credits", {
+                    "p_user_id": user_id,
+                    "p_amount": credits_to_add,
+                    "p_plan_type": plan_type,
+                    "p_payment_id": payment_id
+                }).execute())
+                
+                # Setup Subscription
+                expires_at = None
+                if plan_type == "regular":
+                    expires_at = (datetime.utcnow() + timedelta(days=60)).isoformat()
+                elif plan_type == "student":
+                    expires_at = (datetime.utcnow() + timedelta(days=90)).isoformat()
+                    
+                await sb(lambda: supabase.table("subscriptions").update({"is_active": False}).eq("user_id", user_id).execute())
+                
+                sub_data = {
+                    "user_id": user_id,
+                    "plan_type": plan_type,
+                    "is_active": True,
+                    "credits_granted": credits_to_add
+                }
+                if expires_at:
+                    sub_data["expires_at"] = expires_at
+                if plan_type == "student":
+                    sub_data["student_claimed"] = True
+                    
+                await sb(lambda: supabase.table("subscriptions").insert(sub_data).execute())
+                
+        return {"status": "ok"}
+    except razorpay.errors.SignatureVerificationError:
+        raise HTTPException(status_code=400, detail="Invalid webhook signature")
+    except Exception as e:
+        print(f"Webhook error: {e}")
+        return {"status": "error", "message": str(e)}
