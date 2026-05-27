@@ -10,22 +10,22 @@ const TEMPLATES = [
   {
     id: "classic-a4",
     name: "Classic Professional",
-    format: "A4",
+    format: "US Letter",
     badge: "Most Popular",
     badgeColor: "from-[#006859] to-[#12f8d7]",
     description: "Clean, ATS-optimized layout trusted by recruiters worldwide.",
-    tags: ["ATS-Friendly", "A4 Format", "Clean Layout"],
+    tags: ["ATS-Friendly", "US Letter", "Clean Layout"],
     accentColor: "#006859",
     image: "/classic-a4.png", // <--- PLACE YOUR IMAGE IN public/classic-a4.png
   },
   {
     id: "modern-letter",
     name: "Modern Executive",
-    format: "US Letter",
+    format: "A4",
     badge: "Editor's Pick",
     badgeColor: "from-violet-600 to-indigo-500",
     description: "Premium design with bold typography for standout applications.",
-    tags: ["US Letter", "Bold Design", "Modern"],
+    tags: ["A4 Format", "Bold Design", "Modern"],
     accentColor: "#7c3aed",
     image: "/modern-letter.png", // <--- PLACE YOUR IMAGE IN public/modern-letter.png
   },
