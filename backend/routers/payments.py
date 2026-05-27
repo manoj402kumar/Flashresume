@@ -133,6 +133,8 @@ async def verify_payment(body: VerifyRequest):
                 expires_at = (datetime.utcnow() + timedelta(days=60)).isoformat()
             elif body.plan_type == "student":
                 expires_at = (datetime.utcnow() + timedelta(days=90)).isoformat()
+            elif body.plan_type == "pay_per_use":
+                expires_at = (datetime.utcnow() + timedelta(days=10)).isoformat()
             await sb(lambda: supabase.table("subscriptions").update({"is_active": False}).eq("user_id", body.user_id).execute())
             
             sub_data = {
@@ -423,6 +425,8 @@ async def razorpay_webhook(request: Request):
                     expires_at = (datetime.utcnow() + timedelta(days=60)).isoformat()
                 elif plan_type == "student":
                     expires_at = (datetime.utcnow() + timedelta(days=90)).isoformat()
+                elif plan_type == "pay_per_use":
+                    expires_at = (datetime.utcnow() + timedelta(days=10)).isoformat()
                     
                 await sb(lambda: supabase.table("subscriptions").update({"is_active": False}).eq("user_id", user_id).execute())
                 

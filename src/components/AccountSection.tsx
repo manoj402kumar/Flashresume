@@ -156,7 +156,7 @@ export default function AccountSection({ onTopUpClick }: AccountSectionProps) {
                 </div>
               </div>
 
-              {validUntil && plan !== "Free" && plan !== "Pay Per Use" && (
+              {validUntil && plan !== "Free" && (
                 <div className="flex items-start gap-4">
                   <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary flex-shrink-0">
                     <Calendar className="w-6 h-6" />
