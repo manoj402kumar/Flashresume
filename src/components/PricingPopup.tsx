@@ -526,7 +526,7 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
                     <p className="text-sm text-on-surface-variant mb-2">Enter the 6-digit code sent to <span className="font-bold text-on-background">{resetEmail}</span></p>
                     <div className="flex justify-between gap-2">
                       {[0, 1, 2, 3, 4, 5].map((index) => (
-                        <input key={index} id={`reset-otp-${index}`} type="text" maxLength={1}
+                        <input key={index} id={`reset-otp-${index}`} type="text" maxLength={1} inputMode="numeric" pattern="[0-9]*" autoComplete="one-time-code"
                           value={resetOtpValue[index] || ""}
                           onChange={(e) => {
                             const val = e.target.value;
@@ -743,6 +743,8 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
                       <input
                         type="text"
                         inputMode="numeric"
+                        pattern="[0-9]*"
+                        autoComplete="one-time-code"
                         maxLength={6}
                         placeholder="_ _ _ _ _ _"
                         value={otpValue}
