@@ -123,13 +123,17 @@ async def verify_payment(body: VerifyRequest):
             validity_days = 60 if body.plan_type == "regular" else 90 if body.plan_type == "student" else 10
             
             # Atomically add credits using the new bucket system
-            await sb(lambda: supabase.rpc("add_credit_bucket", {
+            bucket_res = await sb(lambda: supabase.rpc("add_credit_bucket", {
                 "p_user_id": body.user_id,
                 "p_amount": credits_to_add,
                 "p_plan_type": body.plan_type,
                 "p_validity_days": validity_days,
                 "p_payment_id": body.razorpay_payment_id
             }).execute())
+
+            if hasattr(bucket_res, 'error') and bucket_res.error:
+                print(f"CRITICAL: add_credit_bucket RPC failed: {bucket_res.error}")
+                raise HTTPException(status_code=500, detail="Credit bucket creation failed")
 
             expires_at = None
             if body.plan_type == "regular":
@@ -417,13 +421,17 @@ async def razorpay_webhook(request: Request):
                 
                 validity_days = 60 if plan_type == "regular" else 90 if plan_type == "student" else 10
 
-                await sb(lambda: supabase.rpc("add_credit_bucket", {
+                bucket_res = await sb(lambda: supabase.rpc("add_credit_bucket", {
                     "p_user_id": user_id,
                     "p_amount": credits_to_add,
                     "p_plan_type": plan_type,
                     "p_validity_days": validity_days,
                     "p_payment_id": payment_id
                 }).execute())
+
+                if hasattr(bucket_res, 'error') and bucket_res.error:
+                    print(f"CRITICAL: webhook add_credit_bucket RPC failed: {bucket_res.error}")
+                    raise Exception(f"Credit bucket creation failed: {bucket_res.error}")
                 
                 # Setup Subscription
                 expires_at = None
