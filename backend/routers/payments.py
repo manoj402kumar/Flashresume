@@ -120,11 +120,14 @@ async def verify_payment(body: VerifyRequest):
             }
             credits_to_add = PLAN_CREDITS.get(body.plan_type, 0)
             
-            # Atomically add credits
-            await sb(lambda: supabase.rpc("add_credits", {
+            validity_days = 60 if body.plan_type == "regular" else 90 if body.plan_type == "student" else 10
+            
+            # Atomically add credits using the new bucket system
+            await sb(lambda: supabase.rpc("add_credit_bucket", {
                 "p_user_id": body.user_id,
                 "p_amount": credits_to_add,
                 "p_plan_type": body.plan_type,
+                "p_validity_days": validity_days,
                 "p_payment_id": body.razorpay_payment_id
             }).execute())
 
@@ -155,11 +158,12 @@ async def verify_payment(body: VerifyRequest):
                 ref_check = await sb(lambda: supabase.table("users").select("referred_by").eq("id", body.user_id).execute())
                 referrer_id = ref_check.data[0].get("referred_by") if ref_check.data else None
                 if referrer_id:
-                    await sb(lambda: supabase.rpc("award_referral_bonus", {
-                        "p_referrer_uuid": referrer_id,
-                        "p_referred_uuid": body.user_id,
+                    await sb(lambda: supabase.rpc("add_credit_bucket", {
+                        "p_user_id": referrer_id,
+                        "p_plan_type": "referral",
                         "p_amount": 20,
-                        "p_pay_id": body.razorpay_payment_id
+                        "p_validity_days": None,
+                        "p_payment_id": body.razorpay_payment_id
                     }).execute())
                     print(f"Referral bonus awarded: referrer={referrer_id}, buyer={body.user_id}")
             except Exception as ref_err:
@@ -209,13 +213,12 @@ async def deduct_credit(body: DeductRequest, authorization: str = Header(None)):
         raise HTTPException(status_code=401, detail="Invalid token")
         
     try:
-        result = await sb(lambda: supabase.rpc("deduct_credits", {
+        result = await sb(lambda: supabase.rpc("deduct_credits_v2", {
             "p_user_id": body.user_id,
-            "p_amount": 10,
-            "p_session_id": body.session_id
+            "p_amount": 10
         }).execute())
         
-        if result.data and len(result.data) > 0 and result.data[0]["success"]:
+        if result.data:
             # Robustly link the session to the user in Python
             if body.session_id:
                 try:
@@ -412,10 +415,13 @@ async def razorpay_webhook(request: Request):
                 }
                 credits_to_add = PLAN_CREDITS.get(plan_type, 0)
                 
-                await sb(lambda: supabase.rpc("add_credits", {
+                validity_days = 60 if plan_type == "regular" else 90 if plan_type == "student" else 10
+
+                await sb(lambda: supabase.rpc("add_credit_bucket", {
                     "p_user_id": user_id,
                     "p_amount": credits_to_add,
                     "p_plan_type": plan_type,
+                    "p_validity_days": validity_days,
                     "p_payment_id": payment_id
                 }).execute())
                 

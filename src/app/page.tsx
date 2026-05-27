@@ -59,7 +59,7 @@ export default function App() {
   const [credits, setCredits] = useState<number>(0);
   const [analysisCountdown, setAnalysisCountdown] = useState<number | null>(null);
   const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const [subscriptionData, setSubscriptionData] = useState<any>(null);
+  const [buckets, setBuckets] = useState<any[]>([]);
   const [optimizeMode, setOptimizeMode] = useState<"jd" | "no_jd" | "manual" | null>("jd");
   const [referralCode, setReferralCode] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
@@ -141,22 +141,37 @@ export default function App() {
     if (!currentUser) return;
 
     const fetchAccountData = async () => {
-      const { data: userData } = await supabase.from("users").select("credits_balance, referral_code").eq("id", currentUser.id).single();
-      if (userData) {
-        setCredits(userData.credits_balance);
-        setReferralCode(userData.referral_code);
-      }
+      // 1. Fetch referral code
+      const { data: uData } = await supabase.from("users").select("referral_code").eq("id", currentUser.id).single();
+      if (uData?.referral_code) setReferralCode(uData.referral_code);
 
-      const { data: subData } = await supabase.from("subscriptions").select("*").eq("user_id", currentUser.id).eq("is_active", true).order("created_at", { ascending: false }).limit(1).maybeSingle();
-      setSubscriptionData(subData);
+      // 2. Fetch all active/queued/fallback buckets
+      const { data: bucketData } = await supabase
+        .from("credit_buckets")
+        .select("*")
+        .eq("user_id", currentUser.id)
+        .in("status", ["active", "queued", "fallback"])
+        .gt("remaining_credits", 0)
+        .order("created_at", { ascending: true });
+
+      if (bucketData) {
+        setBuckets(bucketData);
+        // Compute total credits
+        const total = bucketData.reduce((acc, b) => acc + b.remaining_credits, 0);
+        setCredits(total);
+      } else {
+        // Fallback to old table if migration hasn't run yet
+        const { data: oldData } = await supabase.from("users").select("credits_balance").eq("id", currentUser.id).single();
+        setCredits(oldData?.credits_balance || 0);
+      }
     };
 
     fetchAccountData();
 
     // Subscribe to credit updates
     const channel = supabase.channel(`page_credits_${currentUser.id}`)
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'users', filter: `id=eq.${currentUser.id}` }, (payload) => {
-        setCredits(payload.new.credits_balance);
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'credit_buckets', filter: `user_id=eq.${currentUser.id}` }, () => {
+        fetchAccountData();
       })
       .subscribe();
 
@@ -457,19 +472,38 @@ export default function App() {
                           </div>
 
                           <div className="p-4 space-y-4">
-                            <div className="flex justify-between items-center bg-primary/10 px-3 py-2 rounded-xl border border-primary/20">
-                              <span className="text-sm font-semibold text-primary">Credits</span>
-                              <span className="text-lg font-black text-primary">{credits}</span>
-                            </div>
 
-                            {subscriptionData && (
-                              <div className="space-y-1">
-                                <p className="text-xs font-bold text-on-surface-variant">Active Plan</p>
-                                <p className="text-sm text-on-background capitalize">{subscriptionData.plan_type.replace('_', ' ')}</p>
-                                {subscriptionData.expires_at && (
-                                  <p className="text-xs text-on-surface-variant">
-                                    Expires: {new Date(subscriptionData.expires_at).toLocaleDateString()}
-                                  </p>
+
+                            {buckets.length > 0 && (
+                              <div className="space-y-3 mt-4">
+                                {buckets.map(b => {
+                                  const name = b.plan_type === 'student' ? '🎓 Student Plan' : b.plan_type === 'regular' ? '👑 Pro Monthly' : b.plan_type === 'pay_per_use' ? '💳 Pay Per Use' : '🎁 Referral Credits';
+                                  let validText = "";
+                                  if (b.status === 'active' && b.expires_at) {
+                                    validText = `Valid till ${new Date(b.expires_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
+                                  } else if (b.status === 'queued') {
+                                    validText = `Starts after previous plan`;
+                                  } else if (b.status === 'fallback' || !b.validity_duration_days) {
+                                    validText = `Lifetime (No Expiration)`;
+                                  }
+                                  
+                                  return (
+                                    <div key={b.id} className="text-sm">
+                                      <p className="font-bold text-on-background">{name}</p>
+                                      <p className="text-xs text-on-surface-variant flex items-center gap-1.5 mt-0.5">
+                                        <span className="font-medium">{b.remaining_credits} Credits Remaining</span>
+                                        <span>—</span>
+                                        <span>{validText}</span>
+                                      </p>
+                                    </div>
+                                  );
+                                })}
+                                
+                                {buckets.length > 1 && (
+                                  <div className="pt-2 mt-2 border-t border-surface-container-high/50 flex justify-between items-center">
+                                    <span className="text-sm font-semibold text-on-background">⚡ Total</span>
+                                    <span className="text-sm font-black text-on-background">{credits} Credits</span>
+                                  </div>
                                 )}
                               </div>
                             )}
@@ -917,7 +951,7 @@ export default function App() {
                 <h3 className="font-headline text-2xl font-bold mb-1">One-Time</h3>
                 <p className={`text-sm mb-4 ${hoveredPlan === "pay_per_use" ? "text-white/90" : "text-on-surface-variant"}`}>2 resume downloads</p>
                 <div className="text-4xl font-black mb-1">₹29</div>
-                <p className={`text-sm mb-8 ${hoveredPlan === "pay_per_use" ? "text-white/90" : "text-on-surface-variant"}`}>20 Credits</p>
+                <p className={`text-sm mb-8 ${hoveredPlan === "pay_per_use" ? "text-white/90" : "text-on-surface-variant"}`}>/10 Days</p>
                 <ul className="space-y-3 mb-10 text-left flex-grow">
                   <li className={`flex items-center gap-3 ${hoveredPlan === "pay_per_use" ? "text-white" : "text-on-surface-variant"}`}>
                     <CheckCircle2 className={`w-4 h-4 flex-shrink-0 ${hoveredPlan === "pay_per_use" ? "text-white" : "text-primary"}`} />
@@ -925,7 +959,7 @@ export default function App() {
                   </li>
                   <li className={`flex items-center gap-3 ${hoveredPlan === "pay_per_use" ? "text-white" : "text-on-surface-variant"}`}>
                     <CheckCircle2 className={`w-4 h-4 flex-shrink-0 ${hoveredPlan === "pay_per_use" ? "text-white" : "text-primary"}`} />
-                    Best plan to verify
+                    Valid for 10 Days
                   </li>
                 </ul>
                 <button
