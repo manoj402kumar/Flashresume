@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { X, Loader2, Download, Crown, GraduationCap, CheckCircle2, ArrowRight, Building, Mail, Hash } from "lucide-react";
+import { X, Loader2, Download, Crown, GraduationCap, CheckCircle2, ArrowRight, Building, Mail, Hash, Eye, EyeOff } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { User } from "@supabase/supabase-js";
 
@@ -91,6 +91,7 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
   const [error, setError] = useState<string | null>(null);
   const [selectedPlan, setSelectedPlan] = useState<string>(initialPlan || "pay_per_use");
   const [isStudent, setIsStudent] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -466,8 +467,17 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
                       <input type="email" required placeholder="Email" value={email} onChange={e => setEmail(e.target.value)}
                         className="w-full px-4 py-3 bg-surface-container-low border border-surface-container-high rounded-xl outline-none focus:ring-2 focus:ring-primary text-sm" />
                       <div className="space-y-1">
-                        <input type="password" required placeholder="Password" value={password} onChange={e => setPassword(e.target.value)}
-                          className="w-full px-4 py-3 bg-surface-container-low border border-surface-container-high rounded-xl outline-none focus:ring-2 focus:ring-primary text-sm" />
+                        <div className="relative">
+                          <input type={showPassword ? "text" : "password"} required placeholder="Password" value={password} onChange={e => setPassword(e.target.value)}
+                            className="w-full px-4 pr-10 py-3 bg-surface-container-low border border-surface-container-high rounded-xl outline-none focus:ring-2 focus:ring-primary text-sm" />
+                          <button
+                            type="button"
+                            onClick={() => setShowPassword(!showPassword)}
+                            className="absolute right-4 top-1/2 -translate-y-1/2 text-on-surface-variant/50 hover:text-on-surface-variant focus:outline-none"
+                          >
+                            {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                          </button>
+                        </div>
                         {authMode === "login" && (
                           <div className="flex justify-end">
                             <button type="button" onClick={() => { setAuthMode("forgot_password"); setError(null); setResetSuccessMessage(null); }} className="text-xs text-primary font-bold hover:underline">
@@ -554,10 +564,28 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
                 {authMode === "reset_password" && (
                   <form onSubmit={handleResetPassword} className="space-y-4">
                     <p className="text-sm text-on-surface-variant mb-2">Create a new password for your account.</p>
-                    <input type="password" required placeholder="New Password" value={resetPassword} onChange={e => setResetPassword(e.target.value)}
-                      className="w-full px-4 py-3 bg-surface-container-low border border-surface-container-high rounded-xl outline-none focus:ring-2 focus:ring-primary text-sm" />
-                    <input type="password" required placeholder="Confirm New Password" value={resetConfirmPassword} onChange={e => setResetConfirmPassword(e.target.value)}
-                      className="w-full px-4 py-3 bg-surface-container-low border border-surface-container-high rounded-xl outline-none focus:ring-2 focus:ring-primary text-sm" />
+                    <div className="relative">
+                      <input type={showPassword ? "text" : "password"} required placeholder="New Password" value={resetPassword} onChange={e => setResetPassword(e.target.value)}
+                        className="w-full px-4 pr-10 py-3 bg-surface-container-low border border-surface-container-high rounded-xl outline-none focus:ring-2 focus:ring-primary text-sm" />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-on-surface-variant/50 hover:text-on-surface-variant focus:outline-none"
+                      >
+                        {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                      </button>
+                    </div>
+                    <div className="relative">
+                      <input type={showPassword ? "text" : "password"} required placeholder="Confirm New Password" value={resetConfirmPassword} onChange={e => setResetConfirmPassword(e.target.value)}
+                        className="w-full px-4 pr-10 py-3 bg-surface-container-low border border-surface-container-high rounded-xl outline-none focus:ring-2 focus:ring-primary text-sm" />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-on-surface-variant/50 hover:text-on-surface-variant focus:outline-none"
+                      >
+                        {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                      </button>
+                    </div>
                     {error && <p className="text-xs text-error bg-error/10 px-3 py-2 rounded-lg">{error}</p>}
                     <button type="submit" disabled={loading} className="w-full bg-primary text-white font-bold py-3 rounded-xl hover:opacity-90 transition-opacity">
                       {loading ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : "Update Password"}

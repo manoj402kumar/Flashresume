@@ -8,7 +8,7 @@ from .nvidia_fallback     import call_single_nvidia_r1,     call_single_nvidia_r
 
 # ── Concurrency guard ────────────────────────────────────────────────────────
 # Limits simultaneous LLM operations to 8 per worker process.
-_LLM_SEMAPHORE = asyncio.Semaphore(4)
+_LLM_SEMAPHORE = asyncio.Semaphore(5)
 # ─────────────────────────────────────────────────────────────────────────────
 
 _R1_MAX_TOKENS = 2500
@@ -59,17 +59,45 @@ _RR_POOL_R2 = [
 _rr_counter_r1 = 0
 _rr_counter_r2 = 0
 
-def _get_next_rr_index_r1() -> int:
-    global _rr_counter_r1
-    idx = _rr_counter_r1 % len(_RR_POOL_R1)
-    _rr_counter_r1 += 1
-    return idx
+async def _get_next_rr_index_r1() -> int:
+    """Atomic counter via Supabase — shared across all workers."""
+    try:
+        result = await asyncio.wait_for(
+            asyncio.to_thread(
+                lambda: supabase.rpc("increment_rr_counter", {
+                    "p_counter_name": "r1",
+                    "p_pool_size": len(_RR_POOL_R1)
+                }).execute()
+            ),
+            timeout=0.8
+        )
+        return result.data
+    except Exception:
+        # Fallback to local counter if Supabase is down or slow
+        global _rr_counter_r1
+        idx = _rr_counter_r1 % len(_RR_POOL_R1)
+        _rr_counter_r1 += 1
+        return idx
 
-def _get_next_rr_index_r2() -> int:
-    global _rr_counter_r2
-    idx = _rr_counter_r2 % len(_RR_POOL_R2)
-    _rr_counter_r2 += 1
-    return idx
+async def _get_next_rr_index_r2() -> int:
+    """Atomic counter via Supabase — shared across all workers."""
+    try:
+        result = await asyncio.wait_for(
+            asyncio.to_thread(
+                lambda: supabase.rpc("increment_rr_counter", {
+                    "p_counter_name": "r2",
+                    "p_pool_size": len(_RR_POOL_R2)
+                }).execute()
+            ),
+            timeout=0.8
+        )
+        return result.data
+    except Exception:
+        # Fallback to local counter if Supabase is down or slow
+        global _rr_counter_r2
+        idx = _rr_counter_r2 % len(_RR_POOL_R2)
+        _rr_counter_r2 += 1
+        return idx
 
 # -----------------------------------------------------------------------------
 # FLAT CHAINS (Fallback if all pool models trip)
@@ -206,7 +234,7 @@ async def call_llm_balanced(prompt: str, is_r1: bool, preferred_model: str = "")
                     break
 
         # 2. Round-Robin through pool
-        start_idx = _get_next_rr_index_r1() if is_r1 else _get_next_rr_index_r2()
+        start_idx = await _get_next_rr_index_r1() if is_r1 else await _get_next_rr_index_r2()
         pool_size = len(pool)
         
         for i in range(pool_size):
