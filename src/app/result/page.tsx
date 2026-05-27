@@ -190,7 +190,7 @@ export default function ResultPage() {
   const [checkingAccess, setCheckingAccess] = useState(true);
   const [userEmail, setUserEmail] = useState<string>("");
   const [credits, setCredits] = useState<number>(0);
-  const [subscriptionData, setSubscriptionData] = useState<any>(null);
+  const [buckets, setBuckets] = useState<any[]>([]);
   const [showAccountDropdown, setShowAccountDropdown] = useState(false);
   const [showMobilePreview, setShowMobilePreview] = useState(true);
   const [showFeedback, setShowFeedback] = useState(false);
@@ -437,28 +437,22 @@ export default function ResultPage() {
     setUserEmail(session.user.email || "");
     setCurrentUserId(session.user.id);
 
-    // Check credits balance
-    const { data: userData } = await supabase
-      .from("users")
-      .select("credits_balance")
-      .eq("id", session.user.id)
-      .single();
-
-    const currentCredits = userData?.credits_balance || 0;
+    // 1. Fetch total credits
+    const { data: creditData } = await supabase.rpc("get_total_active_credits", { p_user_id: session.user.id });
+    const currentCredits = creditData ?? 0;
     setCredits(currentCredits);
 
-    // Check subscription data for Account dropdown
-    const { data: subData } = await supabase
-      .from("subscriptions")
-      .select("plan_type, expires_at")
+    // 2. Fetch buckets
+    const { data: bucketData } = await supabase
+      .from("credit_buckets")
+      .select("*")
       .eq("user_id", session.user.id)
-      .eq("is_active", true)
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
+      .in("status", ["active", "queued", "fallback"])
+      .gt("remaining_credits", 0)
+      .order("created_at", { ascending: true });
 
-    if (subData) {
-      setSubscriptionData(subData);
+    if (bucketData) {
+      setBuckets(bucketData);
     }
 
     if (currentCredits >= 10) {
@@ -704,32 +698,57 @@ export default function ResultPage() {
 
                     {userEmail ? (
                       <div className="p-4 space-y-4">
-                        <div className="flex justify-between items-center bg-primary/10 px-3 py-2 rounded-xl border border-primary/20">
-                          <span className="text-sm font-semibold text-primary">Credits</span>
-                          <span className="text-lg font-black text-primary">{credits}</span>
-                        </div>
-
-                        {subscriptionData && (
-                          <div className="space-y-1">
-                            <p className="text-xs font-bold text-on-surface-variant">Active Plan</p>
-                            <p className="text-sm text-on-background capitalize">{subscriptionData.plan_type.replace('_', ' ')}</p>
-                            {subscriptionData.expires_at && (
-                              <p className="text-xs text-on-surface-variant">
-                                Expires: {new Date(subscriptionData.expires_at).toLocaleDateString()}
-                              </p>
+                        {buckets.length > 0 && (
+                          <div className="space-y-4 mt-5">
+                            {buckets.map(b => {
+                              const activeBucket = buckets.find(b => b.status === 'active');
+                              const activePlanName = activeBucket ? (activeBucket.plan_type === 'student' ? 'student plan' : activeBucket.plan_type === 'regular' ? 'pro plan' : 'previous plan') : 'previous plan';
+                              
+                              const name = b.plan_type === 'student' ? '🎓 Student Plan' : b.plan_type === 'regular' ? '👑 Pro Monthly' : b.plan_type === 'pay_per_use' ? '💳 Pay Per Use' : '🎁 Referral Credits';
+                              let validText = "";
+                              if (b.status === 'active' && b.expires_at) {
+                                validText = `Valid till ${new Date(b.expires_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
+                              } else if (b.status === 'queued') {
+                                validText = `Starts after ${activePlanName}`;
+                              } else if (b.status === 'fallback' || !b.validity_duration_days) {
+                                validText = `Lifetime (No Expiration)`;
+                              }
+                              
+                              return (
+                                <div key={b.id} className="flex flex-col gap-0.5">
+                                  <div className="flex justify-between items-center w-full gap-4">
+                                    <div className="flex items-center gap-2 min-w-0">
+                                      <p className="font-bold text-sm text-on-background truncate">{name}</p>
+                                    </div>
+                                    <span className="font-black text-sm text-on-background whitespace-nowrap">{b.remaining_credits} Credits</span>
+                                  </div>
+                                  <p className="text-[11px] font-medium text-on-surface-variant/80">
+                                    {validText}
+                                  </p>
+                                </div>
+                              );
+                            })}
+                            
+                            {buckets.length > 1 && (
+                              <div className="pt-3 border-t border-surface-container-high/60 flex justify-between items-center">
+                                <span className="text-sm font-semibold text-on-background">⚡ Total</span>
+                                <span className="text-sm font-black text-on-background">{credits} Credits</span>
+                              </div>
                             )}
                           </div>
                         )}
 
-                        <button
-                          onClick={() => {
-                            setShowAccountDropdown(false);
-                            window.location.href = '/#pricing';
-                          }}
-                          className="w-full py-2.5 bg-surface-container-low hover:bg-surface-container-high text-on-background text-sm font-bold rounded-xl transition-colors"
-                        >
-                          Buy More Credits
-                        </button>
+                        <div className="pt-2 space-y-2 border-t border-surface-container-low mt-2">
+                          <button
+                            onClick={() => {
+                              setShowAccountDropdown(false);
+                              window.location.href = '/#pricing';
+                            }}
+                            className="w-full py-2.5 bg-surface-container-low hover:bg-surface-container-high text-on-background text-sm font-bold rounded-xl transition-colors"
+                          >
+                            Buy More Credits
+                          </button>
+                        </div>
                       </div>
                     ) : (
                       <div className="p-4 text-center">
