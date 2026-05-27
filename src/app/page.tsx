@@ -474,39 +474,46 @@ export default function App() {
                           <div className="p-4 space-y-4">
 
 
-                            {buckets.length > 0 && (
-                              <div className="space-y-3 mt-4">
+                              {buckets.length > 0 && (
+                                <div className="space-y-4 mt-5">
                                 {buckets.map(b => {
+                                  const activeBucket = buckets.find(b => b.status === 'active');
+                                  const activePlanName = activeBucket ? (activeBucket.plan_type === 'student' ? 'student plan' : activeBucket.plan_type === 'regular' ? 'pro plan' : 'previous plan') : 'previous plan';
                                   const name = b.plan_type === 'student' ? '🎓 Student Plan' : b.plan_type === 'regular' ? '👑 Pro Monthly' : b.plan_type === 'pay_per_use' ? '💳 Pay Per Use' : '🎁 Referral Credits';
                                   let validText = "";
                                   if (b.status === 'active' && b.expires_at) {
                                     validText = `Valid till ${new Date(b.expires_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
                                   } else if (b.status === 'queued') {
-                                    validText = `Starts after previous plan`;
+                                    validText = `Starts after ${activePlanName}`;
                                   } else if (b.status === 'fallback' || !b.validity_duration_days) {
                                     validText = `Lifetime (No Expiration)`;
                                   }
+                                    
+                                    const isQueued = b.status === 'queued';
+
+                                    return (
+                                      <div key={b.id} className="flex flex-col gap-0.5">
+                                        <div className="flex justify-between items-center w-full gap-4">
+                                          <div className="flex items-center gap-2 min-w-0">
+                                            <p className="font-bold text-sm text-on-background truncate">{name}</p>
+                                          </div>
+                                          <span className="font-black text-sm text-on-background whitespace-nowrap">{b.remaining_credits} Credits</span>
+                                        </div>
+                                        <p className="text-[11px] font-medium text-on-surface-variant/80">
+                                          {validText}
+                                        </p>
+                                      </div>
+                                    );
+                                  })}
                                   
-                                  return (
-                                    <div key={b.id} className="text-sm">
-                                      <p className="font-bold text-on-background">{name}</p>
-                                      <p className="text-xs text-on-surface-variant flex items-center gap-1.5 mt-0.5">
-                                        <span className="font-medium">{b.remaining_credits} Credits Remaining</span>
-                                        <span>—</span>
-                                        <span>{validText}</span>
-                                      </p>
+                                  {buckets.length > 1 && (
+                                    <div className="pt-3 border-t border-surface-container-high/60 flex justify-between items-center">
+                                      <span className="text-sm font-semibold text-on-background">⚡ Total</span>
+                                      <span className="text-sm font-black text-on-background">{credits} Credits</span>
                                     </div>
-                                  );
-                                })}
-                                
-                                {buckets.length > 1 && (
-                                  <div className="pt-2 mt-2 border-t border-surface-container-high/50 flex justify-between items-center">
-                                    <span className="text-sm font-semibold text-on-background">⚡ Total</span>
-                                    <span className="text-sm font-black text-on-background">{credits} Credits</span>
-                                  </div>
-                                )}
-                              </div>
-                            )}
+                                  )}
+                                </div>
+                              )}
 
                             <div className="pt-2 space-y-2 border-t border-surface-container-low mt-2">
                               <button

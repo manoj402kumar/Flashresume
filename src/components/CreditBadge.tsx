@@ -36,13 +36,10 @@ export default function CreditBadge({ onTopUpClick }: CreditBadgeProps) {
     // Fetch initial balance
     const fetchCredits = async () => {
       const { data, error } = await supabase
-        .from("users")
-        .select("credits_balance")
-        .eq("id", user.id)
-        .single();
+        .rpc("get_total_active_credits", { p_user_id: user.id });
       
-      if (!error && data) {
-        setCredits(data.credits_balance);
+      if (!error && data !== null) {
+        setCredits(data);
       }
     };
 
@@ -54,13 +51,15 @@ export default function CreditBadge({ onTopUpClick }: CreditBadgeProps) {
       .on(
         "postgres_changes",
         {
-          event: "UPDATE",
+          event: "*",
           schema: "public",
-          table: "users",
-          filter: `id=eq.${user.id}`,
+          table: "credit_buckets",
+          filter: `user_id=eq.${user.id}`,
         },
-        (payload) => {
-          setCredits(payload.new.credits_balance);
+        async () => {
+          const { data } = await supabase
+            .rpc("get_total_active_credits", { p_user_id: user.id });
+          if (data !== null) setCredits(data);
         }
       )
       .subscribe();
