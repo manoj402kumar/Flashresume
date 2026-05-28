@@ -86,6 +86,17 @@ export default function App() {
     return () => clearTimeout(timer);
   }, []);
 
+  // ── Track every homepage visit (production only) ─────────────────────────
+  useEffect(() => {
+    if (process.env.NODE_ENV !== "production") return; // skip in local dev
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+    fetch(`${apiUrl}/api/analytics/track-visit`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ page_type: "landing" }),
+    }).catch(() => {}); // silent fail — never block the user
+  }, []);
+
   // ── Referral Capture: Step 1 ─────────────────────────────────────────────
   // On page load, read ?ref=CODE from the URL and store it in localStorage.
   // This persists across OAuth redirects so the code survives Google sign-in.

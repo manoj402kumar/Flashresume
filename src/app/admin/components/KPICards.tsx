@@ -55,11 +55,10 @@ function KPICard({ kpi, delay }: { kpi: KPI; delay: number }) {
           {kpi.icon}
         </div>
         <span
-          className={`flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full ${
-            kpi.deltaPositive
+          className={`flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full ${kpi.deltaPositive
               ? "bg-emerald-50 text-emerald-700"
               : "bg-red-50 text-red-700"
-          }`}
+            }`}
         >
           <ArrowUpRight className={`w-3 h-3 ${!kpi.deltaPositive && "rotate-180"}`} />
           {kpi.delta}
@@ -78,10 +77,19 @@ function KPICard({ kpi, delay }: { kpi: KPI; delay: number }) {
   );
 }
 
-export default function KPICards({ activeSessions, onlineUsers, stats }: { activeSessions: number, onlineUsers: number, stats?: { revenue: number, downloads: number, subscribers: number } }) {
+export default function KPICards({ onlineUsers, stats }: { onlineUsers: number, stats?: { revenue: number, downloads: number, subscribers: number, totalLogins: number, totalVisitors: number } }) {
   const kpis: KPI[] = [
     {
-      label: "Online Visitors",
+      label: "Total Visitors",
+      value: stats?.totalVisitors || 0,
+      icon: <TrendingUp className="w-5 h-5 text-emerald-600" />,
+      iconBg: "bg-emerald-50",
+      delta: "All Time",
+      deltaPositive: true,
+      note: "All page visits tracked",
+    },
+    {
+      label: "Live Users",
       value: onlineUsers,
       icon: <Users className="w-5 h-5 text-blue-600" />,
       iconBg: "bg-blue-50",
@@ -90,13 +98,30 @@ export default function KPICards({ activeSessions, onlineUsers, stats }: { activ
       note: "Currently browsing the site",
     },
     {
-      label: "Queue Processing",
-      value: activeSessions,
+      label: "Total Signups",
+      value: stats?.totalLogins || 0,
       icon: <Activity className="w-5 h-5 text-[#006859]" />,
       iconBg: "bg-[#12f8d7]/15",
-      delta: "Live",
+      delta: "All Time",
       deltaPositive: true,
-      note: "Resumes being generated right now",
+      note: "Registered accounts",
+    },
+    {
+      label: "Paid Subscribers",
+      value: stats?.subscribers || 0,
+      icon: <CreditCard className="w-5 h-5 text-amber-600" />,
+      iconBg: "bg-amber-50",
+      delta: "Active",
+      deltaPositive: true,
+      note: "unique paying users",
+    },
+    {
+      label: "Total Downloads",
+      value: stats?.downloads || 0,
+      icon: <Download className="w-5 h-5 text-indigo-600" />,
+      iconBg: "bg-indigo-50",
+      delta: "All Time",
+      deltaPositive: true,
     },
     {
       label: "Total Revenue",
@@ -108,27 +133,10 @@ export default function KPICards({ activeSessions, onlineUsers, stats }: { activ
       deltaPositive: true,
       note: "From Razorpay payments",
     },
-    {
-      label: "Total Downloads",
-      value: stats?.downloads || 0,
-      icon: <Download className="w-5 h-5 text-indigo-600" />,
-      iconBg: "bg-indigo-50",
-      delta: "All Time",
-      deltaPositive: true,
-    },
-    {
-      label: "Paid Subscribers",
-      value: stats?.subscribers || 0,
-      icon: <CreditCard className="w-5 h-5 text-amber-600" />,
-      iconBg: "bg-amber-50",
-      delta: "Active",
-      deltaPositive: true,
-      note: "Regular + Student",
-    },
   ];
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-5">
+    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-6 gap-5">
       {kpis.map((kpi, i) => (
         <KPICard key={kpi.label} kpi={kpi} delay={i * 0.08} />
       ))}

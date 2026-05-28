@@ -38,18 +38,22 @@ async def get_admin_stats():
         "uptime_seconds": uptime_seconds,
         "total_revenue": 0,
         "total_downloads": 0,
-        "active_subs": 0
+        "active_subs": 0,
+        "total_logins": 0,
+        "total_visitors": 0,
     }
     
     if not supabase:
         return stats
         
     try:
-        # Run all 3 DB queries in parallel — non-blocking
-        payments_res, downloads, subs = await asyncio.gather(
-            _sb(supabase.table("payments").select("amount").eq("status", "success")),
+        # Run all 5 DB queries in parallel — non-blocking
+        payments_res, downloads, subs_res, users_res, visitors_res = await asyncio.gather(
+            _sb(supabase.table("payments").select("amount, user_id, plan_type").eq("status", "success")),
             _sb(supabase.table("resume_downloads").select("id", count="exact")),
-            _sb(supabase.table("subscriptions").select("id", count="exact").eq("is_active", True)),
+            _sb(supabase.table("subscriptions").select("user_id").eq("is_active", True)),
+            _sb(supabase.table("users").select("id", count="exact")),
+            _sb(supabase.table("page_visits").select("id", count="exact")),
         )
 
         if payments_res.data:
@@ -60,10 +64,26 @@ async def get_admin_stats():
         else:
             stats["total_downloads"] = len(downloads.data) if downloads.data else 0
 
-        if hasattr(subs, 'count') and subs.count is not None:
-            stats["active_subs"] = subs.count
+        # Unique paid users across ALL 3 plans:
+        # 1. Active subscribers (Regular + Student) from subscriptions table
+        sub_user_ids = set(s["user_id"] for s in (subs_res.data or []) if s.get("user_id"))
+        # 2. Pay-per-use users from payments table
+        ppu_user_ids = set(
+            p["user_id"] for p in (payments_res.data or [])
+            if p.get("plan_type") == "pay_per_use" and p.get("user_id")
+        )
+        # Union → deduplicated unique paid users
+        stats["active_subs"] = len(sub_user_ids | ppu_user_ids)
+
+        if hasattr(users_res, 'count') and users_res.count is not None:
+            stats["total_logins"] = users_res.count
         else:
-            stats["active_subs"] = len(subs.data) if subs.data else 0
+            stats["total_logins"] = len(users_res.data) if users_res.data else 0
+
+        if hasattr(visitors_res, 'count') and visitors_res.count is not None:
+            stats["total_visitors"] = visitors_res.count
+        else:
+            stats["total_visitors"] = len(visitors_res.data) if visitors_res.data else 0
 
         return stats
     except Exception as e:

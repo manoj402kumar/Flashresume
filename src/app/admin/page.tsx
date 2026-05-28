@@ -130,9 +130,8 @@ function SectionTitle({ title, subtitle }: { title: string; subtitle?: string })
 export default function AdminPage() {
   const [activeSection, setActiveSection] = useState("overview");
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [activeSessions, setActiveSessions] = useState(0);
   const [onlineUsers, setOnlineUsers] = useState(0);
-  const [stats, setStats] = useState({ revenue: 0, downloads: 0, subscribers: 0 });
+  const [stats, setStats] = useState({ revenue: 0, downloads: 0, subscribers: 0, totalLogins: 0, totalVisitors: 0 });
   const [uptime, setUptime] = useState("—");
   const [time, setTime] = useState("");
   const sectionRefs = useRef<Record<string, HTMLElement | null>>({});
@@ -161,19 +160,7 @@ export default function AdminPage() {
     };
   }, []);
 
-  // Fetch queue stats for active sessions
-  useEffect(() => {
-    const fetchQueue = async () => {
-      try {
-        const res = await fetch(`${API_URL}/health/queue`);
-        const json = await res.json();
-        setActiveSessions(json.processing ?? 0);
-      } catch { /* backend offline */ }
-    };
-    fetchQueue();
-    const id = setInterval(fetchQueue, 5000);
-    return () => clearInterval(id);
-  }, []);
+
 
   // Fetch stats
   useEffect(() => {
@@ -188,7 +175,9 @@ export default function AdminPage() {
         setStats({
           revenue: json.total_revenue ?? 0,
           downloads: json.total_downloads ?? 0,
-          subscribers: json.active_subs ?? 0
+          subscribers: json.active_subs ?? 0,
+          totalLogins: json.total_logins ?? 0,
+          totalVisitors: json.total_visitors ?? 0,
         });
       } catch { /* offline */ }
     };
@@ -270,7 +259,7 @@ export default function AdminPage() {
               title="Overview"
               subtitle="Platform health at a glance"
             />
-            <KPICards activeSessions={activeSessions} onlineUsers={onlineUsers} stats={stats} />
+            <KPICards onlineUsers={onlineUsers} stats={stats} />
           </section>
 
           {/* -- Revenue -------------------------------------------- */}
