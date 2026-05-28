@@ -526,7 +526,7 @@ export default function ResultPage() {
         try {
           await fetch(`${apiUrl}/api/payments/deduct-credit`, {
             method: "POST",
-            headers: { 
+            headers: {
               "Content-Type": "application/json",
               "Authorization": `Bearer ${session.access_token}`
             },
@@ -544,7 +544,7 @@ export default function ResultPage() {
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      
+
       // Delay revocation so iOS Safari has time to read the blob into its PDF viewer
       setTimeout(() => URL.revokeObjectURL(url), 1000);
 
@@ -708,7 +708,7 @@ export default function ResultPage() {
                             {buckets.map(b => {
                               const activeBucket = buckets.find(b => b.status === 'active');
                               const activePlanName = activeBucket ? (activeBucket.plan_type === 'student' ? 'student plan' : activeBucket.plan_type === 'regular' ? 'pro plan' : 'previous plan') : 'previous plan';
-                              
+
                               const name = b.plan_type === 'student' ? '🎓 Student Plan' : b.plan_type === 'regular' ? '👑 Pro Monthly' : b.plan_type === 'pay_per_use' ? '💳 Pay Per Use' : '🎁 Referral Credits';
                               let validText = "";
                               if (b.status === 'active' && b.expires_at) {
@@ -718,7 +718,7 @@ export default function ResultPage() {
                               } else if (b.status === 'fallback' || !b.validity_duration_days) {
                                 validText = `Lifetime (No Expiration)`;
                               }
-                              
+
                               return (
                                 <div key={b.id} className="flex flex-col gap-0.5">
                                   <div className="flex justify-between items-center w-full gap-4">
@@ -733,7 +733,7 @@ export default function ResultPage() {
                                 </div>
                               );
                             })}
-                            
+
                             {buckets.length > 1 && (
                               <div className="pt-3 border-t border-surface-container-high/60 flex justify-between items-center">
                                 <span className="text-sm font-semibold text-on-background">⚡ Total</span>
@@ -897,18 +897,18 @@ export default function ResultPage() {
                   <div className="relative overflow-hidden flex items-center justify-between bg-gradient-to-br from-[#006859]/5 to-[#12f8d7]/5 border border-[#006859]/15 px-6 py-5 rounded-3xl shadow-sm mb-2">
                     <div className="absolute top-0 right-0 w-32 h-32 bg-[#12f8d7]/10 blur-[50px] rounded-full pointer-events-none -z-10"></div>
                     <div className="absolute bottom-0 left-0 w-32 h-32 bg-[#006859]/10 blur-[50px] rounded-full pointer-events-none -z-10"></div>
-                    
+
                     {noJdMode ? (
                       <div className="flex items-center justify-center w-full gap-4 relative z-10">
                         <div className="w-10 h-10 rounded-full bg-[#006859]/10 flex items-center justify-center">
                           <TrendingUp className="w-5 h-5 text-[#006859]" />
                         </div>
                         <div className="flex flex-col">
-                           <span className="font-extrabold text-[#006859] text-xs uppercase tracking-widest opacity-80">ATS Formatting Score</span>
-                           <span className="font-bold text-on-surface-variant text-sm">After Optimization</span>
+                          <span className="font-extrabold text-[#006859] text-xs uppercase tracking-widest opacity-80">ATS Formatting Score</span>
+                          <span className="font-bold text-on-surface-variant text-sm">After Optimization</span>
                         </div>
                         <div className="ml-auto text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-[#006859] to-[#12f8d7]">
-                           100%
+                          100%
                         </div>
                       </div>
                     ) : (
@@ -917,13 +917,13 @@ export default function ResultPage() {
                           <span className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant/60 mb-1">Before</span>
                           <span className="text-3xl font-black text-on-surface-variant/80 leading-none">{resume.ats_score_before}</span>
                         </div>
-                        
+
                         <div className="flex-1 flex items-center justify-center px-4 relative">
-                           <div className="h-[2px] w-full bg-gradient-to-r from-transparent via-[#006859]/20 to-[#12f8d7]/40 relative">
-                             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-surface border border-[#006859]/10 flex items-center justify-center shadow-sm">
-                               <TrendingUp className="w-4 h-4 text-[#006859]" />
-                             </div>
-                           </div>
+                          <div className="h-[2px] w-full bg-gradient-to-r from-transparent via-[#006859]/20 to-[#12f8d7]/40 relative">
+                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-surface border border-[#006859]/10 flex items-center justify-center shadow-sm">
+                              <TrendingUp className="w-4 h-4 text-[#006859]" />
+                            </div>
+                          </div>
                         </div>
 
                         <div className="flex flex-col items-end min-w-[60px]">
@@ -1273,7 +1273,7 @@ export default function ResultPage() {
                                               updateResume({ custom_sections: newCustoms });
                                             }}
                                             className="w-full sm:flex-[1] text-xs rounded-lg px-3 py-2 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm min-w-0"
-                                            placeholder="Behind URL (e.g., LeetCode)"
+                                            placeholder="Behind URL (e.g., leetcode.com/user)"
                                           />
                                         </div>
                                       ) : (
@@ -2255,7 +2255,7 @@ export default function ResultPage() {
                       <div className="bg-gradient-to-r from-[#006859] to-[#0a9980] px-6 py-4 flex items-center gap-3">
                         <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0">
                           <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a2 2 0 0 1-2 2H10a2 2 0 0 1-2-2v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7z"/><line x1="9" y1="21" x2="15" y2="21"/>
+                            <path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a2 2 0 0 1-2 2H10a2 2 0 0 1-2-2v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7z" /><line x1="9" y1="21" x2="15" y2="21" />
                           </svg>
                         </div>
                         <div>

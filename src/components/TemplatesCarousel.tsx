@@ -86,28 +86,28 @@ export default function TemplatesCarousel() {
           className="relative max-w-5xl mx-auto flex items-center justify-center overflow-visible"
         >
           {/* Main card layout - centered with wide bounds for peek effect */}
-          <div className="relative w-full px-10 sm:px-20 flex items-center justify-center">
+          <div className="relative w-full px-0 sm:px-20 flex items-center justify-center">
             
-            {/* Previous button */}
-            <button
-              onClick={() => go(-1)}
-              aria-label="Previous template"
-              className="absolute left-0 sm:left-4 top-1/2 -translate-y-1/2 z-30 w-10 h-10 lg:w-12 lg:h-12 rounded-full bg-[#006859] hover:bg-[#005145] active:scale-95 flex items-center justify-center shadow-lg shadow-[#006859]/30 transition-all duration-200"
-            >
-              <ChevronLeft className="w-5 h-5 text-white font-black" strokeWidth={3} />
-            </button>
-
-            {/* Next button */}
-            <button
-              onClick={() => go(1)}
-              aria-label="Next template"
-              className="absolute right-0 sm:right-4 top-1/2 -translate-y-1/2 z-30 w-10 h-10 lg:w-12 lg:h-12 rounded-full bg-[#006859] hover:bg-[#005145] active:scale-95 flex items-center justify-center shadow-lg shadow-[#006859]/30 transition-all duration-200"
-            >
-              <ChevronRight className="w-5 h-5 text-white font-black" strokeWidth={3} />
-            </button>
-
             {/* Preview side (Center Card Size) */}
-            <div className="relative w-full max-w-[280px] sm:max-w-[400px] md:max-w-[500px] aspect-[1/1.414] mx-auto z-10">
+            <div className="relative w-[92%] max-w-[360px] sm:max-w-[400px] md:max-w-[500px] aspect-[1/1.414] mx-auto z-10">
+              
+              {/* Previous button - Overlaid on top of templates */}
+              <button
+                onClick={() => go(-1)}
+                aria-label="Previous template"
+                className="absolute -left-2 sm:-left-6 lg:-left-12 top-1/2 -translate-y-1/2 z-30 w-10 h-10 lg:w-12 lg:h-12 rounded-full bg-[#006859] hover:bg-[#005145] active:scale-95 flex items-center justify-center shadow-xl shadow-[#006859]/30 transition-all duration-200 border-2 border-white/10"
+              >
+                <ChevronLeft className="w-5 h-5 text-white font-black" strokeWidth={3} />
+              </button>
+
+              {/* Next button - Overlaid on top of templates */}
+              <button
+                onClick={() => go(1)}
+                aria-label="Next template"
+                className="absolute -right-2 sm:-right-6 lg:-right-12 top-1/2 -translate-y-1/2 z-30 w-10 h-10 lg:w-12 lg:h-12 rounded-full bg-[#006859] hover:bg-[#005145] active:scale-95 flex items-center justify-center shadow-xl shadow-[#006859]/30 transition-all duration-200 border-2 border-white/10"
+              >
+                <ChevronRight className="w-5 h-5 text-white font-black" strokeWidth={3} />
+              </button>
               {TEMPLATES.map((tmpl, i) => (
                 <motion.div
                   key={tmpl.id}
