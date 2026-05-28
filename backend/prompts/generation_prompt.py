@@ -93,7 +93,7 @@ Its title is the FIRST entry in SELECTED_PROJECTS. Do NOT look for it in RESUME_
 For the APPROVED PROJECT:
   - Use the EXACT title and tech_stack from APPROVED_PROJECT. Do NOT change them.
   - This is a brand new project — it does NOT exist in RESUME_TEXT.
-  - Write 3-4 strong, achievable, realistic bullets.
+  - Write 3 strong, achievable, realistic bullets.
   - 🚨 MANDATORY: The FIRST bullet MUST clearly state the real-world problem or business domain the project solves (derived from the APPROVED_PROJECT description). Do NOT just list technical steps.
   - For all bullets, use this format: Action verb + tech stack/algorithm/methodology + outcome/scope/result.
       (achievable and realistic — never insert numbers forcefully where they don't fit naturally)

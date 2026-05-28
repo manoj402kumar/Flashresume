@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { Star, X } from "lucide-react";
+import { Star } from "lucide-react";
 
 interface Props {
   userId: string;
@@ -47,9 +47,6 @@ export default function FeedbackModal({ userId, sessionId, onClose }: Props) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4">
       <div className="bg-white rounded-2xl shadow-2xl p-7 w-full max-w-sm mx-auto relative">
-        <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600">
-          <X className="w-5 h-5" />
-        </button>
 
         {submitted ? (
           <div className="text-center py-4">
@@ -60,7 +57,7 @@ export default function FeedbackModal({ userId, sessionId, onClose }: Props) {
         ) : (
           <>
             <h3 className="font-bold text-lg text-gray-800 mb-1">How was your experience?</h3>
-            <p className="text-sm text-gray-500 mb-4">Takes 10 seconds · Helps us improve</p>
+            <p className="text-sm text-gray-500 mb-4">Rate us · Takes just 10 seconds</p>
 
             {error && (
               <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-600 text-xs rounded-xl font-medium text-center">
@@ -90,7 +87,7 @@ export default function FeedbackModal({ userId, sessionId, onClose }: Props) {
             <textarea
               value={suggestion}
               onChange={(e) => setSuggestion(e.target.value)}
-              placeholder="Any suggestions / feedback?"
+              placeholder="Any suggestions or thoughts? We'd love to hear."
               rows={3}
               className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm
                          text-gray-700 resize-none focus:outline-none focus:ring-2
