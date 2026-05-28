@@ -540,7 +540,9 @@ export default function ResultPage() {
           if (res.ok) {
             const data = await res.json();
             const total = data.total_platform_downloads;
-            if (total && total > 0 && total % 20 === 0) {
+            const isFirstDownload = data.download_count === 1;
+            const isGlobalMilestone = total > 0 && total % 10 === 0;
+            if (isFirstDownload || isGlobalMilestone) {
               setTimeout(() => setShowFeedback(true), 10000);
             }
           }
