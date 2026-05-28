@@ -56,8 +56,8 @@ function KPICard({ kpi, delay }: { kpi: KPI; delay: number }) {
         </div>
         <span
           className={`flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full ${kpi.deltaPositive
-              ? "bg-emerald-50 text-emerald-700"
-              : "bg-red-50 text-red-700"
+            ? "bg-emerald-50 text-emerald-700"
+            : "bg-red-50 text-red-700"
             }`}
         >
           <ArrowUpRight className={`w-3 h-3 ${!kpi.deltaPositive && "rotate-180"}`} />
@@ -86,7 +86,7 @@ export default function KPICards({ onlineUsers, stats }: { onlineUsers: number, 
       iconBg: "bg-emerald-50",
       delta: "All Time",
       deltaPositive: true,
-      note: "All page visits tracked",
+      note: "Home page visits",
     },
     {
       label: "Live Users",
