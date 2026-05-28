@@ -518,12 +518,8 @@ export default function ResultPage() {
       const link = document.createElement("a");
       link.href = url;
       link.download = `${resume.heading.name.replace(/\s+/g, "_")}_Resume.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
 
-      // Deduct credit if applicable
+      // 1. Deduct credit FIRST (before triggering OS download actions which suspend mobile browsers)
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
@@ -534,14 +530,23 @@ export default function ResultPage() {
               "Content-Type": "application/json",
               "Authorization": `Bearer ${session.access_token}`
             },
-            body: JSON.stringify({ user_id: session.user.id, session_id: sessionGuid })
+            body: JSON.stringify({ user_id: session.user.id, session_id: sessionGuid }),
+            keepalive: true // Essential for mobile: ensures request completes even if page unloads
           });
-          // Re-evaluate access silently
-          await checkAccess();
+          // Re-evaluate access silently (do not await, to not delay download)
+          checkAccess();
         } catch (e) {
           console.error("Failed to deduct credit", e);
         }
       }
+
+      // 2. Trigger the actual download
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      // Delay revocation so iOS Safari has time to read the blob into its PDF viewer
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
 
       // Trigger feedback on first download
       if (sessionGuid && currentUserId) {
