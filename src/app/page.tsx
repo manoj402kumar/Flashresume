@@ -66,6 +66,7 @@ export default function App() {
   const [purchaseSuccess, setPurchaseSuccess] = useState(false);
   const [activeTooltip, setActiveTooltip] = useState<"nav" | "dropdown" | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const [showMobileHint, setShowMobileHint] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -75,6 +76,14 @@ export default function App() {
       setCurrentUser(session?.user ?? null);
     });
     return () => subscription.unsubscribe();
+  }, []);
+
+  // Show mobile hint popup after a short delay, only on mobile
+  useEffect(() => {
+    const isMobile = window.innerWidth < 768;
+    if (!isMobile) return;
+    const timer = setTimeout(() => setShowMobileHint(true), 1800);
+    return () => clearTimeout(timer);
   }, []);
 
   // ── Referral Capture: Step 1 ─────────────────────────────────────────────
@@ -471,8 +480,8 @@ export default function App() {
                           <div className="p-4 space-y-4">
 
 
-                              {buckets.length > 0 && (
-                                <div className="space-y-4 mt-5">
+                            {buckets.length > 0 && (
+                              <div className="space-y-4 mt-5">
                                 {buckets.map(b => {
                                   const activeBucket = buckets.find(b => b.status === 'active');
                                   const activePlanName = activeBucket ? (activeBucket.plan_type === 'student' ? 'student plan' : activeBucket.plan_type === 'regular' ? 'pro plan' : 'previous plan') : 'previous plan';
@@ -485,32 +494,32 @@ export default function App() {
                                   } else if (b.status === 'fallback' || !b.validity_duration_days) {
                                     validText = `Lifetime (No Expiration)`;
                                   }
-                                    
-                                    const isQueued = b.status === 'queued';
 
-                                    return (
-                                      <div key={b.id} className="flex flex-col gap-0.5">
-                                        <div className="flex justify-between items-center w-full gap-4">
-                                          <div className="flex items-center gap-2 min-w-0">
-                                            <p className="font-bold text-sm text-on-background truncate">{name}</p>
-                                          </div>
-                                          <span className="font-black text-sm text-on-background whitespace-nowrap">{b.remaining_credits} Credits</span>
+                                  const isQueued = b.status === 'queued';
+
+                                  return (
+                                    <div key={b.id} className="flex flex-col gap-0.5">
+                                      <div className="flex justify-between items-center w-full gap-4">
+                                        <div className="flex items-center gap-2 min-w-0">
+                                          <p className="font-bold text-sm text-on-background truncate">{name}</p>
                                         </div>
-                                        <p className="text-[11px] font-medium text-on-surface-variant/80">
-                                          {validText}
-                                        </p>
+                                        <span className="font-black text-sm text-on-background whitespace-nowrap">{b.remaining_credits} Credits</span>
                                       </div>
-                                    );
-                                  })}
-                                  
-                                  {buckets.length > 1 && (
-                                    <div className="pt-3 border-t border-surface-container-high/60 flex justify-between items-center">
-                                      <span className="text-sm font-semibold text-on-background">⚡ Total</span>
-                                      <span className="text-sm font-black text-on-background">{credits} Credits</span>
+                                      <p className="text-[11px] font-medium text-on-surface-variant/80">
+                                        {validText}
+                                      </p>
                                     </div>
-                                  )}
-                                </div>
-                              )}
+                                  );
+                                })}
+
+                                {buckets.length > 1 && (
+                                  <div className="pt-3 border-t border-surface-container-high/60 flex justify-between items-center">
+                                    <span className="text-sm font-semibold text-on-background">⚡ Total</span>
+                                    <span className="text-sm font-black text-on-background">{credits} Credits</span>
+                                  </div>
+                                )}
+                              </div>
+                            )}
 
                             <div className="pt-2 space-y-2 border-t border-surface-container-low mt-2">
                               <button
@@ -688,7 +697,7 @@ export default function App() {
                       onDrop={handleDrop}
                       onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
                       onDragLeave={() => setIsDragging(false)}
-                      className={`flex flex-col items-center justify-center cursor-pointer rounded-2xl border-2 border-dashed py-6 px-6 transition-all duration-200 w-full overflow-hidden
+                      className={`flex flex-col items-center justify-center cursor-pointer rounded-2xl border-2 border-dashed py-3 sm:py-6 px-6 transition-all duration-200 w-full overflow-hidden
                         ${isDragging
                           ? "border-[#006859] bg-[#006859]/8 scale-[1.01]"
                           : file
@@ -773,7 +782,7 @@ export default function App() {
                           <div className={`w-3 h-3 sm:w-3.5 sm:h-3.5 rounded-full border-[1.5px] flex-shrink-0 flex items-center justify-center transition-colors ${isActive ? opt.radioBorder : "border-on-surface-variant/60"}`}>
                             {isActive && <div className={`w-1.5 h-1.5 rounded-full ${opt.radioDot}`} />}
                           </div>
-                          <span className="text-[9px] min-[375px]:text-[10px] sm:text-xs font-bold leading-tight text-left sm:text-center sm:whitespace-nowrap">
+                          <span className="text-[9px] min-[375px]:text-[10px] sm:text-xs font-bold leading-tight text-left sm:text-center whitespace-nowrap">
                             {opt.label}
                           </span>
                         </button>
@@ -845,11 +854,7 @@ export default function App() {
                             : "Continue to Editor"}
                 </button>
 
-                {/* Mobile-only notice */}
-                <p className="text-center text-[11px] font-medium text-on-surface-variant/80 flex items-center justify-center gap-1.5 mt-2 sm:hidden">
-                  <Laptop className="w-3.5 h-3.5 opacity-70" />
-                  Use laptop for best experience
-                </p>
+
 
               </div>
             </div>
@@ -1244,6 +1249,73 @@ export default function App() {
         prefetchedUser={currentUser}
         prefetchedCredits={credits}
       />
+
+      {/* Mobile-only "Best on Desktop" popup — visible on sm screens only */}
+      <AnimatePresence>
+        {showMobileHint && (
+          <>
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.25 }}
+              className="fixed inset-0 z-[90] bg-black/40 backdrop-blur-[2px] sm:hidden"
+              onClick={() => setShowMobileHint(false)}
+            />
+            {/* Bottom sheet card */}
+            <motion.div
+              initial={{ opacity: 0, y: 80 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 80 }}
+              transition={{ type: "spring", stiffness: 340, damping: 30 }}
+              className="fixed bottom-0 left-0 right-0 z-[91] sm:hidden"
+            >
+              <div className="mx-3 mb-4 bg-surface-container-lowest border border-surface-container-high rounded-[1.75rem] shadow-[0_-8px_40px_rgba(0,0,0,0.18)] overflow-hidden">
+                {/* Top accent bar */}
+                <div className="h-1 w-full bg-gradient-to-r from-[#006859] via-[#12f8d7] to-[#006859]" />
+
+                {/* Handle */}
+                <div className="flex justify-center pt-3 pb-1">
+                  <div className="w-10 h-1 rounded-full bg-surface-container-high" />
+                </div>
+
+                <div className="px-6 pt-3 pb-6">
+                  {/* Icon + heading */}
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#006859] to-[#12f8d7] flex items-center justify-center flex-shrink-0 shadow-lg shadow-[#006859]/30">
+                      <Laptop className="w-6 h-6 text-white" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-headline font-extrabold text-on-background text-base leading-tight">
+                        Better on a laptop ✨
+                      </p>
+                      <p className="text-xs text-on-surface-variant mt-1 leading-relaxed">
+                        Use Laptop for best experience and faster usage to generate and edit.
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => setShowMobileHint(false)}
+                      className="w-7 h-7 rounded-full bg-surface-container-low hover:bg-surface-container-high flex items-center justify-center flex-shrink-0 transition-colors -mt-0.5"
+                      aria-label="Dismiss"
+                    >
+                      <X className="w-3.5 h-3.5 text-on-surface-variant" />
+                    </button>
+                  </div>
+
+                  {/* Dismiss CTA */}
+                  <button
+                    onClick={() => setShowMobileHint(false)}
+                    className="mt-5 w-full py-3 rounded-2xl bg-gradient-to-r from-[#006859] to-[#009d87] text-white font-bold text-sm shadow-md shadow-[#006859]/25 active:scale-95 transition-transform"
+                  >
+                    Got it, I will use it in laptop later →
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
