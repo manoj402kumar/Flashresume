@@ -753,6 +753,16 @@ export default function ResultPage() {
                           >
                             Buy More Credits
                           </button>
+
+                          <button
+                            onClick={() => {
+                              setShowAccountDropdown(false);
+                              window.location.href = '/contact';
+                            }}
+                            className="w-full py-2.5 bg-surface-container-low hover:bg-surface-container-high text-on-background text-sm font-bold rounded-xl transition-colors"
+                          >
+                            Help / Contact
+                          </button>
                         </div>
                       </div>
                     ) : (

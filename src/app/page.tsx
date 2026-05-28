@@ -548,6 +548,16 @@ export default function App() {
                               </button>
 
                               <button
+                                onClick={() => {
+                                  setShowAccountDropdown(false);
+                                  router.push('/contact');
+                                }}
+                                className="w-full py-2.5 bg-surface-container-low hover:bg-surface-container-high text-on-background text-sm font-bold rounded-xl transition-colors"
+                              >
+                                Help / Contact
+                              </button>
+
+                              <button
                                 onClick={async () => {
                                   await supabase.auth.signOut();
                                   setCurrentUser(null);
