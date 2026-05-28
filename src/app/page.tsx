@@ -94,7 +94,7 @@ export default function App() {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ page_type: "landing" }),
-    }).catch(() => {}); // silent fail — never block the user
+    }).catch(() => { }); // silent fail — never block the user
   }, []);
 
   // ── Referral Capture: Step 1 ─────────────────────────────────────────────
@@ -862,7 +862,7 @@ export default function App() {
                           ? "Optimize for JD"
                           : optimizeMode === "no_jd"
                             ? "Optimize Resume"
-                            : "Continue to Editor"}
+                            : "Edit manually"}
                 </button>
 
 

@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { motion } from "motion/react";
 import {
   Users, TrendingUp, Download, CreditCard,
-  ArrowUpRight, Activity,
+  ArrowUpRight, Activity, AlertCircle,
 } from "lucide-react";
 
 // -- Animated counter hook --------------------------------------------------
@@ -77,7 +77,7 @@ function KPICard({ kpi, delay }: { kpi: KPI; delay: number }) {
   );
 }
 
-export default function KPICards({ onlineUsers, stats }: { onlineUsers: number, stats?: { revenue: number, downloads: number, subscribers: number, totalLogins: number, totalVisitors: number } }) {
+export default function KPICards({ onlineUsers, stats }: { onlineUsers: number, stats?: { revenue: number, downloads: number, subscribers: number, totalLogins: number, totalVisitors: number, failedPayments: number } }) {
   const kpis: KPI[] = [
     {
       label: "Total Visitors",
@@ -133,10 +133,19 @@ export default function KPICards({ onlineUsers, stats }: { onlineUsers: number, 
       deltaPositive: true,
       note: "From Razorpay payments",
     },
+    {
+      label: "Failed Payments",
+      value: stats?.failedPayments || 0,
+      icon: <AlertCircle className="w-5 h-5 text-red-500" />,
+      iconBg: "bg-red-50",
+      delta: "All Time",
+      deltaPositive: false,
+      note: "Incomplete transactions",
+    },
   ];
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-6 gap-5">
+    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-7 gap-5">
       {kpis.map((kpi, i) => (
         <KPICard key={kpi.label} kpi={kpi} delay={i * 0.08} />
       ))}

@@ -41,6 +41,7 @@ async def get_admin_stats():
         "active_subs": 0,
         "total_logins": 0,
         "total_visitors": 0,
+        "failed_payments": 0,
     }
     
     if not supabase:
@@ -48,12 +49,13 @@ async def get_admin_stats():
         
     try:
         # Run all 5 DB queries in parallel — non-blocking
-        payments_res, downloads, subs_res, users_res, visitors_res = await asyncio.gather(
+        payments_res, downloads, subs_res, users_res, visitors_res, failed_res = await asyncio.gather(
             _sb(supabase.table("payments").select("amount, user_id, plan_type").eq("status", "success")),
             _sb(supabase.table("resume_downloads").select("id", count="exact")),
             _sb(supabase.table("subscriptions").select("user_id").eq("is_active", True)),
             _sb(supabase.table("users").select("id", count="exact")),
             _sb(supabase.table("page_visits").select("id", count="exact")),
+            _sb(supabase.table("payments").select("id", count="exact").eq("status", "failed")),
         )
 
         if payments_res.data:
@@ -84,6 +86,11 @@ async def get_admin_stats():
             stats["total_visitors"] = visitors_res.count
         else:
             stats["total_visitors"] = len(visitors_res.data) if visitors_res.data else 0
+
+        if hasattr(failed_res, 'count') and failed_res.count is not None:
+            stats["failed_payments"] = failed_res.count
+        else:
+            stats["failed_payments"] = len(failed_res.data) if failed_res.data else 0
 
         return stats
     except Exception as e:
