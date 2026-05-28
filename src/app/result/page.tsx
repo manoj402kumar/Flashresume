@@ -316,15 +316,7 @@ export default function ResultPage() {
     setInsertionIndex(null); insertionIndexRef.current = null;
   };
 
-  // Track Result Page Visit
-  useEffect(() => {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-    fetch(`${apiUrl}/api/analytics/track-visit`, {
-      method: "POST",
-      body: JSON.stringify({ page_type: "result" }),
-      headers: { "Content-Type": "application/json" }
-    }).catch(() => { });
-  }, []);
+
 
   useEffect(() => {
     const fetchSession = async () => {
