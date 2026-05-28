@@ -47,7 +47,7 @@ export async function POST(request: Request) {
     const response = NextResponse.json({ success: true });
 
     // Set HttpOnly cookie for the admin session
-    // Max age: 24 hours
+    // Max age: 60 days (matches Supabase refresh token lifetime)
     response.cookies.set({
       name: "admin_session",
       value: "authenticated",
@@ -55,7 +55,7 @@ export async function POST(request: Request) {
       secure: true,
       sameSite: "strict",
       path: "/",
-      maxAge: 60 * 60 * 24, 
+      maxAge: 60 * 60 * 24 * 60, // 60 days
     });
 
     return response;
