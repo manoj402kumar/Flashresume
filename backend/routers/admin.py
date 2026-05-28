@@ -165,20 +165,7 @@ async def get_analytics_revenue(
             if ptype in plan_mrr: plan_mrr[ptype] += amt
             else: plan_mrr[ptype] = amt
             
-        free_users = 0
-        if plan_filter == "all":
-            users_query = supabase.table("users").select("id", count="exact")
-            if dt_start: users_query = users_query.gte("created_at", dt_start.isoformat())
-            if dt_end: users_query = users_query.lte("created_at", dt_end.isoformat())
-            u_res = await _sb(users_query)
-            total_users = u_res.count if hasattr(u_res, 'count') and u_res.count is not None else len(u_res.data or [])
-            free_users = max(0, total_users - sum(plan_counts.values()))
-            
         breakdown = [
-            {
-                "name": "Free", "price": 0, "users": free_users, "mrr": 0,
-                "color": "bg-[#eff1f2]", "textColor": "text-[#595c5d]", "barColor": "bg-[#595c5d]/30"
-            },
             {
                 "name": "Student", "price": 99, "users": plan_counts.get("student", 0), "mrr": plan_mrr.get("student", 0),
                 "color": "bg-[#12f8d7]/15", "textColor": "text-[#006859]", "barColor": "bg-gradient-to-r from-[#006859] to-[#12f8d7]"
