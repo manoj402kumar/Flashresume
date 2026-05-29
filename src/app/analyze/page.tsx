@@ -112,7 +112,7 @@ export default function AnalyzePage() {
               <p className="text-on-background font-bold text-lg md:text-xl">
                 {analysis.ats_score >= 70
                   ? "Great start! We'll push it to perfection."
-                  : "Room for growth. Our AI will boost this significantly."}
+                  : "Let's increase it."}
               </p>
             </div>
 

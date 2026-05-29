@@ -743,7 +743,7 @@ export default function App() {
                 <div className="flex justify-end -mt-1">
                   <a
                     href="/scratch"
-                    className="text-xs font-semibold text-tertiary hover:text-tertiary-container transition-colors flex items-center gap-1.5"
+                    className="text-xs font-semibold text-sky-500 hover:text-sky-400 transition-colors flex items-center gap-1.5"
                   >
                     <FileText className="w-3.5 h-3.5" />
                     No old resume?
