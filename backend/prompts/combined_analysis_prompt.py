@@ -124,12 +124,12 @@ CASE 2 — New project needed:
 ────────────────────────────────────────────────────
 STEP 4: Build suggested_project (for Case 2 only)
 ────────────────────────────────────────────────────
-select project idea which is achievable by a fresher.
+select project idea that solves real world problem and most relavant to company profile, which is achievable by a fresher.
 title: creative domain-specific product name — NOT a tech stack description like "Django REST App".
   Pattern: domain-action word + product suffix.
   🚨 IMPORTANT: INVENT a unique name. Do NOT reuse the examples provided in this prompt (e.g., "VitalTrack", "SpendLens", "CartEngine", "TaskFlow").
 tech_stack: 4-5 technologies from JOB_DESCRIPTION's required stack (comma-separated string).
-description: 2-3 sentences — (a) real-world problem it solves, (b) how JOB_DESCRIPTION tech is used naturally, (c) the outcome. Rich enough to write 3-4 bullets from.
+description: 2-3 sentences — (a) real-world problem it solves, (b) how JOB_DESCRIPTION tech is used naturally, (c) the outcome. Rich enough to write 3 bullets from.
 
 ────────────────────────────────────────────────────
 STEP 5: Build the two missing-skills lists
@@ -177,8 +177,8 @@ Example B — Case 2 (new project needed, OR-slot filtered from updated_missing_
   JD: "java/python, springboot, REST APIs, unit testing"
   ATS Task: all_missing_skills: ["java/python", "springboot", "REST APIs", "unit testing"]
   Project Task: no existing project covers java/python lang slot → Case 2.
-  suggested_project: title "HireTrack", tech_stack: "Python, Spring Boot, MySQL"
-  selected_projects: ["HireTrack", "Ecommerce Website"]
+  suggested_project: title "Shoecart", tech_stack: "java, Spring Boot, MySQL"
+  selected_projects: ["Shoecart", "Ecommerce Website"]
   STEP 5: "java/python" OR slot — suggested project uses Python → covered → REMOVE from updated_missing_skills.
           "springboot" covered by suggested project → REMOVE from updated_missing_skills.
           "REST APIs" is a concept → KEEP in updated_missing_skills.
