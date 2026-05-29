@@ -84,7 +84,7 @@ export default function AnalyzePage() {
             Resume Match Analysis
           </h1>
           <p className="text-lg text-on-surface-variant font-medium">
-            Here's how your resume stacks up against the job description.
+            Here's how your resume matches against the job description.
           </p>
         </motion.div>
 
