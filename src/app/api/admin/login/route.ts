@@ -53,7 +53,7 @@ export async function POST(request: Request) {
       value: "authenticated",
       httpOnly: true,
       secure: true,
-      sameSite: "strict",
+      sameSite: "lax",
       path: "/",
       maxAge: 60 * 60 * 24 * 60, // 60 days
     });
