@@ -167,8 +167,14 @@ export default function ResultPage() {
   const [showMissedKeywords, setShowMissedKeywords] = useState(false);
   const [copied, setCopied] = useState(false);
   const [editMode, setEditMode] = useState(true);
-  const [openEditSections, setOpenEditSections] = useState<Record<string, boolean>>({ contact: true });
+  const [openEditSections, setOpenEditSections] = useState<Record<string, boolean>>({ contact: true, summary: true, education: true, experience: true, projects: true, skills: true, certifications: true });
   const toggleSection = (sec: string) => setOpenEditSections(p => ({ ...p, [sec]: !p[sec] }));
+  const [activeEditSection, setActiveEditSection] = useState<string>('contact');
+  // Always open the section when switching to it via pill
+  const selectEditSection = (sid: string) => {
+    setActiveEditSection(sid);
+    setOpenEditSections(p => ({ ...p, [sid]: true }));
+  };
   const [showHighlights, setShowHighlights] = useState(true);
   const [downloadingPDF, setDownloadingPDF] = useState(false);
   const [missingKeywords, setMissingKeywords] = useState<string[]>([]);
@@ -839,6 +845,31 @@ export default function ResultPage() {
 
           {/* Segmented Toggles inside Sticky Top */}
           <div className="flex-shrink-0 bg-surface/95 backdrop-blur-md p-4 border-b border-surface-container-low flex flex-col gap-3 py-4 sticky top-0 z-20">
+            {/* ── Compact ATS Score Strip — above tab buttons ── */}
+            {resume && (
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-surface-container-low border border-[#006859]/15 mb-1">
+                {noJdMode ? (
+                  <>
+                    <TrendingUp className="w-3.5 h-3.5 text-[#006859] flex-shrink-0" />
+                    <span className="text-[9px] font-black uppercase tracking-widest text-on-surface-variant/60 flex-1">ATS Formatting Score</span>
+                    <span className="text-sm font-black text-transparent bg-clip-text bg-gradient-to-r from-[#006859] to-[#12f8d7]">100%</span>
+                  </>
+                ) : (
+                  <>
+                    <span className="text-[9px] font-black uppercase tracking-widest text-on-surface-variant/50">Before</span>
+                    <span className="text-base font-black text-on-surface-variant/70 leading-none">{resume.ats_score_before}</span>
+                    <div className="flex-1 flex items-center px-1">
+                      <div className="flex-1 h-px bg-gradient-to-r from-on-surface-variant/20 to-[#006859]/40 rounded-full" />
+                      <TrendingUp className="w-3 h-3 text-[#006859] flex-shrink-0 mx-1.5" />
+                      <div className="flex-1 h-px bg-gradient-to-r from-[#006859]/40 to-[#12f8d7]/60 rounded-full" />
+                    </div>
+                    <span className="text-[9px] font-black uppercase tracking-widest text-[#006859]">After</span>
+                    <span className="text-base font-black text-transparent bg-clip-text bg-gradient-to-r from-[#006859] to-[#12f8d7] leading-none">{resume.ats_score_after}</span>
+                    <span className="bg-gradient-to-r from-[#006859] to-[#12f8d7] text-white px-2 py-0.5 rounded-lg text-[9px] font-black whitespace-nowrap ml-1">+{scoreImprovement} PTS</span>
+                  </>
+                )}
+              </div>
+            )}
             <div className="flex gap-2">
               <button
                 onClick={() => { setEditMode(true); setShowChanges(false); setShowMissedKeywords(false); }}
@@ -876,64 +907,82 @@ export default function ResultPage() {
                 </button>
               )}
             </div>
-
-            {/* ATS Score Context Mini-Banner (When changes are shown) */}
-            <AnimatePresence>
-              {showChanges && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0, marginTop: 0 }}
-                  animate={{ opacity: 1, height: 'auto', marginTop: '0.5rem' }}
-                  exit={{ opacity: 0, height: 0, marginTop: 0 }}
-                  className="overflow-hidden"
-                >
-                  <div className="relative overflow-hidden flex items-center justify-between bg-gradient-to-br from-[#006859]/5 to-[#12f8d7]/5 border border-[#006859]/15 px-6 py-5 rounded-3xl shadow-sm mb-2">
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-[#12f8d7]/10 blur-[50px] rounded-full pointer-events-none -z-10"></div>
-                    <div className="absolute bottom-0 left-0 w-32 h-32 bg-[#006859]/10 blur-[50px] rounded-full pointer-events-none -z-10"></div>
-
-                    {noJdMode ? (
-                      <div className="flex items-center justify-center w-full gap-4 relative z-10">
-                        <div className="w-10 h-10 rounded-full bg-[#006859]/10 flex items-center justify-center">
-                          <TrendingUp className="w-5 h-5 text-[#006859]" />
-                        </div>
-                        <div className="flex flex-col">
-                          <span className="font-extrabold text-[#006859] text-xs uppercase tracking-widest opacity-80">ATS Formatting Score</span>
-                          <span className="font-bold text-on-surface-variant text-sm">After Optimization</span>
-                        </div>
-                        <div className="ml-auto text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-[#006859] to-[#12f8d7]">
-                          100%
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="w-full flex items-center relative z-10">
-                        <div className="flex flex-col items-start min-w-[60px]">
-                          <span className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant/60 mb-1">Before</span>
-                          <span className="text-3xl font-black text-on-surface-variant/80 leading-none">{resume.ats_score_before}</span>
-                        </div>
-
-                        <div className="flex-1 flex items-center justify-center px-4 relative">
-                          <div className="h-[2px] w-full bg-gradient-to-r from-transparent via-[#006859]/20 to-[#12f8d7]/40 relative">
-                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-surface border border-[#006859]/10 flex items-center justify-center shadow-sm">
-                              <TrendingUp className="w-4 h-4 text-[#006859]" />
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="flex flex-col items-end min-w-[60px]">
-                          <span className="text-[10px] font-black uppercase tracking-widest text-[#006859] mb-1">After</span>
-                          <span className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-br from-[#006859] to-[#12f8d7] leading-none drop-shadow-sm">{resume.ats_score_after}</span>
-                        </div>
-
-                        <div className="ml-6 bg-gradient-to-r from-[#006859] to-[#12f8d7] text-white px-4 py-2 rounded-2xl text-sm font-black tracking-wide shadow-lg shadow-[#006859]/25 whitespace-nowrap flex items-center gap-1.5">
-                          <span>+{scoreImprovement}</span>
-                          <span className="opacity-80 font-bold text-[10px]">PTS</span>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
           </div>
+
+          {/* ── Section Pill Nav ── */}
+          {editMode && resume && (
+            <div className="flex-shrink-0 border-b border-surface-container-low bg-surface/95 backdrop-blur-md px-4 py-2">
+              <div className="grid grid-cols-3 gap-1 sm:flex sm:flex-wrap sm:gap-1.5">
+                {/* Contact pill — always first */}
+                <button
+                  type="button"
+                  onClick={() => selectEditSection('contact')}
+                  className={`w-full sm:w-auto flex items-center justify-center sm:justify-start gap-1 sm:gap-1.5 px-1.5 sm:px-3 py-1.5 rounded-full text-[10px] sm:text-xs font-bold whitespace-nowrap transition-all duration-200 border ${activeEditSection === 'contact'
+                      ? 'bg-primary text-white shadow-sm border-transparent'
+                      : 'bg-surface-container text-on-surface-variant border-surface-container-highest hover:bg-surface-container-high hover:text-on-background'
+                    }`}
+                >
+                  <FileText className="hidden sm:block w-3 h-3" />
+                  Contact
+                </button>
+                {/* Dynamic section pills in current order */}
+                {(resume.section_order || []).map((sid) => {
+                  const isCustom = sid.startsWith('custom_');
+                  const customSection = isCustom ? resume.custom_sections?.find(s => s.id === sid) : null;
+                  const meta = isCustom
+                    ? { label: customSection?.heading || 'Custom', icon: <FileText className="w-3 h-3" /> }
+                    : SECTION_LABELS[sid];
+                  if (!meta) return null;
+                  const isActive = activeEditSection === sid;
+                  return (
+                    <button
+                      key={sid}
+                      type="button"
+                      onClick={() => selectEditSection(sid)}
+                      className={`w-full sm:w-auto flex items-center justify-center sm:justify-start gap-1 sm:gap-1.5 px-1.5 sm:px-3 py-1.5 rounded-full text-[10px] sm:text-xs font-bold whitespace-nowrap transition-all duration-200 border ${isActive
+                          ? 'bg-primary text-white shadow-sm border-transparent'
+                          : 'bg-surface-container text-on-surface-variant border-surface-container-highest hover:bg-surface-container-high hover:text-on-background'
+                        }`}
+                    >
+                      <span className="hidden sm:inline-flex [&>svg]:w-3 [&>svg]:h-3">{meta.icon}</span>
+                      {meta.label}
+                    </button>
+                  );
+                })}
+                {/* Reorder pill */}
+                <button
+                  type="button"
+                  onClick={() => selectEditSection('__reorder__')}
+                  className={`w-full sm:w-auto flex items-center justify-center sm:justify-start gap-1 sm:gap-1.5 px-1.5 sm:px-3 py-1.5 rounded-full text-[10px] sm:text-xs font-bold whitespace-nowrap transition-all duration-200 border ${activeEditSection === '__reorder__'
+                      ? 'bg-surface-container-highest text-on-background shadow-sm border-transparent'
+                      : 'bg-surface-container text-on-surface-variant border-surface-container-highest hover:bg-surface-container-high hover:text-on-background'
+                    }`}
+                >
+                  <GripVertical className="hidden sm:block w-3 h-3" />
+                  Reorder
+                </button>
+                {/* + Custom Section pill */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    const newCustomId = `custom_${Date.now()}`;
+                    const newCustoms = [...(resume.custom_sections || []), {
+                      id: newCustomId,
+                      heading: '',
+                      bullets: [{ text: '', url: '' }]
+                    }];
+                    const newOrder = [...(resume.section_order || ['summary', 'education', 'experience', 'projects', 'skills', 'certifications']), newCustomId];
+                    updateResume({ custom_sections: newCustoms, section_order: newOrder });
+                    selectEditSection(newCustomId);
+                  }}
+                  className="w-full sm:w-auto flex items-center justify-center sm:justify-start gap-1 sm:gap-1.5 px-1.5 sm:px-3 py-1.5 rounded-full text-[10px] sm:text-xs font-bold whitespace-nowrap transition-all duration-200 border border-primary/40 text-primary hover:bg-primary/10 hover:border-primary"
+                >
+                  <PlusCircle className="hidden sm:block w-3 h-3" />
+                  + Custom
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* Scrollable Panel Content */}
           <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:px-8 lg:py-6 pb-24 hide-scrollbar">
@@ -948,99 +997,101 @@ export default function ResultPage() {
                   className="w-full max-w-4xl mx-auto space-y-6"
                 >
 
-                  {/* Drag Drop Section Reordering — insertion-line style */}
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="soothing-light-theme text-on-background bg-surface-container-lowest rounded-xl p-4 shadow-md border border-primary/10"
-                    onDragOver={(e) => e.preventDefault()}
-                    onDrop={handleSectionDrop}
-                  >
-                    <div className="flex items-center justify-between mb-2">
-                      <h3 className="font-headline font-bold text-on-background text-sm">Reorder Sections</h3>
-                      <span className="text-xs text-on-surface-variant bg-surface-container px-2 py-0.5 rounded-full">Drag / hold &amp; drag to reorder</span>
-                    </div>
-                    <div ref={dragListRef} className="flex flex-col">
-                      {(resume.section_order || []).map((sectionId, index) => {
-                        const getSectionMeta = (sId: string) => {
-                          if (SECTION_LABELS[sId]) return SECTION_LABELS[sId];
-                          if (sId.startsWith("custom_")) {
-                            const customSection = resume.custom_sections?.find(s => s.id === sId);
-                            return {
-                              label: customSection?.heading || "Custom Section",
-                              icon: <FileText className="w-4 h-4 text-primary" />
-                            };
-                          }
-                          return null;
-                        };
-                        const sectionMeta = getSectionMeta(sectionId);
-                        if (!sectionMeta) return null;
-                        const isDragging = draggingId === sectionId;
-                        const order = resume.section_order || [];
-                        const showLineAbove = insertionIndex === index && draggingId !== null &&
-                          draggingId !== sectionId &&
-                          (index === 0 || order[index - 1] !== draggingId);
-                        const showLineBelow = insertionIndex === index + 1 && draggingId !== null &&
-                          draggingId !== sectionId &&
-                          (index === order.length - 1 || order[index + 1] !== draggingId);
-                        return (
-                          <div key={sectionId} className="relative">
-                            {/* Blue insertion line ABOVE */}
-                            <div className={`h-[3px] rounded-full mx-1 transition-all duration-100 ${showLineAbove ? "bg-primary shadow-md mb-1" : "bg-transparent mb-0"
-                              }`} />
-                            <div
-                              draggable
-                              data-section-index={index}
-                              data-section-id={sectionId}
-                              onDragStart={(e) => handleSectionDragStart(e, sectionId)}
-                              onDragEnter={(e) => handleSectionDragEnter(e, index, sectionId)}
-                              onDragOver={(e) => handleSectionDragOver(e, index, sectionId)}
-                              onDragEnd={handleSectionDragEnd}
-                              onTouchStart={(e) => handleSectionTouchStart(e, sectionId)}
-                              onTouchEnd={handleSectionTouchEnd}
-                              className={`flex items-center gap-3 px-3 py-1.5 rounded-xl cursor-grab active:cursor-grabbing transition-all duration-150 shadow-sm select-none mb-1 ${isDragging
-                                ? "opacity-25 scale-[0.97] bg-surface-container-high border-2 border-dashed border-primary/30"
-                                : "bg-surface-container border-2 border-transparent hover:border-primary/20 hover:shadow-md"
-                                }`}
-                            >
-                              <GripVertical className="text-on-surface-variant/40 w-4 h-4 flex-shrink-0" />
-                              <div className="flex items-center gap-2 flex-1">
-                                <div className="w-6 h-6 rounded-md bg-surface-container-highest flex items-center justify-center">
-                                  {sectionMeta.icon}
+                  {/* Reorder tab — shown only when __reorder__ pill is active */}
+                  {activeEditSection === '__reorder__' && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="soothing-light-theme text-on-background bg-surface-container-lowest rounded-2xl p-4 shadow-md border border-primary/10"
+                      onDragOver={(e) => e.preventDefault()}
+                      onDrop={handleSectionDrop}
+                    >
+                      <div className="flex items-center justify-between mb-3">
+                        <h3 className="font-headline font-bold text-on-background text-sm">Drag to Reorder</h3>
+                        <span className="text-[10px] text-on-surface-variant bg-surface-container px-2 py-0.5 rounded-full">Hold &amp; drag</span>
+                      </div>
+                      <div ref={dragListRef} className="flex flex-col">
+                        {(resume.section_order || []).map((sectionId, index) => {
+                          const getSectionMeta = (sId: string) => {
+                            if (SECTION_LABELS[sId]) return SECTION_LABELS[sId];
+                            if (sId.startsWith("custom_")) {
+                              const customSection = resume.custom_sections?.find(s => s.id === sId);
+                              return {
+                                label: customSection?.heading || "Custom Section",
+                                icon: <FileText className="w-4 h-4 text-primary" />
+                              };
+                            }
+                            return null;
+                          };
+                          const sectionMeta = getSectionMeta(sectionId);
+                          if (!sectionMeta) return null;
+                          const isDragging = draggingId === sectionId;
+                          const order = resume.section_order || [];
+                          const showLineAbove = insertionIndex === index && draggingId !== null &&
+                            draggingId !== sectionId &&
+                            (index === 0 || order[index - 1] !== draggingId);
+                          const showLineBelow = insertionIndex === index + 1 && draggingId !== null &&
+                            draggingId !== sectionId &&
+                            (index === order.length - 1 || order[index + 1] !== draggingId);
+                          return (
+                            <div key={sectionId} className="relative">
+                              {/* Blue insertion line ABOVE */}
+                              <div className={`h-[3px] rounded-full mx-1 transition-all duration-100 ${showLineAbove ? "bg-primary shadow-md mb-1" : "bg-transparent mb-0"
+                                }`} />
+                              <div
+                                draggable
+                                data-section-index={index}
+                                data-section-id={sectionId}
+                                onDragStart={(e) => handleSectionDragStart(e, sectionId)}
+                                onDragEnter={(e) => handleSectionDragEnter(e, index, sectionId)}
+                                onDragOver={(e) => handleSectionDragOver(e, index, sectionId)}
+                                onDragEnd={handleSectionDragEnd}
+                                onTouchStart={(e) => handleSectionTouchStart(e, sectionId)}
+                                onTouchEnd={handleSectionTouchEnd}
+                                className={`flex items-center gap-3 px-3 py-1.5 rounded-xl cursor-grab active:cursor-grabbing transition-all duration-150 shadow-sm select-none mb-1 ${isDragging
+                                  ? "opacity-25 scale-[0.97] bg-surface-container-high border-2 border-dashed border-primary/30"
+                                  : "bg-surface-container border-2 border-transparent hover:border-primary/20 hover:shadow-md"
+                                  }`}
+                              >
+                                <GripVertical className="text-on-surface-variant/40 w-4 h-4 flex-shrink-0" />
+                                <div className="flex items-center gap-2 flex-1">
+                                  <div className="w-6 h-6 rounded-md bg-surface-container-highest flex items-center justify-center">
+                                    {sectionMeta.icon}
+                                  </div>
+                                  <span className="font-semibold text-on-background text-sm">{sectionMeta.label}</span>
                                 </div>
-                                <span className="font-semibold text-on-background text-sm">{sectionMeta.label}</span>
+                                <div className="flex items-center gap-1 bg-surface-container rounded-lg p-0.5">
+                                  <button
+                                    type="button"
+                                    onClick={() => moveSectionUp(index)}
+                                    disabled={index === 0}
+                                    className="p-1 text-on-surface-variant hover:text-primary hover:bg-white rounded-md disabled:opacity-30 disabled:hover:bg-transparent"
+                                  >
+                                    <ChevronUp className="w-4 h-4" />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => moveSectionDown(index)}
+                                    disabled={index === (resume.section_order?.length || 0) - 1}
+                                    className="p-1 text-on-surface-variant hover:text-primary hover:bg-white rounded-md disabled:opacity-30 disabled:hover:bg-transparent"
+                                  >
+                                    <ChevronDown className="w-4 h-4" />
+                                  </button>
+                                </div>
                               </div>
-                              <div className="flex items-center gap-1 bg-surface-container rounded-lg p-0.5">
-                                <button
-                                  type="button"
-                                  onClick={() => moveSectionUp(index)}
-                                  disabled={index === 0}
-                                  className="p-1 text-on-surface-variant hover:text-primary hover:bg-white rounded-md disabled:opacity-30 disabled:hover:bg-transparent"
-                                >
-                                  <ChevronUp className="w-4 h-4" />
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => moveSectionDown(index)}
-                                  disabled={index === (resume.section_order?.length || 0) - 1}
-                                  className="p-1 text-on-surface-variant hover:text-primary hover:bg-white rounded-md disabled:opacity-30 disabled:hover:bg-transparent"
-                                >
-                                  <ChevronDown className="w-4 h-4" />
-                                </button>
-                              </div>
+                              {/* Blue insertion line BELOW (only for last item) */}
+                              {showLineBelow && (
+                                <div className="h-[3px] rounded-full mx-1 bg-primary shadow-md mt-0 mb-1" />
+                              )}
                             </div>
-                            {/* Blue insertion line BELOW (only for last item) */}
-                            {showLineBelow && (
-                              <div className="h-[3px] rounded-full mx-1 bg-primary shadow-md mt-0 mb-1" />
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </motion.div>
+                          );
+                        })}
+                      </div>
+                    </motion.div>
+                  )}
 
-                  {/* Heading Section */}
-                  <motion.div
+                  {/* Heading Section — shown only when contact pill active */}
+                  {activeEditSection === 'contact' && <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.3 }}
@@ -1170,10 +1221,12 @@ export default function ResultPage() {
                         </motion.div>
                       )}
                     </AnimatePresence>
-                  </motion.div>
+                  </motion.div>}
 
                   {/* Section cards rendered in section_order sequence — mirrors PDF exactly */}
                   {(resume.section_order || ["summary", "education", "experience", "projects", "skills", "certifications"]).map((sectionId) => {
+                    // In editMode, only render the active pill's section
+                    if (editMode && activeEditSection !== sectionId) return null;
                     if (sectionId.startsWith("custom_")) {
                       const customIndex = resume.custom_sections?.findIndex(s => s.id === sectionId) ?? -1;
                       const customSection = customIndex >= 0 ? resume.custom_sections![customIndex] : null;
@@ -1303,6 +1356,7 @@ export default function ResultPage() {
                                         const newCustoms = (resume.custom_sections || []).filter((_, i) => i !== customIndex);
                                         const newOrder = (resume.section_order || []).filter(id => id !== sectionId);
                                         updateResume({ custom_sections: newCustoms, section_order: newOrder });
+                                        setActiveEditSection('contact');
                                       }}
                                       className="flex-shrink-0 px-3 py-1 text-sm text-red-500 hover:bg-red-50 rounded-lg transition-colors font-semibold"
                                     >
@@ -2206,27 +2260,7 @@ export default function ResultPage() {
                     }
                   })}
 
-                  {editMode && (
-                    <div className="flex justify-center mt-6">
-                      <button
-                        onClick={() => {
-                          const newCustomId = `custom_${Date.now()}`;
-                          const newCustoms = [...(resume.custom_sections || []), {
-                            id: newCustomId,
-                            heading: '',
-                            bullets: [{ text: '', url: '' }]
-                          }];
-                          const newOrder = [...(resume.section_order || ["summary", "education", "experience", "projects", "skills", "certifications"]), newCustomId];
-                          updateResume({ custom_sections: newCustoms, section_order: newOrder });
-                        }}
-                        className="flex items-center gap-2 px-6 py-3 bg-white text-primary font-bold rounded-2xl hover:bg-primary/5 transition-all shadow-sm border border-primary/10 hover:shadow-md"
-                        type="button"
-                      >
-                        <PlusCircle className="w-5 h-5" />
-                        Add Custom Section
-                      </button>
-                    </div>
-                  )}
+
                 </motion.div>
               )}
 
