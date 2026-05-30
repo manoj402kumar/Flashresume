@@ -540,9 +540,9 @@ export default function ResultPage() {
           if (res.ok) {
             const data = await res.json();
             const total = data.total_platform_downloads;
-            const isFirstDownload = data.download_count === 1;
+            const isFirstEverDownload = data.user_total_downloads === 1; // True only once per user, across all sessions/days
             const isGlobalMilestone = total > 0 && total % 10 === 0;
-            if (isFirstDownload || isGlobalMilestone) {
+            if (isFirstEverDownload || isGlobalMilestone) {
               setTimeout(() => setShowFeedback(true), 10000);
             }
           }

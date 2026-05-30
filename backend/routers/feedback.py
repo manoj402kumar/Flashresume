@@ -1,6 +1,7 @@
 from fastapi import APIRouter, HTTPException, Depends
 from routers.admin import require_admin
 from pydantic import BaseModel
+import asyncio
 from supabase_client import supabase, sb
 
 router = APIRouter()
@@ -67,7 +68,8 @@ async def increment_download(body: IncrementDownloadRequest):
 
     new_count = updated.data or 0
     global_count = 0
-    
+    user_total_downloads = 0
+
     # 3. Log global download (UNIQUE constraint makes this idempotent on retry)
     if actual_user_id:
         try:
@@ -77,20 +79,30 @@ async def increment_download(body: IncrementDownloadRequest):
             }).execute())
         except Exception:
             pass  # UNIQUE constraint violation = already logged, safe to ignore
-            
+
         try:
-            # Count total platform downloads (across all users)
-            downloads_res = await sb(lambda: supabase.table("resume_downloads").select("id", count="exact").execute())
-            if hasattr(downloads_res, 'count') and downloads_res.count is not None:
-                global_count = downloads_res.count
+            # Count total platform downloads (across all users) and this user's total
+            global_res, user_res = await asyncio.gather(
+                sb(lambda: supabase.table("resume_downloads").select("id", count="exact").execute()),
+                sb(lambda: supabase.table("resume_downloads").select("id", count="exact").eq("user_id", actual_user_id).execute()),
+            )
+            if hasattr(global_res, 'count') and global_res.count is not None:
+                global_count = global_res.count
             else:
-                global_count = len(downloads_res.data) if downloads_res.data else 0
+                global_count = len(global_res.data) if global_res.data else 0
+
+            # user_total_downloads = 1 means this is their very first download EVER
+            if hasattr(user_res, 'count') and user_res.count is not None:
+                user_total_downloads = user_res.count
+            else:
+                user_total_downloads = len(user_res.data) if user_res.data else 0
         except Exception as e:
             print(f"Error counting resume_downloads: {e}")
-            
+
     return {
         "download_count": new_count,
-        "total_platform_downloads": global_count
+        "total_platform_downloads": global_count,
+        "user_total_downloads": user_total_downloads,  # 1 = first ever download by this user
     }
 
 @router.get("/admin/llm-stats", dependencies=[Depends(require_admin)])
