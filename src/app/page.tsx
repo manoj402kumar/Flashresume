@@ -781,7 +781,7 @@ export default function App() {
                           activeCls: "bg-surface-container-lowest text-[#006859] shadow-sm border border-surface-container-highest",
                           radioBorder: "border-[#006859]",
                           radioDot: "bg-[#006859]",
-                          label: "First Resume",
+                          label: "Build First Resume",
                         }
                       ] as const).map((opt) => {
                         const isActive = optimizeMode === opt.id;
