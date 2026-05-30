@@ -60,14 +60,14 @@ export default function TemplatesCarousel() {
 
   return (
     <section className="py-24 overflow-hidden">
-      <div className="max-w-7xl mx-auto px-6">
+      <div className="max-w-7xl mx-auto px-0 sm:px-6">
 
         {/* Section Header — matches Use Cases pattern */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="mb-16 text-center"
+          className="mb-16 text-center px-6 sm:px-0"
         >
           <span className="font-sans text-xs font-bold uppercase tracking-widest text-primary mb-3 block">
             Designed to get you hired
@@ -89,13 +89,13 @@ export default function TemplatesCarousel() {
           <div className="relative w-full px-0 sm:px-20 flex items-center justify-center">
             
             {/* Preview side (Center Card Size) */}
-            <div className="relative w-[92%] max-w-[360px] sm:max-w-[400px] md:max-w-[500px] aspect-[1/1.414] mx-auto z-10">
+            <div className="relative w-[94%] sm:w-[96%] max-w-[420px] md:max-w-[500px] aspect-[1/1.414] mx-auto z-10">
               
               {/* Previous button - Overlaid on top of templates */}
               <button
                 onClick={() => go(-1)}
                 aria-label="Previous template"
-                className="absolute -left-2 sm:-left-6 lg:-left-12 top-1/2 -translate-y-1/2 z-30 w-10 h-10 lg:w-12 lg:h-12 rounded-full bg-[#006859] hover:bg-[#005145] active:scale-95 flex items-center justify-center shadow-xl shadow-[#006859]/30 transition-all duration-200 border-2 border-white/10"
+                className="absolute left-2 sm:-left-6 lg:-left-12 top-1/2 -translate-y-1/2 z-30 w-10 h-10 lg:w-12 lg:h-12 rounded-full bg-[#006859]/90 sm:bg-[#006859] hover:bg-[#005145] active:scale-95 flex items-center justify-center shadow-xl shadow-[#006859]/30 transition-all duration-200 border-2 border-white/20 sm:border-white/10 backdrop-blur-sm sm:backdrop-blur-none"
               >
                 <ChevronLeft className="w-5 h-5 text-white font-black" strokeWidth={3} />
               </button>
@@ -104,7 +104,7 @@ export default function TemplatesCarousel() {
               <button
                 onClick={() => go(1)}
                 aria-label="Next template"
-                className="absolute -right-2 sm:-right-6 lg:-right-12 top-1/2 -translate-y-1/2 z-30 w-10 h-10 lg:w-12 lg:h-12 rounded-full bg-[#006859] hover:bg-[#005145] active:scale-95 flex items-center justify-center shadow-xl shadow-[#006859]/30 transition-all duration-200 border-2 border-white/10"
+                className="absolute right-2 sm:-right-6 lg:-right-12 top-1/2 -translate-y-1/2 z-30 w-10 h-10 lg:w-12 lg:h-12 rounded-full bg-[#006859]/90 sm:bg-[#006859] hover:bg-[#005145] active:scale-95 flex items-center justify-center shadow-xl shadow-[#006859]/30 transition-all duration-200 border-2 border-white/20 sm:border-white/10 backdrop-blur-sm sm:backdrop-blur-none"
               >
                 <ChevronRight className="w-5 h-5 text-white font-black" strokeWidth={3} />
               </button>
@@ -123,14 +123,14 @@ export default function TemplatesCarousel() {
                   style={{ pointerEvents: i === activeIdx ? "auto" : "none" }}
                 >
                   {/* Resume card */}
-                  <div className="h-full bg-surface-container-lowest rounded-[2rem] border border-surface-container-high shadow-[0_20px_60px_rgba(0,104,89,0.10)] p-4 flex flex-col relative overflow-hidden">
+                  <div className="h-full bg-surface-container-lowest rounded-[1.25rem] sm:rounded-[2rem] border border-surface-container-high shadow-[0_20px_60px_rgba(0,104,89,0.10)] p-0 sm:p-4 flex flex-col relative overflow-hidden">
                     {/* Glow halos */}
                     <div
                       className="absolute -top-12 -right-12 w-48 h-48 rounded-full blur-[80px] -z-0 pointer-events-none opacity-20"
                       style={{ background: tmpl.accentColor }}
                     />
                     {/* Badge */}
-                    <div className="flex justify-between items-start mb-3 relative z-10">
+                    <div className="flex justify-between items-start mb-0 sm:mb-3 relative z-10 p-2 sm:p-0">
                       <span className={`inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full bg-gradient-to-r ${tmpl.badgeColor} text-white shadow-sm`}>
                         <Sparkles className="w-2.5 h-2.5" />
                         {tmpl.badge}
@@ -140,7 +140,7 @@ export default function TemplatesCarousel() {
                       </span>
                     </div>
                     {/* Resume preview image */}
-                    <div className="flex-1 relative z-10 w-full h-full rounded-xl overflow-hidden shadow-sm bg-white border border-surface-container-highest">
+                    <div className="flex-1 relative z-10 w-full h-full rounded-b-[1.25rem] sm:rounded-xl overflow-hidden shadow-sm bg-white border-0 sm:border sm:border-surface-container-highest">
                       <Image
                         src={tmpl.image}
                         alt={tmpl.name}

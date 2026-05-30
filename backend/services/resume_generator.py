@@ -1,7 +1,6 @@
 import json
 import re
 from prompts.generation_prompt import GENERATION_PROMPT
-from prompts.general_optimization_prompt import GENERAL_OPTIMIZATION_PROMPT
 from prompts.format_only_prompt import FORMAT_ONLY_PROMPT
 from llm.master_llm_caller import call_llm_r2
 from templates.template_v1_schema import TemplateV1
@@ -10,14 +9,8 @@ async def generate_resume(resume_text: str, job_description: str, ats_score_befo
     is_no_jd_mode = not job_description or not job_description.strip()
 
     # Route to correct prompt based on JD presence and flags
-    if no_ai_changes:
+    if no_ai_changes or is_no_jd_mode:
         prompt = FORMAT_ONLY_PROMPT.format(
-            resume_text=resume_text,
-            ats_score_before=ats_score_before
-        )
-    elif is_no_jd_mode:
-        # General formatting mode (No JD) - 100% strict preservation
-        prompt = GENERAL_OPTIMIZATION_PROMPT.format(
             resume_text=resume_text,
             ats_score_before=ats_score_before
         )

@@ -59,7 +59,7 @@ export default function App() {
   const [analysisCountdown, setAnalysisCountdown] = useState<number | null>(null);
   const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [buckets, setBuckets] = useState<any[]>([]);
-  const [optimizeMode, setOptimizeMode] = useState<"jd" | "no_jd" | "manual" | null>("jd");
+  const [optimizeMode, setOptimizeMode] = useState<"jd" | "manual" | "first_resume" | null>("jd");
   const [referralCode, setReferralCode] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [showModeDropdown, setShowModeDropdown] = useState(false);
@@ -271,13 +271,15 @@ export default function App() {
   };
 
   const handleGenerate = async () => {
-    if (inputType === "file" && !file) {
-      setError("Please upload a resume file");
-      return;
-    }
-    if (inputType === "text" && !resumeText.trim()) {
-      setError("Please paste your resume text");
-      return;
+    if (optimizeMode !== "first_resume") {
+      if (inputType === "file" && !file) {
+        setError("Please upload a resume file");
+        return;
+      }
+      if (inputType === "text" && !resumeText.trim()) {
+        setError("Please paste your resume text");
+        return;
+      }
     }
 
     setLoading(true);
@@ -345,8 +347,10 @@ export default function App() {
           setAnalysisCountdown(null);
           throw err; // re-throw to outer catch
         }
+      } else if (optimizeMode === "first_resume") {
+        router.push("/scratch");
       } else {
-        // No-JD mode or Manual: skip analysis, go straight to preview
+        // Manual: skip analysis, go straight to preview
         const dummyAnalysis = {
           ats_score: 0,
           matched_skills: [],
@@ -392,7 +396,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen font-sans" suppressHydrationWarning>
+    <div className="min-h-screen font-sans overflow-x-hidden" suppressHydrationWarning>
       {/* TopNavBar */}
       <nav className="fixed top-0 w-full z-50 glass-header border-b border-surface-container-low">
         <div className="flex justify-between items-center max-w-7xl mx-auto px-4 sm:px-6 py-3 sm:py-4 w-full">
@@ -659,7 +663,7 @@ export default function App() {
             initial={{ opacity: 0, y: 28 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.65, delay: 0.18, ease: [0.22, 1, 0.36, 1] }}
-            className="w-full max-w-2xl relative mx-auto"
+            className="w-full max-w-2xl md:max-w-lg relative mx-auto"
           >
             {/* Glow halos */}
             <div className="absolute -top-10 -right-10 w-48 h-48 bg-[#006859]/15 blur-[70px] rounded-full -z-10 pointer-events-none"></div>
@@ -667,91 +671,84 @@ export default function App() {
 
             <div
               id="upload-card"
-              className="bg-surface-container-lowest rounded-[2rem] p-5 sm:p-6 shadow-[0_20px_70px_rgba(0,104,89,0.08)] border border-[#006859]/10"
+              className="bg-surface-container-lowest rounded-[2rem] p-5 sm:p-6 md:p-5 shadow-[0_20px_70px_rgba(0,104,89,0.08)] border border-[#006859]/10"
             >
               <div className="space-y-4">
 
-                {/* Tab switcher — Upload / Paste */}
-                <div className="flex gap-1.5 p-1.5 bg-surface-container-low rounded-2xl">
-                  <button
-                    onClick={() => setInputType("file")}
-                    className={`flex-1 py-2.5 rounded-xl font-bold text-sm transition-all duration-200 focus:outline-none ${inputType === "file"
-                      ? "bg-surface-container-lowest text-[#006859] shadow-sm"
-                      : "text-on-surface-variant hover:text-on-background"
-                      }`}
-                  >
-                    Upload File
-                  </button>
-                  <button
-                    onClick={() => setInputType("text")}
-                    className={`flex-1 py-2.5 rounded-xl font-bold text-sm transition-all duration-200 focus:outline-none ${inputType === "text"
-                      ? "bg-surface-container-lowest text-[#006859] shadow-sm"
-                      : "text-on-surface-variant hover:text-on-background"
-                      }`}
-                  >
-                    Paste Text
-                  </button>
-                </div>
-
-                {/* File drop zone / Paste textarea */}
-                {inputType === "file" ? (
+                {optimizeMode !== "first_resume" && (
                   <>
-                    <input
-                      type="file"
-                      accept=".pdf,.docx,.jpg,.jpeg,.png"
-                      onChange={handleFileSelect}
-                      className="hidden"
-                      id="file-upload"
-                    />
-                    <label
-                      htmlFor="file-upload"
-                      onDrop={handleDrop}
-                      onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
-                      onDragLeave={() => setIsDragging(false)}
-                      className={`flex flex-col items-center justify-center cursor-pointer rounded-2xl border-2 border-dashed py-3 sm:py-6 px-6 transition-all duration-200 w-full overflow-hidden
-                        ${isDragging
-                          ? "border-[#006859] bg-[#006859]/8 scale-[1.01]"
-                          : file
-                            ? "border-[#006859]/60 bg-[#006859]/5"
-                            : "border-surface-container-highest hover:border-[#006859]/40 bg-surface-container-low hover:bg-surface-container-lowest"
-                        }`}
-                    >
-                      <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-3 transition-colors ${file ? 'bg-[#006859]/10' : 'bg-surface-container-high'}`}>
-                        <CloudUpload className={`w-6 h-6 ${file ? 'text-[#006859]' : 'text-on-surface-variant'}`} />
-                      </div>
-                      <span className="font-headline text-on-background font-bold text-center text-base truncate w-full px-2 mb-1">
-                        {file ? file.name : "Drop your current resume"}
-                      </span>
-                      <span className="text-sm text-on-surface-variant text-center">PDF, DOCX (Max 10MB)</span>
-                      {!file && (
-                        <span className="mt-3 text-xs font-bold text-[#006859] bg-[#006859]/10 px-3 py-1.5 rounded-full">
-                          Browse files
-                        </span>
-                      )}
-                    </label>
+                    {/* Tab switcher — Upload / Paste */}
+                    <div className="flex gap-1.5 p-1.5 bg-surface-container-low rounded-2xl">
+                      <button
+                        onClick={() => setInputType("file")}
+                        className={`flex-1 py-2.5 rounded-xl font-bold text-sm transition-all duration-200 focus:outline-none ${inputType === "file"
+                          ? "bg-surface-container-lowest text-[#006859] shadow-sm"
+                          : "text-on-surface-variant hover:text-on-background"
+                          }`}
+                      >
+                        Upload File
+                      </button>
+                      <button
+                        onClick={() => setInputType("text")}
+                        className={`flex-1 py-2.5 rounded-xl font-bold text-sm transition-all duration-200 focus:outline-none ${inputType === "text"
+                          ? "bg-surface-container-lowest text-[#006859] shadow-sm"
+                          : "text-on-surface-variant hover:text-on-background"
+                          }`}
+                      >
+                        Paste Text
+                      </button>
+                    </div>
+
+                    {/* File drop zone / Paste textarea */}
+                    {inputType === "file" ? (
+                      <>
+                        <input
+                          type="file"
+                          accept=".pdf,.docx,.jpg,.jpeg,.png"
+                          onChange={handleFileSelect}
+                          className="hidden"
+                          id="file-upload"
+                        />
+                        <label
+                          htmlFor="file-upload"
+                          onDrop={handleDrop}
+                          onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+                          onDragLeave={() => setIsDragging(false)}
+                          className={`flex flex-col items-center justify-center cursor-pointer rounded-2xl border-2 border-dashed py-3 sm:py-6 px-6 transition-all duration-200 w-full overflow-hidden
+                            ${isDragging
+                              ? "border-[#006859] bg-[#006859]/8 scale-[1.01]"
+                              : file
+                                ? "border-[#006859]/60 bg-[#006859]/5"
+                                : "border-surface-container-highest hover:border-[#006859]/40 bg-surface-container-low hover:bg-surface-container-lowest"
+                            }`}
+                        >
+                          <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-3 transition-colors ${file ? 'bg-[#006859]/10' : 'bg-surface-container-high'}`}>
+                            <CloudUpload className={`w-6 h-6 ${file ? 'text-[#006859]' : 'text-on-surface-variant'}`} />
+                          </div>
+                          <span className="font-headline text-on-background font-bold text-center text-base truncate w-full px-2 mb-1">
+                            {file ? file.name : "Drop your current resume"}
+                          </span>
+                          <span className="text-sm text-on-surface-variant text-center">PDF, DOCX (Max 10MB)</span>
+                          {!file && (
+                            <span className="mt-3 text-xs font-bold text-[#006859] bg-[#006859]/10 px-3 py-1.5 rounded-full">
+                              Browse files
+                            </span>
+                          )}
+                        </label>
+                      </>
+                    ) : (
+                      <textarea
+                        value={resumeText}
+                        onChange={(e) => setResumeText(e.target.value)}
+                        className="w-full px-5 py-4 rounded-2xl bg-surface-container-low border-2 border-transparent focus:border-[#006859]/30 focus:ring-0 focus:outline-none transition-all placeholder:text-on-surface-variant/50 min-h-[140px] resize-none text-sm leading-relaxed"
+                        placeholder="Paste your current resume text here... (Experience, Education, Skills, etc.)"
+                      />
+                    )}
                   </>
-                ) : (
-                  <textarea
-                    value={resumeText}
-                    onChange={(e) => setResumeText(e.target.value)}
-                    className="w-full px-5 py-4 rounded-2xl bg-surface-container-low border-2 border-transparent focus:border-[#006859]/30 focus:ring-0 focus:outline-none transition-all placeholder:text-on-surface-variant/50 min-h-[140px] resize-none text-sm leading-relaxed"
-                    placeholder="Paste your current resume text here... (Experience, Education, Skills, etc.)"
-                  />
                 )}
 
-                {/* No resume link */}
-                <div className="flex justify-end -mt-1">
-                  <a
-                    href="/scratch"
-                    className="text-xs font-semibold text-sky-500 hover:text-sky-400 transition-colors flex items-center gap-1.5"
-                  >
-                    <FileText className="w-3.5 h-3.5" />
-                    No old resume?
-                  </a>
-                </div>
-
                 {/* Optimize Mode Selection */}
-                <div className="flex flex-row items-center justify-between gap-2 sm:gap-4 bg-surface-container-low rounded-2xl p-1.5 pl-4 sm:pl-5">
+                <div className="flex flex-row items-center justify-between gap-2 sm:gap-4 bg-surface-container-low rounded-2xl p-1.5 pl-4 sm:pl-5 mt-2">
                   <p className="font-sans text-[11px] font-bold uppercase tracking-wider text-on-surface-variant flex-shrink-0">
                     Options
                   </p>
@@ -765,18 +762,18 @@ export default function App() {
                         label: "JD",
                       },
                       {
-                        id: "no_jd" as const,
-                        activeCls: "bg-surface-container-lowest text-[#006859] shadow-sm border border-surface-container-highest",
-                        radioBorder: "border-[#006859]",
-                        radioDot: "bg-[#006859]",
-                        label: "No JD",
-                      },
-                      {
                         id: "manual" as const,
                         activeCls: "bg-surface-container-lowest text-[#006859] shadow-sm border border-surface-container-highest",
                         radioBorder: "border-[#006859]",
                         radioDot: "bg-[#006859]",
                         label: "No Changes",
+                      },
+                      {
+                        id: "first_resume" as const,
+                        activeCls: "bg-surface-container-lowest text-[#006859] shadow-sm border border-surface-container-highest",
+                        radioBorder: "border-[#006859]",
+                        radioDot: "bg-[#006859]",
+                        label: "First Resume",
                       }
                     ] as const).map((opt) => {
                       const isActive = optimizeMode === opt.id;
@@ -860,8 +857,8 @@ export default function App() {
                         ? "Select an option first"
                         : optimizeMode === "jd"
                           ? "Optimize for JD"
-                          : optimizeMode === "no_jd"
-                            ? "Optimize Resume"
+                          : optimizeMode === "first_resume"
+                            ? "Build From Scratch"
                             : "Edit manually"}
                 </button>
 
