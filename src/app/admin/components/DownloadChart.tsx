@@ -34,24 +34,15 @@ const TIME_FILTERS = [
   { id: "custom", label: "Custom" },
 ];
 
-const PLAN_FILTERS = [
-  { id: "all", label: "All Plans" },
-  { id: "pay_per_use", label: "One-Time" },
-  { id: "student", label: "Student" },
-  { id: "regular", label: "Regular" },
-  { id: "free", label: "Free" },
-];
-
 export default function DownloadChart() {
   const [data, setData] = useState<AnalyticsData | null>(null);
-  
+
   const [timeFilter, setTimeFilter] = useState("all");
-  const [planFilter, setPlanFilter] = useState("all");
-  
+
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [dateError, setDateError] = useState("");
-  
+
   const [tooltip, setTooltip] = useState<TrendPoint | null>(null);
 
   useEffect(() => {
@@ -66,7 +57,7 @@ export default function DownloadChart() {
       setDateError("");
     }
 
-    let url = `/api/admin-proxy/analytics/downloads?time_filter=${timeFilter}&plan_filter=${planFilter}`;
+    let url = `/api/admin-proxy/analytics/downloads?time_filter=${timeFilter}&plan_filter=all`;
     if (timeFilter === "custom" && startDate && endDate) {
       url += `&start_date=${startDate}T00:00:00Z&end_date=${endDate}T23:59:59Z`;
     }
@@ -75,11 +66,11 @@ export default function DownloadChart() {
       .then((res) => res.json())
       .then((d) => setData(d))
       .catch((e) => console.error("Failed to fetch download analytics", e));
-  }, [timeFilter, planFilter, startDate, endDate]);
+  }, [timeFilter, startDate, endDate]);
 
   const trend = data?.trend || [];
   const max = trend.length > 0 ? Math.max(...trend.map((d) => d.value)) : 0;
-  
+
   const dByPlan = data?.downloads_by_plan;
 
   return (
@@ -106,45 +97,33 @@ export default function DownloadChart() {
                 <button
                   key={f.id}
                   onClick={() => setTimeFilter(f.id)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                    timeFilter === f.id
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${timeFilter === f.id
                       ? "bg-white text-[#006859] shadow-sm"
                       : "text-[#595c5d] hover:text-[#2c2f30]"
-                  }`}
+                    }`}
                 >
                   {f.label}
                 </button>
               ))}
             </div>
           </div>
-          
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-xs font-bold text-[#595c5d] uppercase tracking-wider w-12">Plan:</span>
-            <select 
-              value={planFilter}
-              onChange={(e) => setPlanFilter(e.target.value)}
-              className="px-3 py-1.5 rounded-xl text-xs font-bold bg-[#eff1f2] border-none text-[#2c2f30] outline-none focus:ring-2 focus:ring-[#006859]/20"
-            >
-              {PLAN_FILTERS.map(f => (
-                <option key={f.id} value={f.id}>{f.label}</option>
-              ))}
-            </select>
-          </div>
+
+          {/* Plan filtering removed */}
         </div>
 
         {timeFilter === "custom" && (
           <div className="flex flex-wrap items-center gap-3 pt-2 border-t border-[#eff1f2]">
             <div className="flex items-center gap-2">
               <Calendar className="w-4 h-4 text-[#595c5d]" />
-              <input 
-                type="date" 
+              <input
+                type="date"
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
                 className="text-xs font-medium px-2 py-1 rounded-lg border border-[#eff1f2] outline-none focus:border-[#006859]"
               />
               <span className="text-xs text-[#595c5d]">to</span>
-              <input 
-                type="date" 
+              <input
+                type="date"
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
                 className="text-xs font-medium px-2 py-1 rounded-lg border border-[#eff1f2] outline-none focus:border-[#006859]"
@@ -181,22 +160,18 @@ export default function DownloadChart() {
       {dByPlan && (
         <div className="pt-2">
           <h3 className="text-sm font-bold text-[#2c2f30] mb-3">Downloads by Plan</h3>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-            <div className="bg-[#eff1f2]/50 rounded-xl p-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+            <div className="bg-[#eff1f2]/50 rounded-xl p-3 border-l-4 border-[#6750A4]">
               <div className="text-xs text-[#595c5d] mb-1">Regular</div>
               <div className="font-bold text-[#2c2f30]">{dByPlan.regular.toLocaleString("en-IN")}</div>
             </div>
-            <div className="bg-[#eff1f2]/50 rounded-xl p-3">
+            <div className="bg-[#eff1f2]/50 rounded-xl p-3 border-l-4 border-orange-500">
               <div className="text-xs text-[#595c5d] mb-1">Student</div>
               <div className="font-bold text-[#2c2f30]">{dByPlan.student.toLocaleString("en-IN")}</div>
             </div>
-            <div className="bg-[#eff1f2]/50 rounded-xl p-3">
+            <div className="bg-[#eff1f2]/50 rounded-xl p-3 border-l-4 border-emerald-500">
               <div className="text-xs text-[#595c5d] mb-1">One-Time</div>
               <div className="font-bold text-[#2c2f30]">{dByPlan.pay_per_use.toLocaleString("en-IN")}</div>
-            </div>
-            <div className="bg-[#eff1f2]/50 rounded-xl p-3">
-              <div className="text-xs text-[#595c5d] mb-1">Free</div>
-              <div className="font-bold text-[#2c2f30]">{dByPlan.free.toLocaleString("en-IN")}</div>
             </div>
           </div>
         </div>
@@ -206,18 +181,18 @@ export default function DownloadChart() {
       {data?.downloads_by_category && (
         <div className="pt-2">
           <h3 className="text-sm font-bold text-[#2c2f30] mb-3">Downloads by AI Mode</h3>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
             <div className="bg-[#eff1f2]/50 rounded-xl p-3 border-l-4 border-[#006859]">
               <div className="text-xs text-[#595c5d] mb-1">JD Optimized</div>
               <div className="font-bold text-[#2c2f30]">{data.downloads_by_category.jd_optimized.toLocaleString("en-IN")}</div>
             </div>
-            <div className="bg-[#eff1f2]/50 rounded-xl p-3 border-l-4 border-blue-500">
-              <div className="text-xs text-[#595c5d] mb-1">No JD</div>
-              <div className="font-bold text-[#2c2f30]">{data.downloads_by_category.no_jd.toLocaleString("en-IN")}</div>
-            </div>
             <div className="bg-[#eff1f2]/50 rounded-xl p-3 border-l-4 border-amber-500">
-              <div className="text-xs text-[#595c5d] mb-1">No AI Changes</div>
+              <div className="text-xs text-[#595c5d] mb-1">No Changes(manual edits)</div>
               <div className="font-bold text-[#2c2f30]">{data.downloads_by_category.no_changes.toLocaleString("en-IN")}</div>
+            </div>
+            <div className="bg-[#eff1f2]/50 rounded-xl p-3 border-l-4 border-blue-500">
+              <div className="text-xs text-[#595c5d] mb-1">First Resume</div>
+              <div className="font-bold text-[#2c2f30]">{data.downloads_by_category.no_jd.toLocaleString("en-IN")}</div>
             </div>
           </div>
         </div>
@@ -233,7 +208,7 @@ export default function DownloadChart() {
         </div>
         <div className="flex items-end gap-1 sm:gap-2 h-32">
           {trend.length === 0 ? (
-             <div className="w-full h-full flex items-center justify-center text-xs text-[#595c5d]">No trend data available</div>
+            <div className="w-full h-full flex items-center justify-center text-xs text-[#595c5d]">No trend data available</div>
           ) : trend.map((d, i) => {
             const heightPct = max > 0 ? (d.value / max) * 100 : 0;
             return (

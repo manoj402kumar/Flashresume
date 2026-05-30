@@ -116,7 +116,8 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
       const credits = prefetchedCredits ?? 0;
       if (directPay && initialPlan) {
         setStep("processing");
-        setTimeout(() => handleProceedToPayment(initialPlan), 100);
+        // Pass user directly to avoid React state closure race condition
+        setTimeout(() => handleProceedToPayment(initialPlan, false, prefetchedUser), 100);
       } else if (!forcePlanSelect && credits >= 10) {
         onSuccess();
       } else {
@@ -127,13 +128,15 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
     // Standard path: fetch session from Supabase
     const { data: { session } } = await supabase.auth.getSession();
     if (session?.user) {
-      setUser(session.user);
-      const { data } = await supabase.from("users").select("is_student, credits_balance").eq("id", session.user.id).single();
+      const sessionUser = session.user;
+      setUser(sessionUser);
+      const { data } = await supabase.from("users").select("is_student, credits_balance").eq("id", sessionUser.id).single();
       applyStudentStatus(data);
       if (directPay && initialPlan) {
         // Skip plan selection — go straight to payment
         setStep("processing");
-        setTimeout(() => handleProceedToPayment(initialPlan), 100);
+        // Pass user directly to avoid React state closure race condition
+        setTimeout(() => handleProceedToPayment(initialPlan, false, sessionUser), 100);
       } else if (!forcePlanSelect && data && data.credits_balance >= 10) {
         // Auto-pass only when used as a download gate (not Buy More Credits)
         onSuccess();
@@ -154,12 +157,14 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
         const { data, error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
         if (data.user) {
-          setUser(data.user);
-          const { data: uData } = await supabase.from("users").select("is_student, credits_balance").eq("id", data.user.id).single();
+          const loggedInUser = data.user;
+          setUser(loggedInUser);
+          const { data: uData } = await supabase.from("users").select("is_student, credits_balance").eq("id", loggedInUser.id).single();
           applyStudentStatus(uData);
           if (directPay && initialPlan) {
             setStep("processing");
-            setTimeout(() => handleProceedToPayment(initialPlan), 100);
+            // Pass user directly to avoid React state closure race condition
+            setTimeout(() => handleProceedToPayment(initialPlan, false, loggedInUser), 100);
           } else if (uData && uData.credits_balance >= 10) {
             onSuccess();
           } else {
@@ -346,8 +351,10 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
     }
   };
 
-  const handleProceedToPayment = async (overridePlan?: string, alreadyVerified = false) => {
-    if (!user) return;
+  const handleProceedToPayment = async (overridePlan?: string, alreadyVerified = false, forceUser?: User | null) => {
+    // Use forceUser if provided (avoids stale closure when called right after setUser)
+    const activeUser = forceUser ?? user;
+    if (!activeUser) return;
     const planToBuy = overridePlan || selectedPlan;
 
     if (planToBuy === "student" && !isStudent && !alreadyVerified) {
@@ -369,7 +376,7 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
       const orderRes = await fetch(`${apiUrl}/api/payments/create-order`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ amount: planDetails.amount, plan_type: planDetails.plan_type, user_id: user.id, email: user.email }),
+        body: JSON.stringify({ amount: planDetails.amount, plan_type: planDetails.plan_type, user_id: activeUser.id, email: activeUser.email }),
       });
       if (!orderRes.ok) throw new Error("Failed to create payment order.");
       const orderData = await orderRes.json();
@@ -381,7 +388,7 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
         name: "Flashresume",
         description: `Purchase ${planDetails.plan_type} plan`,
         order_id: orderData.razorpay_order_id,
-        prefill: { email: user.email },
+        prefill: { email: activeUser.email },
         theme: { color: "#6750A4" },
         handler: async (response: any) => {
           try {
@@ -392,7 +399,7 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
                 razorpay_order_id: response.razorpay_order_id,
                 razorpay_payment_id: response.razorpay_payment_id,
                 razorpay_signature: response.razorpay_signature,
-                user_id: user.id,
+                user_id: activeUser.id,
                 plan_type: planDetails.plan_type,
                 amount: planDetails.amount,
               }),
@@ -410,8 +417,30 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
         },
       };
 
-      const rzp = new window.Razorpay(options);
-      rzp.open();
+      // Wait for window.Razorpay to be available (handles first-load race condition)
+      const openRazorpay = () => {
+        if (typeof window.Razorpay !== "undefined") {
+          const rzp = new window.Razorpay(options);
+          rzp.open();
+        } else {
+          // Poll every 100ms, give up after 8 seconds
+          let attempts = 0;
+          const poll = setInterval(() => {
+            attempts++;
+            if (typeof window.Razorpay !== "undefined") {
+              clearInterval(poll);
+              const rzp = new window.Razorpay(options);
+              rzp.open();
+            } else if (attempts > 80) {
+              clearInterval(poll);
+              setError("Payment gateway failed to load. Please refresh the page and try again.");
+              setStep("plan");
+              setLoading(false);
+            }
+          }, 100);
+        }
+      };
+      openRazorpay();
     } catch (err: any) {
       setError(err.message || "Payment failed.");
       setStep("plan");
@@ -439,7 +468,7 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
             {step === "initializing" ? "Loading..." : step === "auth" ? "Login / Signup" : step === "processing" ? "Processing..." : step === "student_verify" ? "Student Verification" : "Invest in Yourself"}
           </h2>
           <p className="text-sm text-on-surface-variant mt-1 max-w-lg mx-auto">
-            {step === "initializing" ? "Please wait a moment." : step === "auth" ? "Access your account to download." : step === "processing" ? "Securely setting up Razorpay..." : step === "student_verify" ? "Verify to unlock the ₹99 plan." : "Increase the probability of getting shortlisted"}
+            {step === "initializing" ? "Please wait a moment." : step === "auth" ? "Access your account to download." : step === "processing" ? "Securely setting up Razorpay..." : step === "student_verify" ? "Verify to unlock the ₹99 plan." : "Returns >>> Investment(paying for servers)"}
           </p>
         </div>
 
@@ -653,68 +682,68 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
                   })}
 
                   {/* Student card */}
-                    <div onClick={() => setSelectedPlan("student")}
-                      className={`relative w-full md:w-auto flex flex-col p-4 md:p-5 rounded-2xl md:rounded-3xl border-2 cursor-pointer transition-all duration-300 ${selectedPlan === "student" ? "border-transparent bg-gradient-to-b from-[#006859] to-[#12f8d7] shadow-xl md:scale-105 text-white" : "border-tertiary/50 bg-gradient-to-br from-tertiary-container/20 to-surface-container-lowest hover:border-tertiary hover:shadow-md"}`}>
+                  <div onClick={() => setSelectedPlan("student")}
+                    className={`relative w-full md:w-auto flex flex-col p-4 md:p-5 rounded-2xl md:rounded-3xl border-2 cursor-pointer transition-all duration-300 ${selectedPlan === "student" ? "border-transparent bg-gradient-to-b from-[#006859] to-[#12f8d7] shadow-xl md:scale-105 text-white" : "border-tertiary/50 bg-gradient-to-br from-tertiary-container/20 to-surface-container-lowest hover:border-tertiary hover:shadow-md"}`}>
 
-                      {/* Selection indicator top-right */}
-                      <div className={`absolute top-3 right-3 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-200 z-10 ${selectedPlan === "student" ? "border-white bg-white scale-110" : "border-on-surface-variant/30"}`}>
-                        {selectedPlan === "student" && <CheckCircle2 className="w-4 h-4 text-[#006859]" />}
+                    {/* Selection indicator top-right */}
+                    <div className={`absolute top-3 right-3 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-200 z-10 ${selectedPlan === "student" ? "border-white bg-white scale-110" : "border-on-surface-variant/30"}`}>
+                      {selectedPlan === "student" && <CheckCircle2 className="w-4 h-4 text-[#006859]" />}
+                    </div>
+
+                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 flex items-center gap-1 text-[10px] font-black px-3 py-0.5 rounded-full shadow-md whitespace-nowrap tracking-wider border z-20 bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-orange-500/30 border-orange-400/50">
+                      STUDENT OFFER
+                    </div>
+
+                    <div className="flex flex-row md:flex-col items-center md:text-center gap-3 md:gap-0 mb-3 md:mb-4 pr-10 md:pr-4">
+                      <div className={`w-10 h-10 rounded-xl flex-shrink-0 flex items-center justify-center md:mb-2 transition-colors ${selectedPlan === "student" ? "bg-white/20 text-white" : "bg-tertiary/20"}`}>
+                        <GraduationCap className={`w-5 h-5 ${selectedPlan === "student" ? "text-white opacity-90" : "text-tertiary"}`} />
                       </div>
-
-                      <div className="absolute -top-3 left-1/2 -translate-x-1/2 flex items-center gap-1 text-[10px] font-black px-3 py-0.5 rounded-full shadow-md whitespace-nowrap tracking-wider border z-20 bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-orange-500/30 border-orange-400/50">
-                        STUDENT OFFER
+                      <div className="flex-1 text-left md:text-center">
+                        <h4 className="font-bold text-base mb-0 md:mb-0.5">Student Plan</h4>
+                        <p className={`text-[11px] md:mb-2 ${selectedPlan === "student" ? "text-white/90" : "text-on-surface-variant"}`}>400 Credits (40 Resumes)</p>
                       </div>
-
-                      <div className="flex flex-row md:flex-col items-center md:text-center gap-3 md:gap-0 mb-3 md:mb-4 pr-10 md:pr-4">
-                        <div className={`w-10 h-10 rounded-xl flex-shrink-0 flex items-center justify-center md:mb-2 transition-colors ${selectedPlan === "student" ? "bg-white/20 text-white" : "bg-tertiary/20"}`}>
-                          <GraduationCap className={`w-5 h-5 ${selectedPlan === "student" ? "text-white opacity-90" : "text-tertiary"}`} />
+                      <div className="flex flex-col text-right md:text-center md:mb-1">
+                        <div className="flex items-end justify-end md:justify-center gap-1">
+                          <p className={`font-black text-xl md:text-3xl ${selectedPlan === "student" ? "text-white" : "text-tertiary"}`}>₹99</p>
+                          <p className={`text-[10px] md:text-sm line-through mb-0.5 md:mb-1 ${selectedPlan === "student" ? "text-white/60" : "text-on-surface-variant opacity-60"}`}>₹199</p>
                         </div>
-                        <div className="flex-1 text-left md:text-center">
-                          <h4 className="font-bold text-base mb-0 md:mb-0.5">Student Plan</h4>
-                          <p className={`text-[11px] md:mb-2 ${selectedPlan === "student" ? "text-white/90" : "text-on-surface-variant"}`}>400 Credits (40 Resumes)</p>
-                        </div>
-                        <div className="flex flex-col text-right md:text-center md:mb-1">
-                          <div className="flex items-end justify-end md:justify-center gap-1">
-                            <p className={`font-black text-xl md:text-3xl ${selectedPlan === "student" ? "text-white" : "text-tertiary"}`}>₹99</p>
-                            <p className={`text-[10px] md:text-sm line-through mb-0.5 md:mb-1 ${selectedPlan === "student" ? "text-white/60" : "text-on-surface-variant opacity-60"}`}>₹199</p>
-                          </div>
-                          <p className={`text-[10px] md:text-[11px] font-medium mt-0.5 ${selectedPlan === "student" ? "text-white/90" : "text-on-surface-variant"}`}>/3 months</p>
-                        </div>
-                      </div>
-
-                      <div className={`flex-1 flex flex-col justify-start w-full pt-3 border-t ${selectedPlan === "student" ? "border-white/20" : "border-surface-container-high"}`}>
-                        <ul className="space-y-2 text-sm mb-3">
-                          <li className="flex items-start gap-2">
-                            <CheckCircle2 className={`w-4 h-4 flex-shrink-0 mt-0.5 ${selectedPlan === "student" ? "text-white" : "text-tertiary"}`} />
-                            <span className={`text-left font-medium text-[12px] ${selectedPlan === "student" ? "text-white" : "text-on-background"}`}>400 Credits</span>
-                          </li>
-                          <li className="flex items-start gap-2">
-                            <CheckCircle2 className={`w-4 h-4 flex-shrink-0 mt-0.5 ${selectedPlan === "student" ? "text-white" : "text-tertiary"}`} />
-                            <span className={`text-left font-medium text-[12px] ${selectedPlan === "student" ? "text-white" : "text-on-background"}`}>Valid for 3 Months</span>
-                          </li>
-                          <li className="flex items-start gap-2">
-                            <CheckCircle2 className={`w-4 h-4 flex-shrink-0 mt-0.5 ${selectedPlan === "student" ? "text-white" : "text-tertiary"}`} />
-                            <span className={`text-left font-medium text-[12px] ${selectedPlan === "student" ? "text-white" : "text-on-background"}`}>All Premium Features</span>
-                          </li>
-                        </ul>
-                        <p className={`text-[11px] font-bold text-center py-1.5 rounded-lg ${selectedPlan === "student" ? "bg-white/20 text-white" : "bg-tertiary/10 text-tertiary"}`}>
-                          {isStudent ? "✓ Verified Student" : "Requires Verification →"}
-                        </p>
-                        {selectedPlan === "student" && (
-                          <button
-                            onClick={() => handleProceedToPayment()}
-                            disabled={loading}
-                            className="md:hidden w-full mt-4 bg-white text-[#006859] font-bold py-3 rounded-xl transition-all shadow-md flex justify-center items-center gap-2 active:scale-95"
-                          >
-                            {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : (
-                              isStudent
-                                ? <>Pay ₹99 <ArrowRight className="w-4 h-4" /></>
-                                : <>Continue <ArrowRight className="w-4 h-4" /></>
-                            )}
-                          </button>
-                        )}
+                        <p className={`text-[10px] md:text-[11px] font-medium mt-0.5 ${selectedPlan === "student" ? "text-white/90" : "text-on-surface-variant"}`}>/3 months</p>
                       </div>
                     </div>
+
+                    <div className={`flex-1 flex flex-col justify-start w-full pt-3 border-t ${selectedPlan === "student" ? "border-white/20" : "border-surface-container-high"}`}>
+                      <ul className="space-y-2 text-sm mb-3">
+                        <li className="flex items-start gap-2">
+                          <CheckCircle2 className={`w-4 h-4 flex-shrink-0 mt-0.5 ${selectedPlan === "student" ? "text-white" : "text-tertiary"}`} />
+                          <span className={`text-left font-medium text-[12px] ${selectedPlan === "student" ? "text-white" : "text-on-background"}`}>400 Credits</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <CheckCircle2 className={`w-4 h-4 flex-shrink-0 mt-0.5 ${selectedPlan === "student" ? "text-white" : "text-tertiary"}`} />
+                          <span className={`text-left font-medium text-[12px] ${selectedPlan === "student" ? "text-white" : "text-on-background"}`}>Valid for 3 Months</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <CheckCircle2 className={`w-4 h-4 flex-shrink-0 mt-0.5 ${selectedPlan === "student" ? "text-white" : "text-tertiary"}`} />
+                          <span className={`text-left font-medium text-[12px] ${selectedPlan === "student" ? "text-white" : "text-on-background"}`}>All Premium Features</span>
+                        </li>
+                      </ul>
+                      <p className={`text-[11px] font-bold text-center py-1.5 rounded-lg ${selectedPlan === "student" ? "bg-white/20 text-white" : "bg-tertiary/10 text-tertiary"}`}>
+                        {isStudent ? "✓ Verified Student" : "Requires Verification →"}
+                      </p>
+                      {selectedPlan === "student" && (
+                        <button
+                          onClick={() => handleProceedToPayment()}
+                          disabled={loading}
+                          className="md:hidden w-full mt-4 bg-white text-[#006859] font-bold py-3 rounded-xl transition-all shadow-md flex justify-center items-center gap-2 active:scale-95"
+                        >
+                          {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : (
+                            isStudent
+                              ? <>Pay ₹99 <ArrowRight className="w-4 h-4" /></>
+                              : <>Continue <ArrowRight className="w-4 h-4" /></>
+                          )}
+                        </button>
+                      )}
+                    </div>
+                  </div>
                 </div>
 
                 {error && <p className="text-xs font-semibold text-error text-center mt-3 bg-error/10 py-2 rounded-lg">{error}</p>}
@@ -733,94 +762,94 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
               </motion.div>
             )}
 
-          {/* STUDENT VERIFY STEP */}
-          {step === "student_verify" && (
-            <motion.div key="student_verify" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-5">
-              <div className="flex bg-surface-container-low rounded-xl p-1 gap-1">
-                <button onClick={() => setStudentMethod("email")} className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-all flex items-center justify-center gap-2 ${studentMethod === "email" ? "bg-surface-container-lowest text-on-background shadow-sm" : "text-on-surface-variant hover:text-on-background"}`}>
-                  <Mail className="w-4 h-4" /> Verify with clg mail
-                </button>
-                <button onClick={() => setStudentMethod("details")} className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-all flex items-center justify-center gap-2 ${studentMethod === "details" ? "bg-surface-container-lowest text-on-background shadow-sm" : "text-on-surface-variant hover:text-on-background"}`}>
-                  <Building className="w-4 h-4" /> Verify with details
-                </button>
-              </div>
+            {/* STUDENT VERIFY STEP */}
+            {step === "student_verify" && (
+              <motion.div key="student_verify" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-5">
+                <div className="flex bg-surface-container-low rounded-xl p-1 gap-1">
+                  <button onClick={() => setStudentMethod("email")} className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-all flex items-center justify-center gap-2 ${studentMethod === "email" ? "bg-surface-container-lowest text-on-background shadow-sm" : "text-on-surface-variant hover:text-on-background"}`}>
+                    <Mail className="w-4 h-4" /> Verify with clg mail
+                  </button>
+                  <button onClick={() => setStudentMethod("details")} className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-all flex items-center justify-center gap-2 ${studentMethod === "details" ? "bg-surface-container-lowest text-on-background shadow-sm" : "text-on-surface-variant hover:text-on-background"}`}>
+                    <Building className="w-4 h-4" /> Verify with details
+                  </button>
+                </div>
 
-              {studentMethod === "email" ? (
-                <div className="space-y-3">
-                  <div className="flex gap-2">
-                    <input
-                      type="email"
-                      placeholder="Enter your email"
-                      value={studentEmail}
-                      onChange={e => { setStudentEmail(e.target.value); setOtpSent(false); setOtpValue(""); setError(null); }}
-                      disabled={otpSent}
-                      className="flex-1 px-4 py-3 bg-surface-container-low border border-surface-container-high rounded-xl outline-none text-sm focus:ring-2 focus:ring-primary disabled:opacity-60"
-                    />
-                    <button
-                      type="button"
-                      onClick={sendOtp}
-                      disabled={loading || otpSent}
-                      className="px-4 py-3 bg-primary text-white text-sm font-bold rounded-xl hover:opacity-90 transition-opacity disabled:opacity-50 whitespace-nowrap"
-                    >
-                      {loading && !otpSent ? <Loader2 className="w-4 h-4 animate-spin" /> : otpSent ? "Sent ✓" : "Send OTP"}
-                    </button>
-                  </div>
-                  {otpSent && (
-                    <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} className="space-y-2">
-                      <p className="text-xs text-on-surface-variant text-center">Enter the 6-digit code sent to <strong>{studentEmail}</strong></p>
+                {studentMethod === "email" ? (
+                  <div className="space-y-3">
+                    <div className="flex gap-2">
                       <input
-                        type="text"
-                        inputMode="numeric"
-                        pattern="[0-9]*"
-                        autoComplete="one-time-code"
-                        maxLength={6}
-                        placeholder="_ _ _ _ _ _"
-                        value={otpValue}
-                        onChange={e => { setOtpValue(e.target.value.replace(/\D/g, "")); setError(null); }}
-                        className="w-full px-4 py-3 bg-surface-container-low border-2 border-primary rounded-xl outline-none text-sm text-center tracking-[0.5em] font-bold focus:ring-2 focus:ring-primary"
+                        type="email"
+                        placeholder="Enter your email"
+                        value={studentEmail}
+                        onChange={e => { setStudentEmail(e.target.value); setOtpSent(false); setOtpValue(""); setError(null); }}
+                        disabled={otpSent}
+                        className="flex-1 px-4 py-3 bg-surface-container-low border border-surface-container-high rounded-xl outline-none text-sm focus:ring-2 focus:ring-primary disabled:opacity-60"
                       />
                       <button
                         type="button"
-                        onClick={() => { setOtpSent(false); setOtpValue(""); }}
-                        className="text-xs text-on-surface-variant hover:text-primary underline w-full text-center"
-                      >Change email / Resend</button>
-                    </motion.div>
-                  )}
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  <input type="text" placeholder="College Name" value={collegeName} onChange={e => setCollegeName(e.target.value)}
-                    className="w-full px-4 py-3 bg-surface-container-low border border-surface-container-high rounded-xl outline-none text-sm" />
-                  <input type="text" placeholder="Enrolled Roll Number" value={rollNumber} onChange={e => setRollNumber(e.target.value)}
-                    className="w-full px-4 py-3 bg-surface-container-low border border-surface-container-high rounded-xl outline-none text-sm" />
-                </div>
-              )}
+                        onClick={sendOtp}
+                        disabled={loading || otpSent}
+                        className="px-4 py-3 bg-primary text-white text-sm font-bold rounded-xl hover:opacity-90 transition-opacity disabled:opacity-50 whitespace-nowrap"
+                      >
+                        {loading && !otpSent ? <Loader2 className="w-4 h-4 animate-spin" /> : otpSent ? "Sent ✓" : "Send OTP"}
+                      </button>
+                    </div>
+                    {otpSent && (
+                      <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} className="space-y-2">
+                        <p className="text-xs text-on-surface-variant text-center">Enter the 6-digit code sent to <strong>{studentEmail}</strong></p>
+                        <input
+                          type="text"
+                          inputMode="numeric"
+                          pattern="[0-9]*"
+                          autoComplete="one-time-code"
+                          maxLength={6}
+                          placeholder="_ _ _ _ _ _"
+                          value={otpValue}
+                          onChange={e => { setOtpValue(e.target.value.replace(/\D/g, "")); setError(null); }}
+                          className="w-full px-4 py-3 bg-surface-container-low border-2 border-primary rounded-xl outline-none text-sm text-center tracking-[0.5em] font-bold focus:ring-2 focus:ring-primary"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => { setOtpSent(false); setOtpValue(""); }}
+                          className="text-xs text-on-surface-variant hover:text-primary underline w-full text-center"
+                        >Change email / Resend</button>
+                      </motion.div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    <input type="text" placeholder="College Name" value={collegeName} onChange={e => setCollegeName(e.target.value)}
+                      className="w-full px-4 py-3 bg-surface-container-low border border-surface-container-high rounded-xl outline-none text-sm" />
+                    <input type="text" placeholder="Enrolled Roll Number" value={rollNumber} onChange={e => setRollNumber(e.target.value)}
+                      className="w-full px-4 py-3 bg-surface-container-low border border-surface-container-high rounded-xl outline-none text-sm" />
+                  </div>
+                )}
 
-              {error && <p className="text-xs text-error text-center bg-error/10 py-2 rounded">{error}</p>}
+                {error && <p className="text-xs text-error text-center bg-error/10 py-2 rounded">{error}</p>}
 
-              <div className="flex gap-2">
-                <button onClick={() => { setStep("plan"); setError(null); setOtpSent(false); setOtpValue(""); }} className="flex-1 py-3 font-bold text-on-surface-variant hover:bg-surface-container-low rounded-xl transition-colors">Back</button>
-                <button
-                  onClick={studentMethod === "email" ? (otpSent ? verifyOtp : sendOtp) : verifyStudent}
-                  disabled={loading || (studentMethod === "email" && otpSent && otpValue.length !== 6)}
-                  className="flex-1 bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-md shadow-orange-500/30 font-bold py-3 rounded-xl hover:opacity-90 transition-opacity flex justify-center items-center"
-                >
-                  {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : studentMethod === "email" ? (otpSent ? "Claim Student Offer →" : "Send OTP") : "Claim Student Offer →"}
-                </button>
+                <div className="flex gap-2">
+                  <button onClick={() => { setStep("plan"); setError(null); setOtpSent(false); setOtpValue(""); }} className="flex-1 py-3 font-bold text-on-surface-variant hover:bg-surface-container-low rounded-xl transition-colors">Back</button>
+                  <button
+                    onClick={studentMethod === "email" ? (otpSent ? verifyOtp : sendOtp) : verifyStudent}
+                    disabled={loading || (studentMethod === "email" && otpSent && otpValue.length !== 6)}
+                    className="flex-1 bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-md shadow-orange-500/30 font-bold py-3 rounded-xl hover:opacity-90 transition-opacity flex justify-center items-center"
+                  >
+                    {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : studentMethod === "email" ? (otpSent ? "Claim Student Offer →" : "Send OTP") : "Claim Student Offer →"}
+                  </button>
+                </div>
+              </motion.div>
+            )}
+
+            {/* PROCESSING STEP */}
+            {step === "processing" && (
+              <div className="flex flex-col items-center justify-center py-12 gap-4">
+                <Loader2 className="w-10 h-10 text-primary animate-spin" />
+                <p className="text-on-surface-variant text-sm font-bold">Setting up secure payment...</p>
               </div>
-            </motion.div>
-          )}
+            )}
 
-          {/* PROCESSING STEP */}
-          {step === "processing" && (
-            <div className="flex flex-col items-center justify-center py-12 gap-4">
-              <Loader2 className="w-10 h-10 text-primary animate-spin" />
-              <p className="text-on-surface-variant text-sm font-bold">Setting up secure payment...</p>
-            </div>
-          )}
-
-        </AnimatePresence>
-    </div>
+          </AnimatePresence>
+        </div>
       </motion.div >
     </div >
   );
