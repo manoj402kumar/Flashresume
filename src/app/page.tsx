@@ -678,124 +678,133 @@ export default function App() {
                 {optimizeMode !== "first_resume" && (
                   <>
                     {/* Tab switcher — Upload / Paste */}
-                    <div className="flex gap-1.5 p-1.5 bg-surface-container-low rounded-2xl">
-                      <button
-                        onClick={() => setInputType("file")}
-                        className={`flex-1 py-2.5 rounded-xl font-bold text-sm transition-all duration-200 focus:outline-none ${inputType === "file"
-                          ? "bg-surface-container-lowest text-[#006859] shadow-sm"
-                          : "text-on-surface-variant hover:text-on-background"
-                          }`}
-                      >
-                        Upload File
-                      </button>
-                      <button
-                        onClick={() => setInputType("text")}
-                        className={`flex-1 py-2.5 rounded-xl font-bold text-sm transition-all duration-200 focus:outline-none ${inputType === "text"
-                          ? "bg-surface-container-lowest text-[#006859] shadow-sm"
-                          : "text-on-surface-variant hover:text-on-background"
-                          }`}
-                      >
-                        Paste Text
-                      </button>
-                    </div>
-
-                    {/* File drop zone / Paste textarea */}
-                    {inputType === "file" ? (
-                      <>
-                        <input
-                          type="file"
-                          accept=".pdf,.docx,.jpg,.jpeg,.png"
-                          onChange={handleFileSelect}
-                          className="hidden"
-                          id="file-upload"
-                        />
-                        <label
-                          htmlFor="file-upload"
-                          onDrop={handleDrop}
-                          onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
-                          onDragLeave={() => setIsDragging(false)}
-                          className={`flex flex-col items-center justify-center cursor-pointer rounded-2xl border-2 border-dashed py-3 sm:py-6 px-6 transition-all duration-200 w-full overflow-hidden
-                            ${isDragging
-                              ? "border-[#006859] bg-[#006859]/8 scale-[1.01]"
-                              : file
-                                ? "border-[#006859]/60 bg-[#006859]/5"
-                                : "border-surface-container-highest hover:border-[#006859]/40 bg-surface-container-low hover:bg-surface-container-lowest"
+                    <div className="flex flex-col gap-1">
+                      <div className="flex items-center gap-2 mb-1 ml-0.5">
+                        <span className="flex items-center justify-center w-5 h-5 rounded-full bg-[#006859] text-white text-[10px] font-black flex-shrink-0">1</span>
+                        <span className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Upload Resume</span>
+                      </div>
+                      <div className="flex gap-1.5 p-1.5 bg-surface-container-low rounded-2xl">
+                        <button
+                          onClick={() => setInputType("file")}
+                          className={`flex-1 py-2.5 rounded-xl font-bold text-sm transition-all duration-200 focus:outline-none ${inputType === "file"
+                            ? "bg-surface-container-lowest text-[#006859] shadow-sm"
+                            : "text-on-surface-variant hover:text-on-background"
                             }`}
                         >
-                          <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-3 transition-colors ${file ? 'bg-[#006859]/10' : 'bg-surface-container-high'}`}>
-                            <CloudUpload className={`w-6 h-6 ${file ? 'text-[#006859]' : 'text-on-surface-variant'}`} />
-                          </div>
-                          <span className="font-headline text-on-background font-bold text-center text-base truncate w-full px-2 mb-1">
-                            {file ? file.name : "Drop your current resume"}
-                          </span>
-                          <span className="text-sm text-on-surface-variant text-center">PDF, DOCX (Max 10MB)</span>
-                          {!file && (
-                            <span className="mt-3 text-xs font-bold text-[#006859] bg-[#006859]/10 px-3 py-1.5 rounded-full">
-                              Browse files
+                          Upload File
+                        </button>
+                        <button
+                          onClick={() => setInputType("text")}
+                          className={`flex-1 py-2.5 rounded-xl font-bold text-sm transition-all duration-200 focus:outline-none ${inputType === "text"
+                            ? "bg-surface-container-lowest text-[#006859] shadow-sm"
+                            : "text-on-surface-variant hover:text-on-background"
+                            }`}
+                        >
+                          Paste Text
+                        </button>
+                      </div>
+
+                      {/* File drop zone / Paste textarea */}
+                      {inputType === "file" ? (
+                        <>
+                          <input
+                            type="file"
+                            accept=".pdf,.docx,.jpg,.jpeg,.png"
+                            onChange={handleFileSelect}
+                            className="hidden"
+                            id="file-upload"
+                          />
+                          <label
+                            htmlFor="file-upload"
+                            onDrop={handleDrop}
+                            onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+                            onDragLeave={() => setIsDragging(false)}
+                            className={`flex flex-col items-center justify-center cursor-pointer rounded-2xl border-2 border-dashed py-3 sm:py-6 px-6 transition-all duration-200 w-full overflow-hidden
+                            ${isDragging
+                                ? "border-[#006859] bg-[#006859]/8 scale-[1.01]"
+                                : file
+                                  ? "border-[#006859]/60 bg-[#006859]/5"
+                                  : "border-surface-container-highest hover:border-[#006859]/40 bg-surface-container-low hover:bg-surface-container-lowest"
+                              }`}
+                          >
+                            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-3 transition-colors ${file ? 'bg-[#006859]/10' : 'bg-surface-container-high'}`}>
+                              <CloudUpload className={`w-6 h-6 ${file ? 'text-[#006859]' : 'text-on-surface-variant'}`} />
+                            </div>
+                            <span className="font-headline text-on-background font-bold text-center text-base truncate w-full px-2 mb-1">
+                              {file ? file.name : "Drop your current resume"}
                             </span>
-                          )}
-                        </label>
-                      </>
-                    ) : (
-                      <textarea
-                        value={resumeText}
-                        onChange={(e) => setResumeText(e.target.value)}
-                        className="w-full px-5 py-4 rounded-2xl bg-surface-container-low border-2 border-transparent focus:border-[#006859]/30 focus:ring-0 focus:outline-none transition-all placeholder:text-on-surface-variant/50 min-h-[140px] resize-none text-sm leading-relaxed"
-                        placeholder="Paste your current resume text here... (Experience, Education, Skills, etc.)"
-                      />
-                    )}
+                            <span className="text-sm text-on-surface-variant text-center">PDF, DOCX (Max 10MB)</span>
+                            {!file && (
+                              <span className="mt-3 text-xs font-bold text-[#006859] bg-[#006859]/10 px-3 py-1.5 rounded-full">
+                                Browse files
+                              </span>
+                            )}
+                          </label>
+                        </>
+                      ) : (
+                        <textarea
+                          value={resumeText}
+                          onChange={(e) => setResumeText(e.target.value)}
+                          className="w-full px-5 py-4 rounded-2xl bg-surface-container-low border-2 border-transparent focus:border-[#006859]/30 focus:ring-0 focus:outline-none transition-all placeholder:text-on-surface-variant/50 min-h-[140px] resize-none text-sm leading-relaxed"
+                          placeholder="Paste your current resume text here... (Experience, Education, Skills, etc.)"
+                        />
+                      )}
+                    </div>
                   </>
                 )}
 
                 {/* Optimize Mode Selection */}
-                <div className="flex flex-row items-center justify-between gap-2 sm:gap-4 bg-surface-container-low rounded-2xl p-1.5 pl-4 sm:pl-5 mt-2">
-                  <p className="font-sans text-[11px] font-bold uppercase tracking-wider text-on-surface-variant flex-shrink-0">
-                    Options
-                  </p>
-                  <div className="flex flex-1 sm:flex-none w-full sm:w-auto gap-1 justify-end">
-                    {([
-                      {
-                        id: "jd" as const,
-                        activeCls: "bg-surface-container-lowest text-[#006859] shadow-sm border border-surface-container-highest",
-                        radioBorder: "border-[#006859]",
-                        radioDot: "bg-[#006859]",
-                        label: "JD",
-                      },
-                      {
-                        id: "manual" as const,
-                        activeCls: "bg-surface-container-lowest text-[#006859] shadow-sm border border-surface-container-highest",
-                        radioBorder: "border-[#006859]",
-                        radioDot: "bg-[#006859]",
-                        label: "No Changes",
-                      },
-                      {
-                        id: "first_resume" as const,
-                        activeCls: "bg-surface-container-lowest text-[#006859] shadow-sm border border-surface-container-highest",
-                        radioBorder: "border-[#006859]",
-                        radioDot: "bg-[#006859]",
-                        label: "First Resume",
-                      }
-                    ] as const).map((opt) => {
-                      const isActive = optimizeMode === opt.id;
-                      return (
-                        <button
-                          key={opt.id}
-                          type="button"
-                          onClick={() => setOptimizeMode(opt.id)}
-                          className={`flex-1 sm:flex-none flex items-center justify-center gap-1 sm:gap-2 px-1 sm:px-3 py-2.5 rounded-xl transition-all duration-200 border border-transparent ${isActive
-                            ? opt.activeCls
-                            : "text-on-surface-variant hover:bg-surface-container-high hover:text-on-background"
-                            }`}
-                        >
-                          <div className={`w-3 h-3 sm:w-3.5 sm:h-3.5 rounded-full border-[1.5px] flex-shrink-0 flex items-center justify-center transition-colors ${isActive ? opt.radioBorder : "border-on-surface-variant/60"}`}>
-                            {isActive && <div className={`w-1.5 h-1.5 rounded-full ${opt.radioDot}`} />}
-                          </div>
-                          <span className="text-[9px] min-[375px]:text-[10px] sm:text-xs font-bold leading-tight text-left sm:text-center whitespace-nowrap">
-                            {opt.label}
-                          </span>
-                        </button>
-                      );
-                    })}
+                <div className="flex flex-col gap-1.5">
+                  <div className="flex items-center gap-2 ml-0.5">
+                    <span className="flex items-center justify-center w-5 h-5 rounded-full bg-[#006859] text-white text-[10px] font-black flex-shrink-0">2</span>
+                    <span className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Choose Mode</span>
+                  </div>
+                  <div className="flex flex-row items-center justify-between gap-2 sm:gap-4 bg-surface-container-low rounded-2xl p-1.5 pl-4 sm:pl-5">
+                    <div className="flex flex-1 sm:flex-none w-full sm:w-auto gap-1 justify-end">
+                      {([
+                        {
+                          id: "jd" as const,
+                          activeCls: "bg-surface-container-lowest text-[#006859] shadow-sm border border-surface-container-highest",
+                          radioBorder: "border-[#006859]",
+                          radioDot: "bg-[#006859]",
+                          label: "JD",
+                        },
+                        {
+                          id: "manual" as const,
+                          activeCls: "bg-surface-container-lowest text-[#006859] shadow-sm border border-surface-container-highest",
+                          radioBorder: "border-[#006859]",
+                          radioDot: "bg-[#006859]",
+                          label: "Self Edit",
+                        },
+                        {
+                          id: "first_resume" as const,
+                          activeCls: "bg-surface-container-lowest text-[#006859] shadow-sm border border-surface-container-highest",
+                          radioBorder: "border-[#006859]",
+                          radioDot: "bg-[#006859]",
+                          label: "First Resume",
+                        }
+                      ] as const).map((opt) => {
+                        const isActive = optimizeMode === opt.id;
+                        return (
+                          <button
+                            key={opt.id}
+                            type="button"
+                            onClick={() => setOptimizeMode(opt.id)}
+                            className={`flex-1 sm:flex-none flex items-center justify-center gap-1 sm:gap-2 px-1 sm:px-3 py-2.5 rounded-xl transition-all duration-200 border border-transparent ${isActive
+                              ? opt.activeCls
+                              : "text-on-surface-variant hover:bg-surface-container-high hover:text-on-background"
+                              }`}
+                          >
+                            <div className={`w-3 h-3 sm:w-3.5 sm:h-3.5 rounded-full border-[1.5px] flex-shrink-0 flex items-center justify-center transition-colors ${isActive ? opt.radioBorder : "border-on-surface-variant/60"}`}>
+                              {isActive && <div className={`w-1.5 h-1.5 rounded-full ${opt.radioDot}`} />}
+                            </div>
+                            <span className="text-[9px] min-[375px]:text-[10px] sm:text-xs font-bold leading-tight text-left sm:text-center whitespace-nowrap">
+                              {opt.label}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
                 </div>
 
@@ -808,9 +817,10 @@ export default function App() {
                     transition={{ duration: 0.25 }}
                     className="space-y-2 overflow-hidden"
                   >
-                    <label className="font-sans text-[10px] font-black uppercase tracking-widest text-on-surface-variant ml-1">
-                      PASTE JOB DESCRIPTION
-                    </label>
+                    <div className="flex items-center gap-2 mb-1 ml-0.5">
+                      <span className="flex items-center justify-center w-5 h-5 rounded-full bg-[#006859] text-white text-[10px] font-black flex-shrink-0">3</span>
+                      <span className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Paste Job Description</span>
+                    </div>
                     <textarea
                       value={jobDescription}
                       onChange={(e) => setJobDescription(e.target.value)}
