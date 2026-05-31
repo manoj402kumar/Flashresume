@@ -103,21 +103,8 @@ export default function GeneratePage() {
       className="min-h-screen flex items-center justify-center px-4 py-10 font-sans"
       style={{ background: "linear-gradient(160deg, #030706 0%, #08110f 50%, #0d1d1a 100%)" }}
     >
-      {/* Ambient background blobs */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden" aria-hidden="true">
-        <motion.div
-          animate={{ scale: [1, 1.2, 1], opacity: [0.15, 0.25, 0.15] }}
-          transition={{ duration: 9, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute -top-48 -left-48 w-[550px] h-[550px] rounded-full"
-          style={{ background: "radial-gradient(circle, #12f8d7 0%, transparent 70%)" }}
-        />
-        <motion.div
-          animate={{ scale: [1, 1.15, 1], opacity: [0.1, 0.18, 0.1] }}
-          transition={{ duration: 11, repeat: Infinity, ease: "easeInOut", delay: 4 }}
-          className="absolute -bottom-48 -right-48 w-[600px] h-[600px] rounded-full"
-          style={{ background: "radial-gradient(circle, #09c4fd 0%, transparent 70%)" }}
-        />
-      </div>
+      {/* Skill Constellation Particle Network */}
+      <ParticleNetwork progress={progress} />
 
       <div className="relative z-10 w-full max-w-[340px]">
         <AnimatePresence mode="wait">
@@ -433,5 +420,157 @@ export default function GeneratePage() {
         </AnimatePresence>
       </div>
     </div>
+  );
+}
+
+function ParticleNetwork({ progress }: { progress: number }) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const progressRef = useRef(progress);
+
+  useEffect(() => {
+    progressRef.current = progress;
+  }, [progress]);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    let animationFrameId: number;
+    
+    const resize = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      initParticles();
+    };
+
+    class Particle {
+      x: number;
+      y: number;
+      vx: number;
+      vy: number;
+      radius: number;
+
+      constructor() {
+        this.x = Math.random() * canvas.width;
+        this.y = Math.random() * canvas.height;
+        this.vx = (Math.random() - 0.5) * 0.5;
+        this.vy = (Math.random() - 0.5) * 0.5;
+        this.radius = Math.random() * 1.5 + 1.0; // Slightly larger base radius for visibility
+      }
+
+      update() {
+        const intensity = progressRef.current / 100;
+        const centerX = canvas.width / 2;
+        const centerY = canvas.height / 2;
+        
+        const dx = centerX - this.x;
+        const dy = centerY - this.y;
+        
+        // Exponentially scale the pull so it only strongly merges near the end (~10s slow drift)
+        const pullFactor = Math.pow(intensity, 3) * 0.00003;
+        
+        this.vx += dx * pullFactor;
+        this.vy += dy * pullFactor;
+
+        // Higher friction to keep motion smooth and slow
+        this.vx *= 0.98;
+        this.vy *= 0.98;
+
+        // Gentle random walk
+        this.vx += (Math.random() - 0.5) * 0.04;
+        this.vy += (Math.random() - 0.5) * 0.04;
+
+        // Tighter speed limit for slow, elegant movement
+        const maxSpeed = 0.6 + intensity * 1.0;
+        const speed = Math.sqrt(this.vx * this.vx + this.vy * this.vy);
+        if (speed > maxSpeed) {
+          this.vx = (this.vx / speed) * maxSpeed;
+          this.vy = (this.vy / speed) * maxSpeed;
+        }
+
+        this.x += this.vx;
+        this.y += this.vy;
+
+        if (this.x < 0) this.x = canvas.width;
+        if (this.x > canvas.width) this.x = 0;
+        if (this.y < 0) this.y = canvas.height;
+        if (this.y > canvas.height) this.y = 0;
+      }
+
+      draw() {
+        if (!ctx) return;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        ctx.fillStyle = "rgba(18, 248, 215, 0.9)";
+        ctx.fill();
+      }
+    }
+
+    let particles: Particle[] = [];
+
+    const initParticles = () => {
+      particles = [];
+      // Higher density for mobile screens (8000 vs 12000), minimum 50 particles
+      const density = window.innerWidth < 768 ? 8000 : 12000;
+      const count = Math.max(50, Math.floor((canvas.width * canvas.height) / density));
+      for (let i = 0; i < count; i++) {
+        particles.push(new Particle());
+      }
+    };
+
+    const draw = () => {
+      if (!ctx) return;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      const intensity = progressRef.current / 100;
+      // Lines reach further and are more opaque
+      const connectionDistance = 90 + intensity * 80; 
+
+      for (let i = 0; i < particles.length; i++) {
+        particles[i].update();
+        particles[i].draw();
+
+        for (let j = i + 1; j < particles.length; j++) {
+          const dx = particles[i].x - particles[j].x;
+          const dy = particles[i].y - particles[j].y;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+
+          if (distance < connectionDistance) {
+            ctx.beginPath();
+            ctx.moveTo(particles[i].x, particles[i].y);
+            ctx.lineTo(particles[j].x, particles[j].y);
+            
+            // Increased base opacity for better visibility
+            const maxOpacity = 0.3 + (intensity * 0.5); 
+            const opacity = maxOpacity * (1 - distance / connectionDistance);
+            
+            ctx.strokeStyle = `rgba(18, 248, 215, ${opacity})`;
+            ctx.lineWidth = 0.8 + intensity * 1.2;
+            ctx.stroke();
+          }
+        }
+      }
+
+      animationFrameId = requestAnimationFrame(draw);
+    };
+
+    window.addEventListener("resize", resize);
+    resize();
+    draw();
+
+    return () => {
+      window.removeEventListener("resize", resize);
+      cancelAnimationFrame(animationFrameId);
+    };
+  }, []);
+
+  return (
+    <canvas
+      ref={canvasRef}
+      className="fixed inset-0 pointer-events-none"
+      style={{ zIndex: 0 }}
+    />
   );
 }

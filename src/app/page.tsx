@@ -689,7 +689,7 @@ export default function App() {
                           activeCls: "bg-surface-container-lowest text-[#006859] shadow-sm border border-surface-container-highest",
                           radioBorder: "border-[#006859]",
                           radioDot: "bg-[#006859]",
-                          label: "JD",
+                          label: "JD Optimize",
                         },
                         {
                           id: "manual" as const,
@@ -703,7 +703,7 @@ export default function App() {
                           activeCls: "bg-surface-container-lowest text-[#006859] shadow-sm border border-surface-container-highest",
                           radioBorder: "border-[#006859]",
                           radioDot: "bg-[#006859]",
-                          label: "Build First Resume",
+                          label: "First Resume",
                         }
                       ] as const).map((opt) => {
                         const isActive = optimizeMode === opt.id;
