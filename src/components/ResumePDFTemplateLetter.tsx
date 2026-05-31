@@ -503,7 +503,11 @@ export default function ResumePDFTemplateLetter({ resume, showHighlights = false
             default:
               if (sectionId.startsWith("custom_")) {
                 const customSection = resume.custom_sections?.find(s => s.id === sectionId);
-                if (!customSection || !customSection.bullets || customSection.bullets.length === 0) return null;
+                const hasValidBullets = customSection?.bullets?.some(b => {
+                  const text = typeof b === 'string' ? b : b.text;
+                  return !!text?.trim();
+                });
+                if (!customSection || (!customSection.heading?.trim() && !hasValidBullets)) return null;
                 return (
                   <View key={sectionId} wrap={false}>
                     <Text style={styles.sectionTitle}>{customSection.heading}</Text>

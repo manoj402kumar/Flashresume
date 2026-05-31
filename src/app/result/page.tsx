@@ -777,63 +777,37 @@ export default function ResultPage() {
 
       {/* Mobile PDF Preview — shown only on small screens */}
       <div className="lg:hidden w-full flex flex-col bg-[#0f1117] border-b border-white/8">
-        <button
-          onClick={() => setShowMobilePreview(!showMobilePreview)}
-          className="flex items-center justify-between px-4 py-3 bg-white/5 backdrop-blur-sm"
-        >
-          <div className="flex items-center gap-2">
-            <Eye className="w-4 h-4 text-primary" />
-            <span className="text-sm font-bold text-white">Live Preview</span>
+        <div className="relative bg-[#0c0f12] flex flex-col items-center pb-6">
+          {/* Template + Highlight controls */}
+          <div className="w-full flex justify-end px-4 pt-4 pb-4">
+            <div className="flex bg-[#0f1117]/90 backdrop-blur-md rounded-xl shadow-lg border border-[#006859]/30 overflow-hidden">
+              <button onClick={() => setSelectedTemplate("templateLetter")} className={`px-3 py-2 text-[11px] font-bold transition-colors ${selectedTemplate === "templateLetter" ? "bg-primary text-white" : "text-white/60 hover:bg-white/10"}`}>T1</button>
+              <div className="w-[1px] bg-white/10"></div>
+              <button onClick={() => setSelectedTemplate("templateA4")} className={`px-3 py-2 text-[11px] font-bold transition-colors ${selectedTemplate === "templateA4" ? "bg-primary text-white" : "text-white/60 hover:bg-white/10"}`}>T2</button>
+            </div>
           </div>
-          <motion.div animate={{ rotate: showMobilePreview ? 180 : 0 }} transition={{ type: "spring", stiffness: 300, damping: 25 }}>
-            <ChevronDown className="w-4 h-4 text-white/50" />
-          </motion.div>
-        </button>
 
-        <AnimatePresence initial={false}>
-          {showMobilePreview && (
-            <motion.div
-              key="mobile-preview"
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: "auto", opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={{ type: "spring", stiffness: 300, damping: 30, opacity: { duration: 0.2 } }}
-              className="overflow-hidden"
+          <div className="w-full px-4 flex justify-center">
+            <div
+              className="relative bg-white shadow-2xl rounded-sm ring-1 ring-white/20 transition-all duration-300"
+              style={{
+                width: "100%",
+                maxWidth: selectedTemplate === "templateLetter" ? "calc((85vh - 6rem) * 0.707)" : "calc((85vh - 6rem) * 0.774)",
+              }}
             >
-              <div className="relative bg-[#0c0f12] border-y border-white/8 flex flex-col items-center pb-6">
-                {/* Template + Highlight controls */}
-                <div className="w-full flex justify-end px-4 pt-4 pb-4">
-                  <div className="flex bg-[#0f1117]/90 backdrop-blur-md rounded-xl shadow-lg border border-[#006859]/30 overflow-hidden">
-                    <button onClick={() => setSelectedTemplate("templateLetter")} className={`px-3 py-2 text-[11px] font-bold transition-colors ${selectedTemplate === "templateLetter" ? "bg-primary text-white" : "text-white/60 hover:bg-white/10"}`}>T1</button>
-                    <div className="w-[1px] bg-white/10"></div>
-                    <button onClick={() => setSelectedTemplate("templateA4")} className={`px-3 py-2 text-[11px] font-bold transition-colors ${selectedTemplate === "templateA4" ? "bg-primary text-white" : "text-white/60 hover:bg-white/10"}`}>T2</button>
-                  </div>
-                </div>
-
-                <div className="w-full px-4 flex justify-center">
-                  <div
-                    className="relative bg-white shadow-2xl rounded-sm ring-1 ring-white/20 transition-all duration-300"
-                    style={{
-                      width: "100%",
-                      maxWidth: selectedTemplate === "templateLetter" ? "calc((85vh - 6rem) * 0.707)" : "calc((85vh - 6rem) * 0.774)",
-                    }}
-                  >
-                    <MobilePDFPreview
-                      key={`mobile-${selectedTemplate}`}
-                      refreshKey={JSON.stringify({ resume, showHighlights, matchedKeywords, missingKeywords })}
-                    >
-                      {selectedTemplate === "templateLetter" ? (
-                        <ResumePDFTemplateLetter resume={resume} showHighlights={showHighlights} matchedKeywords={matchedKeywords} missingKeywords={missingKeywords} />
-                      ) : (
-                        <ResumePDFTemplateA4 resume={resume} showHighlights={showHighlights} matchedKeywords={matchedKeywords} missingKeywords={missingKeywords} />
-                      )}
-                    </MobilePDFPreview>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+              <MobilePDFPreview
+                key={`mobile-${selectedTemplate}`}
+                refreshKey={JSON.stringify({ resume, showHighlights, matchedKeywords, missingKeywords })}
+              >
+                {selectedTemplate === "templateLetter" ? (
+                  <ResumePDFTemplateLetter resume={resume} showHighlights={showHighlights} matchedKeywords={matchedKeywords} missingKeywords={missingKeywords} />
+                ) : (
+                  <ResumePDFTemplateA4 resume={resume} showHighlights={showHighlights} matchedKeywords={matchedKeywords} missingKeywords={missingKeywords} />
+                )}
+              </MobilePDFPreview>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Main Workspace */}
