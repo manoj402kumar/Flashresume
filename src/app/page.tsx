@@ -675,12 +675,67 @@ export default function App() {
             >
               <div className="space-y-4">
 
+                {/* Optimize Mode Selection */}
+                <div className="flex flex-col gap-1.5">
+                  <div className="flex items-center gap-2 ml-0.5">
+                    <span className="flex items-center justify-center w-5 h-5 rounded-full bg-[#006859] text-white text-[10px] font-black flex-shrink-0">1</span>
+                    <span className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Choose Mode</span>
+                  </div>
+                  <div className="flex flex-row items-center justify-between gap-2 sm:gap-4 bg-surface-container-low rounded-2xl p-1.5 pl-4 sm:pl-5">
+                    <div className="flex flex-1 sm:flex-none w-full sm:w-auto gap-1 justify-end">
+                      {([
+                        {
+                          id: "jd" as const,
+                          activeCls: "bg-surface-container-lowest text-[#006859] shadow-sm border border-surface-container-highest",
+                          radioBorder: "border-[#006859]",
+                          radioDot: "bg-[#006859]",
+                          label: "JD",
+                        },
+                        {
+                          id: "manual" as const,
+                          activeCls: "bg-surface-container-lowest text-[#006859] shadow-sm border border-surface-container-highest",
+                          radioBorder: "border-[#006859]",
+                          radioDot: "bg-[#006859]",
+                          label: "Self Edit",
+                        },
+                        {
+                          id: "first_resume" as const,
+                          activeCls: "bg-surface-container-lowest text-[#006859] shadow-sm border border-surface-container-highest",
+                          radioBorder: "border-[#006859]",
+                          radioDot: "bg-[#006859]",
+                          label: "Build First Resume",
+                        }
+                      ] as const).map((opt) => {
+                        const isActive = optimizeMode === opt.id;
+                        return (
+                          <button
+                            key={opt.id}
+                            type="button"
+                            onClick={() => setOptimizeMode(opt.id)}
+                            className={`flex-1 sm:flex-none flex items-center justify-center gap-1 sm:gap-2 px-1 sm:px-3 py-2.5 rounded-xl transition-all duration-200 border border-transparent ${isActive
+                              ? opt.activeCls
+                              : "text-on-surface-variant hover:bg-surface-container-high hover:text-on-background"
+                              }`}
+                          >
+                            <div className={`w-3 h-3 sm:w-3.5 sm:h-3.5 rounded-full border-[1.5px] flex-shrink-0 flex items-center justify-center transition-colors ${isActive ? opt.radioBorder : "border-on-surface-variant/60"}`}>
+                              {isActive && <div className={`w-1.5 h-1.5 rounded-full ${opt.radioDot}`} />}
+                            </div>
+                            <span className="text-[9px] min-[375px]:text-[10px] sm:text-xs font-bold leading-tight text-left sm:text-center whitespace-nowrap">
+                              {opt.label}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+
                 {optimizeMode !== "first_resume" && (
                   <>
                     {/* Tab switcher — Upload / Paste */}
                     <div className="flex flex-col gap-1">
                       <div className="flex items-center gap-2 mb-1 ml-0.5">
-                        <span className="flex items-center justify-center w-5 h-5 rounded-full bg-[#006859] text-white text-[10px] font-black flex-shrink-0">1</span>
+                        <span className="flex items-center justify-center w-5 h-5 rounded-full bg-[#006859] text-white text-[10px] font-black flex-shrink-0">2</span>
                         <span className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Upload Resume</span>
                       </div>
                       <div className="flex gap-1.5 p-1.5 bg-surface-container-low rounded-2xl">
@@ -752,61 +807,6 @@ export default function App() {
                     </div>
                   </>
                 )}
-
-                {/* Optimize Mode Selection */}
-                <div className="flex flex-col gap-1.5">
-                  <div className="flex items-center gap-2 ml-0.5">
-                    <span className="flex items-center justify-center w-5 h-5 rounded-full bg-[#006859] text-white text-[10px] font-black flex-shrink-0">2</span>
-                    <span className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Choose Mode</span>
-                  </div>
-                  <div className="flex flex-row items-center justify-between gap-2 sm:gap-4 bg-surface-container-low rounded-2xl p-1.5 pl-4 sm:pl-5">
-                    <div className="flex flex-1 sm:flex-none w-full sm:w-auto gap-1 justify-end">
-                      {([
-                        {
-                          id: "jd" as const,
-                          activeCls: "bg-surface-container-lowest text-[#006859] shadow-sm border border-surface-container-highest",
-                          radioBorder: "border-[#006859]",
-                          radioDot: "bg-[#006859]",
-                          label: "JD",
-                        },
-                        {
-                          id: "manual" as const,
-                          activeCls: "bg-surface-container-lowest text-[#006859] shadow-sm border border-surface-container-highest",
-                          radioBorder: "border-[#006859]",
-                          radioDot: "bg-[#006859]",
-                          label: "Self Edit",
-                        },
-                        {
-                          id: "first_resume" as const,
-                          activeCls: "bg-surface-container-lowest text-[#006859] shadow-sm border border-surface-container-highest",
-                          radioBorder: "border-[#006859]",
-                          radioDot: "bg-[#006859]",
-                          label: "Build First Resume",
-                        }
-                      ] as const).map((opt) => {
-                        const isActive = optimizeMode === opt.id;
-                        return (
-                          <button
-                            key={opt.id}
-                            type="button"
-                            onClick={() => setOptimizeMode(opt.id)}
-                            className={`flex-1 sm:flex-none flex items-center justify-center gap-1 sm:gap-2 px-1 sm:px-3 py-2.5 rounded-xl transition-all duration-200 border border-transparent ${isActive
-                              ? opt.activeCls
-                              : "text-on-surface-variant hover:bg-surface-container-high hover:text-on-background"
-                              }`}
-                          >
-                            <div className={`w-3 h-3 sm:w-3.5 sm:h-3.5 rounded-full border-[1.5px] flex-shrink-0 flex items-center justify-center transition-colors ${isActive ? opt.radioBorder : "border-on-surface-variant/60"}`}>
-                              {isActive && <div className={`w-1.5 h-1.5 rounded-full ${opt.radioDot}`} />}
-                            </div>
-                            <span className="text-[9px] min-[375px]:text-[10px] sm:text-xs font-bold leading-tight text-left sm:text-center whitespace-nowrap">
-                              {opt.label}
-                            </span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                </div>
 
                 {/* JD textarea */}
                 {optimizeMode === "jd" && (
