@@ -101,7 +101,7 @@ export default function GeneratePage() {
   return (
     <div
       className="min-h-screen flex items-center justify-center px-4 py-10 font-sans"
-      style={{ background: "linear-gradient(160deg, #003d34 0%, #006859 50%, #0a9e83 100%)" }}
+      style={{ background: "linear-gradient(160deg, #030706 0%, #08110f 50%, #0d1d1a 100%)" }}
     >
       {/* Ambient background blobs */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden" aria-hidden="true">
