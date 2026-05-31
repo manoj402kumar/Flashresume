@@ -453,8 +453,8 @@ function ParticleNetwork({ progress }: { progress: number }) {
       radius: number;
 
       constructor() {
-        this.x = Math.random() * canvas.width;
-        this.y = Math.random() * canvas.height;
+        this.x = Math.random() * canvas!.width;
+        this.y = Math.random() * canvas!.height;
         this.vx = (Math.random() - 0.5) * 0.5;
         this.vy = (Math.random() - 0.5) * 0.5;
         this.radius = Math.random() * 1.5 + 1.0; // Slightly larger base radius for visibility
@@ -462,8 +462,8 @@ function ParticleNetwork({ progress }: { progress: number }) {
 
       update() {
         const intensity = progressRef.current / 100;
-        const centerX = canvas.width / 2;
-        const centerY = canvas.height / 2;
+        const centerX = canvas!.width / 2;
+        const centerY = canvas!.height / 2;
         
         const dx = centerX - this.x;
         const dy = centerY - this.y;
@@ -501,10 +501,10 @@ function ParticleNetwork({ progress }: { progress: number }) {
         this.x += this.vx;
         this.y += this.vy;
 
-        if (this.x < 0) this.x = canvas.width;
-        if (this.x > canvas.width) this.x = 0;
-        if (this.y < 0) this.y = canvas.height;
-        if (this.y > canvas.height) this.y = 0;
+        if (this.x < 0) this.x = canvas!.width;
+        if (this.x > canvas!.width) this.x = 0;
+        if (this.y < 0) this.y = canvas!.height;
+        if (this.y > canvas!.height) this.y = 0;
       }
 
       draw() {
@@ -522,7 +522,7 @@ function ParticleNetwork({ progress }: { progress: number }) {
       particles = [];
       // Higher density for mobile screens (8000 vs 12000), minimum 50 particles
       const density = window.innerWidth < 768 ? 8000 : 12000;
-      const count = Math.max(50, Math.floor((canvas.width * canvas.height) / density));
+      const count = Math.max(50, Math.floor((canvas!.width * canvas!.height) / density));
       for (let i = 0; i < count; i++) {
         particles.push(new Particle());
       }
@@ -530,7 +530,7 @@ function ParticleNetwork({ progress }: { progress: number }) {
 
     const draw = () => {
       if (!ctx) return;
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.clearRect(0, 0, canvas!.width, canvas!.height);
 
       const intensity = progressRef.current / 100;
       // Lines reach further and are more opaque
