@@ -37,21 +37,17 @@ def _trip_circuit(model_id: str, error_type: str):
 
 # ── TOP PREFERRED MODELS — Round-Robin Pools ─────────────────────
 _RR_POOL_R1 = [
-    ("mistral", "mistral-medium-latest",                       call_single_mistral_r1),
-    ("nvidia",  "mistralai/mistral-nemotron",                  call_single_nvidia_r1),
     ("mistral", "mistral-large-latest",                        call_single_mistral_r1),
-    ("nvidia",  "mistralai/mistral-medium-3.5-128b",           call_single_nvidia_r1),
-    ("nvidia",  "mistralai/ministral-14b-instruct-2512",       call_single_nvidia_r1),
     ("groq",    "llama-3.3-70b-versatile",                     call_single_groq_r1),
+    ("nvidia",  "mistralai/mistral-medium-3.5-128b",           call_single_nvidia_r1),
+    ("nvidia",  "mistralai/mistral-nemotron",                  call_single_nvidia_r1),
 ]
 
 _RR_POOL_R2 = [
-    ("mistral", "mistral-medium-latest",                       call_single_mistral_r2),
-    ("nvidia",  "mistralai/mistral-nemotron",                  call_single_nvidia_r2),
     ("mistral", "mistral-large-latest",                        call_single_mistral_r2),
-    ("nvidia",  "mistralai/mistral-medium-3.5-128b",           call_single_nvidia_r2),
-    ("nvidia",  "mistralai/ministral-14b-instruct-2512",       call_single_nvidia_r2),
     ("groq",    "llama-3.3-70b-versatile",                     call_single_groq_r2),
+    ("nvidia",  "mistralai/mistral-medium-3.5-128b",           call_single_nvidia_r2),
+    ("nvidia",  "mistralai/mistral-nemotron",                  call_single_nvidia_r2),
 ]
 
 _rr_counter_r1 = 0
@@ -101,12 +97,12 @@ async def _get_next_rr_index_r2() -> int:
 # FLAT CHAINS (Fallback if all pool models trip)
 # -----------------------------------------------------------------------------
 _R1_FLAT = [
-    ("mistral",    "mistral-medium-latest",                       call_single_mistral_r1),
-    ("nvidia",     "mistralai/mistral-nemotron",                  call_single_nvidia_r1),
     ("mistral",    "mistral-large-latest",                        call_single_mistral_r1),
-    ("nvidia",     "mistralai/mistral-medium-3.5-128b",           call_single_nvidia_r1),
-    ("nvidia",     "mistralai/ministral-14b-instruct-2512",       call_single_nvidia_r1),
     ("groq",       "llama-3.3-70b-versatile",                     call_single_groq_r1),
+    ("nvidia",     "mistralai/mistral-medium-3.5-128b",           call_single_nvidia_r1),
+    ("nvidia",     "mistralai/mistral-nemotron",                  call_single_nvidia_r1),
+    ("mistral",    "mistral-medium-latest",                       call_single_mistral_r1),
+    ("nvidia",     "mistralai/ministral-14b-instruct-2512",       call_single_nvidia_r1),
     ("mistral",    "ministral-8b-latest",                         call_single_mistral_r1),
     ("nvidia",     "mistralai/mixtral-8x22b-instruct-v0.1",       call_single_nvidia_r1),
     ("groq",       "meta-llama/llama-4-scout-17b-16e-instruct",   call_single_groq_r1),
@@ -117,12 +113,12 @@ _R1_FLAT = [
 ]
 
 _R2_FLAT = [
-    ("mistral",    "mistral-medium-latest",                       call_single_mistral_r2),
-    ("nvidia",     "mistralai/mistral-nemotron",                  call_single_nvidia_r2),
     ("mistral",    "mistral-large-latest",                        call_single_mistral_r2),
-    ("nvidia",     "mistralai/mistral-medium-3.5-128b",           call_single_nvidia_r2),
-    ("nvidia",     "mistralai/ministral-14b-instruct-2512",       call_single_nvidia_r2),
     ("groq",       "llama-3.3-70b-versatile",                     call_single_groq_r2),
+    ("nvidia",     "mistralai/mistral-medium-3.5-128b",           call_single_nvidia_r2),
+    ("nvidia",     "mistralai/mistral-nemotron",                  call_single_nvidia_r2),
+    ("mistral",    "mistral-medium-latest",                       call_single_mistral_r2),
+    ("nvidia",     "mistralai/ministral-14b-instruct-2512",       call_single_nvidia_r2),
     ("mistral",    "ministral-8b-latest",                         call_single_mistral_r2),
     ("nvidia",     "mistralai/mixtral-8x22b-instruct-v0.1",       call_single_nvidia_r2),
     ("groq",       "meta-llama/llama-4-scout-17b-16e-instruct",   call_single_groq_r2),
