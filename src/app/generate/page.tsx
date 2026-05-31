@@ -100,60 +100,23 @@ export default function GeneratePage() {
 
   return (
     <div
-      className="min-h-screen flex items-center justify-center px-4 py-10 font-sans relative overflow-hidden bg-[#030706]"
+      className="min-h-screen flex items-center justify-center px-4 py-10 font-sans"
+      style={{ background: "linear-gradient(160deg, #030706 0%, #08110f 50%, #0d1d1a 100%)" }}
     >
-      {/* Fluid Aurora Background */}
+      {/* Ambient background blobs */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden" aria-hidden="true">
-        
-        {/* Blob 1 - Neon Teal */}
         <motion.div
-          animate={{ 
-            x: ["-10%", "20%", "-10%"],
-            y: ["-10%", "30%", "-10%"],
-            scale: [1, 1.2, 1],
-            rotate: [0, 90, 0]
-          }}
-          transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute top-[-10%] left-[-10%] w-[50vw] h-[50vw] min-w-[500px] min-h-[500px] rounded-full"
-          style={{ 
-            background: "radial-gradient(circle, rgba(18,248,215,0.12) 0%, transparent 60%)",
-            filter: "blur(60px)",
-          }}
+          animate={{ scale: [1, 1.2, 1], opacity: [0.15, 0.25, 0.15] }}
+          transition={{ duration: 9, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute -top-48 -left-48 w-[550px] h-[550px] rounded-full"
+          style={{ background: "radial-gradient(circle, #12f8d7 0%, transparent 70%)" }}
         />
-
-        {/* Blob 2 - Deep Emerald */}
         <motion.div
-          animate={{ 
-            x: ["10%", "-20%", "10%"],
-            y: ["20%", "-10%", "20%"],
-            scale: [1, 1.4, 1],
-            rotate: [0, -90, 0]
-          }}
-          transition={{ duration: 25, repeat: Infinity, ease: "easeInOut", delay: 2 }}
-          className="absolute bottom-[-10%] right-[-10%] w-[60vw] h-[60vw] min-w-[600px] min-h-[600px] rounded-full"
-          style={{ 
-            background: "radial-gradient(circle, rgba(0,104,89,0.18) 0%, transparent 60%)",
-            filter: "blur(80px)",
-          }}
+          animate={{ scale: [1, 1.15, 1], opacity: [0.1, 0.18, 0.1] }}
+          transition={{ duration: 11, repeat: Infinity, ease: "easeInOut", delay: 4 }}
+          className="absolute -bottom-48 -right-48 w-[600px] h-[600px] rounded-full"
+          style={{ background: "radial-gradient(circle, #09c4fd 0%, transparent 70%)" }}
         />
-
-        {/* Blob 3 - Bright Mint */}
-        <motion.div
-          animate={{ 
-            x: ["0%", "30%", "0%"],
-            y: ["0%", "-30%", "0%"],
-            scale: [1, 1.1, 1],
-          }}
-          transition={{ duration: 18, repeat: Infinity, ease: "easeInOut", delay: 5 }}
-          className="absolute top-[30%] left-[30%] w-[40vw] h-[40vw] min-w-[400px] min-h-[400px] rounded-full"
-          style={{ 
-            background: "radial-gradient(circle, rgba(10,158,131,0.15) 0%, transparent 60%)",
-            filter: "blur(70px)",
-          }}
-        />
-        
-        {/* Grain overlay for premium texture */}
-        <div className="absolute inset-0 opacity-[0.03] mix-blend-overlay" style={{ backgroundImage: "url('data:image/svg+xml,%3Csvg viewBox=%220 0 200 200%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter id=%22noiseFilter%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%220.65%22 numOctaves=%223%22 stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect width=%22100%25%22 height=%22100%25%22 filter=%22url(%23noiseFilter)%22/%3E%3C/svg%3E')" }} />
       </div>
 
       <div className="relative z-10 w-full max-w-[340px]">

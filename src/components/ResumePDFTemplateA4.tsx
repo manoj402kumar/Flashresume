@@ -539,7 +539,7 @@ export default function ResumePDFTemplateA4({ resume, showHighlights = false, ma
                     <Text style={styles.sectionTitle}>{customSection.heading.toUpperCase()}</Text>
                     <View style={styles.sectionDivider} />
                     <View style={styles.bullets}>
-                      {customSection.bullets.map((bulletObj, bidx) => {
+                      {(customSection.bullets || []).map((bulletObj, bidx) => {
                         const text = typeof bulletObj === 'string' ? bulletObj : bulletObj.text;
                         const url = typeof bulletObj === 'string' ? undefined : bulletObj.url;
                         if (!text?.trim()) return null;
