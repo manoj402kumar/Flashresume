@@ -468,8 +468,13 @@ function ParticleNetwork({ progress }: { progress: number }) {
         const dx = centerX - this.x;
         const dy = centerY - this.y;
         
-        // Exponentially scale the pull so it only strongly merges near the end (~10s slow drift)
-        const pullFactor = Math.pow(intensity, 3) * 0.00003;
+        // Scale the pull: gentle drift initially, strong pull at 85%, massive vacuum at 100%
+        let pullFactor = Math.pow(intensity, 3) * 0.00002;
+        if (intensity >= 0.99) {
+          pullFactor = 0.0015; // Massive vacuum effect
+        } else if (intensity >= 0.85) {
+          pullFactor = 0.00015; // Noticeable acceleration
+        }
         
         this.vx += dx * pullFactor;
         this.vy += dy * pullFactor;
@@ -482,8 +487,11 @@ function ParticleNetwork({ progress }: { progress: number }) {
         this.vx += (Math.random() - 0.5) * 0.04;
         this.vy += (Math.random() - 0.5) * 0.04;
 
-        // Tighter speed limit for slow, elegant movement
-        const maxSpeed = 0.6 + intensity * 1.0;
+        // Tighter speed limit normally, uncapped for the final vacuum merge
+        let maxSpeed = 0.6 + intensity * 1.0;
+        if (intensity >= 0.99) maxSpeed = 30; // Very fast merge
+        else if (intensity >= 0.85) maxSpeed = 6;
+        
         const speed = Math.sqrt(this.vx * this.vx + this.vy * this.vy);
         if (speed > maxSpeed) {
           this.vx = (this.vx / speed) * maxSpeed;
