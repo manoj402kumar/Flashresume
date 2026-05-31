@@ -151,12 +151,12 @@ function cleanDisplayUrl(val: string | undefined | null, fallback: string): stri
 }
 
 const SECTION_LABELS: Record<string, { label: string; icon: React.ReactNode }> = {
-  summary: { label: "Summary", icon: <Zap className="w-4 h-4 text-primary" /> },
-  education: { label: "Education", icon: <GraduationCap className="w-4 h-4 text-secondary-container" /> },
-  experience: { label: "Experience", icon: <Briefcase className="w-4 h-4 text-tertiary-container" /> },
-  projects: { label: "Projects", icon: <FolderGit2 className="w-4 h-4 text-primary" /> },
-  skills: { label: "Technical Skills", icon: <Code className="w-4 h-4 text-secondary" /> },
-  certifications: { label: "Certifications", icon: <Award className="w-4 h-4 text-secondary-container" /> }
+  summary: { label: "Summary", icon: <Zap className="w-4 h-4" /> },
+  education: { label: "Education", icon: <GraduationCap className="w-4 h-4" /> },
+  experience: { label: "Experience", icon: <Briefcase className="w-4 h-4" /> },
+  projects: { label: "Projects", icon: <FolderGit2 className="w-4 h-4" /> },
+  skills: { label: "Technical Skills", icon: <Code className="w-4 h-4" /> },
+  certifications: { label: "Certifications", icon: <Award className="w-4 h-4" /> }
 };
 
 export default function ResultPage() {
@@ -591,9 +591,9 @@ export default function ResultPage() {
   const scoreImprovement = resume.ats_score_after - resume.ats_score_before;
 
   return (
-    <div className="min-h-[100dvh] lg:h-[100dvh] flex flex-col bg-surface font-sans lg:overflow-hidden overflow-y-auto">
+    <div className="min-h-[100dvh] lg:h-[100dvh] flex flex-col bg-[#0f1117] font-sans lg:overflow-hidden overflow-y-auto">
       {/* Top App Bar - Fixed non-scrolling */}
-      <header className="flex-shrink-0 z-50 bg-surface border-b border-surface-container-low shadow-sm">
+      <header className="flex-shrink-0 z-50 bg-[#0f1117] border-b border-white/8 shadow-md">
         <div className="w-full px-4 sm:px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <a href="/" title="Back to Home" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
@@ -611,9 +611,9 @@ export default function ResultPage() {
               </div>
             </a>
             <div>
-              <h1 className="font-headline text-lg font-bold text-on-background leading-tight">Your Resume</h1>
-              <p className="text-xs text-on-surface-variant leading-tight flex items-center gap-1">
-                <Sparkles className="w-3 h-3 text-primary" /> AI Optimized
+              <h1 className="font-headline text-lg font-bold text-white leading-tight">Your Resume</h1>
+              <p className="text-xs text-white/50 leading-tight flex items-center gap-1">
+                <Sparkles className="w-3 h-3 text-[#12f8d7]" /> AI Optimized
               </p>
             </div>
           </div>
@@ -621,7 +621,7 @@ export default function ResultPage() {
           <div className="flex items-center gap-2 sm:gap-4">
             <button
               onClick={handleStartOver}
-              className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-xl text-sm font-semibold text-on-surface-variant bg-surface-container-low hover:bg-surface-container-high transition-colors"
+              className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-xl text-sm font-semibold text-white/60 bg-white/6 hover:bg-white/10 border border-white/10 transition-colors"
             >
               <Home className="w-4 h-4" />
               Start Over
@@ -637,11 +637,11 @@ export default function ResultPage() {
                 }
               }}
               disabled={downloadingPDF || checkingAccess}
-              className={`flex items-center gap-2 px-4 py-1.5 sm:px-5 sm:py-2 rounded-xl text-sm font-bold text-white transition-all shadow-sm ${downloadingPDF || checkingAccess
-                ? "bg-surface-container-high cursor-not-allowed"
+              className={`flex items-center gap-2 px-4 py-1.5 sm:px-5 sm:py-2 rounded-xl text-sm font-bold text-white transition-all ${downloadingPDF || checkingAccess
+                ? "bg-white/10 cursor-not-allowed"
                 : hasPaidAccess
-                  ? "bg-primary hover:bg-primary/90"
-                  : "bg-gradient-to-r from-primary to-secondary hover:opacity-90"
+                  ? "bg-primary hover:bg-primary/90 border border-[#12f8d7] shadow-[0_0_10px_rgba(18,248,215,0.4)] hover:shadow-[0_0_15px_rgba(18,248,215,0.6)]"
+                  : "bg-gradient-to-r from-primary to-secondary hover:opacity-90 border border-[#12f8d7] shadow-[0_0_10px_rgba(18,248,215,0.4)] hover:shadow-[0_0_15px_rgba(18,248,215,0.6)]"
                 }`}
             >
               {checkingAccess ? (
@@ -670,10 +670,10 @@ export default function ResultPage() {
             <div className="relative">
               <button
                 onClick={() => setShowAccountDropdown(!showAccountDropdown)}
-                className="w-10 h-10 rounded-xl bg-surface-container-low hover:bg-surface-container-high transition-colors flex items-center justify-center relative shadow-sm"
+                className="w-10 h-10 rounded-xl bg-white/6 hover:bg-white/12 border border-white/10 transition-colors flex items-center justify-center relative shadow-sm"
               >
-                <User className="w-5 h-5 text-on-surface-variant" />
-                {credits < 10 && <span className="absolute top-0 right-0 w-3 h-3 bg-error rounded-full border-2 border-surface"></span>}
+                <User className="w-5 h-5 text-white/60" />
+                {credits < 10 && <span className="absolute top-0 right-0 w-3 h-3 bg-error rounded-full border-2 border-[#0f1117]"></span>}
               </button>
 
               <AnimatePresence>
@@ -776,17 +776,17 @@ export default function ResultPage() {
       </header>
 
       {/* Mobile PDF Preview — shown only on small screens */}
-      <div className="lg:hidden w-full flex flex-col bg-surface-container-lowest border-b border-surface-container-low">
+      <div className="lg:hidden w-full flex flex-col bg-[#0f1117] border-b border-white/8">
         <button
           onClick={() => setShowMobilePreview(!showMobilePreview)}
-          className="flex items-center justify-between px-4 py-3 bg-surface-container-low/80 backdrop-blur-sm"
+          className="flex items-center justify-between px-4 py-3 bg-white/5 backdrop-blur-sm"
         >
           <div className="flex items-center gap-2">
             <Eye className="w-4 h-4 text-primary" />
-            <span className="text-sm font-bold text-on-background">Live Preview</span>
+            <span className="text-sm font-bold text-white">Live Preview</span>
           </div>
           <motion.div animate={{ rotate: showMobilePreview ? 180 : 0 }} transition={{ type: "spring", stiffness: 300, damping: 25 }}>
-            <ChevronDown className="w-4 h-4 text-on-surface-variant" />
+            <ChevronDown className="w-4 h-4 text-white/50" />
           </motion.div>
         </button>
 
@@ -800,13 +800,13 @@ export default function ResultPage() {
               transition={{ type: "spring", stiffness: 300, damping: 30, opacity: { duration: 0.2 } }}
               className="overflow-hidden"
             >
-              <div className="relative bg-[#0c0f12] border-y border-surface-container-low flex flex-col items-center pb-6">
+              <div className="relative bg-[#0c0f12] border-y border-white/8 flex flex-col items-center pb-6">
                 {/* Template + Highlight controls */}
                 <div className="w-full flex justify-end px-4 pt-4 pb-4">
-                  <div className="flex bg-surface/90 backdrop-blur-md rounded-xl shadow-lg border border-primary/20 overflow-hidden">
-                    <button onClick={() => setSelectedTemplate("templateLetter")} className={`px-3 py-2 text-[11px] font-bold transition-colors ${selectedTemplate === "templateLetter" ? "bg-primary text-white" : "text-on-surface-variant hover:bg-surface-container"}`}>T1</button>
-                    <div className="w-[1px] bg-primary/20"></div>
-                    <button onClick={() => setSelectedTemplate("templateA4")} className={`px-3 py-2 text-[11px] font-bold transition-colors ${selectedTemplate === "templateA4" ? "bg-primary text-white" : "text-on-surface-variant hover:bg-surface-container"}`}>T2</button>
+                  <div className="flex bg-[#0f1117]/90 backdrop-blur-md rounded-xl shadow-lg border border-[#006859]/30 overflow-hidden">
+                    <button onClick={() => setSelectedTemplate("templateLetter")} className={`px-3 py-2 text-[11px] font-bold transition-colors ${selectedTemplate === "templateLetter" ? "bg-primary text-white" : "text-white/60 hover:bg-white/10"}`}>T1</button>
+                    <div className="w-[1px] bg-white/10"></div>
+                    <button onClick={() => setSelectedTemplate("templateA4")} className={`px-3 py-2 text-[11px] font-bold transition-colors ${selectedTemplate === "templateA4" ? "bg-primary text-white" : "text-white/60 hover:bg-white/10"}`}>T2</button>
                   </div>
                 </div>
 
@@ -840,24 +840,23 @@ export default function ResultPage() {
       <div className="flex-1 lg:overflow-hidden flex flex-col lg:flex-row relative">
 
         {/* Left Column (Editor & Metrics) */}
-        <div className="dark-theme-override text-on-background w-full lg:w-[45%] flex-1 lg:h-full flex flex-col bg-surface border-r border-surface-container-low z-10 shadow-xl lg:shadow-none transition-all relative">
-          <div className="absolute inset-0 bg-gradient-to-br from-[#0c0f12] to-[#151a1e] pointer-events-none -z-10" />
+        <div className="w-full lg:w-[45%] flex-1 lg:h-full flex flex-col bg-[#0f1117] border-r border-white/8 z-10 shadow-xl lg:shadow-none transition-all relative">
 
           {/* Segmented Toggles inside Sticky Top */}
-          <div className="flex-shrink-0 bg-surface/95 backdrop-blur-md p-4 border-b border-surface-container-low flex flex-col gap-3 py-4 sticky top-0 z-20">
+          <div className="flex-shrink-0 bg-[#0f1117]/95 backdrop-blur-md p-4 border-b border-white/8 flex flex-col gap-3 py-4 sticky top-0 z-20">
             {/* ── Compact ATS Score Strip — above tab buttons ── */}
             {resume && (
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-surface-container-low border border-[#006859]/15 mb-1">
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/5 border border-[#006859]/30 mb-1">
                 {noJdMode ? (
                   <>
                     <TrendingUp className="w-3.5 h-3.5 text-[#006859] flex-shrink-0" />
-                    <span className="text-[9px] font-black uppercase tracking-widest text-on-surface-variant/60 flex-1">ATS Formatting Score</span>
+                    <span className="text-[9px] font-black uppercase tracking-widest text-white/40 flex-1">ATS Formatting Score</span>
                     <span className="text-sm font-black text-transparent bg-clip-text bg-gradient-to-r from-[#006859] to-[#12f8d7]">100%</span>
                   </>
                 ) : (
                   <>
-                    <span className="text-[9px] font-black uppercase tracking-widest text-on-surface-variant/50">Before</span>
-                    <span className="text-base font-black text-on-surface-variant/70 leading-none">{resume.ats_score_before}</span>
+                    <span className="text-[9px] font-black uppercase tracking-widest text-white/40">Before</span>
+                    <span className="text-base font-black text-white/50 leading-none">{resume.ats_score_before}</span>
                     <div className="flex-1 flex items-center px-1">
                       <div className="flex-1 h-px bg-gradient-to-r from-on-surface-variant/20 to-[#006859]/40 rounded-full" />
                       <TrendingUp className="w-3 h-3 text-[#006859] flex-shrink-0 mx-1.5" />
@@ -874,35 +873,35 @@ export default function ResultPage() {
               <button
                 onClick={() => { setEditMode(true); setShowChanges(false); setShowMissedKeywords(false); }}
                 className={`relative flex-1 py-3 px-1 sm:px-3 text-xs sm:text-sm whitespace-nowrap font-bold transition-all duration-200 rounded-2xl flex items-center justify-center gap-1 sm:gap-2 active:scale-95 ${editMode
-                  ? "bg-[#006859] text-white shadow-lg shadow-[#006859]/30 border border-[#006859]"
-                  : "bg-surface-container-low text-on-surface-variant border border-surface-container-high hover:bg-surface-container-high hover:text-on-background"
+                  ? "bg-primary text-white shadow-lg shadow-primary/30 border border-transparent"
+                  : "bg-white/6 text-white/50 border border-white/10 hover:bg-white/10 hover:text-white/80"
                   }`}
               >
-                <Edit3 className={`w-4 h-4 ${editMode ? 'text-white' : 'text-on-surface-variant'}`} />
+                <Edit3 className={`w-4 h-4 ${editMode ? 'text-white' : 'text-white/40'}`} />
                 Edit Form
               </button>
               <button
                 onClick={() => { setShowChanges(true); setEditMode(false); setShowMissedKeywords(false); }}
                 className={`flex-1 py-3 px-1 sm:px-3 text-xs sm:text-sm whitespace-nowrap font-bold transition-all duration-200 rounded-2xl flex items-center justify-center gap-1 sm:gap-2 active:scale-95 ${showChanges
-                  ? "bg-[#006859] text-white shadow-lg shadow-[#006859]/30 border border-[#006859]"
-                  : "bg-surface-container-low text-on-surface-variant border border-surface-container-high hover:bg-surface-container-high hover:text-on-background"
+                  ? "bg-primary text-white shadow-lg shadow-primary/30 border border-transparent"
+                  : "bg-white/6 text-white/50 border border-white/10 hover:bg-white/10 hover:text-white/80"
                   }`}
               >
-                <Sparkles className={`w-4 h-4 ${showChanges ? 'text-white' : 'text-on-surface-variant'}`} />
+                <Sparkles className={`w-4 h-4 ${showChanges ? 'text-white' : 'text-white/40'}`} />
                 AI Changes
               </button>
               {!noJdMode && (
                 <button
                   onClick={() => { setShowMissedKeywords(true); setEditMode(false); setShowChanges(false); }}
                   className={`relative flex-1 py-3 px-1 sm:px-3 text-xs sm:text-sm whitespace-nowrap font-bold transition-all duration-200 rounded-2xl flex items-center justify-center gap-1 sm:gap-2 active:scale-95 ${showMissedKeywords
-                    ? "bg-error text-white shadow-lg shadow-error/30 border border-error"
-                    : "bg-surface-container-low text-on-surface-variant border border-surface-container-high hover:bg-surface-container-high hover:text-on-background"
+                    ? "bg-primary text-white shadow-lg shadow-primary/30 border border-transparent"
+                    : "bg-white/6 text-white/50 border border-white/10 hover:bg-white/10 hover:text-white/80"
                     }`}
                 >
-                  <Zap className={`w-4 h-4 ${showMissedKeywords ? 'text-white' : 'text-on-surface-variant'}`} />
+                  <Zap className={`w-4 h-4 ${showMissedKeywords ? 'text-white' : 'text-white/40'}`} />
                   Keywords
                   {missingKeywords.length > 0 && !showMissedKeywords && (
-                    <span className="absolute -top-1.5 -right-1.5 flex min-w-[18px] h-[18px] items-center justify-center rounded-full bg-error px-1 text-[10px] font-bold text-white shadow-md ring-2 ring-surface">{missingKeywords.length}</span>
+                    <span className="absolute -top-1.5 -right-1.5 flex min-w-[18px] h-[18px] items-center justify-center rounded-full bg-error px-1 text-[10px] font-bold text-white shadow-md ring-2 ring-[#0f1117]">{missingKeywords.length}</span>
                   )}
                 </button>
               )}
@@ -911,15 +910,27 @@ export default function ResultPage() {
 
           {/* ── Section Pill Nav ── */}
           {editMode && resume && (
-            <div className="flex-shrink-0 border-b border-surface-container-low bg-surface/95 backdrop-blur-md px-4 py-2">
+            <div className="flex-shrink-0 border-b border-white/8 bg-[#0f1117]/95 backdrop-blur-md px-4 py-2">
               <div className="grid grid-cols-3 gap-1 sm:flex sm:flex-wrap sm:gap-1.5">
-                {/* Contact pill — always first */}
+                {/* Reorder pill — always first */}
+                <button
+                  type="button"
+                  onClick={() => selectEditSection('__reorder__')}
+                  className={`w-full sm:w-auto flex items-center justify-center sm:justify-start gap-1 sm:gap-1.5 px-1.5 sm:px-3 py-1.5 rounded-full text-[10px] sm:text-xs font-bold whitespace-nowrap transition-all duration-200 border ${activeEditSection === '__reorder__'
+                      ? 'bg-[#12f8d7]/10 text-[#12f8d7] border-[#12f8d7] shadow-sm'
+                      : 'bg-white/6 text-white/50 border-white/10 hover:bg-white/10 hover:text-white/80'
+                    }`}
+                >
+                  <GripVertical className="hidden sm:block w-3 h-3" />
+                  Reorder
+                </button>
+                {/* Contact pill */}
                 <button
                   type="button"
                   onClick={() => selectEditSection('contact')}
                   className={`w-full sm:w-auto flex items-center justify-center sm:justify-start gap-1 sm:gap-1.5 px-1.5 sm:px-3 py-1.5 rounded-full text-[10px] sm:text-xs font-bold whitespace-nowrap transition-all duration-200 border ${activeEditSection === 'contact'
-                      ? 'bg-primary text-white shadow-sm border-transparent'
-                      : 'bg-surface-container text-on-surface-variant border-surface-container-highest hover:bg-surface-container-high hover:text-on-background'
+                      ? 'bg-[#12f8d7]/10 text-[#12f8d7] border-[#12f8d7] shadow-sm'
+                      : 'bg-white/6 text-white/50 border-white/10 hover:bg-white/10 hover:text-white/80'
                     }`}
                 >
                   <FileText className="hidden sm:block w-3 h-3" />
@@ -940,8 +951,8 @@ export default function ResultPage() {
                       type="button"
                       onClick={() => selectEditSection(sid)}
                       className={`w-full sm:w-auto flex items-center justify-center sm:justify-start gap-1 sm:gap-1.5 px-1.5 sm:px-3 py-1.5 rounded-full text-[10px] sm:text-xs font-bold whitespace-nowrap transition-all duration-200 border ${isActive
-                          ? 'bg-primary text-white shadow-sm border-transparent'
-                          : 'bg-surface-container text-on-surface-variant border-surface-container-highest hover:bg-surface-container-high hover:text-on-background'
+                          ? 'bg-[#12f8d7]/10 text-[#12f8d7] border-[#12f8d7] shadow-sm'
+                          : 'bg-white/6 text-white/50 border-white/10 hover:bg-white/10 hover:text-white/80'
                         }`}
                     >
                       <span className="hidden sm:inline-flex [&>svg]:w-3 [&>svg]:h-3">{meta.icon}</span>
@@ -949,18 +960,6 @@ export default function ResultPage() {
                     </button>
                   );
                 })}
-                {/* Reorder pill */}
-                <button
-                  type="button"
-                  onClick={() => selectEditSection('__reorder__')}
-                  className={`w-full sm:w-auto flex items-center justify-center sm:justify-start gap-1 sm:gap-1.5 px-1.5 sm:px-3 py-1.5 rounded-full text-[10px] sm:text-xs font-bold whitespace-nowrap transition-all duration-200 border ${activeEditSection === '__reorder__'
-                      ? 'bg-surface-container-highest text-on-background shadow-sm border-transparent'
-                      : 'bg-surface-container text-on-surface-variant border-surface-container-highest hover:bg-surface-container-high hover:text-on-background'
-                    }`}
-                >
-                  <GripVertical className="hidden sm:block w-3 h-3" />
-                  Reorder
-                </button>
                 {/* + Custom Section pill */}
                 <button
                   type="button"
@@ -975,7 +974,7 @@ export default function ResultPage() {
                     updateResume({ custom_sections: newCustoms, section_order: newOrder });
                     selectEditSection(newCustomId);
                   }}
-                  className="w-full sm:w-auto flex items-center justify-center sm:justify-start gap-1 sm:gap-1.5 px-1.5 sm:px-3 py-1.5 rounded-full text-[10px] sm:text-xs font-bold whitespace-nowrap transition-all duration-200 border border-primary/40 text-primary hover:bg-primary/10 hover:border-primary"
+                  className="w-full sm:w-auto flex items-center justify-center sm:justify-start gap-1 sm:gap-1.5 px-1.5 sm:px-3 py-1.5 rounded-full text-[10px] sm:text-xs font-bold whitespace-nowrap transition-all duration-200 border border-white/10 text-white/50 hover:bg-white/10 hover:text-white/80"
                 >
                   <PlusCircle className="hidden sm:block w-3 h-3" />
                   + Custom
@@ -985,7 +984,7 @@ export default function ResultPage() {
           )}
 
           {/* Scrollable Panel Content */}
-          <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:px-8 lg:py-6 pb-24 hide-scrollbar">
+          <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:px-8 lg:py-6 pb-24 hide-scrollbar bg-[#0f1117]">
             <AnimatePresence mode="wait">
               {editMode && (
                 <motion.div
@@ -1384,49 +1383,32 @@ export default function ResultPage() {
                             whileHover={{ y: -4 }}
                             className="soothing-light-theme text-on-background bg-surface-container-lowest rounded-[2rem] p-8 shadow-xl hover:shadow-2xl transition-all duration-300 border border-primary/5"
                           >
-                            <div
-                              className={`flex items-center justify-between ${editMode ? 'cursor-pointer hover:opacity-80 transition-opacity mb-4' : 'mb-6'}`}
-                              role={editMode ? 'button' : undefined} tabIndex={editMode ? 0 : undefined} onClick={() => editMode && toggleSection("summary")}
-                            >
-                              <div className="flex items-center gap-3">
-                                <div className="w-12 h-12 rounded-2xl bg-primary-container/20 flex items-center justify-center">
-                                  <Zap className="w-6 h-6 text-primary" />
-                                </div>
-                                <h3 className="font-headline text-2xl font-bold text-on-background">Summary</h3>
+                            <div className="flex items-center gap-3 mb-4">
+                              <div className="w-12 h-12 rounded-2xl bg-primary-container/20 flex items-center justify-center">
+                                <Zap className="w-6 h-6 text-primary" />
                               </div>
-                              {editMode && (
-                                <motion.div className="p-2 hover:bg-surface-container rounded-full transition-colors" animate={{ rotate: openEditSections["summary"] ? 180 : 0 }} transition={{ type: "spring", stiffness: 300, damping: 25 }}>
-                                  <ChevronDown className="w-5 h-5 text-on-surface-variant" />
-                                </motion.div>
-                              )}
+                              <h3 className="font-headline text-2xl font-bold text-on-background">Summary</h3>
                             </div>
 
-                            <AnimatePresence initial={false}>
-                              {(!editMode || openEditSections["summary"]) && (
-                                <motion.div
-                                  key="summary-content"
-                                  initial={{ height: 0, opacity: 0 }}
-                                  animate={{ height: "auto", opacity: 1 }}
-                                  exit={{ height: 0, opacity: 0 }}
-                                  transition={{ type: "spring", stiffness: 300, damping: 30, opacity: { duration: 0.2 } }}
-                                  className="overflow-hidden"
-                                >
-                                  <>
-                                    {editMode ? (
-                                      <textarea
-                                        value={resume.summary || ''}
-                                        onChange={(e) => updateResume({ summary: e.target.value })}
-                                        className="w-full rounded-xl px-4 py-3 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm resize-none"
-                                        rows={3}
-                                        placeholder="Professional summary..."
-                                      />
-                                    ) : (
-                                      <p className="text-on-background leading-relaxed">{resume.summary}</p>
-                                    )}
-                                  </>
-                                </motion.div>
-                              )}
-                            </AnimatePresence>
+                            {editMode ? (
+                              <textarea
+                                value={resume.summary || ''}
+                                onChange={(e) => updateResume({ summary: e.target.value })}
+                                onInput={(e) => {
+                                  const el = e.currentTarget;
+                                  el.style.height = 'auto';
+                                  el.style.height = el.scrollHeight + 'px';
+                                }}
+                                ref={(el) => {
+                                  if (el) { el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px'; }
+                                }}
+                                className="w-full rounded-xl px-4 py-3 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm resize-none overflow-hidden"
+                                rows={1}
+                                placeholder="Professional summary..."
+                              />
+                            ) : (
+                              <p className="text-on-background leading-relaxed">{resume.summary}</p>
+                            )}
                           </motion.div>
                         );
 
