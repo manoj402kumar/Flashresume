@@ -26,7 +26,9 @@ import {
   ChevronDown,
   ChevronUp,
   User,
-  Trash2
+  Trash2,
+  Undo2,
+  Redo2
 } from "lucide-react";
 
 // Utility: move element in array from index `from` to index `to`
@@ -203,6 +205,45 @@ export default function ResultPage() {
   const [sessionGuid, setSessionGuid] = useState<string>("");
   const [currentUserId, setCurrentUserId] = useState<string>("");
 
+  // ── Undo / Redo history ───────────────────────────────────────────────
+  const MAX_HISTORY = 50;
+  const historyRef = useRef<TemplateV1[]>([]);
+  const historyIndexRef = useRef<number>(-1);
+  const [canUndo, setCanUndo] = useState(false);
+  const [canRedo, setCanRedo] = useState(false);
+
+  const updateResume = (updates: Partial<TemplateV1>) => {
+    setResume((prev) => {
+      if (!prev) return null;
+      const next = { ...prev, ...updates };
+      const truncated = historyRef.current.slice(0, historyIndexRef.current + 1);
+      truncated.push(next);
+      if (truncated.length > MAX_HISTORY) truncated.shift();
+      historyRef.current = truncated;
+      historyIndexRef.current = truncated.length - 1;
+      setCanUndo(historyIndexRef.current > 0);
+      setCanRedo(false);
+      return next;
+    });
+  };
+
+  const handleUndo = () => {
+    if (historyIndexRef.current <= 0) return;
+    historyIndexRef.current -= 1;
+    const prev = historyRef.current[historyIndexRef.current];
+    setResume(prev);
+    setCanUndo(historyIndexRef.current > 0);
+    setCanRedo(true);
+  };
+
+  const handleRedo = () => {
+    if (historyIndexRef.current >= historyRef.current.length - 1) return;
+    historyIndexRef.current += 1;
+    const next = historyRef.current[historyIndexRef.current];
+    setResume(next);
+    setCanUndo(true);
+    setCanRedo(historyIndexRef.current < historyRef.current.length - 1);
+  };
 
   const handleSectionDragStart = (e: React.DragEvent, sectionId: string) => {
     setDraggingId(sectionId);
@@ -411,6 +452,30 @@ export default function ResultPage() {
     fetchSession();
   }, [router]);
 
+  // Seed history once resume first loads
+  useEffect(() => {
+    if (resume && historyRef.current.length === 0) {
+      historyRef.current = [resume];
+      historyIndexRef.current = 0;
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [resume === null]);
+
+  // Keyboard shortcuts: Ctrl+Z → undo, Ctrl+Y / Ctrl+Shift+Z → redo
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (!editMode) return;
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+      if (e.ctrlKey || e.metaKey) {
+        if (e.key === 'z' && !e.shiftKey) { e.preventDefault(); handleUndo(); }
+        if (e.key === 'y' || (e.key === 'z' && e.shiftKey)) { e.preventDefault(); handleRedo(); }
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editMode, canUndo, canRedo]);
 
   const checkAccess = async () => {
     setCheckingAccess(true);
@@ -454,15 +519,6 @@ export default function ResultPage() {
     checkAccess();
   }, []);
 
-  // JSON copy removed
-  const handleCopyJSON_UNUSED = () => {
-    if (resume) {
-      navigator.clipboard.writeText(JSON.stringify(resume, null, 2));
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    }
-  };
-
   const handleStartOver = () => {
     // Only clear resume workflow keys — do NOT clear auth session
     ["resume_text", "job_description", "analysis", "generated_resume",
@@ -470,10 +526,6 @@ export default function ResultPage() {
         (key) => localStorage.removeItem(key)
       );
     router.push("/");
-  };
-
-  const updateResume = (updates: Partial<TemplateV1>) => {
-    setResume((prev) => prev ? { ...prev, ...updates } : null);
   };
 
   // Auto-save: persist resume to localStorage whenever it changes
@@ -779,7 +831,41 @@ export default function ResultPage() {
       <div className="lg:hidden w-full flex flex-col bg-[#0f1117] border-b border-white/8">
         <div className="relative bg-[#0c0f12] flex flex-col items-center pb-6">
           {/* Template + Highlight controls */}
-          <div className="w-full flex justify-end px-4 pt-4 pb-4">
+          <div className="w-full flex items-center justify-between px-4 pt-4 pb-4">
+            {/* Undo / Redo — visible only in edit mode */}
+            {editMode ? (
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={handleUndo}
+                  disabled={!canUndo}
+                  title="Undo (Ctrl+Z)"
+                  className={`flex items-center justify-center w-8 h-8 rounded-xl border transition-all duration-200 ${
+                    canUndo
+                      ? 'bg-[#0f1117]/90 text-white/70 border-[#006859]/30 hover:bg-white/10 hover:text-white active:scale-95'
+                      : 'bg-transparent text-white/20 border-white/5 cursor-not-allowed'
+                  }`}
+                >
+                  <Undo2 className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={handleRedo}
+                  disabled={!canRedo}
+                  title="Redo (Ctrl+Y)"
+                  className={`flex items-center justify-center w-8 h-8 rounded-xl border transition-all duration-200 ${
+                    canRedo
+                      ? 'bg-[#0f1117]/90 text-white/70 border-[#006859]/30 hover:bg-white/10 hover:text-white active:scale-95'
+                      : 'bg-transparent text-white/20 border-white/5 cursor-not-allowed'
+                  }`}
+                >
+                  <Redo2 className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            ) : (
+              <div />
+            )}
+            {/* T1 / T2 template switcher */}
             <div className="flex bg-[#0f1117]/90 backdrop-blur-md rounded-xl shadow-lg border border-[#006859]/30 overflow-hidden">
               <button onClick={() => setSelectedTemplate("templateLetter")} className={`px-3 py-2 text-[11px] font-bold transition-colors ${selectedTemplate === "templateLetter" ? "bg-primary text-white" : "text-white/60 hover:bg-white/10"}`}>T1</button>
               <div className="w-[1px] bg-white/10"></div>
@@ -885,7 +971,8 @@ export default function ResultPage() {
           {/* ── Section Pill Nav ── */}
           {editMode && resume && (
             <div className="flex-shrink-0 border-b border-white/8 bg-[#0f1117]/95 backdrop-blur-md px-4 py-2">
-              <div className="grid grid-cols-3 gap-1 sm:flex sm:flex-wrap sm:gap-1.5">
+              <div className="flex items-center gap-1.5 overflow-x-auto hide-scrollbar w-full">
+                <div className="w-full grid grid-cols-3 gap-1 sm:flex sm:flex-wrap sm:gap-1.5 sm:w-auto">
                 {/* Reorder pill — always first */}
                 <button
                   type="button"
@@ -953,6 +1040,8 @@ export default function ResultPage() {
                   <PlusCircle className="hidden sm:block w-3 h-3" />
                   + Custom
                 </button>
+                </div>
+
               </div>
             </div>
           )}
@@ -1371,7 +1460,19 @@ export default function ResultPage() {
                                 </div>
                                 <h3 className="font-headline text-2xl font-bold text-on-background">Education</h3>
                               </div>
-
+                              {editMode && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const newEducation = [...resume.education, { institution: '', location: '', degree: '', duration: '', cgpa: '' }];
+                                    updateResume({ education: newEducation });
+                                  }}
+                                  className="flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 hover:bg-primary/20 text-primary text-xs font-bold rounded-xl transition-colors border border-primary/20 flex-shrink-0"
+                                >
+                                  <PlusCircle className="w-3.5 h-3.5" />
+                                  Add
+                                </button>
+                              )}
                             </div>
 
                             <div>
@@ -1498,7 +1599,19 @@ export default function ResultPage() {
                                 </div>
                                 <h3 className="font-headline text-2xl font-bold text-on-background">Experience</h3>
                               </div>
-
+                              {editMode && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const newExperience = [...resume.experience, { job_title: '', company: '', location: '', duration: '', bullets: [''] }];
+                                    updateResume({ experience: newExperience });
+                                  }}
+                                  className="flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 hover:bg-primary/20 text-primary text-xs font-bold rounded-xl transition-colors border border-primary/20 flex-shrink-0"
+                                >
+                                  <PlusCircle className="w-3.5 h-3.5" />
+                                  Add
+                                </button>
+                              )}
                             </div>
 
                             <div>
@@ -1826,12 +1939,17 @@ export default function ResultPage() {
                               className="flex items-center justify-between mb-6"
                             >
                               <div className="flex items-center gap-3">
-                                <div className="w-12 h-12 rounded-2xl bg-secondary-container/20 flex items-center justify-center">
-                                  <Code className="w-6 h-6 text-secondary-container" />
+                                <div className="w-12 h-12 rounded-2xl bg-black/5 flex items-center justify-center">
+                                  <Code className="w-6 h-6 text-black" />
                                 </div>
                                 <h3 className="font-headline text-2xl font-bold text-on-background">Technical Skills</h3>
                               </div>
-
+                              {editMode && (
+                                <span className="hidden sm:inline-flex items-center gap-1 px-2.5 py-1 bg-primary/10 text-primary text-[10px] font-bold rounded-lg border border-primary/20 flex-shrink-0">
+                                  <Sparkles className="w-3 h-3" />
+                                  Tags
+                                </span>
+                              )}
                             </div>
 
                             <div>
@@ -2026,7 +2144,23 @@ export default function ResultPage() {
                                 </div>
                                 <h3 className="font-headline text-2xl font-bold text-on-background">Certifications & Achievements</h3>
                               </div>
-
+                              {editMode && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const newItems = [...uniqueItems, ''];
+                                    updateResume({
+                                      certifications_and_achievements: newItems,
+                                      certifications: [],
+                                      achievements: []
+                                    });
+                                  }}
+                                  className="flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 hover:bg-primary/20 text-primary text-xs font-bold rounded-xl transition-colors border border-primary/20 flex-shrink-0"
+                                >
+                                  <PlusCircle className="w-3.5 h-3.5" />
+                                  Add
+                                </button>
+                              )}
                             </div>
 
                             <div>
