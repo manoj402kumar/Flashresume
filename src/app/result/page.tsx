@@ -1072,8 +1072,7 @@ export default function ResultPage() {
                     className="soothing-light-theme text-on-background bg-surface-container-lowest rounded-[2rem] p-8 shadow-xl hover:shadow-2xl transition-all duration-300 border border-primary/5"
                   >
                     <div
-                      className={`flex items-center justify-between ${editMode ? 'cursor-pointer hover:opacity-80 transition-opacity mb-4' : 'mb-6'}`}
-                      role={editMode ? 'button' : undefined} tabIndex={editMode ? 0 : undefined} onClick={() => editMode && toggleSection("contact")}
+                      className="flex items-center justify-between mb-6"
                     >
                       <div className="flex items-center gap-3">
                         <div className="w-12 h-12 rounded-2xl bg-primary-container/20 flex items-center justify-center">
@@ -1081,23 +1080,9 @@ export default function ResultPage() {
                         </div>
                         <h3 className="font-headline text-2xl font-bold text-on-background">Contact Information</h3>
                       </div>
-                      {editMode && (
-                        <motion.div className="p-2 hover:bg-surface-container rounded-full transition-colors" animate={{ rotate: openEditSections["contact"] ? 180 : 0 }} transition={{ type: "spring", stiffness: 300, damping: 25 }}>
-                          <ChevronDown className="w-5 h-5 text-on-surface-variant" />
-                        </motion.div>
-                      )}
                     </div>
 
-                    <AnimatePresence initial={false}>
-                      {(!editMode || openEditSections["contact"]) && (
-                        <motion.div
-                          key="contact-content"
-                          initial={{ height: 0, opacity: 0 }}
-                          animate={{ height: "auto", opacity: 1 }}
-                          exit={{ height: 0, opacity: 0 }}
-                          transition={{ type: "spring", stiffness: 300, damping: 30, opacity: { duration: 0.2 } }}
-                          className="overflow-hidden"
-                        >
+                    <div>
                           {editMode ? (
                             <div className="space-y-3">
                               <input
@@ -1191,9 +1176,7 @@ export default function ResultPage() {
                               </div>
                             </>
                           )}
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
+                    </div>
                   </motion.div>}
 
                   {/* Section cards rendered in section_order sequence — mirrors PDF exactly */}
@@ -1215,14 +1198,13 @@ export default function ResultPage() {
                           className="soothing-light-theme text-on-background bg-surface-container-lowest rounded-[2rem] p-8 shadow-xl hover:shadow-2xl transition-all duration-300 border border-primary/5"
                         >
                           <div
-                            className={`flex items-center justify-between ${editMode ? 'cursor-pointer hover:opacity-80 transition-opacity mb-4' : 'mb-6'}`}
-                            role={editMode ? 'button' : undefined} tabIndex={editMode ? 0 : undefined} onClick={() => editMode && toggleSection(sectionId)}
+                            className="flex items-center justify-between mb-6"
                           >
                             <div className="flex items-center gap-3">
                               <div className="w-12 h-12 rounded-2xl bg-primary-container/20 flex items-center justify-center">
                                 <FileText className="w-6 h-6 text-primary" />
                               </div>
-                              {editMode && openEditSections[sectionId] ? (
+                              {editMode ? (
                                 <input
                                   type="text"
                                   value={customSection.heading}
@@ -1231,7 +1213,6 @@ export default function ResultPage() {
                                     newCustoms[customIndex].heading = e.target.value;
                                     updateResume({ custom_sections: newCustoms });
                                   }}
-                                  onClick={(e) => e.stopPropagation()}
                                   className="font-headline text-2xl font-bold rounded-xl px-4 py-2 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm w-full"
                                   placeholder="Section Heading"
                                 />
@@ -1239,23 +1220,9 @@ export default function ResultPage() {
                                 <h3 className="font-headline text-2xl font-bold text-on-background">{customSection.heading || "Custom Section"}</h3>
                               )}
                             </div>
-                            {editMode && (
-                              <motion.div className="p-2 hover:bg-surface-container rounded-full transition-colors flex-shrink-0" animate={{ rotate: openEditSections[sectionId] ? 180 : 0 }} transition={{ type: "spring", stiffness: 300, damping: 25 }}>
-                                <ChevronDown className="w-5 h-5 text-on-surface-variant" />
-                              </motion.div>
-                            )}
                           </div>
 
-                          <AnimatePresence initial={false}>
-                            {(!editMode || openEditSections[sectionId]) && (
-                              <motion.div
-                                key={`${sectionId}-content`}
-                                initial={{ height: 0, opacity: 0 }}
-                                animate={{ height: "auto", opacity: 1 }}
-                                exit={{ height: 0, opacity: 0 }}
-                                transition={{ type: "spring", stiffness: 300, damping: 30, opacity: { duration: 0.2 } }}
-                                className="overflow-hidden"
-                              >
+                          <div>
 
                                 <ul className="space-y-2">
                                   {(customSection.bullets ?? []).map((bulletObj, bidx) => (
@@ -1337,9 +1304,7 @@ export default function ResultPage() {
                                     </button>
                                   </div>
                                 )}
-                              </motion.div>
-                            )}
-                          </AnimatePresence>
+                          </div>
                         </motion.div>
                       );
                     }
@@ -1398,8 +1363,7 @@ export default function ResultPage() {
                             className="soothing-light-theme text-on-background bg-surface-container-lowest rounded-[2rem] p-8 shadow-xl hover:shadow-2xl transition-all duration-300 border border-primary/5"
                           >
                             <div
-                              className={`flex items-center justify-between ${editMode ? 'cursor-pointer hover:opacity-80 transition-opacity mb-4' : 'mb-6'}`}
-                              role={editMode ? 'button' : undefined} tabIndex={editMode ? 0 : undefined} onClick={() => editMode && toggleSection("education")}
+                              className="flex items-center justify-between mb-6"
                             >
                               <div className="flex items-center gap-3">
                                 <div className="w-12 h-12 rounded-2xl bg-secondary-container/20 flex items-center justify-center">
@@ -1407,23 +1371,10 @@ export default function ResultPage() {
                                 </div>
                                 <h3 className="font-headline text-2xl font-bold text-on-background">Education</h3>
                               </div>
-                              {editMode && (
-                                <motion.div className="p-2 hover:bg-surface-container rounded-full transition-colors" animate={{ rotate: openEditSections["education"] ? 180 : 0 }} transition={{ type: "spring", stiffness: 300, damping: 25 }}>
-                                  <ChevronDown className="w-5 h-5 text-on-surface-variant" />
-                                </motion.div>
-                              )}
+
                             </div>
 
-                            <AnimatePresence initial={false}>
-                              {(!editMode || openEditSections["education"]) && (
-                                <motion.div
-                                  key="education-content"
-                                  initial={{ height: 0, opacity: 0 }}
-                                  animate={{ height: "auto", opacity: 1 }}
-                                  exit={{ height: 0, opacity: 0 }}
-                                  transition={{ type: "spring", stiffness: 300, damping: 30, opacity: { duration: 0.2 } }}
-                                  className="overflow-hidden"
-                                >
+                            <div>
                                   <>
                                     {resume.education.map((edu, idx) => (
                                       <div key={idx} className="mb-6 last:mb-0">
@@ -1523,9 +1474,7 @@ export default function ResultPage() {
                                       </div>
                                     )}
                                   </>
-                                </motion.div>
-                              )}
-                            </AnimatePresence>
+                            </div>
                           </motion.div>
                         );
 
@@ -1541,8 +1490,7 @@ export default function ResultPage() {
                             className="soothing-light-theme text-on-background bg-surface-container-lowest rounded-[2rem] p-8 shadow-xl hover:shadow-2xl transition-all duration-300 border border-primary/5"
                           >
                             <div
-                              className={`flex items-center justify-between ${editMode ? 'cursor-pointer hover:opacity-80 transition-opacity mb-4' : 'mb-6'}`}
-                              role={editMode ? 'button' : undefined} tabIndex={editMode ? 0 : undefined} onClick={() => editMode && toggleSection("experience")}
+                              className="flex items-center justify-between mb-6"
                             >
                               <div className="flex items-center gap-3">
                                 <div className="w-12 h-12 rounded-2xl bg-tertiary-container/20 flex items-center justify-center">
@@ -1550,23 +1498,10 @@ export default function ResultPage() {
                                 </div>
                                 <h3 className="font-headline text-2xl font-bold text-on-background">Experience</h3>
                               </div>
-                              {editMode && (
-                                <motion.div className="p-2 hover:bg-surface-container rounded-full transition-colors" animate={{ rotate: openEditSections["experience"] ? 180 : 0 }} transition={{ type: "spring", stiffness: 300, damping: 25 }}>
-                                  <ChevronDown className="w-5 h-5 text-on-surface-variant" />
-                                </motion.div>
-                              )}
+
                             </div>
 
-                            <AnimatePresence initial={false}>
-                              {(!editMode || openEditSections["experience"]) && (
-                                <motion.div
-                                  key="experience-content"
-                                  initial={{ height: 0, opacity: 0 }}
-                                  animate={{ height: "auto", opacity: 1 }}
-                                  exit={{ height: 0, opacity: 0 }}
-                                  transition={{ type: "spring", stiffness: 300, damping: 30, opacity: { duration: 0.2 } }}
-                                  className="overflow-hidden"
-                                >
+                            <div>
                                   <>
 
                                     {resume.experience.map((exp, idx) => (
@@ -1700,9 +1635,7 @@ export default function ResultPage() {
                                       </div>
                                     )}
                                   </>
-                                </motion.div>
-                              )}
-                            </AnimatePresence>
+                            </div>
                           </motion.div>
                         );
 
@@ -1718,8 +1651,7 @@ export default function ResultPage() {
                             className="soothing-light-theme text-on-background bg-surface-container-lowest rounded-[2rem] p-8 shadow-xl hover:shadow-2xl transition-all duration-300 border border-primary/5"
                           >
                             <div
-                              className={`flex items-center justify-between ${editMode ? 'cursor-pointer hover:opacity-80 transition-opacity mb-4' : 'mb-6'}`}
-                              role={editMode ? 'button' : undefined} tabIndex={editMode ? 0 : undefined} onClick={() => editMode && toggleSection("projects")}
+                              className="flex items-center justify-between mb-6"
                             >
                               <div className="flex items-center gap-3">
                                 <div className="w-12 h-12 rounded-2xl bg-primary-container/20 flex items-center justify-center">
@@ -1727,23 +1659,10 @@ export default function ResultPage() {
                                 </div>
                                 <h3 className="font-headline text-2xl font-bold text-on-background">Projects</h3>
                               </div>
-                              {editMode && (
-                                <motion.div className="p-2 hover:bg-surface-container rounded-full transition-colors" animate={{ rotate: openEditSections["projects"] ? 180 : 0 }} transition={{ type: "spring", stiffness: 300, damping: 25 }}>
-                                  <ChevronDown className="w-5 h-5 text-on-surface-variant" />
-                                </motion.div>
-                              )}
+
                             </div>
 
-                            <AnimatePresence initial={false}>
-                              {(!editMode || openEditSections["projects"]) && (
-                                <motion.div
-                                  key="projects-content"
-                                  initial={{ height: 0, opacity: 0 }}
-                                  animate={{ height: "auto", opacity: 1 }}
-                                  exit={{ height: 0, opacity: 0 }}
-                                  transition={{ type: "spring", stiffness: 300, damping: 30, opacity: { duration: 0.2 } }}
-                                  className="overflow-hidden"
-                                >
+                            <div>
                                   <>
 
                                     {resume.projects.map((proj, idx) => (
@@ -1889,9 +1808,7 @@ export default function ResultPage() {
                                       </div>
                                     )}
                                   </>
-                                </motion.div>
-                              )}
-                            </AnimatePresence>
+                            </div>
                           </motion.div>
                         );
 
@@ -1906,8 +1823,7 @@ export default function ResultPage() {
                             className="soothing-light-theme text-on-background bg-surface-container-lowest rounded-[2rem] p-8 shadow-xl hover:shadow-2xl transition-all duration-300 border border-primary/5"
                           >
                             <div
-                              className={`flex items-center justify-between ${editMode ? 'cursor-pointer hover:opacity-80 transition-opacity mb-4' : 'mb-6'}`}
-                              role={editMode ? 'button' : undefined} tabIndex={editMode ? 0 : undefined} onClick={() => editMode && toggleSection("skills")}
+                              className="flex items-center justify-between mb-6"
                             >
                               <div className="flex items-center gap-3">
                                 <div className="w-12 h-12 rounded-2xl bg-secondary-container/20 flex items-center justify-center">
@@ -1915,23 +1831,10 @@ export default function ResultPage() {
                                 </div>
                                 <h3 className="font-headline text-2xl font-bold text-on-background">Technical Skills</h3>
                               </div>
-                              {editMode && (
-                                <motion.div className="p-2 hover:bg-surface-container rounded-full transition-colors" animate={{ rotate: openEditSections["skills"] ? 180 : 0 }} transition={{ type: "spring", stiffness: 300, damping: 25 }}>
-                                  <ChevronDown className="w-5 h-5 text-on-surface-variant" />
-                                </motion.div>
-                              )}
+
                             </div>
 
-                            <AnimatePresence initial={false}>
-                              {(!editMode || openEditSections["skills"]) && (
-                                <motion.div
-                                  key="skills-content"
-                                  initial={{ height: 0, opacity: 0 }}
-                                  animate={{ height: "auto", opacity: 1 }}
-                                  exit={{ height: 0, opacity: 0 }}
-                                  transition={{ type: "spring", stiffness: 300, damping: 30, opacity: { duration: 0.2 } }}
-                                  className="overflow-hidden"
-                                >
+                            <div>
                                   <>
 
                                     <div className="space-y-4">
@@ -2093,9 +1996,7 @@ export default function ResultPage() {
                                       )}
                                     </div>
                                   </>
-                                </motion.div>
-                              )}
-                            </AnimatePresence>
+                            </div>
                           </motion.div>
                         );
 
@@ -2117,8 +2018,7 @@ export default function ResultPage() {
                             className="soothing-light-theme text-on-background bg-surface-container-lowest rounded-[2rem] p-8 shadow-xl hover:shadow-2xl transition-all duration-300 border border-primary/5"
                           >
                             <div
-                              className={`flex items-center justify-between ${editMode ? 'cursor-pointer hover:opacity-80 transition-opacity mb-4' : 'mb-6'}`}
-                              role={editMode ? 'button' : undefined} tabIndex={editMode ? 0 : undefined} onClick={() => editMode && toggleSection("certifications")}
+                              className="flex items-center justify-between mb-6"
                             >
                               <div className="flex items-center gap-3">
                                 <div className="w-12 h-12 rounded-2xl bg-secondary-container/20 flex items-center justify-center">
@@ -2126,23 +2026,10 @@ export default function ResultPage() {
                                 </div>
                                 <h3 className="font-headline text-2xl font-bold text-on-background">Certifications & Achievements</h3>
                               </div>
-                              {editMode && (
-                                <motion.div className="p-2 hover:bg-surface-container rounded-full transition-colors" animate={{ rotate: openEditSections["certifications"] ? 180 : 0 }} transition={{ type: "spring", stiffness: 300, damping: 25 }}>
-                                  <ChevronDown className="w-5 h-5 text-on-surface-variant" />
-                                </motion.div>
-                              )}
+
                             </div>
 
-                            <AnimatePresence initial={false}>
-                              {(!editMode || openEditSections["certifications"]) && (
-                                <motion.div
-                                  key="certifications-content"
-                                  initial={{ height: 0, opacity: 0 }}
-                                  animate={{ height: "auto", opacity: 1 }}
-                                  exit={{ height: 0, opacity: 0 }}
-                                  transition={{ type: "spring", stiffness: 300, damping: 30, opacity: { duration: 0.2 } }}
-                                  className="overflow-hidden"
-                                >
+                            <div>
                                   <>
                                     <ul className="space-y-3">
                                       {uniqueItems.map((item, idx) => (
@@ -2204,9 +2091,7 @@ export default function ResultPage() {
                                       </div>
                                     )}
                                   </>
-                                </motion.div>
-                              )}
-                            </AnimatePresence>
+                            </div>
                           </motion.div>
                         );
                       }
