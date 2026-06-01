@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
@@ -457,9 +457,11 @@ export default function ResultPage() {
     if (resume && historyRef.current.length === 0) {
       historyRef.current = [resume];
       historyIndexRef.current = 0;
+      setCanUndo(false);
+      setCanRedo(false);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [resume === null]);
+  }, [!!resume]);
 
   // Keyboard shortcuts: Ctrl+Z → undo, Ctrl+Y / Ctrl+Shift+Z → redo
   useEffect(() => {
@@ -929,7 +931,7 @@ export default function ResultPage() {
                 )}
               </div>
             )}
-            <div className="flex gap-2">
+            <div className="flex gap-2 items-center">
               <button
                 onClick={() => { setEditMode(true); setShowChanges(false); setShowMissedKeywords(false); }}
                 className={`relative flex-1 py-3 px-1 sm:px-3 text-xs sm:text-sm whitespace-nowrap font-bold transition-all duration-200 rounded-2xl flex items-center justify-center gap-1 sm:gap-2 active:scale-95 ${editMode
@@ -964,6 +966,37 @@ export default function ResultPage() {
                     <span className="absolute -top-1.5 -right-1.5 flex min-w-[18px] h-[18px] items-center justify-center rounded-full bg-error px-1 text-[10px] font-bold text-white shadow-md ring-2 ring-[#0f1117]">{missingKeywords.length}</span>
                   )}
                 </button>
+              )}
+              {/* Undo / Redo — always visible in edit mode on both mobile & desktop */}
+              {editMode && (
+                <div className="flex items-center gap-1 ml-auto flex-shrink-0">
+                  <button
+                    type="button"
+                    onClick={handleUndo}
+                    disabled={!canUndo}
+                    title="Undo (Ctrl+Z)"
+                    className={`flex items-center justify-center w-8 h-8 rounded-xl border transition-all duration-200 ${
+                      canUndo
+                        ? 'bg-[#0f1117]/90 text-white/70 border-[#006859]/30 hover:bg-white/10 hover:text-white active:scale-95'
+                        : 'bg-transparent text-white/20 border-white/5 cursor-not-allowed'
+                    }`}
+                  >
+                    <Undo2 className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleRedo}
+                    disabled={!canRedo}
+                    title="Redo (Ctrl+Y)"
+                    className={`flex items-center justify-center w-8 h-8 rounded-xl border transition-all duration-200 ${
+                      canRedo
+                        ? 'bg-[#0f1117]/90 text-white/70 border-[#006859]/30 hover:bg-white/10 hover:text-white active:scale-95'
+                        : 'bg-transparent text-white/20 border-white/5 cursor-not-allowed'
+                    }`}
+                  >
+                    <Redo2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
               )}
             </div>
           </div>
