@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
@@ -223,6 +223,11 @@ export default function ResultPage() {
       historyIndexRef.current = truncated.length - 1;
       setCanUndo(historyIndexRef.current > 0);
       setCanRedo(false);
+      // Persist history so undo/redo survives a page refresh
+      try {
+        localStorage.setItem("resume_history", JSON.stringify(truncated));
+        localStorage.setItem("resume_history_index", String(truncated.length - 1));
+      } catch (_) {}
       return next;
     });
   };
@@ -234,6 +239,7 @@ export default function ResultPage() {
     setResume(prev);
     setCanUndo(historyIndexRef.current > 0);
     setCanRedo(true);
+    try { localStorage.setItem("resume_history_index", String(historyIndexRef.current)); } catch (_) {}
   };
 
   const handleRedo = () => {
@@ -243,6 +249,7 @@ export default function ResultPage() {
     setResume(next);
     setCanUndo(true);
     setCanRedo(historyIndexRef.current < historyRef.current.length - 1);
+    try { localStorage.setItem("resume_history_index", String(historyIndexRef.current)); } catch (_) {}
   };
 
   const handleSectionDragStart = (e: React.DragEvent, sectionId: string) => {
@@ -452,9 +459,25 @@ export default function ResultPage() {
     fetchSession();
   }, [router]);
 
-  // Seed history once resume first loads
+  // Seed history once resume first loads — restore from localStorage if available
   useEffect(() => {
     if (resume && historyRef.current.length === 0) {
+      try {
+        const savedHistory = localStorage.getItem("resume_history");
+        const savedIndex = localStorage.getItem("resume_history_index");
+        if (savedHistory && savedIndex !== null) {
+          const parsedHistory: TemplateV1[] = JSON.parse(savedHistory);
+          const parsedIndex = parseInt(savedIndex, 10);
+          if (Array.isArray(parsedHistory) && parsedHistory.length > 0 && parsedIndex >= 0 && parsedIndex < parsedHistory.length) {
+            historyRef.current = parsedHistory;
+            historyIndexRef.current = parsedIndex;
+            setCanUndo(parsedIndex > 0);
+            setCanRedo(parsedIndex < parsedHistory.length - 1);
+            return; // restored — skip default seed
+          }
+        }
+      } catch (_) {}
+      // Fallback: seed with current resume as starting point
       historyRef.current = [resume];
       historyIndexRef.current = 0;
       setCanUndo(false);
@@ -524,7 +547,8 @@ export default function ResultPage() {
   const handleStartOver = () => {
     // Only clear resume workflow keys — do NOT clear auth session
     ["resume_text", "job_description", "analysis", "generated_resume",
-      "no_jd_mode", "no_ai_changes", "approved_project", "preferred_model"].forEach(
+      "no_jd_mode", "no_ai_changes", "approved_project", "preferred_model",
+      "resume_history", "resume_history_index"].forEach(
         (key) => localStorage.removeItem(key)
       );
     router.push("/");
