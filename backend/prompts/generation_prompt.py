@@ -34,8 +34,8 @@ Step 0: Determine Candidate Level
 Step 1: Resume sections already available in RESUME_TEXT below.
 
 Step 2: Summary
-Write/rewrite a powerful summary highlighting why the candidate is the best fit for JOB_DESCRIPTION.
-STRICT: Summary MUST be exactly 16-20 words.
+Write/rewrite a powerful summary highlighting why the candidate is the best fit for JOB_DESCRIPTION. It should impress the recruiter and make them want to read the whole resume. Include oucomes if any.
+STRICT: Summary MUST be exactly 20 -24 words.
 
 Step 3: Education
 - Keep as-is, no changes. Include ALL qualifications (B.Tech, XII, Diploma, etc.).

@@ -1072,7 +1072,7 @@ export default function ResultPage() {
                   const isCustom = sid.startsWith('custom_');
                   const customSection = isCustom ? resume.custom_sections?.find(s => s.id === sid) : null;
                   const meta = isCustom
-                    ? { label: customSection?.heading || 'Custom', icon: <FileText className="w-3 h-3" /> }
+                    ? { label: (customSection?.heading || 'Custom').slice(0, 16) + ((customSection?.heading || '').length > 16 ? '…' : ''), icon: <FileText className="w-3 h-3" /> }
                     : SECTION_LABELS[sid];
                   if (!meta) return null;
                   const isActive = activeEditSection === sid;
@@ -1081,13 +1081,14 @@ export default function ResultPage() {
                       key={sid}
                       type="button"
                       onClick={() => selectEditSection(sid)}
-                      className={`w-full sm:w-auto flex items-center justify-center sm:justify-start gap-1 sm:gap-1.5 px-1.5 sm:px-3 py-1.5 rounded-full text-[10px] sm:text-xs font-bold whitespace-nowrap transition-all duration-200 border ${isActive
+                      className={`w-full sm:w-auto flex items-center justify-center sm:justify-start gap-1 sm:gap-1.5 px-1.5 sm:px-3 py-1.5 rounded-full text-[10px] sm:text-xs font-bold whitespace-nowrap transition-all duration-200 border max-w-[120px] sm:max-w-[150px] ${isActive
                           ? 'bg-[#12f8d7]/10 text-[#12f8d7] border-[#12f8d7] shadow-sm'
                           : 'bg-white/6 text-white/50 border-white/10 hover:bg-white/10 hover:text-white/80'
                         }`}
+                      title={customSection?.heading || 'Custom'}
                     >
                       <span className="hidden sm:inline-flex [&>svg]:w-3 [&>svg]:h-3">{meta.icon}</span>
-                      {meta.label}
+                      <span className="truncate">{meta.label}</span>
                     </button>
                   );
                 })}
