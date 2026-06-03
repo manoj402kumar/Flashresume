@@ -69,24 +69,24 @@ Case 2 — APPROVED_PROJECT is present (not "none"):
 For the SECOND PROJECT (if in SELECTED_PROJECTS):
 - It exists in RESUME_TEXT — preserve original title, tech_stack, and bullets.
 - Only inject non-tech-stack keywords where they naturally fit (debugging, error handling, CI/CD, testing, code review).
-- Do NOT inject languages, frameworks, or libraries if the project's tech stack doesn't match.
+- Do NOT inject languages, frameworks, or libraries if the project's tech stack doesn't match exaclty.
 
 Case 1 — APPROVED_PROJECT is "none" (both projects already in resume):
 - Keep original title and tech_stack — do NOT rewrite them.
 - INSERT missing keywords (70-90%) into existing bullets where they fit naturally without changing original meaning.
-- Inject tech-stack keywords into the matching project's stack only. Do NOT inject a language/framework into a mismatched project.
+- Inject tech-stack keywords into the matching project's stack only. Do NOT inject a language/framework/database into a mismatched project.
 - Inject non-tech-stack keywords (debugging, testing, CI/CD) into either project where they fit.
-- Do NOT change facts or data — candidate must prove every bullet.
+- Do NOT change facts or data — candidate must prove every bullet since he has to prove them in actual interview.
 - If bullet already has numbers/metrics, keep them exactly.
 - Rewrite weak bullets with better framing, but injecting missing keywords is mandatory.
 
-MISSING KEYWORDS INJECTION (applies to ALL cases) — HIGHEST PRIORITY:
+MISSING KEYWORDS INJECTION (applies to ALL cases) — HIGHEST PRIORITY: (ignore an other contradiction in the prompt)
 INJECT EVERY SINGLE KEYWORD from "MISSING KEYWORDS TO INJECT". For OR groups (e.g., "aws/azure"), inject exactly one alternative that fits best — never write the literal slash string into a bullet.
 
 Distribution:
 (i) Project bullets — FIRST PRIORITY (70-90% of missing keywords).
     Case 2: approved project bullets get most. Second project gets only non-tech-stack keywords.
-    Case 1: inject tech stack keywords into the matching project only. Non-tech-stack into either where fits naturally
+    Case 1: inject tech stack keywords into the tech stack matching project only. Non-tech-stack into either where fits naturally
 (ii) Work experience bullets — 10-20% ONLY if keyword directly matches the experience's tech stack. Never add languages/frameworks/libraries if the stack doesn't match. If 0 work experience → put all into project bullets.
 (iii) Miscellaneous Skills — max 1-2 broad concepts only (e.g., Agile, Code Review). NEVER languages/frameworks here.
 Every keyword MUST appear at least once. No exceptions. Weave naturally, not bolted on.
@@ -128,11 +128,11 @@ RULES:
 1. Return ONLY valid JSON. No markdown, no **bold**, no *italics*, no # headers inside values. Plain text only.
 2. NEVER output null for string fields (degree, company, job_title, etc.). Use empty string "" if missing.
 3. "changes" field: list EVERY modification — "Enhanced [section] bullet X: [old] → [new]", "Injected 'keyword' into Project X bullet Y", "Added X to developer_tools", "Removed Django — not relevant to Java/Spring Boot JD", etc.
-4. "ai_suggestions" field: 5-7 honest, personalized, actionable career tips based on THIS candidate's gaps and JD requirements.
+4. "ai_suggestions" field: 5-9 honest, personalized, actionable career tips based on THIS candidate's gaps and JD requirements.
    - Be specific — mention actual JD tech stack and their specific gaps, not generic advice.
    - Always include: "Reach out to HRs, Talent Acquisition, Lead developers for referrals for more chances to get shortlisted."
    - Always include DSA tip: "Solve top interview 150 DSA problems on LeetCode focusing on Arrays, Strings, Trees, DP, and Graphs. Aim for 1700+ contest rating to clear most coding interviews."
-   - Always include: "Conribute to opensource in x tech stack" where x is jd core tech s
+   - Always include: "Conribute to opensource on github in x tech stack" where x is jd core tech s
    - If approved project was suggested → include: "Build the [project title] project using [tech stack] — this directly fills your [JD tech] gap and gives you something concrete to show recruiters."
    - Suggest 1 specific certfication relevant to the JD tech stack.
    - Address user as "you". Output as flat array of plain strings. Only give suggestions when genuinely needed.
