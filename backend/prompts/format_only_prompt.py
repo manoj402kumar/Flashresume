@@ -25,6 +25,7 @@ CONDITIONAL tips (only if genuinely applicable and missing based on RESUME_TEXT)
 - If only 1 project: "Build at least 2-3 solid projects in your tech stack with different complexity levels — a CRUD app, a real-time feature, and one with a deployed backend. Quantity signals consistency."
 - If no summary: "Add a 2-line professional summary at the top of your resume — it's the first thing recruiters read and it sets the context for your entire profile."
 - if no hackahons paticipated: "Participate in hackathons where you learn to build products in least time and sometimes money as well."
+- if basic projects: "Try to build projects that solves the real problem that you are facing or other people are facing"
 Address the user as 'you'. Output as a flat array of plain strings. Keep each suggestion under 40 words. Be direct and specific — no generic filler.
 
 OUTPUT FORMAT (Template v1):
