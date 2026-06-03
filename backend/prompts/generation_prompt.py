@@ -34,7 +34,7 @@ Step 0: Determine Candidate Level
 Step 1: Resume sections already available in RESUME_TEXT below.
 
 Step 2: Summary
-Write/rewrite a powerful summary highlighting why the candidate is the best fit for JOB_DESCRIPTION. It should impress the recruiter and make them want to read the whole resume. Include oucomes if any.
+Write/rewrite a powerful summary highlighting why the candidate is the best fit for JOB_DESCRIPTION. It should impress the recruiter and make them want to read the whole resume. Include outcomes if any.
 STRICT: Summary MUST be exactly 20 -24 words.
 
 Step 3: Education
@@ -128,7 +128,7 @@ RULES:
 1. Return ONLY valid JSON. No markdown, no **bold**, no *italics*, no # headers inside values. Plain text only.
 2. NEVER output null for string fields (degree, company, job_title, etc.). Use empty string "" if missing.
 3. "changes" field: list EVERY modification — "Enhanced [section] bullet X: [old] → [new]", "Injected 'keyword' into Project X bullet Y", "Added X to developer_tools", "Removed Django — not relevant to Java/Spring Boot JD", etc.
-4. "ai_suggestions" field: 5-9 honest, personalized, actionable career tips based on THIS candidate's gaps and JD requirements.
+4. "ai_suggestions" field: 5-8 honest, personalized, actionable career tips based on THIS candidate's gaps and JD requirements.
    - Be specific — mention actual JD tech stack and their specific gaps, not generic advice.
    - Always include: "Reach out to HRs, Talent Acquisition, Lead developers for referrals for more chances to get shortlisted."
    - Always include DSA tip: "Solve top interview 150 DSA problems on LeetCode focusing on Arrays, Strings, Trees, DP, and Graphs. Aim for 1700+ contest rating to clear most coding interviews."
