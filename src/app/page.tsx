@@ -857,9 +857,6 @@ export default function App() {
                 {optimizeMode === "jd" && (
                   <ModelSelector storageKey="r1_preferred_model" label="R1 Model (Analysis)" />
                 )}
-                {optimizeMode === "no_jd" && (
-                  <ModelSelector storageKey="preferred_model" label="R2 Model (Generation)" />
-                )}
                 {optimizeMode === "manual" && (
                   <ModelSelector storageKey="preferred_model" label="R2 Model (Generation)" />
                 )}
