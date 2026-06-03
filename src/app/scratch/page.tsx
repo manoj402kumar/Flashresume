@@ -347,23 +347,27 @@ export default function ScratchPage() {
     checkAccess();
   }, []);
 
-  // Seed undo history once resume loads
+  // Seed undo history exactly once when the blank template first loads
+  const hasSeeded = useRef(false);
   useEffect(() => {
-    if (resume && historyRef.current.length === 0) {
-      historyRef.current = [resume];
-      historyIndexRef.current = 0;
-      setCanUndo(false);
-      setCanRedo(false);
-    }
+    if (!resume || hasSeeded.current) return;
+    hasSeeded.current = true;
+    historyRef.current = [resume];
+    historyIndexRef.current = 0;
+    setCanUndo(false);
+    setCanRedo(false);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [!!resume]);
+  }, [resume]);
 
   // Keyboard shortcuts: Ctrl+Z undo, Ctrl+Y redo
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (!editMode) return;
-      const tag = (e.target as HTMLElement)?.tagName;
+      const el = e.target as HTMLElement;
+      const tag = el?.tagName;
+      // Block when user is typing in any text input
       if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+      if (el?.isContentEditable) return;
       if (e.ctrlKey || e.metaKey) {
         if (e.key === 'z' && !e.shiftKey) { e.preventDefault(); handleUndo(); }
         if (e.key === 'y' || (e.key === 'z' && e.shiftKey)) { e.preventDefault(); handleRedo(); }
@@ -387,9 +391,14 @@ export default function ScratchPage() {
     setResume((prev) => {
       if (!prev) return null;
       const next = { ...prev, ...updates };
+      // Slice off any redo states beyond current index
       const truncated = historyRef.current.slice(0, historyIndexRef.current + 1);
       truncated.push(next);
-      if (truncated.length > MAX_HISTORY) truncated.shift();
+      // If we exceed the max, drop the oldest entry and keep index in sync
+      if (truncated.length > MAX_HISTORY) {
+        truncated.shift();
+        historyIndexRef.current = Math.max(0, historyIndexRef.current - 1);
+      }
       historyRef.current = truncated;
       historyIndexRef.current = truncated.length - 1;
       setCanUndo(historyIndexRef.current > 0);
@@ -404,17 +413,21 @@ export default function ScratchPage() {
   const handleUndo = () => {
     if (historyIndexRef.current <= 0) return;
     historyIndexRef.current -= 1;
-    setResume(historyRef.current[historyIndexRef.current]);
+    const state = historyRef.current[historyIndexRef.current];
+    setResume(state);
     setCanUndo(historyIndexRef.current > 0);
     setCanRedo(true);
+    try { localStorage.setItem("generated_resume", JSON.stringify(state)); } catch (_) {}
   };
 
   const handleRedo = () => {
     if (historyIndexRef.current >= historyRef.current.length - 1) return;
     historyIndexRef.current += 1;
-    setResume(historyRef.current[historyIndexRef.current]);
+    const state = historyRef.current[historyIndexRef.current];
+    setResume(state);
     setCanUndo(true);
     setCanRedo(historyIndexRef.current < historyRef.current.length - 1);
+    try { localStorage.setItem("generated_resume", JSON.stringify(state)); } catch (_) {}
   };
 
   const handleDownloadPDF = async () => {

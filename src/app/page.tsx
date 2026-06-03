@@ -853,14 +853,6 @@ export default function App() {
                   </button>
                 )}
 
-                {/* Model Selectors */}
-                {optimizeMode === "jd" && (
-                  <ModelSelector storageKey="r1_preferred_model" label="R1 Model (Analysis)" />
-                )}
-                {optimizeMode === "manual" && (
-                  <ModelSelector storageKey="preferred_model" label="R2 Model (Generation)" />
-                )}
-
                 {/* Main CTA */}
                 <button
                   onClick={handleGenerate}

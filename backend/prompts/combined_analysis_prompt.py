@@ -54,9 +54,10 @@ CASE 1 — No new project needed:
 
 CASE 2 — New project needed:
   Trigger only if Case 1 fails: Significant, undeniable gap in JD's core tech stack (languages, frameworks, libraries) that no existing project can reasonably cover.
-  Action: Suggest a new project using JD's primary tech stack. Second project = most relevant existing resume project (always include it).
+  Action: Suggest a new project using JD's primary tech stack that solves real world problem. Second project = most relevant existing resume project (always include it).
 
-STEP 4: Build suggested_project (Case 2 only):
+STEP 4: Build suggested_project (for Case 2 only):
+  select a project idea that solves real world problem and aligns with JD's tech stack and requirements.
   title: creative domain-specific product name. Pattern: domain-action word + product suffix. INVENT a unique name — do NOT reuse examples from this prompt.
   tech_stack: 4-5 technologies from JD's required stack (comma-separated string).
   description: 2-3 sentences — (a) real-world problem solved, (b) how JD tech is used naturally, (c) outcome. Rich enough to write 3 bullets from.
