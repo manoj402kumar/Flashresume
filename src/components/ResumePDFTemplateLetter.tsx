@@ -35,7 +35,7 @@ const styles = StyleSheet.create({
   },
   // Heading Section
   heading: {
-    marginBottom: 8,
+    marginBottom: 0,
     textAlign: "center",
   },
   name: {
