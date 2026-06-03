@@ -1,194 +1,94 @@
 COMBINED_ANALYSIS_PROMPT = """
-Read whole prompt once and proceed to Json result.
-You must perform TWO analysis tasks on the same resume and job description below, and return ONE unified JSON object containing results from both tasks.
+Read whole prompt once then output JSON. Perform TWO tasks on the resume and job description below. Return ONE unified JSON object. Return ONLY valid JSON. No markdown, no bold/italic formatting inside values, no explanation.
 
-Return ONLY valid JSON. No markdown code blocks. DO NOT use markdown formatting (like **bold**, *italics*, etc.) inside the JSON string values. Use plain text only. No explanation. Raw JSON only.
+INPUT LABELS:
+- RESUME_TEXT: raw resume text (see bottom)
+- JOB_DESCRIPTION: target job description (see bottom)
+Do both tasks independently.
 
-INPUT LABELS (referred throughout this prompt):
-- RESUME_TEXT → The raw original resume text uploaded by the user (see bottom of this prompt)
-- JOB_DESCRIPTION → The target job description (see bottom of this prompt)
-Note: Do both tasks independently.
---------------------------------------------------------------------------
+OR CONDITION RULE (apply throughout both tasks):
+When JD lists alternatives via "/", "OR", commas, or natural language ("one of React, Angular, Vue", "java/python") — treat the entire group as ONE slot.
+- Resume matches ANY ONE → slot is MATCHED. Add only the matched alternative to matched_skills. Do NOT add unmatched alternatives to missing_skills.
+- Resume matches NONE → slot is MISSING. Add the full group as ONE entry (e.g. "java/python") to missing_skills.
+- NEVER split one OR group into separate entries.
 
-════════════════════════════════════════════════════
-TASK 1: ATS SCORE ANALYSIS
-════════════════════════════════════════════════════
+---- TASK 1: ATS SCORE ANALYSIS ----
 
-Act as best ATS resume analyzer wrt given job description.
-Analyze this resume against the job description. Calculate ATS score and missing skills as instructed below.
+Act as an ATS resume analyzer. TARGET USERS: freshers to experienced professionals.
 
-TARGET USERS: B.Tech freshers (0-1 year experience) to experienced professionals.
-OBJECTIVE: Calculate ATS score based on rigorous keyword and concept matching.
+DEFINITION OF A SKILL/KEYWORD — extract ALL ATS-relevant keywords from the entire JD:
+- Hard Skills & Technologies (Spring Boot, REST APIs, SQL, Git, MongoDB)
+- Programming Concepts & Paradigms (OOP, Multithreading, Exception Handling)
+- Methodologies & Practices (Unit Testing, CI/CD, Agile, Code Review)
+- System Design Concepts (Microservices, Caching, Authentication)
 
-OR CONDITION RULE — apply this FIRST before any matching:
-When the JD lists alternative technologies — whether using "/", "OR", commas, or natural language like
-"Proficiency in Java or Python", "one of React, Angular, Vue", "Java/Python/Go",
-"proficiency in any one of Python, Java" — treat the ENTIRE group as ONE slot.
-- If resume matches ANY ONE alternative → slot is MATCHED. Add only the matched alternative
-  (e.g., "python") to matched_skills. Do NOT add the other unmatched alternatives to missing_skills.
-- If resume matches NONE → slot is MISSING. Add the full group as ONE entry (e.g., "java/python")
-  to missing_skills. Do NOT split into separate items.
-- NEVER add both "java" and "python" as two separate entries when they come from the same OR group.
+Rules:
+1. Extract ALL critical keywords from the JD using the definition above.
+2. Apply OR CONDITION RULE — normalize slash/OR groups into single slots before matching.
+3. Strict matching: a skill is matched ONLY if explicitly stated in RESUME_TEXT. Do NOT infer. Scan ALL sections (Summary, Skills, Projects, Experience, Education, Certifications).
+4. matched_skills: skills from JOB_DESCRIPTION explicitly present in RESUME_TEXT.
+5. all_missing_skills: skills from JOB_DESCRIPTION NOT in RESUME_TEXT. One entry per slot; OR groups as single "x/y" entry.
+6. A skill cannot appear in both lists.
+7. Do NOT add any skill to matched_skills that is not in JOB_DESCRIPTION.
+8. ATS score = (matched_skills count / (matched + missing) count) * 100.
 
-Examples of correct OR behavior:
-  JD: "java/python", Resume has Python → matched_skills: ["python"]        (java is NOT in missing_skills)
-  JD: "Proficiency in Java or Python", Resume has Python → matched_skills: ["python"]  (java is NOT in missing_skills)
-  JD: "java/python", Resume has neither → missing_skills: ["java/python"]  (one entry, not two)
-  JD: "react OR angular", Resume has React → matched_skills: ["react"]     (angular is NOT in missing_skills)
-  JD: "mysql/postgresql", Resume has MySQL → matched_skills: ["mysql"]     (postgresql is NOT in missing_skills)
-  JD: "proficiency in any one of Python, Java", Resume has Python → matched_skills: ["python"]  (java is NOT in missing_skills)
-  JD: "proficiency in any one of Python, Java", Resume has neither → missing_skills: ["python/java"]  (one entry, not two)
-  JD: "REST API deployment (Flask or FastAPI)", Resume has FastAPI → matched_skills: ["fastapi"]  (flask is NOT in missing_skills)
+MANDATORY SELF-VALIDATION: For each skill in all_missing_skills, re-scan ENTIRE RESUME_TEXT once more. If found anywhere — move it to matched_skills.
 
-CRITICAL INSTRUCTION - DEFINITION OF A "SKILL/KEYWORD":
-Do NOT restrict your extraction to just tools and frameworks (like React, Java, MongoDB). You MUST comprehensively extract all ATS-relevant keywords from the ENTIRE Job Description (both "Responsibilities" and "Qualifications" sections).
-This includes:
-- Hard Skills & Technologies (e.g., Spring Boot, REST APIs, SQL, Git, MongoDB)
-- Programming Concepts & Paradigms (e.g., OOP, Multithreading, Exception Handling, Collections)
-- Methodologies & Practices (e.g., Unit Testing, CI/CD, Agile, Code Review, Bug Fixing)
-- System Design Concepts (e.g., Microservices, Caching, Load Balancing, Security, Authentication)
+---- TASK 2: PROJECT RELEVANCE CHECK ----
 
-Analysis Rules:
-1. Extract ALL critical keywords/concepts from the JD using the expanded definition above.
-2. Apply OR CONDITION RULE first — normalize all slash/OR groups into single slots before matching.
-3. Strict Verification for Matches: A concept/keyword is ONLY a matched_skill if it is EXPLICITLY stated in RESUME_TEXT. Do NOT infer, assume, or guess a skill. (e.g., if RESUME_TEXT says "REST API", do not assume "Microservices" unless that word is actually in RESUME_TEXT).
-   SCAN ALL SECTIONS: Read RESUME_TEXT top to bottom — Summary, Skills, Projects (titles, tech stacks, bullets), Work Experience (bullets), Education, and Certifications. A keyword found in ANY section counts as matched.
-4. Identify matched_skills: (don't forget) ONLY skills that are (a) extracted from JOB_DESCRIPTION AND (b) explicitly present in RESUME_TEXT (any section). Source is always JOB_DESCRIPTION — never add a RESUME_TEXT-only skill here.
-5. Identify all_missing_skills: (don't forget) ONLY skills extracted from JOB_DESCRIPTION that are NOT present in RESUME_TEXT. One entry per slot; OR groups shown as single "x/y" entry.
-6. HARD EXCLUSION: A skill CANNOT appear in both matched_skills and all_missing_skills. If it matched, it is matched only. If it is missing, it is missing only.
-7. HARD EXCLUSION: Do NOT add any skill to matched_skills that is not present in JOB_DESCRIPTION, even if it appears in RESUME_TEXT.
-8. Calculate ATS score: (count of matched_skills / (count of matched_skills + count of all_missing_skills)) * 100
+Analyze RESUME_TEXT projects against JOB_DESCRIPTION. Decide which 2 projects to include.
 
-⚠️ MANDATORY SELF-VALIDATION (before outputting JSON):
-For each skill in your all_missing_skills list, re-scan the ENTIRE RESUME_TEXT one more time.
-If the skill (or any OR alternative) appears ANYWHERE in the resume — move it to matched_skills.
-This catches accidental misses, especially for skills in the Technical Skills section or project tech stacks.
+STEP 1: Extract JD tech requirements (languages, frameworks, libraries, databases, tools). Apply OR normalization.
 
-------------------------------------------------------------------
+STEP 2: Find all projects in RESUME_TEXT. A project = named entry with title, tech stack, and at least 1 bullet. Skills-only sections or phrases like "built 12+ projects" are NOT projects.
 
-════════════════════════════════════════════════════
-TASK 2: PROJECT RELEVANCE CHECK
-════════════════════════════════════════════════════
+STEP 3: Decide the case:
 
-You are an ATS resume expert. Analyze the RESUME_TEXT projects against the JOB_DESCRIPTION and decide which 2 projects to include in the final resume.
-
-OR CONDITION RULE — apply throughout all steps:
-When a JOB_DESCRIPTION lists technologies separated by "/", "OR", commas, or natural language like "proficiency in any one of Python, Java" or "one of React, Angular, Vue" — treat the entire group as ONE slot. Matching ANY ONE satisfies the whole slot. Never treat them as separate independent requirements.
-Example: JOB_DESCRIPTION says "java/python" → if RESUME_TEXT has Python, the language slot is fully satisfied. Java is NOT a missing requirement.
-Example: JOB_DESCRIPTION says "proficiency in any one of Python, Java" → if RESUME_TEXT has Python, the slot is fully satisfied.
-
-────────────────────────────────────────────────────
-STEP 1: Extract JOB_DESCRIPTION tech requirements
-────────────────────────────────────────────────────
-List every language, framework, library, database, and tool the JOB_DESCRIPTION requires.
-Apply OR normalization: "java/python/nodejs" → one slot [java OR python OR nodejs].
-
-────────────────────────────────────────────────────
-STEP 2: Find all projects in the RESUME_TEXT
-────────────────────────────────────────────────────
-A project is a named entry with a title, tech stack, and at least 1 descriptive bullet.
-Skills listed under SKILLS or phrases like "built 12+ projects" are NOT projects.
-
-────────────────────────────────────────────────────
-STEP 3: Decide the case — check in this EXACT order
-────────────────────────────────────────────────────
-
-MATCHING SCOPE — what counts as "language/framework/library" for Case triggers:
-  ✅ COUNTS: Programming languages (Java, Python, JavaScript, C++, Go, TypeScript),
-             Frameworks (Spring Boot, Django, React, Angular, Express.js, Flask, Node.js, Next.js),
-             Libraries (NumPy, Pandas, jQuery, Mongoose, TensorFlow)
-  ❌ DOES NOT COUNT: Databases (MongoDB, MySQL, PostgreSQL, Redis),
-                     Concepts (REST APIs, Microservices, OOP, Multithreading),
-                     DevOps/Tools (Docker, Git, Kubernetes, CI/CD, Postman),
-                     Methodologies (Agile, Scrum, Code Review, Unit Testing)
+MATCHING SCOPE for case triggers — ONLY consider:
+  COUNTS: Programming languages, Frameworks, Libraries
+  DOES NOT COUNT: Databases, Concepts (REST APIs, OOP), DevOps/Tools (Docker, Git), Methodologies (Agile)
 
 CASE 1 — No new project needed:
-
-  Trigger: RESUME_TEXT projects already cover the majority of the JOB_DESCRIPTION's primary
-           tech stack (languages, frameworks, libraries only). Use your judgment — consider parent
-           technologies (e.g., Next.js implies JavaScript, FastAPI implies Python), "or similar"
-           phrasing, and soft requirements ("one of", "e.g.", "etc.") as satisfied.
-           OR CONDITION: If JOB_DESCRIPTION lists alternatives such as "Java/Python" or
-           "React OR Angular", matching ANY ONE fully satisfies that slot (e.g., Python alone
-           satisfies "Java/Python") — do NOT treat unmatched alternatives as missing requirements.
-           Dont consider Databases, cloud services, and DevOps tools or any concepts for project matching requirements.(strictly follow) - only consider languages, libraries, frameworks following OR codnition rule.
-  Action: Pick the top 2 most JOB_DESCRIPTION-relevant projects. No new project needed.
+  Trigger: Resume projects already cover the majority of JD's primary tech stack (languages, frameworks, libraries only). Consider parent technologies (Next.js implies JavaScript), "or similar" phrasing, OR CONDITION. Do NOT count databases, cloud, DevOps, or concepts.
+  Action: Pick top 2 most JD-relevant existing projects.
 
 CASE 2 — New project needed:
-  Trigger only if case1 fails: There is a significant, undeniable gap in the JOB_DESCRIPTION's core tech stack
-           (languages, frameworks, libraries) that no existing RESUME_TEXT project(s) can
-           reasonably cover — even accounting for related/parent technologies (or) OR CONDITION applied.
-  Action: Suggest a completely new project using the JOB_DESCRIPTION's primary tech stack.
-  Second project = most JOB_DESCRIPTION-relevant existing RESUME_TEXT project (if one exists — ALWAYS include it in selected_projects; do NOT drop it).
+  Trigger only if Case 1 fails: Significant, undeniable gap in JD's core tech stack (languages, frameworks, libraries) that no existing project can reasonably cover.
+  Action: Suggest a new project using JD's primary tech stack. Second project = most relevant existing resume project (always include it).
 
-────────────────────────────────────────────────────
-STEP 4: Build suggested_project (for Case 2 only)
-────────────────────────────────────────────────────
-select project idea that solves real world problem and most relavant to company profile, which is achievable by a fresher.
-title: creative domain-specific product name — NOT a tech stack description like "Django REST App".
-  Pattern: domain-action word + product suffix.
-  🚨 IMPORTANT: INVENT a unique name. Do NOT reuse the examples provided in this prompt (e.g., "VitalTrack", "SpendLens", "CartEngine", "TaskFlow").
-tech_stack: 4-5 technologies from JOB_DESCRIPTION's required stack (comma-separated string).
-description: 2-3 sentences — (a) real-world problem it solves, (b) how JOB_DESCRIPTION tech is used naturally, (c) the outcome. Rich enough to write 3 bullets from.
+STEP 4: Build suggested_project (Case 2 only):
+  title: creative domain-specific product name. Pattern: domain-action word + product suffix. INVENT a unique name — do NOT reuse examples from this prompt.
+  tech_stack: 4-5 technologies from JD's required stack (comma-separated string).
+  description: 2-3 sentences — (a) real-world problem solved, (b) how JD tech is used naturally, (c) outcome. Rich enough to write 3 bullets from.
 
-────────────────────────────────────────────────────
-STEP 5: Build the two missing-skills lists
-────────────────────────────────────────────────────
-You must produce TWO separate missing-skills lists:
+STEP 5: Build the two missing-skills lists:
+a) all_missing_skills — same list from Task 1. Full unfiltered list shown to user.
+b) updated_missing_skills — start from all_missing_skills, then REMOVE any OR-slot already covered by the 2 selected projects' tech stacks.
+   - If "java/python" slot is covered by Python in a selected project → remove the entire "java/python" entry.
+   - Only remove tech stack slots (languages, frameworks, libraries, databases). NEVER remove concepts (REST APIs, OOP), DevOps tools (Docker, CI/CD), or methodologies (Agile) — keep those for the generation step.
 
-a) all_missing_skills — You already extracted this in task1, every skill from JOB_DESCRIPTION that is NOT in RESUME_TEXT.
-   This is the full unfiltered list shown to the user on the results page so they can cross-check.
-   Use the exact same OR-group entries as Task 1 (e.g. "java/python" as one entry).
+WORKED EXAMPLES:
 
-b) updated_missing_skills — the filtered list that will be passed to the resume generation step.
-   Start from all_missing_skills, then REMOVE any OR-slot that is already covered by the 2 selected projects.
-   A slot is covered if ANY alternative in the OR group appears in the tech stack of the 2 selected projects (including the suggested_project's tech_stack for Case 2).
-
-   FILTERING RULE (apply the OR CONDITION):
-   - If an OR slot such as "java/python" is covered by Python in a selected project → remove the entire "java/python" entry from updated_missing_skills.
-   - If a slot is NOT covered by any selected project → keep it in updated_missing_skills.
-   - Only remove TECH STACK slots (languages, frameworks, libraries, databases). Never remove concepts (REST APIs, OOP), DevOps tools (Docker, CI/CD), or methodologies (Agile) — those must stay in updated_missing_skills so the generation step can weave them into resume bullets.
-
-   Example: JD has "java/python". Suggested new project uses Python. → "java/python" slot is covered → remove from updated_missing_skills. But "REST APIs" is still missing → keep it in updated_missing_skills.
-
-────────────────────────────────────────────────────
-WORKED EXAMPLES
-────────────────────────────────────────────────────
-
-Example A — Case 1 (both existing projects cover the core JD stack):
-  RESUME_TEXT: Project 1 "API Backend" uses Python, Django.
-          Project 2 "Dashboard" uses React, Node.js
+Example A — Case 1:
+  Resume: Project1 "API Backend" (Python, Django), Project2 "Dashboard" (React, Node.js)
   JD: "python/nodejs, django, postgresql, REST APIs, agile"
-  ATS Task: all_missing_skills: ["postgresql", "REST APIs", "agile"]
-  Project Task: selected projects cover python/nodejs, django — Case 1.
-  STEP 5: "python/nodejs" OR slot is covered by Project 1 (Python) AND Project 2 (Node.js) → remove from updated_missing_skills.
-          "postgresql" is a database not covered by any project → keep in updated_missing_skills.
-          "REST APIs" is a concept → keep in updated_missing_skills.
-          "agile" is a methodology → keep in updated_missing_skills.
   all_missing_skills: ["postgresql", "REST APIs", "agile"]
-  updated_missing_skills: ["postgresql", "REST APIs", "agile"]  ← same here since no OR tech slot was covered
-  selected_projects: ["API Backend", "Dashboard"]
-  suggested_project: null
-  requires_consent: false
+  "python/nodejs" OR slot covered by existing projects → no OR-tech entry to remove.
+  updated_missing_skills: ["postgresql", "REST APIs", "agile"]
+  selected_projects: ["API Backend", "Dashboard"], suggested_project: null, requires_consent: false
 
-
-Example B — Case 2 (new project needed, OR-slot filtered from updated_missing_skills):
-  RESUME_TEXT: "Ecommerce Website" uses HTML, CSS, JavaScript, nodejs, mysql.
+Example B — Case 2:
+  Resume: "Ecommerce Website" (HTML, CSS, JavaScript, nodejs, mysql)
   JD: "java/python, springboot, REST APIs, unit testing"
-  ATS Task: all_missing_skills: ["java/python", "springboot", "REST APIs", "unit testing"]
-  Project Task: no existing project covers java/python lang slot → Case 2.
-  suggested_project: title "Shoecart", tech_stack: "java, Spring Boot, MySQL"
-  selected_projects: ["Shoecart", "Ecommerce Website"]
-  STEP 5: "java/python" OR slot — suggested project uses Python → covered → REMOVE from updated_missing_skills.
-          "springboot" covered by suggested project → REMOVE from updated_missing_skills.
-          "REST APIs" is a concept → KEEP in updated_missing_skills.
-          "unit testing" is a methodology → KEEP in updated_missing_skills.
   all_missing_skills: ["java/python", "springboot", "REST APIs", "unit testing"]
+  No existing project covers java/python → Case 2.
+  suggested_project: title "Shoecart", tech_stack: "java, Spring Boot, MySQL"
+  "java/python" covered by suggested project (Java) → remove. "springboot" covered → remove. "REST APIs" concept → keep. "unit testing" methodology → keep.
   updated_missing_skills: ["REST APIs", "unit testing"]
 
-════════════════════════════════════════════════════
-COMBINED OUTPUT — return ONLY valid JSON, no markdown, no explanation, no symbols like **, #.
-════════════════════════════════════════════════════
+---- COMBINED OUTPUT ----
+
+Return ONLY valid JSON, no markdown, no explanation:
 
 {{
   "ats_score": <integer 0-100>,
@@ -208,21 +108,19 @@ COMBINED OUTPUT — return ONLY valid JSON, no markdown, no explanation, no symb
 }}
 
 Field rules:
-- ats_score: integer 0-100. Formula: (count of matched_skills / (count of matched_skills + count of all_missing_skills)) * 100.
-- matched_skills: skills from JOB_DESCRIPTION that are explicitly present in RESUME_TEXT.
-- all_missing_skills: ALL skills from JOB_DESCRIPTION not in RESUME_TEXT. Full unfiltered list. One entry per OR slot. This is shown to the user on the results page.
-- updated_missing_skills: Filtered version of all_missing_skills. Remove any OR tech-stack slot already covered by the 2 selected projects (including suggested_project). Concepts, DevOps, and methodologies are NEVER removed — they stay here for the generation step to inject into bullets.
+- ats_score: integer 0-100. Formula: (matched count / (matched + missing) count) * 100.
+- matched_skills: JD skills explicitly present in RESUME_TEXT.
+- all_missing_skills: ALL JD skills not in RESUME_TEXT. One entry per OR slot. Shown to user.
+- updated_missing_skills: Filtered all_missing_skills — remove OR tech-stack slots covered by 2 selected projects. Concepts, DevOps, methodologies are NEVER removed.
 - case: 1 or 2 (integer).
-- selected_projects: max 2 entries. If resume has 0 or 1 existing project, may have only 1 entry.
+- selected_projects: max 2 entries.
 - suggested_project: object for Case 2, null for Case 1.
-- requires_consent: JSON boolean true for Case 2, JSON boolean false for Case 1. MUST be true or false — NOT the strings "true" or "false".
-- least_relevant_project: title of lowest-scoring existing RESUME_TEXT project (shown in UI as which project gets replaced). null if resume has 0 or 1 project.
-- total_projects_count: integer count of distinct project entries found in the RESUME_TEXT. Does NOT count the new/upgraded suggested project. Must be an integer, NOT a string.
+- requires_consent: JSON boolean true/false (NOT strings).
+- least_relevant_project: title of lowest-scoring existing project, or null if 0-1 projects.
+- total_projects_count: integer count of distinct projects in RESUME_TEXT (does NOT include suggested_project).
 - tech_stack must be a comma-separated STRING, not an array.
 
-════════════════════════════════════════════════════
-INPUTS
-════════════════════════════════════════════════════
+---- INPUTS ----
 
 RESUME_TEXT:
 {resume_text}
