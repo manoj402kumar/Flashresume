@@ -1,9 +1,8 @@
 FROM python:3.11-slim
 
-# Install system dependencies (Tesseract OCR, Poppler for PDF2Image)
+# Install system dependencies (Tesseract OCR for scanned PDF fallback)
 RUN apt-get update -qq && apt-get install -y --no-install-recommends \
     tesseract-ocr \
-    poppler-utils \
     libgl1 \
     libglib2.0-0 \
     && rm -rf /var/lib/apt/lists/*

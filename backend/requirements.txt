@@ -2,7 +2,6 @@ fastapi
 uvicorn
 python-multipart
 pdfplumber
-pdf2image
 Pillow
 pypdfium2
 pytesseract
@@ -18,5 +17,4 @@ slowapi>=0.1.9
 supabase>=2.0.0
 razorpay
 httpx
-google-generativeai
 aiosmtplib
