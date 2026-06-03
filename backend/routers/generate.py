@@ -41,7 +41,7 @@ async def generate_resume_endpoint(request: Request, payload: GenerateRequest, a
             if user_res and hasattr(user_res, 'user') and user_res.user:
                 user_id = user_res.user.id
                 credit_res = await asyncio.to_thread(
-                    lambda: supabase.rpc("get_user_credits_v2", {"p_user_id": user_id}).execute()
+                    lambda: supabase.rpc("get_total_active_credits", {"p_user_id": user_id}).execute()
                 )
                 if credit_res and hasattr(credit_res, 'data') and credit_res.data and credit_res.data > 0:
                     has_credits = True

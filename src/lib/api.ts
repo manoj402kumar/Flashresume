@@ -1,5 +1,6 @@
 // FlashResume API Integration Layer
 // All backend calls with error handling and timeouts
+import { supabase } from "./supabase";
 
 const BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -91,11 +92,21 @@ export async function analyzeResume(
   }
 
   try {
+    const { data: { session } } = await supabase.auth.getSession();
+    const headers: Record<string, string> = { "Content-Type": "application/json" };
+    if (session?.access_token) {
+      headers["Authorization"] = `Bearer ${session.access_token}`;
+    }
+
     const res = await fetch(`${BASE}/api/analyze`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ resume_text, job_description, preferred_model }),
-      signal: AbortSignal.timeout(120000), // 120s timeout
+      headers,
+      body: JSON.stringify({
+        resume_text,
+        job_description,
+        preferred_model
+      }),
+      signal: AbortSignal.timeout(60000), // 60s timeout for LLM
     });
 
     if (!res.ok) {
@@ -194,11 +205,17 @@ export async function generateResume(
   }
 
   try {
+    const { data: { session } } = await supabase.auth.getSession();
+    const headers: Record<string, string> = { "Content-Type": "application/json" };
+    if (session?.access_token) {
+      headers["Authorization"] = `Bearer ${session.access_token}`;
+    }
+
     const res = await fetch(`${BASE}/api/generate`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers,
       body: JSON.stringify(payload),
-      signal: AbortSignal.timeout(120000), // 120s timeout (LLM can be slow)
+      signal: AbortSignal.timeout(180000), // 180s timeout (generation is slower)
     });
 
     if (!res.ok) {

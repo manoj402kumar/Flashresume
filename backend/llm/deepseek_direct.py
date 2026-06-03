@@ -65,6 +65,9 @@ async def _call_deepseek_single(client_getter, model: str, prompt: str, max_toke
                 messages=[{"role": "user", "content": prompt}],
                 max_tokens=max_tokens,
                 temperature=0.2,
+                extra_body={
+                    "thinking": {"type": "disabled"}
+                }
             )
             elapsed = round(time.time() - start_time, 2)
             text = _extract_text(response)
