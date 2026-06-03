@@ -7,7 +7,7 @@ INPUT LABELS:
 Do both tasks independently.
 
 OR CONDITION RULE (apply throughout both tasks):
-When JD lists alternatives via "/", "OR", commas, or natural language ("one of React, Angular, Vue", "java/python") — treat the entire group as ONE slot.
+When JD lists alternatives via "/", "OR", commas, or natural language (ex: "one of React, Angular, Vue", "proficient in java/python") — treat the entire group as ONE slot.
 - Resume matches ANY ONE → slot is MATCHED. Add only the matched alternative to matched_skills. Do NOT add unmatched alternatives to missing_skills.
 - Resume matches NONE → slot is MISSING. Add the full group as ONE entry (e.g. "java/python") to missing_skills.
 - NEVER split one OR group into separate entries.
@@ -25,7 +25,7 @@ DEFINITION OF A SKILL/KEYWORD — extract ALL ATS-relevant keywords from the ent
 Rules:
 1. Extract ALL critical keywords from the JD using the definition above.
 2. Apply OR CONDITION RULE — normalize slash/OR groups into single slots before matching.
-3. Strict matching: a skill is matched ONLY if explicitly stated in RESUME_TEXT. Do NOT infer. Scan ALL sections (Summary, Skills, Projects, Experience, Education, Certifications).
+3. Strict matching: a skill is matched ONLY if explicitly stated in RESUME_TEXT and JOB_DESCRIPTION. Do NOT infer. Scan ALL sections (Summary, Skills, Projects, Experience, Education, Certifications).
 4. matched_skills: skills from JOB_DESCRIPTION explicitly present in RESUME_TEXT.
 5. all_missing_skills: skills from JOB_DESCRIPTION NOT in RESUME_TEXT. One entry per slot; OR groups as single "x/y" entry.
 6. A skill cannot appear in both lists.

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "motion/react";
 import { pdf } from "@react-pdf/renderer";
@@ -11,7 +11,6 @@ import {
   Edit3,
   Eye,
   Sparkles,
-  Save,
   TrendingUp,
   CheckCircle2,
   Home,
@@ -26,7 +25,10 @@ import {
   PlusCircle,
   ChevronDown,
   ChevronUp,
-  User
+  User,
+  Trash2,
+  Undo2,
+  Redo2
 } from "lucide-react";
 
 // Utility: move element in array from index `from` to index `to`
@@ -166,30 +168,41 @@ export default function ScratchPage() {
   const [showMissedKeywords, setShowMissedKeywords] = useState(false);
   const [copied, setCopied] = useState(false);
   const [editMode, setEditMode] = useState(true);
-  const [openEditSections, setOpenEditSections] = useState<Record<string, boolean>>({ contact: true });
+  const [openEditSections, setOpenEditSections] = useState<Record<string, boolean>>({ contact: true, summary: true, education: true, experience: true, projects: true, skills: true, certifications: true });
   const toggleSection = (sec: string) => setOpenEditSections(p => ({ ...p, [sec]: !p[sec] }));
-  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [activeEditSection, setActiveEditSection] = useState<string>('contact');
+  const selectEditSection = (sid: string) => {
+    setActiveEditSection(sid);
+    setOpenEditSections(p => ({ ...p, [sid]: true }));
+  };
   const [showHighlights, setShowHighlights] = useState(true);
   const [downloadingPDF, setDownloadingPDF] = useState(false);
   const [missingKeywords, setMissingKeywords] = useState<string[]>([]);
   const [matchedKeywords, setMatchedKeywords] = useState<string[]>([]);
   const [selectedTemplate, setSelectedTemplate] = useState<"templateLetter" | "templateA4">("templateLetter");
   const [noJdMode, setNoJdMode] = useState(false);
-  // Section drag-and-drop: track insertion gap index for reliable ordering
+  // Section drag-and-drop
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [insertionIndex, setInsertionIndex] = useState<number | null>(null);
+  const dragListRef = useRef<HTMLDivElement>(null);
   const [showPricingPopup, setShowPricingPopup] = useState(false);
   const [pricingTrigger, setPricingTrigger] = useState<"download" | "buy_more">("download");
   const [hasPaidAccess, setHasPaidAccess] = useState(false);
   const [checkingAccess, setCheckingAccess] = useState(true);
   const [userEmail, setUserEmail] = useState<string>("");
   const [credits, setCredits] = useState<number>(0);
-  const [subscriptionData, setSubscriptionData] = useState<any>(null);
+  const [buckets, setBuckets] = useState<any[]>([]);
   const [showAccountDropdown, setShowAccountDropdown] = useState(false);
   const [showMobilePreview, setShowMobilePreview] = useState(true);
   const [showFeedback, setShowFeedback] = useState(false);
   const [sessionGuid, setSessionGuid] = useState<string>("");
   const [currentUserId, setCurrentUserId] = useState<string>("");
+  // ── Undo / Redo history
+  const MAX_HISTORY = 50;
+  const historyRef = useRef<TemplateV1[]>([]);
+  const historyIndexRef = useRef<number>(-1);
+  const [canUndo, setCanUndo] = useState(false);
+  const [canRedo, setCanRedo] = useState(false);
 
   const handleSectionDragStart = (e: React.DragEvent, sectionId: string) => {
     setDraggingId(sectionId);
@@ -312,51 +325,54 @@ export default function ScratchPage() {
     setUserEmail(session.user.email || "");
     setCurrentUserId(session.user.id);
 
-    // Check credits balance
-    const { data: userData } = await supabase
-      .from("users")
-      .select("credits_balance")
-      .eq("id", session.user.id)
-      .single();
-
-    const currentCredits = userData?.credits_balance || 0;
+    const { data: creditData } = await supabase.rpc("get_total_active_credits", { p_user_id: session.user.id });
+    const currentCredits = creditData ?? 0;
     setCredits(currentCredits);
 
-    // Check subscription data for Account dropdown
-    const { data: subData } = await supabase
-      .from("subscriptions")
-      .select("plan_type, expires_at")
+    const { data: bucketData } = await supabase
+      .from("credit_buckets")
+      .select("*")
       .eq("user_id", session.user.id)
-      .eq("is_active", true)
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
+      .in("status", ["active", "queued", "fallback"])
+      .gt("remaining_credits", 0)
+      .order("created_at", { ascending: true });
+    if (bucketData) setBuckets(bucketData);
 
-    if (subData) {
-      setSubscriptionData(subData);
-    }
-
-    if (currentCredits >= 10) {
-      setHasPaidAccess(true);
-    } else {
-      setHasPaidAccess(false);
-    }
+    setHasPaidAccess(currentCredits >= 10);
     setCheckingAccess(false);
   };
 
-  // Check if user has already paid — skip gate if yes
+  // Check if user has already paid
   useEffect(() => {
     checkAccess();
   }, []);
 
-  // JSON copy removed
-  const handleCopyJSON_UNUSED = () => {
-    if (resume) {
-      navigator.clipboard.writeText(JSON.stringify(resume, null, 2));
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+  // Seed undo history once resume loads
+  useEffect(() => {
+    if (resume && historyRef.current.length === 0) {
+      historyRef.current = [resume];
+      historyIndexRef.current = 0;
+      setCanUndo(false);
+      setCanRedo(false);
     }
-  };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [!!resume]);
+
+  // Keyboard shortcuts: Ctrl+Z undo, Ctrl+Y redo
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (!editMode) return;
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+      if (e.ctrlKey || e.metaKey) {
+        if (e.key === 'z' && !e.shiftKey) { e.preventDefault(); handleUndo(); }
+        if (e.key === 'y' || (e.key === 'z' && e.shiftKey)) { e.preventDefault(); handleRedo(); }
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editMode, canUndo, canRedo]);
 
   const handleStartOver = () => {
     // Only clear resume workflow keys — do NOT clear auth session
@@ -367,16 +383,38 @@ export default function ScratchPage() {
     router.push("/");
   };
 
-  const handleSaveChanges = () => {
-    if (resume) {
-      localStorage.setItem("generated_resume", JSON.stringify(resume));
-      setHasUnsavedChanges(false);
-    }
+  const updateResume = (updates: Partial<TemplateV1>) => {
+    setResume((prev) => {
+      if (!prev) return null;
+      const next = { ...prev, ...updates };
+      const truncated = historyRef.current.slice(0, historyIndexRef.current + 1);
+      truncated.push(next);
+      if (truncated.length > MAX_HISTORY) truncated.shift();
+      historyRef.current = truncated;
+      historyIndexRef.current = truncated.length - 1;
+      setCanUndo(historyIndexRef.current > 0);
+      setCanRedo(false);
+      try {
+        localStorage.setItem("generated_resume", JSON.stringify(next));
+      } catch (_) {}
+      return next;
+    });
   };
 
-  const updateResume = (updates: Partial<TemplateV1>) => {
-    setResume((prev) => prev ? { ...prev, ...updates } : null);
-    setHasUnsavedChanges(true);
+  const handleUndo = () => {
+    if (historyIndexRef.current <= 0) return;
+    historyIndexRef.current -= 1;
+    setResume(historyRef.current[historyIndexRef.current]);
+    setCanUndo(historyIndexRef.current > 0);
+    setCanRedo(true);
+  };
+
+  const handleRedo = () => {
+    if (historyIndexRef.current >= historyRef.current.length - 1) return;
+    historyIndexRef.current += 1;
+    setResume(historyRef.current[historyIndexRef.current]);
+    setCanUndo(true);
+    setCanRedo(historyIndexRef.current < historyRef.current.length - 1);
   };
 
   const handleDownloadPDF = async () => {
@@ -470,9 +508,9 @@ export default function ScratchPage() {
   const scoreImprovement = resume.ats_score_after - resume.ats_score_before;
 
   return (
-    <div className="min-h-[100dvh] lg:h-[100dvh] flex flex-col bg-surface font-sans lg:overflow-hidden overflow-y-auto">
-      {/* Top App Bar - Fixed non-scrolling */}
-      <header className="flex-shrink-0 z-50 bg-surface border-b border-surface-container-low shadow-sm">
+    <div className="min-h-[100dvh] lg:h-[100dvh] flex flex-col bg-[#0f1117] font-sans lg:overflow-hidden overflow-y-auto">
+      {/* Top App Bar */}
+      <header className="flex-shrink-0 z-50 bg-[#0f1117] border-b border-white/8 shadow-md">
         <div className="w-full px-4 sm:px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <a href="/" title="Back to Home" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
@@ -490,35 +528,17 @@ export default function ScratchPage() {
               </div>
             </a>
             <div>
-              <h1 className="font-headline text-lg font-bold text-on-background leading-tight">Build From Scratch</h1>
-              <p className="text-xs text-on-surface-variant leading-tight flex items-center gap-1 whitespace-nowrap">
-                <Sparkles className="w-3 h-3 text-primary flex-shrink-0" /> Blank template — fill in your details
+              <h1 className="font-headline text-lg font-bold text-white leading-tight">Build From Scratch</h1>
+              <p className="text-xs text-white/50 leading-tight flex items-center gap-1 whitespace-nowrap">
+                <Sparkles className="w-3 h-3 text-[#12f8d7]" /> Blank template — fill in your details
               </p>
             </div>
           </div>
 
           <div className="flex items-center gap-2 sm:gap-4">
-            <AnimatePresence>
-              {hasUnsavedChanges && (
-                <motion.button
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.9 }}
-                  onClick={handleSaveChanges}
-                  className="flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl bg-green-500 text-white font-semibold hover:bg-green-600 transition-all shadow-md text-sm"
-                  title="Save changes"
-                >
-                  <Save className="w-4 h-4" />
-                  <span className="hidden sm:inline">Save</span>
-                </motion.button>
-              )}
-            </AnimatePresence>
-
-
-
             <button
               onClick={handleStartOver}
-              className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-xl text-sm font-semibold text-on-surface-variant bg-surface-container-low hover:bg-surface-container-high transition-colors"
+              className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-xl text-sm font-semibold text-white/60 bg-white/6 hover:bg-white/10 border border-white/10 transition-colors"
             >
               <Home className="w-4 h-4" />
               Start Over
@@ -534,43 +554,32 @@ export default function ScratchPage() {
                 }
               }}
               disabled={downloadingPDF || checkingAccess}
-              className={`flex items-center gap-2 px-4 py-1.5 sm:px-5 sm:py-2 rounded-xl text-sm font-bold text-white transition-all shadow-sm ${downloadingPDF || checkingAccess
-                ? "bg-surface-container-high cursor-not-allowed"
+              className={`flex items-center gap-2 px-4 py-1.5 sm:px-5 sm:py-2 rounded-xl text-sm font-bold text-white transition-all ${downloadingPDF || checkingAccess
+                ? "bg-white/10 cursor-not-allowed"
                 : hasPaidAccess
-                  ? "bg-primary hover:bg-primary/90"
-                  : "bg-gradient-to-r from-primary to-secondary hover:opacity-90"
+                  ? "bg-primary hover:bg-primary/90 border border-[#12f8d7] shadow-[0_0_10px_rgba(18,248,215,0.4)] hover:shadow-[0_0_15px_rgba(18,248,215,0.6)]"
+                  : "bg-gradient-to-r from-primary to-secondary hover:opacity-90 border border-[#12f8d7] shadow-[0_0_10px_rgba(18,248,215,0.4)]"
                 }`}
             >
               {checkingAccess ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                </>
+                <><div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div></>
               ) : downloadingPDF ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                  <span className="hidden sm:inline">Wait...</span>
-                </>
+                <><div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div><span className="hidden sm:inline">Wait...</span></>
               ) : hasPaidAccess ? (
-                <>
-                  <Download className="w-4 h-4" />
-                  <span className="hidden sm:inline">Download</span>
-                </>
+                <><Download className="w-4 h-4" /><span className="hidden sm:inline">Download</span></>
               ) : (
-                <>
-                  <Download className="w-4 h-4" />
-                  <span className="hidden sm:inline">Download PDF</span>
-                </>
+                <><Download className="w-4 h-4" /><span className="hidden sm:inline">Download PDF</span></>
               )}
             </button>
 
-            {/* Account Details Dropdown */}
+            {/* Account Dropdown */}
             <div className="relative">
               <button
                 onClick={() => setShowAccountDropdown(!showAccountDropdown)}
-                className="w-10 h-10 rounded-xl bg-surface-container-low hover:bg-surface-container-high transition-colors flex items-center justify-center relative shadow-sm"
+                className="w-10 h-10 rounded-xl bg-white/6 hover:bg-white/12 border border-white/10 transition-colors flex items-center justify-center relative shadow-sm"
               >
-                <User className="w-5 h-5 text-on-surface-variant" />
-                {credits < 10 && <span className="absolute top-0 right-0 w-3 h-3 bg-error rounded-full border-2 border-surface"></span>}
+                <User className="w-5 h-5 text-white/60" />
+                {credits < 10 && <span className="absolute top-0 right-0 w-3 h-3 bg-error rounded-full border-2 border-[#0f1117]"></span>}
               </button>
 
               <AnimatePresence>
@@ -588,41 +597,58 @@ export default function ScratchPage() {
 
                     {userEmail ? (
                       <div className="p-4 space-y-4">
-                        <div className="flex justify-between items-center bg-primary/10 px-3 py-2 rounded-xl border border-primary/20">
-                          <span className="text-sm font-semibold text-primary">Credits</span>
-                          <span className="text-lg font-black text-primary">{credits}</span>
-                        </div>
-
-                        {subscriptionData && (
-                          <div className="space-y-1">
-                            <p className="text-xs font-bold text-on-surface-variant">Active Plan</p>
-                            <p className="text-sm text-on-background capitalize">{subscriptionData.plan_type.replace('_', ' ')}</p>
-                            {subscriptionData.expires_at && (
-                              <p className="text-xs text-on-surface-variant">
-                                Expires: {new Date(subscriptionData.expires_at).toLocaleDateString()}
-                              </p>
+                        {buckets.length > 0 && (
+                          <div className="space-y-4 mt-5">
+                            {buckets.map(b => {
+                              const activeBucket = buckets.find(b => b.status === 'active');
+                              const activePlanName = activeBucket ? (activeBucket.plan_type === 'student' ? 'student plan' : activeBucket.plan_type === 'regular' ? 'pro plan' : 'previous plan') : 'previous plan';
+                              const name = b.plan_type === 'student' ? '🎓 Student Plan' : b.plan_type === 'regular' ? '👑 Pro Monthly' : b.plan_type === 'pay_per_use' ? '💳 Pay Per Use' : '🎁 Referral Credits';
+                              let validText = "";
+                              if (b.status === 'active' && b.expires_at) {
+                                validText = `Valid till ${new Date(b.expires_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
+                              } else if (b.status === 'queued') {
+                                validText = `Starts after ${activePlanName}`;
+                              } else if (b.status === 'fallback' || !b.validity_duration_days) {
+                                validText = `Lifetime (No Expiration)`;
+                              }
+                              return (
+                                <div key={b.id} className="flex flex-col gap-0.5">
+                                  <div className="flex justify-between items-center w-full gap-4">
+                                    <p className="font-bold text-sm text-on-background truncate">{name}</p>
+                                    <span className="font-black text-sm text-on-background whitespace-nowrap">{b.remaining_credits} Credits</span>
+                                  </div>
+                                  <p className="text-[11px] font-medium text-on-surface-variant/80">{validText}</p>
+                                </div>
+                              );
+                            })}
+                            {buckets.length > 1 && (
+                              <div className="pt-3 border-t border-surface-container-high/60 flex justify-between items-center">
+                                <span className="text-sm font-semibold text-on-background">⚡ Total</span>
+                                <span className="text-sm font-black text-on-background">{credits} Credits</span>
+                              </div>
                             )}
                           </div>
                         )}
-
-                        <button
-                          onClick={() => {
-                            setShowAccountDropdown(false);
-                            window.location.href = '/#pricing';
-                          }}
-                          className="w-full py-2.5 bg-surface-container-low hover:bg-surface-container-high text-on-background text-sm font-bold rounded-xl transition-colors"
-                        >
-                          Buy More Credits
-                        </button>
+                        <div className="pt-2 space-y-2 border-t border-surface-container-low mt-2">
+                          <button
+                            onClick={() => { setShowAccountDropdown(false); window.location.href = '/#pricing'; }}
+                            className="w-full py-2.5 bg-surface-container-low hover:bg-surface-container-high text-on-background text-sm font-bold rounded-xl transition-colors"
+                          >
+                            Buy More Credits
+                          </button>
+                          <button
+                            onClick={() => { setShowAccountDropdown(false); window.location.href = '/contact'; }}
+                            className="w-full py-2.5 bg-surface-container-low hover:bg-surface-container-high text-on-background text-sm font-bold rounded-xl transition-colors"
+                          >
+                            Help / Contact
+                          </button>
+                        </div>
                       </div>
                     ) : (
                       <div className="p-4 text-center">
                         <p className="text-sm text-on-surface-variant mb-3">Log in to view credits</p>
                         <button
-                          onClick={() => {
-                            setShowAccountDropdown(false);
-                            setShowPricingPopup(true);
-                          }}
+                          onClick={() => { setShowAccountDropdown(false); setShowPricingPopup(true); }}
                           className="w-full py-2 bg-primary text-white text-sm font-bold rounded-xl hover:opacity-90 transition-opacity"
                         >
                           Log In
@@ -637,126 +663,122 @@ export default function ScratchPage() {
         </div>
       </header>
 
-      {/* Mobile PDF Preview — shown only on small screens */}
-      <div className="lg:hidden w-full flex flex-col bg-surface-container-lowest border-b border-surface-container-low">
-        <button
-          onClick={() => setShowMobilePreview(!showMobilePreview)}
-          className="flex items-center justify-between px-4 py-3 bg-surface-container-low/80 backdrop-blur-sm"
-        >
-          <div className="flex items-center gap-2">
-            <Eye className="w-4 h-4 text-primary" />
-            <span className="text-sm font-bold text-on-background">Live Preview</span>
-          </div>
-          <motion.div animate={{ rotate: showMobilePreview ? 180 : 0 }} transition={{ type: "spring", stiffness: 300, damping: 25 }}>
-            <ChevronDown className="w-4 h-4 text-on-surface-variant" />
-          </motion.div>
-        </button>
-
-        <AnimatePresence initial={false}>
-          {showMobilePreview && (
-            <motion.div
-              key="mobile-preview"
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: "auto", opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={{ type: "spring", stiffness: 300, damping: 30, opacity: { duration: 0.2 } }}
-              className="overflow-hidden"
-            >
-              <div className="relative bg-[#0c0f12] border-y border-surface-container-low flex flex-col items-center pb-6">
-                {/* Template + Highlight controls */}
-                <div className="w-full flex justify-end px-4 pt-4 pb-4">
-                  <div className="flex bg-surface/90 backdrop-blur-md rounded-xl shadow-lg border border-primary/20 overflow-hidden">
-                    <button onClick={() => setSelectedTemplate("templateLetter")} className={`px-3 py-2 text-[11px] font-bold transition-colors ${selectedTemplate === "templateLetter" ? "bg-primary text-white" : "text-on-surface-variant hover:bg-surface-container"}`}>Template 1</button>
-                    <div className="w-[1px] bg-primary/20"></div>
-                    <button onClick={() => setSelectedTemplate("templateA4")} className={`px-3 py-2 text-[11px] font-bold transition-colors ${selectedTemplate === "templateA4" ? "bg-primary text-white" : "text-on-surface-variant hover:bg-surface-container"}`}>Template 2</button>
-                  </div>
-                </div>
-
-                <div className="w-full px-4 flex justify-center">
-                  <div
-                    className="relative bg-white shadow-2xl rounded-sm ring-1 ring-white/20 transition-all duration-300"
-                    style={{
-                      width: "100%",
-                      maxWidth: selectedTemplate === "templateLetter" ? "calc((85vh - 6rem) * 0.707)" : "calc((85vh - 6rem) * 0.774)",
-                    }}
-                  >
-                    <MobilePDFPreview
-                      key={`mobile-${selectedTemplate}`}
-                      refreshKey={JSON.stringify({ resume, showHighlights, matchedKeywords, missingKeywords })}
-                    >
-                      {selectedTemplate === "templateLetter" ? (
-                        <ResumePDFTemplateLetter resume={resume} showHighlights={showHighlights} matchedKeywords={matchedKeywords} missingKeywords={missingKeywords} />
-                      ) : (
-                        <ResumePDFTemplateA4 resume={resume} showHighlights={showHighlights} matchedKeywords={matchedKeywords} missingKeywords={missingKeywords} />
-                      )}
-                    </MobilePDFPreview>
-                  </div>
-                </div>
+      {/* Mobile PDF Preview */}
+      <div className="lg:hidden w-full flex flex-col bg-[#0f1117] border-b border-white/8">
+        <div className="relative bg-[#0c0f12] flex flex-col items-center pb-6">
+          <div className="w-full flex items-center justify-between px-4 pt-4 pb-4">
+            {editMode ? (
+              <div className="flex items-center gap-1">
+                <button type="button" onClick={handleUndo} disabled={!canUndo} title="Undo (Ctrl+Z)"
+                  className={`flex items-center justify-center w-8 h-8 rounded-xl border transition-all duration-200 ${canUndo ? 'bg-[#0f1117]/90 text-white/70 border-[#006859]/30 hover:bg-white/10 hover:text-white active:scale-95' : 'bg-transparent text-white/20 border-white/5 cursor-not-allowed'}`}>
+                  <Undo2 className="w-3.5 h-3.5" />
+                </button>
+                <button type="button" onClick={handleRedo} disabled={!canRedo} title="Redo (Ctrl+Y)"
+                  className={`flex items-center justify-center w-8 h-8 rounded-xl border transition-all duration-200 ${canRedo ? 'bg-[#0f1117]/90 text-white/70 border-[#006859]/30 hover:bg-white/10 hover:text-white active:scale-95' : 'bg-transparent text-white/20 border-white/5 cursor-not-allowed'}`}>
+                  <Redo2 className="w-3.5 h-3.5" />
+                </button>
               </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+            ) : <div />}
+            <div className="flex bg-[#0f1117]/90 backdrop-blur-md rounded-xl shadow-lg border border-[#006859]/30 overflow-hidden">
+              <button onClick={() => setSelectedTemplate("templateLetter")} className={`px-3 py-2 text-[11px] font-bold transition-colors ${selectedTemplate === "templateLetter" ? "bg-primary text-white" : "text-white/60 hover:bg-white/10"}`}>T1</button>
+              <div className="w-[1px] bg-white/10"></div>
+              <button onClick={() => setSelectedTemplate("templateA4")} className={`px-3 py-2 text-[11px] font-bold transition-colors ${selectedTemplate === "templateA4" ? "bg-primary text-white" : "text-white/60 hover:bg-white/10"}`}>T2</button>
+            </div>
+          </div>
+          <div className="w-full px-4 flex justify-center">
+            <div className="relative bg-white shadow-2xl rounded-sm ring-1 ring-white/20 transition-all duration-300"
+              style={{ width: "100%", maxWidth: selectedTemplate === "templateLetter" ? "calc((85vh - 6rem) * 0.707)" : "calc((85vh - 6rem) * 0.774)" }}>
+              <MobilePDFPreview key={`mobile-${selectedTemplate}`} refreshKey={JSON.stringify({ resume, showHighlights, matchedKeywords, missingKeywords })}>
+                {selectedTemplate === "templateLetter" ? (
+                  <ResumePDFTemplateLetter resume={resume} showHighlights={showHighlights} matchedKeywords={matchedKeywords} missingKeywords={missingKeywords} />
+                ) : (
+                  <ResumePDFTemplateA4 resume={resume} showHighlights={showHighlights} matchedKeywords={matchedKeywords} missingKeywords={missingKeywords} />
+                )}
+              </MobilePDFPreview>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Main Workspace */}
       <div className="flex-1 lg:overflow-hidden flex flex-col lg:flex-row relative">
 
-        {/* Left Column (Editor & Metrics) */}
-        <div className="dark-theme-override text-on-background w-full lg:w-[45%] flex-1 lg:h-full flex flex-col bg-surface border-r border-surface-container-low z-10 shadow-xl lg:shadow-none transition-all relative">
-          <div className="absolute inset-0 bg-gradient-to-br from-[#0c0f12] to-[#151a1e] pointer-events-none -z-10" />
+        {/* Left Column */}
+        <div className="w-full lg:w-[45%] flex-1 lg:h-full flex flex-col bg-[#0f1117] border-r border-white/8 z-10 shadow-xl lg:shadow-none transition-all relative">
 
-          {/* Segmented Toggles inside Sticky Top */}
-          <div className="flex-shrink-0 bg-surface/95 backdrop-blur-md p-4 border-b border-surface-container-low flex flex-col gap-3 py-4 sticky top-0 z-20">
-            <div className="flex items-center gap-2 px-2 py-1">
-              <Edit3 className="w-5 h-5 text-on-surface-variant" />
-              <h2 className="text-base font-bold text-on-background">Edit Form</h2>
-              {hasUnsavedChanges && (
-                <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse ml-2" title="Unsaved changes"></span>
+          {/* Sticky Top */}
+          <div className="flex-shrink-0 bg-[#0f1117]/95 backdrop-blur-md p-4 border-b border-white/8 flex flex-col gap-3 py-4 sticky top-0 z-20">
+            {/* ATS Strip */}
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/5 border border-[#006859]/30 mb-1">
+              <TrendingUp className="w-3.5 h-3.5 text-[#006859] flex-shrink-0" />
+              <span className="text-[9px] font-black uppercase tracking-widest text-white/40 flex-1">ATS Formatting Score</span>
+              <span className="text-sm font-black text-transparent bg-clip-text bg-gradient-to-r from-[#006859] to-[#12f8d7]">100%</span>
+            </div>
+            <div className="flex gap-2 items-center">
+              <button
+                onClick={() => { setEditMode(true); setShowChanges(false); setShowMissedKeywords(false); }}
+                className={`relative flex-1 py-3 px-1 sm:px-3 text-xs sm:text-sm whitespace-nowrap font-bold transition-all duration-200 rounded-2xl flex items-center justify-center gap-1 sm:gap-2 active:scale-95 ${editMode ? "bg-primary text-white shadow-lg shadow-primary/30 border border-transparent" : "bg-white/6 text-white/50 border border-white/10 hover:bg-white/10 hover:text-white/80"}`}
+              >
+                <Edit3 className={`w-4 h-4 ${editMode ? 'text-white' : 'text-white/40'}`} />
+                Edit Form
+              </button>
+              {editMode && (
+                <div className="flex items-center gap-1 ml-auto flex-shrink-0">
+                  <button type="button" onClick={handleUndo} disabled={!canUndo} title="Undo (Ctrl+Z)"
+                    className={`flex items-center justify-center w-8 h-8 rounded-xl border transition-all duration-200 ${canUndo ? 'bg-[#0f1117]/90 text-white/70 border-[#006859]/30 hover:bg-white/10 hover:text-white active:scale-95' : 'bg-transparent text-white/20 border-white/5 cursor-not-allowed'}`}>
+                    <Undo2 className="w-3.5 h-3.5" />
+                  </button>
+                  <button type="button" onClick={handleRedo} disabled={!canRedo} title="Redo (Ctrl+Y)"
+                    className={`flex items-center justify-center w-8 h-8 rounded-xl border transition-all duration-200 ${canRedo ? 'bg-[#0f1117]/90 text-white/70 border-[#006859]/30 hover:bg-white/10 hover:text-white active:scale-95' : 'bg-transparent text-white/20 border-white/5 cursor-not-allowed'}`}>
+                    <Redo2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
               )}
             </div>
-
-            {/* ATS Score Context Mini-Banner (When changes are shown) */}
-            <AnimatePresence>
-              {showChanges && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0, marginTop: 0 }}
-                  animate={{ opacity: 1, height: 'auto', marginTop: '0.5rem' }}
-                  exit={{ opacity: 0, height: 0, marginTop: 0 }}
-                  className="overflow-hidden"
-                >
-                  <div className="flex items-center justify-between bg-primary-container/20 border border-primary/20 px-5 py-3 rounded-xl shadow-sm">
-                    {noJdMode ? (
-                      <div className="flex items-center justify-center w-full gap-3 py-1">
-                        <TrendingUp className="w-5 h-5 text-primary animate-pulse" />
-                        <span className="font-bold text-primary text-sm uppercase tracking-wider">ATS formatting score after optimization:</span>
-                        <span className="text-2xl font-black text-primary">100%</span>
-                      </div>
-                    ) : (
-                      <>
-                        <div className="text-center">
-                          <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider">Before</p>
-                          <p className="text-xl font-black text-on-surface-variant">{resume.ats_score_before}</p>
-                        </div>
-                        <div className="flex flex-col items-center flex-1 px-4">
-                          <TrendingUp className="w-5 h-5 text-primary mb-1 animate-pulse" />
-                        </div>
-                        <div className="text-center relative">
-                          <p className="text-[10px] font-bold text-primary uppercase tracking-wider">After</p>
-                          <p className="text-xl font-black text-primary">{resume.ats_score_after}</p>
-                        </div>
-                        <div className="ml-4 bg-primary text-white px-3 py-1 rounded-lg text-sm font-bold shadow-sm whitespace-nowrap">
-                          +{scoreImprovement} Points
-                        </div>
-                      </>
-                    )}
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
           </div>
 
+          {/* Pill Nav */}
+          {editMode && resume && (
+            <div className="flex-shrink-0 border-b border-white/8 bg-[#0f1117]/95 backdrop-blur-md px-4 py-2">
+              <div className="w-full grid grid-cols-3 gap-1 sm:flex sm:flex-wrap sm:gap-1.5 sm:w-auto">
+                <button type="button" onClick={() => selectEditSection('__reorder__')}
+                  className={`w-full sm:w-auto flex items-center justify-center sm:justify-start gap-1 sm:gap-1.5 px-1.5 sm:px-3 py-1.5 rounded-full text-[10px] sm:text-xs font-bold whitespace-nowrap transition-all duration-200 border ${activeEditSection === '__reorder__' ? 'bg-[#12f8d7]/10 text-[#12f8d7] border-[#12f8d7] shadow-sm' : 'bg-white/6 text-white/50 border-white/10 hover:bg-white/10 hover:text-white/80'}`}>
+                  <GripVertical className="hidden sm:block w-3 h-3" />Reorder
+                </button>
+                <button type="button" onClick={() => selectEditSection('contact')}
+                  className={`w-full sm:w-auto flex items-center justify-center sm:justify-start gap-1 sm:gap-1.5 px-1.5 sm:px-3 py-1.5 rounded-full text-[10px] sm:text-xs font-bold whitespace-nowrap transition-all duration-200 border ${activeEditSection === 'contact' ? 'bg-[#12f8d7]/10 text-[#12f8d7] border-[#12f8d7] shadow-sm' : 'bg-white/6 text-white/50 border-white/10 hover:bg-white/10 hover:text-white/80'}`}>
+                  <FileText className="hidden sm:block w-3 h-3" />Contact
+                </button>
+                {(resume.section_order || []).map((sid) => {
+                  const isCustom = sid.startsWith('custom_');
+                  const customSection = isCustom ? resume.custom_sections?.find(s => s.id === sid) : null;
+                  const meta = isCustom ? { label: customSection?.heading || 'Custom', icon: <FileText className="w-3 h-3" /> } : SECTION_LABELS[sid];
+                  if (!meta) return null;
+                  return (
+                    <button key={sid} type="button" onClick={() => selectEditSection(sid)}
+                      className={`w-full sm:w-auto flex items-center justify-center sm:justify-start gap-1 sm:gap-1.5 px-1.5 sm:px-3 py-1.5 rounded-full text-[10px] sm:text-xs font-bold whitespace-nowrap transition-all duration-200 border ${activeEditSection === sid ? 'bg-[#12f8d7]/10 text-[#12f8d7] border-[#12f8d7] shadow-sm' : 'bg-white/6 text-white/50 border-white/10 hover:bg-white/10 hover:text-white/80'}`}>
+                      <span className="hidden sm:inline-flex [&>svg]:w-3 [&>svg]:h-3">{meta.icon}</span>
+                      {meta.label}
+                    </button>
+                  );
+                })}
+                <button type="button"
+                  onClick={() => {
+                    const newCustomId = `custom_${Date.now()}`;
+                    const newCustoms = [...(resume.custom_sections || []), { id: newCustomId, heading: '', bullets: [{ text: '', url: '' }] }];
+                    const newOrder = [...(resume.section_order || ['summary', 'education', 'experience', 'projects', 'skills', 'certifications']), newCustomId];
+                    updateResume({ custom_sections: newCustoms, section_order: newOrder });
+                    selectEditSection(newCustomId);
+                  }}
+                  className="w-full sm:w-auto flex items-center justify-center sm:justify-start gap-1 sm:gap-1.5 px-1.5 sm:px-3 py-1.5 rounded-full text-[10px] sm:text-xs font-bold whitespace-nowrap transition-all duration-200 border border-white/10 text-white/50 hover:bg-white/10 hover:text-white/80">
+                  <PlusCircle className="hidden sm:block w-3 h-3" />+ Custom
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* Scrollable Panel Content */}
-          <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:px-8 lg:py-6 pb-24 hide-scrollbar">
+          <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:px-8 lg:py-6 pb-24 hide-scrollbar bg-[#0f1117]">
 
             {/* ── Inspiration Banner ── */}
             <motion.div
@@ -802,7 +824,8 @@ export default function ScratchPage() {
                   className="w-full max-w-4xl mx-auto space-y-6"
                 >
 
-                  {/* Drag Drop Section Reordering — insertion-line style */}
+                  {/* Reorder — only when __reorder__ pill active */}
+                  {activeEditSection === '__reorder__' && (
                   <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -888,8 +911,10 @@ export default function ScratchPage() {
                       })}
                     </div>
                   </motion.div>
+                  )}
 
-                  {/* Heading Section */}
+                  {/* Contact — only when contact pill active */}
+                  {activeEditSection === 'contact' && (
                   <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -1005,9 +1030,11 @@ export default function ScratchPage() {
                           )}
                     </div>
                   </motion.div>
+                  )}
 
-                  {/* Section cards rendered in section_order sequence — mirrors PDF exactly */}
+                  {/* Section cards — filtered by active pill */}
                   {(resume.section_order || ["summary", "education", "experience", "projects", "skills", "certifications"]).map((sectionId) => {
+                    if (activeEditSection !== sectionId) return null;
                     if (sectionId.startsWith("custom_")) {
                       const customIndex = resume.custom_sections?.findIndex(s => s.id === sectionId) ?? -1;
                       const customSection = customIndex >= 0 ? resume.custom_sections![customIndex] : null;
@@ -2060,24 +2087,14 @@ export default function ScratchPage() {
         </div>
 
         {/* Right Column (Live PDF Preview) — Desktop only */}
-        <div className="hidden lg:flex w-full lg:w-[55%] h-[60vh] lg:h-full bg-surface-container-lowest relative flex-col">
+        <div className="hidden lg:flex w-full lg:w-[55%] h-[60vh] lg:h-full bg-[#0c0f12] relative flex-col">
           {/* Floating Controls Row */}
           <div className="absolute top-4 right-4 z-10 flex items-center gap-3">
             {/* Template Selector */}
-            <div className="flex bg-surface/90 backdrop-blur-md rounded-2xl shadow-lg border border-primary/10 overflow-hidden">
-              <button
-                onClick={() => setSelectedTemplate("templateLetter")}
-                className={`px-3 py-2 text-xs font-semibold transition-colors ${selectedTemplate === "templateLetter" ? "bg-primary text-white" : "text-on-surface-variant hover:bg-surface-container"}`}
-              >
-                Template 1
-              </button>
-              <div className="w-[1px] bg-primary/10"></div>
-              <button
-                onClick={() => setSelectedTemplate("templateA4")}
-                className={`px-3 py-2 text-xs font-semibold transition-colors ${selectedTemplate === "templateA4" ? "bg-primary text-white" : "text-on-surface-variant hover:bg-surface-container"}`}
-              >
-                Template 2
-              </button>
+            <div className="flex bg-[#0f1117]/90 backdrop-blur-md rounded-2xl shadow-lg border border-[#006859]/30 overflow-hidden">
+              <button onClick={() => setSelectedTemplate("templateLetter")} className={`px-3 py-2 text-xs font-semibold transition-colors ${selectedTemplate === "templateLetter" ? "bg-primary text-white" : "text-white/60 hover:bg-white/10"}`}>Template 1</button>
+              <div className="w-[1px] bg-white/10"></div>
+              <button onClick={() => setSelectedTemplate("templateA4")} className={`px-3 py-2 text-xs font-semibold transition-colors ${selectedTemplate === "templateA4" ? "bg-primary text-white" : "text-white/60 hover:bg-white/10"}`}>Template 2</button>
             </div>
 
             {/* Highlight Toggle */}
