@@ -5,7 +5,7 @@ from prompts.format_only_prompt import FORMAT_ONLY_PROMPT
 from llm.master_llm_caller import call_llm_r2
 from templates.template_v1_schema import TemplateV1
 
-async def generate_resume(resume_text: str, job_description: str, ats_score_before: int, approved_project: str = "", missing_keywords: list[str] = None, selected_projects: list[str] = None, no_ai_changes: bool = False, preferred_model: str = "") -> dict:
+async def generate_resume(resume_text: str, job_description: str, ats_score_before: int, approved_project: str = "", missing_keywords: list[str] = None, selected_projects: list[str] = None, no_ai_changes: bool = False, preferred_model: str = "", has_credits: bool = False) -> dict:
     is_no_jd_mode = not job_description or not job_description.strip()
 
     # Route to correct prompt based on JD presence and flags
@@ -25,13 +25,13 @@ async def generate_resume(resume_text: str, job_description: str, ats_score_befo
             approved_project=approved_project if approved_project else "none"
         )
 
-    result = await call_llm_r2(prompt, preferred_model)
+    result = await call_llm_r2(prompt, preferred_model, has_credits=has_credits, no_ai_changes=no_ai_changes)
     
     # Check if LLM call failed
     if not result["success"]:
         raise ValueError(f"All LLM providers failed: {result['all_attempts']}")
     
-    model_used = result.get("model", "unknown")
+    model_used = result.get("_model_used", "unknown")
 
     raw_response = result["text"]
 
@@ -130,6 +130,7 @@ async def generate_resume(resume_text: str, job_description: str, ats_score_befo
         # resume had only 1 and no approved project was provided.
         # The LLM is responsible for not fabricating projects.
         
+        validated_dict["_model_used"] = model_used
         return validated_dict, model_used
     except Exception as e:
         raise ValueError(f"Generated JSON does not match Template v1 schema: {str(e)}")

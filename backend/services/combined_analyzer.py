@@ -4,7 +4,7 @@ from prompts.combined_analysis_prompt import COMBINED_ANALYSIS_PROMPT
 from llm.master_llm_caller import call_llm_r1
 
 
-async def analyze_resume_combined(resume_text: str, job_description: str, preferred_model: str = "") -> dict:
+async def analyze_resume_combined(resume_text: str, job_description: str, preferred_model: str = "", has_credits: bool = False) -> dict:
     """
     Combined analyzer: ATS Scoring + Project Relevance in a SINGLE LLM call.
     The LLM directly outputs both all_missing_skills (full, for UI) and
@@ -14,7 +14,7 @@ async def analyze_resume_combined(resume_text: str, job_description: str, prefer
         resume_text=resume_text,
         job_description=job_description
     )
-    result = await call_llm_r1(prompt, preferred_model)
+    result = await call_llm_r1(prompt, preferred_model, has_credits=has_credits)
 
     if not result["success"]:
         raise ValueError(f"All LLM providers failed: {result['all_attempts']}")
@@ -114,6 +114,6 @@ async def analyze_resume_combined(resume_text: str, job_description: str, prefer
     if data.get("case") == 2 and data.get("suggested_project") is not None:
         data["requires_consent"] = True
 
-    data["_model_used"] = result.get("model", "unknown")
+    data["_model_used"] = result.get("_model_used", "unknown")
     data["_provider"] = result.get("provider", "unknown")
     return data

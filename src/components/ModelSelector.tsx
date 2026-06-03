@@ -11,36 +11,24 @@ interface ModelSelectorProps {
 
 export const MODELS = {
   r1_preferred_model: [
-    { id: "", name: "Auto (Fastest Available)" },
+    { id: "", name: "Auto (Recommended)" },
+    { id: "deepseek-v4-flash", name: "DeepSeek V4 Flash (Premium)" },
     { id: "mistral-large-latest", name: "Mistral Large (Mistral)" },
     { id: "llama-3.3-70b-versatile", name: "Llama 3.3 70B (Groq)" },
     { id: "mistralai/mistral-medium-3.5-128b", name: "Mistral Medium 3.5 (NVIDIA)" },
     { id: "mistralai/mistral-nemotron", name: "Mistral Nemotron (NVIDIA)" },
     { id: "mistral-medium-latest", name: "Mistral Medium (Mistral)" },
-    { id: "mistralai/ministral-14b-instruct-2512", name: "Ministral 14B (NVIDIA)" },
-    { id: "ministral-8b-latest", name: "Ministral 8B (Mistral)" },
-    { id: "mistralai/mixtral-8x22b-instruct-v0.1", name: "Mixtral 8x22B (NVIDIA)" },
-    { id: "meta-llama/llama-4-scout-17b-16e-instruct", name: "Llama 4 Scout 17B (Groq)" },
-    { id: "mistral-small-latest", name: "Mistral Small (Mistral)" },
-    { id: "mistralai/mistral-small-4-119b-2603", name: "Mistral Small 4 (NVIDIA)" },
-    { id: "mistral-tiny-latest", name: "Mistral Tiny (Mistral)" },
-    { id: "open-mistral-nemo", name: "Mistral Nemo (Mistral)" }
+    { id: "mistralai/ministral-14b-instruct-2512", name: "Ministral 14B (NVIDIA)" }
   ],
   preferred_model: [
-    { id: "", name: "Auto (Best Quality Available)" },
+    { id: "", name: "Auto (Recommended)" },
+    { id: "deepseek-v4-flash", name: "DeepSeek V4 Flash (Premium)" },
     { id: "mistral-large-latest", name: "Mistral Large (Mistral)" },
     { id: "llama-3.3-70b-versatile", name: "Llama 3.3 70B (Groq)" },
     { id: "mistralai/mistral-medium-3.5-128b", name: "Mistral Medium 3.5 (NVIDIA)" },
     { id: "mistralai/mistral-nemotron", name: "Mistral Nemotron (NVIDIA)" },
     { id: "mistral-medium-latest", name: "Mistral Medium (Mistral)" },
-    { id: "mistralai/ministral-14b-instruct-2512", name: "Ministral 14B (NVIDIA)" },
-    { id: "ministral-8b-latest", name: "Ministral 8B (Mistral)" },
-    { id: "mistralai/mixtral-8x22b-instruct-v0.1", name: "Mixtral 8x22B (NVIDIA)" },
-    { id: "meta-llama/llama-4-scout-17b-16e-instruct", name: "Llama 4 Scout 17B (Groq)" },
-    { id: "mistral-small-latest", name: "Mistral Small (Mistral)" },
-    { id: "mistralai/mistral-small-4-119b-2603", name: "Mistral Small 4 (NVIDIA)" },
-    { id: "mistral-tiny-latest", name: "Mistral Tiny (Mistral)" },
-    { id: "open-mistral-nemo", name: "Mistral Nemo (Mistral)" }
+    { id: "mistralai/ministral-14b-instruct-2512", name: "Ministral 14B (NVIDIA)" }
   ]
 };
 
