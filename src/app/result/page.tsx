@@ -227,6 +227,9 @@ export default function ResultPage() {
       try {
         localStorage.setItem("resume_history", JSON.stringify(truncated));
         localStorage.setItem("resume_history_index", String(truncated.length - 1));
+        if (next.session_id) {
+          localStorage.setItem("resume_history_session_id", next.session_id);
+        }
       } catch (_) { }
       return next;
     });
@@ -471,13 +474,16 @@ export default function ResultPage() {
     fetchSession();
   }, [router]);
 
-  // Seed history once resume first loads — restore from localStorage if available
+  // Seed history once resume first loads — restore from localStorage if it belongs to THIS session
   useEffect(() => {
     if (resume && historyRef.current.length === 0) {
       try {
         const savedHistory = localStorage.getItem("resume_history");
         const savedIndex = localStorage.getItem("resume_history_index");
-        if (savedHistory && savedIndex !== null) {
+        const savedSessionId = localStorage.getItem("resume_history_session_id");
+        const currentSessionId = resume.session_id || "";
+
+        if (savedHistory && savedIndex !== null && savedSessionId === currentSessionId && currentSessionId !== "") {
           const parsedHistory: TemplateV1[] = JSON.parse(savedHistory);
           const parsedIndex = parseInt(savedIndex, 10);
           if (Array.isArray(parsedHistory) && parsedHistory.length > 0 && parsedIndex >= 0 && parsedIndex < parsedHistory.length) {
@@ -489,7 +495,13 @@ export default function ResultPage() {
           }
         }
       } catch (_) { }
-      // Fallback: seed with current resume as starting point
+      // Different session or no saved history — start fresh
+      localStorage.removeItem("resume_history");
+      localStorage.removeItem("resume_history_index");
+      localStorage.removeItem("resume_history_session_id");
+      if (resume.session_id) {
+        localStorage.setItem("resume_history_session_id", resume.session_id);
+      }
       historyRef.current = [resume];
       historyIndexRef.current = 0;
       setCanUndo(false);
