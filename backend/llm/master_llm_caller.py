@@ -101,6 +101,24 @@ async def _get_pool_models(pool_type: int, is_r1: bool) -> list:
     # Return reordered pool starting at idx
     return pool[idx:] + pool[:idx]
 
+from llm.cloudflare_fallback import call_single_cloudflare_r1, call_single_cloudflare_r2
+
+def _get_provider_for_model(model_id: str) -> str:
+    if model_id == "deepseek-v4-flash":
+        return "deepseek"
+    if model_id.startswith("@cf/"):
+        return "cloudflare"
+    # Known Groq prefixes/keywords
+    if any(k in model_id.lower() for k in ["llama", "qwen", "gpt", "allam", "compound", "whisper", "orpheus"]):
+        # Note: if NVIDIA models like "meta/llama" are used, they should be mapped explicitly if we add them back.
+        # Currently, all llama/qwen/gpt in the new 30 list are Groq or Cloudflare (handled above).
+        return "groq"
+    if any(k in model_id.lower() for k in ["stral", "nemo", "vibe"]):
+        if model_id.startswith("mistralai/"):
+            return "nvidia"
+        return "mistral"
+    return "mistral" # fallback
+
 async def call_llm_balanced(prompt: str, is_r1: bool, preferred_model: str = "", has_credits: bool = False, no_ai_changes: bool = False) -> dict:
     async with _LLM_SEMAPHORE:
         max_tokens = _R1_MAX_TOKENS if is_r1 else _R2_MAX_TOKENS
@@ -111,38 +129,47 @@ async def call_llm_balanced(prompt: str, is_r1: bool, preferred_model: str = "",
         
         # 1. Explicit Preferred Model Override (e.g., from Dropdown for testing)
         if preferred_model:
-            if preferred_model == "deepseek-v4-flash":
-                deepseek_caller = call_single_deepseek_r1 if is_r1 else call_single_deepseek_r2
-                chain.append(("deepseek", "deepseek-v4-flash", deepseek_caller))
+            provider = _get_provider_for_model(preferred_model)
+            
+            if provider == "deepseek":
+                caller = call_single_deepseek_r1 if is_r1 else call_single_deepseek_r2
+            elif provider == "cloudflare":
+                caller = call_single_cloudflare_r1 if is_r1 else call_single_cloudflare_r2
+            elif provider == "groq":
+                caller = call_single_groq_r1 if is_r1 else call_single_groq_r2
+            elif provider == "nvidia":
+                caller = call_single_nvidia_r1 if is_r1 else call_single_nvidia_r2
             else:
-                pools = POOL_1_R1 + POOL_2_R1 if is_r1 else POOL_1_R2 + POOL_2_R2
-                for provider, model_id, caller in pools:
-                    if preferred_model == model_id:
-                        chain.append((provider, model_id, caller))
-                        break
-
-        if is_r1:
-            # R1 (Analyze): ALWAYS DeepSeek -> Pool 1 -> Pool 2 (regardless of credits)
-            deepseek_caller = call_single_deepseek_r1
-            chain.append(("deepseek", "deepseek-v4-flash", deepseek_caller))
-            chain.extend(await _get_pool_models(1, True))
-            chain.extend(await _get_pool_models(2, True))
+                caller = call_single_mistral_r1 if is_r1 else call_single_mistral_r2
+                
+            chain.append((provider, preferred_model, caller))
+            
+            # We INTENTIONALLY skip adding the fallback pools here.
+            # If the user manually selects a model, they want to test THAT model.
+            # If it fails, it should hard-fail and show the error, rather than silently falling back.
         else:
-            # R2 (Generate)
-            if no_ai_changes:
-                # Self-edit: Pool 1 -> Pool 2 (cost optimization, no premium inference needed)
-                chain.extend(await _get_pool_models(1, False))
-                chain.extend(await _get_pool_models(2, False))
-            elif has_credits:
-                # Paid User Gen: DeepSeek -> Pool 1 -> Pool 2
-                deepseek_caller = call_single_deepseek_r2
+            if is_r1:
+                # R1 (Analyze): ALWAYS DeepSeek -> Pool 1 -> Pool 2 (regardless of credits)
+                deepseek_caller = call_single_deepseek_r1
                 chain.append(("deepseek", "deepseek-v4-flash", deepseek_caller))
-                chain.extend(await _get_pool_models(1, False))
-                chain.extend(await _get_pool_models(2, False))
+                chain.extend(await _get_pool_models(1, True))
+                chain.extend(await _get_pool_models(2, True))
             else:
-                # Free User Gen: Pool 1 -> Pool 2
-                chain.extend(await _get_pool_models(1, False))
-                chain.extend(await _get_pool_models(2, False))
+                # R2 (Generate)
+                if no_ai_changes:
+                    # Self-edit: Pool 1 -> Pool 2 (cost optimization, no premium inference needed)
+                    chain.extend(await _get_pool_models(1, False))
+                    chain.extend(await _get_pool_models(2, False))
+                elif has_credits:
+                    # Paid User Gen: DeepSeek -> Pool 1 -> Pool 2
+                    deepseek_caller = call_single_deepseek_r2
+                    chain.append(("deepseek", "deepseek-v4-flash", deepseek_caller))
+                    chain.extend(await _get_pool_models(1, False))
+                    chain.extend(await _get_pool_models(2, False))
+                else:
+                    # Free User Gen: Pool 1 -> Pool 2
+                    chain.extend(await _get_pool_models(1, False))
+                    chain.extend(await _get_pool_models(2, False))
 
         # Execute Chain
         for provider, model_id, caller in chain:

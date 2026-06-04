@@ -97,7 +97,7 @@ async def _call_groq_single(get_client_fn, model: str, prompt: str, max_tokens: 
                 "speed": elapsed, "attempts": attempts + [{"model": model, "status": "pass"}],
             }
         except Exception as e:
-            err = str(e)
+            err = repr(e)
             attempts.append({"model": model, "status": err[:80]})
             if any(x in err for x in ["429", "rate_limit", "rate limit"]):
                 break

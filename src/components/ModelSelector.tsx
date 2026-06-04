@@ -13,24 +13,50 @@ export const MODELS = {
   r1_preferred_model: [
     { id: "", name: "Auto (Recommended)" },
     { id: "deepseek-v4-flash", name: "DeepSeek V4 Flash (Premium)" },
+    
+    // -- Mistral --
     { id: "mistral-large-latest", name: "Mistral Large (Mistral)" },
+    { id: "mistral-medium-latest", name: "Mistral Medium (Mistral)" },
+    { id: "magistral-medium-latest", name: "Magistral Medium (Mistral) (Slow/Reasoning)" },
+    { id: "mistral-medium-2604", name: "Mistral Medium 2604 (Mistral)" },
+    { id: "mistral-medium-3.5", name: "Mistral Medium 3.5 (Mistral)" },
+    { id: "ministral-14b-latest", name: "Ministral 14B (Mistral)" },
+    { id: "mistral-small-latest", name: "Mistral Small (Mistral)" },
+    { id: "magistral-small-latest", name: "Magistral Small (Mistral) (Slow/Reasoning)" },
+    { id: "devstral-latest", name: "Devstral (Mistral)" },
+    { id: "open-mistral-nemo", name: "Mistral Nemo (Mistral)" },
+    
+    // -- Groq --
     { id: "llama-3.3-70b-versatile", name: "Llama 3.3 70B (Groq)" },
+    { id: "meta-llama/llama-4-scout-17b-16e-instruct", name: "Llama 4 Scout 17B (Groq)" },
+    { id: "qwen/qwen3-32b", name: "Qwen3 32B (Groq)" },
+    { id: "openai/gpt-oss-120b", name: "GPT-OSS 120B (Groq) (Slow/Reasoning)" },
+    { id: "openai/gpt-oss-20b", name: "GPT-OSS 20B (Groq) (Slow/Reasoning)" },
+    { id: "llama-3.1-8b-instant", name: "Llama 3.1 8B (Groq)" },
+    { id: "groq/compound", name: "Groq Compound (Groq)" },
+    { id: "groq/compound-mini", name: "Groq Compound Mini (Groq)" },
+    { id: "allam-2-7b", name: "Allam 2 7B (Groq)" },
+    { id: "openai/gpt-oss-safeguard-20b", name: "GPT-OSS Safeguard 20B (Groq) (Slow/Reasoning)" },
+
+    // -- Cloudflare --
+    { id: "@cf/qwen/qwq-32b", name: "QwQ 32B (Cloudflare) (Slow/Reasoning)" },
+    { id: "@cf/meta/llama-3.3-70b-instruct-fp8-fast", name: "Llama 3.3 70B Fast (Cloudflare)" },
+    { id: "@cf/openai/gpt-oss-120b", name: "GPT-OSS 120B (Cloudflare) (Slow/Reasoning)" },
+    { id: "@cf/openai/gpt-oss-20b", name: "GPT-OSS 20B (Cloudflare) (Slow/Reasoning)" },
+    { id: "@cf/moonshotai/kimi-k2.6", name: "Kimi K2.6 (Cloudflare)" },
+    { id: "@cf/qwen/qwen3-30b-a3b-fp8", name: "Qwen3 30B (Cloudflare)" },
+    { id: "@cf/meta/llama-4-scout-17b-16e-instruct", name: "Llama 4 Scout 17B (Cloudflare)" },
+    { id: "@cf/google/gemma-4-26b-a4b-it", name: "Gemma 4 26B (Cloudflare)" },
+    { id: "@cf/deepseek-ai/deepseek-r1-distill-qwen-32b", name: "DeepSeek R1 Distill (Cloudflare) (Slow/Reasoning)" },
+    { id: "@cf/qwen/qwen2.5-coder-32b-instruct", name: "Qwen 2.5 Coder (Cloudflare)" },
+
+    // -- NVIDIA (Existing) --
     { id: "mistralai/mistral-medium-3.5-128b", name: "Mistral Medium 3.5 (NVIDIA)" },
     { id: "mistralai/mistral-nemotron", name: "Mistral Nemotron (NVIDIA)" },
-    { id: "mistral-medium-latest", name: "Mistral Medium (Mistral)" },
-    { id: "mistralai/ministral-14b-instruct-2512", name: "Ministral 14B (NVIDIA)" }
-  ],
-  preferred_model: [
-    { id: "", name: "Auto (Recommended)" },
-    { id: "deepseek-v4-flash", name: "DeepSeek V4 Flash (Premium)" },
-    { id: "mistral-large-latest", name: "Mistral Large (Mistral)" },
-    { id: "llama-3.3-70b-versatile", name: "Llama 3.3 70B (Groq)" },
-    { id: "mistralai/mistral-medium-3.5-128b", name: "Mistral Medium 3.5 (NVIDIA)" },
-    { id: "mistralai/mistral-nemotron", name: "Mistral Nemotron (NVIDIA)" },
-    { id: "mistral-medium-latest", name: "Mistral Medium (Mistral)" },
-    { id: "mistralai/ministral-14b-instruct-2512", name: "Ministral 14B (NVIDIA)" }
+    { id: "mistralai/ministral-14b-instruct-2512", name: "Ministral 14B 2512 (NVIDIA)" }
   ]
 };
+MODELS.preferred_model = MODELS.r1_preferred_model;
 
 export default function ModelSelector({ storageKey, label }: ModelSelectorProps) {
   const [selected, setSelected] = useState("");
@@ -95,7 +121,7 @@ export default function ModelSelector({ storageKey, label }: ModelSelectorProps)
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -10, scale: 0.95 }}
             transition={{ duration: 0.15 }}
-            className="absolute bottom-full left-0 right-0 mb-2 bg-surface-container-lowest border border-surface-container-high rounded-xl shadow-xl overflow-hidden z-50 py-1"
+            className="absolute bottom-full left-0 right-0 mb-2 bg-surface-container-lowest border border-surface-container-high rounded-xl shadow-xl overflow-y-auto max-h-72 z-50 py-1"
           >
             {options.map((opt) => (
               <button

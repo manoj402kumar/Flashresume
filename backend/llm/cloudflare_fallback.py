@@ -7,11 +7,11 @@ load_dotenv()
 
 # -------------------------------------------------------------------
 # Dual-client architecture — LAZY INITIALIZED (ASYNC):
-#   R1 client  → MISTRAL_R1_API_KEY  (Account / Email 1)  timeout=30s
-#   R2 client  → MISTRAL_R2_API_KEY  (Account / Email 2)  timeout=90s
+#   R1 client  → CLOUDFLARE_R1_API_TOKEN + ACCOUNT_ID
+#   R2 client  → CLOUDFLARE_R2_API_TOKEN + ACCOUNT_ID
 #
 # Clients are created on first use, NOT at module import time.
-# Uses AsyncMistral for non-blocking async calls.
+# Uses AsyncOpenAI for Cloudflare Workers AI compatible endpoint.
 # -------------------------------------------------------------------
 _client_r1 = None
 _client_r2 = None
@@ -20,41 +20,41 @@ _client_r2 = None
 def _get_client_r1():
     global _client_r1
     if _client_r1 is None:
-        from mistralai.client import Mistral
-        api_key = os.getenv("MISTRAL_R1_API_KEY")
-        if not api_key:
+        from openai import AsyncOpenAI
+        api_key = os.getenv("CLOUDFLARE_R1_API_TOKEN")
+        account_id = os.getenv("CLOUDFLARE_R1_ACCOUNT_ID")
+        if not api_key or not account_id:
             return None
-        _client_r1 = Mistral(api_key=api_key, timeout_ms=30000)
+        _client_r1 = AsyncOpenAI(
+            base_url=f"https://api.cloudflare.com/client/v4/accounts/{account_id}/ai/v1",
+            api_key=api_key,
+            timeout=30.0
+        )
     return _client_r1
 
 
 def _get_client_r2():
     global _client_r2
     if _client_r2 is None:
-        from mistralai.client import Mistral
-        api_key = os.getenv("MISTRAL_R2_API_KEY")
-        if not api_key:
+        from openai import AsyncOpenAI
+        api_key = os.getenv("CLOUDFLARE_R2_API_TOKEN")
+        account_id = os.getenv("CLOUDFLARE_R2_ACCOUNT_ID")
+        if not api_key or not account_id:
             return None
-        _client_r2 = Mistral(api_key=api_key, timeout_ms=90000)
+        _client_r2 = AsyncOpenAI(
+            base_url=f"https://api.cloudflare.com/client/v4/accounts/{account_id}/ai/v1",
+            api_key=api_key,
+            timeout=90.0
+        )
     return _client_r2
 
 
 def _extract_text(response) -> str | None:
-    """Safely pull text from Mistral response. Returns None on any structural issue."""
+    """Safely pull text from Cloudflare response. Returns None on any structural issue."""
     try:
         text = response.choices[0].message.content
         if text is None:
             return None
-            
-        # Handle new Mistral SDK returning list of chunks for reasoning models
-        if isinstance(text, list):
-            # Extract the actual text chunk, ignoring ThinkChunk
-            extracted = ""
-            for chunk in text:
-                if getattr(chunk, "type", "") == "text":
-                    extracted += getattr(chunk, "text", "")
-            text = extracted
-
         text = text.strip()
         if not text:
             return None
@@ -77,18 +77,18 @@ def _extract_text(response) -> str | None:
         return None
 
 
-async def _call_mistral_single(get_client_fn, model: str, prompt: str, max_tokens: int, retries: int = 1) -> dict:
+async def _call_cloudflare_single(get_client_fn, model: str, prompt: str, max_tokens: int, retries: int = 1) -> dict:
     client = get_client_fn()
     if client is None:
         return {
             "success": False, "text": None, "model": None, "speed": None,
-            "attempts": [{"model": model, "status": "skipped — Mistral API key not configured"}],
+            "attempts": [{"model": model, "status": "skipped — Cloudflare API key/account not configured"}],
         }
     attempts = []
     for attempt in range(retries + 1):
         try:
             start = time.time()
-            response = await client.chat.complete_async(
+            response = await client.chat.completions.create(
                 model=model,
                 messages=[{"role": "user", "content": prompt}],
                 temperature=0.1,
@@ -108,18 +108,18 @@ async def _call_mistral_single(get_client_fn, model: str, prompt: str, max_token
             attempts.append({"model": model, "status": err[:80]})
             if any(x in err for x in ["429", "rate_limit", "rate limit", "too many requests"]):
                 break
-            if any(x in err for x in ["404", "model_not_found", "does not exist", "No such model"]):
+            if any(x in err for x in ["404", "model_not_found", "does not exist"]):
                 break
-            if any(x in err for x in ["401", "403", "invalid_api_key", "Unauthorized"]):
+            if any(x in err for x in ["401", "403", "invalid_api_key", "authentication", "Unauthorized"]):
                 break
-            if "tokens" in err.lower() and ("exceed" in err.lower() or "limit" in err.lower()):
+            if "context_length_exceeded" in err or "maximum context" in err.lower():
                 break
-            if any(x in err for x in ["503", "500", "502", "overloaded", "capacity"]):
+            if any(x in err for x in ["503", "500", "502", "overloaded"]):
                 if attempt < retries:
                     import asyncio
                     await asyncio.sleep(1)
                 continue
-            if "timeout" in err.lower() or "timed out" in err.lower() or "ReadTimeout" in err:
+            if "timeout" in err.lower() or "timed out" in err.lower():
                 if attempt < retries:
                     import asyncio
                     await asyncio.sleep(1)
@@ -128,11 +128,11 @@ async def _call_mistral_single(get_client_fn, model: str, prompt: str, max_token
     return {"success": False, "text": None, "model": None, "speed": None, "attempts": attempts}
 
 
-async def call_single_mistral_r1(model: str, prompt: str, max_tokens: int = 2500) -> dict:
-    """Call exactly one Mistral model using the R1 API key (Account 1). R1 timeout=30s."""
-    return await _call_mistral_single(_get_client_r1, model, prompt, max_tokens)
+async def call_single_cloudflare_r1(model: str, prompt: str, max_tokens: int = 2500) -> dict:
+    """Call exactly one Cloudflare model using the R1 API key. R1 timeout=30s."""
+    return await _call_cloudflare_single(_get_client_r1, model, prompt, max_tokens)
 
 
-async def call_single_mistral_r2(model: str, prompt: str, max_tokens: int = 4500) -> dict:
-    """Call exactly one Mistral model using the R2 API key (Account 2). R2 timeout=90s."""
-    return await _call_mistral_single(_get_client_r2, model, prompt, max_tokens)
+async def call_single_cloudflare_r2(model: str, prompt: str, max_tokens: int = 4500) -> dict:
+    """Call exactly one Cloudflare model using the R2 API key. R2 timeout=90s."""
+    return await _call_cloudflare_single(_get_client_r2, model, prompt, max_tokens)
