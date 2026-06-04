@@ -194,6 +194,7 @@ export interface TemplateV1 {
   }>;
   ats_score_before: number;
   ats_score_after: number;
+  session_id?: string;
   _model_used?: string;
 }
 
