@@ -79,7 +79,9 @@ async def _get_next_rr_index(pool_type: int, pool_size: int) -> int:
             ),
             timeout=0.8
         )
-        return result.data
+        if result.data is None:
+            raise ValueError(f"Supabase RPC returned None for {counter_name}")
+        return int(result.data)
     except Exception:
         # Fallback to local lock if Supabase is down or slow
         global _pool1_idx, _pool2_idx
