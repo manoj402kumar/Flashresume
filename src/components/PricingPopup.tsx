@@ -766,34 +766,24 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
             {step === "student_verify" && (
               <motion.div key="student_verify" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-5">
                 <div className="flex bg-surface-container-low rounded-xl p-1 gap-1">
-                  <button onClick={() => setStudentMethod("email")} className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-all flex items-center justify-center gap-2 ${studentMethod === "email" ? "bg-surface-container-lowest text-on-background shadow-sm" : "text-on-surface-variant hover:text-on-background"}`}>
-                    <Mail className="w-4 h-4" /> Verify with clg mail
+                  <button onClick={() => setStudentMethod("email")} className={`flex-1 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all flex items-center justify-center gap-1.5 sm:gap-2 ${studentMethod === "email" ? "bg-surface-container-lowest text-on-background shadow-sm" : "text-on-surface-variant hover:text-on-background"}`}>
+                    <Mail className="w-4 h-4 shrink-0" /> College Email
                   </button>
-                  <button onClick={() => setStudentMethod("details")} className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-all flex items-center justify-center gap-2 ${studentMethod === "details" ? "bg-surface-container-lowest text-on-background shadow-sm" : "text-on-surface-variant hover:text-on-background"}`}>
-                    <Building className="w-4 h-4" /> Verify with details
+                  <button onClick={() => setStudentMethod("details")} className={`flex-1 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all flex items-center justify-center gap-1.5 sm:gap-2 ${studentMethod === "details" ? "bg-surface-container-lowest text-on-background shadow-sm" : "text-on-surface-variant hover:text-on-background"}`}>
+                    <Building className="w-4 h-4 shrink-0" /> College Details
                   </button>
                 </div>
 
                 {studentMethod === "email" ? (
                   <div className="space-y-3">
-                    <div className="flex gap-2">
-                      <input
-                        type="email"
-                        placeholder="Enter your email"
-                        value={studentEmail}
-                        onChange={e => { setStudentEmail(e.target.value); setOtpSent(false); setOtpValue(""); setError(null); }}
-                        disabled={otpSent}
-                        className="flex-1 px-4 py-3 bg-surface-container-low border border-surface-container-high rounded-xl outline-none text-sm focus:ring-2 focus:ring-primary disabled:opacity-60"
-                      />
-                      <button
-                        type="button"
-                        onClick={sendOtp}
-                        disabled={loading || otpSent}
-                        className="px-4 py-3 bg-primary text-white text-sm font-bold rounded-xl hover:opacity-90 transition-opacity disabled:opacity-50 whitespace-nowrap"
-                      >
-                        {loading && !otpSent ? <Loader2 className="w-4 h-4 animate-spin" /> : otpSent ? "Sent ✓" : "Send OTP"}
-                      </button>
-                    </div>
+                    <input
+                      type="email"
+                      placeholder="Enter your college email"
+                      value={studentEmail}
+                      onChange={e => { setStudentEmail(e.target.value); setOtpSent(false); setOtpValue(""); setError(null); }}
+                      disabled={otpSent}
+                      className="w-full px-4 py-3 bg-surface-container-low border border-surface-container-high rounded-xl outline-none text-sm focus:ring-2 focus:ring-primary disabled:opacity-60"
+                    />
                     {otpSent && (
                       <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} className="space-y-2">
                         <p className="text-xs text-on-surface-variant text-center">Enter the 6-digit code sent to <strong>{studentEmail}</strong></p>

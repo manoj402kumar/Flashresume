@@ -1,4 +1,6 @@
 import React from "react";
+import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 
 export const metadata = {
   title: "Contact Us | Flashresume",
@@ -8,6 +10,13 @@ export default function ContactPage() {
   return (
     <div className="min-h-screen pt-24 pb-12 bg-surface">
       <div className="max-w-3xl mx-auto px-6">
+        <Link href="/" className="inline-flex items-center gap-2 text-on-surface-variant hover:text-primary transition-colors mb-8">
+
+          <ArrowLeft className="w-4 h-4" />
+
+          <span>Back to Home</span>
+
+        </Link>
         <h1 className="text-4xl font-headline font-bold mb-8">Contact Us</h1>
         <div className="bg-surface-container-low p-8 rounded-3xl border border-surface-container-high space-y-6">
           <p className="text-on-surface-variant leading-relaxed">

@@ -6,6 +6,8 @@ import razorpay
 import os
 import random
 import aiosmtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 from dotenv import load_dotenv
 from supabase_client import supabase, sb
 from datetime import datetime, timedelta, timezone

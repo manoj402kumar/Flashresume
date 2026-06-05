@@ -380,6 +380,24 @@ export default function App() {
     if (!referralCode) return;
     const url = `${window.location.origin}/?ref=${referralCode}`;
 
+    // 1. Copy to clipboard synchronously first. 
+    // iOS Safari blocks clipboard access if it happens after an 'await'.
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(url).catch(() => {});
+      } else {
+        const textArea = document.createElement("textarea");
+        textArea.value = url;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand("copy");
+        document.body.removeChild(textArea);
+      }
+    } catch (e) {
+      // Ignore copy errors
+    }
+
+    // 2. Attempt native share sheet
     if (navigator.share) {
       try {
         await navigator.share({
@@ -393,7 +411,7 @@ export default function App() {
       }
     }
 
-    navigator.clipboard.writeText(url);
+    // 3. If native share fails or isn't supported, show "Copied" UI
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
