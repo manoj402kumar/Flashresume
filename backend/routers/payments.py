@@ -268,12 +268,14 @@ async def send_otp(request: Request, body: SendOtpRequest):
     expires_at = (datetime.now(timezone.utc) + timedelta(minutes=10)).isoformat()
     
     # Upsert OTP into a simple table (create this in Supabase if it doesn't exist)
+    # Also reset failed_attempts so locked-out users can retry after requesting a new code
     try:
         await sb(lambda: supabase.table("otp_verifications").upsert({
             "email": email,
             "otp": otp_code,
             "expires_at": expires_at,
-            "verified": False
+            "verified": False,
+            "failed_attempts": 0
         }, on_conflict="email").execute())
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"DB error: {str(e)}")

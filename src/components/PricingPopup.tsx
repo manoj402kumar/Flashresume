@@ -314,14 +314,22 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
       });
       const data = await res.json();
       if (!res.ok || !data.verified) throw new Error(data.detail || "Invalid or expired OTP.");
-      // OTP verified — mark student and go to payment
-      await supabase.from("users").update({
+
+      // Guard: user must be set before writing to DB
+      const activeUser = user;
+      if (!activeUser?.id) throw new Error("Session expired. Please close and re-open the popup.");
+
+      // OTP verified — mark student status in DB
+      const { error: dbError } = await supabase.from("users").update({
         is_student: true,
         student_verified_at: new Date().toISOString()
-      }).eq("id", user?.id);
+      }).eq("id", activeUser.id);
+      if (dbError) console.warn("Failed to save student status:", dbError.message);
+
       setIsStudent(true);
       setSelectedPlan("student");
-      handleProceedToPayment("student", true); // pass alreadyVerified=true to skip stale state check
+      // Pass activeUser explicitly to avoid stale React state closure
+      handleProceedToPayment("student", true, activeUser);
     } catch (e: any) {
       setError(e.message);
     } finally {

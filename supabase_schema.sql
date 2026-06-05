@@ -142,3 +142,19 @@ BEGIN
   WHERE id = p_referrer_uuid;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- 8. OTP Verifications (Student Offer Email Verification)
+-- Used by /api/payments/send-otp and /api/payments/verify-otp
+-- RLS is disabled — accessed only via the backend service role key (not by users directly)
+CREATE TABLE IF NOT EXISTS public.otp_verifications (
+  email TEXT PRIMARY KEY,            -- one active OTP per email at a time
+  otp TEXT NOT NULL,
+  expires_at TIMESTAMPTZ NOT NULL,
+  verified BOOLEAN DEFAULT FALSE,
+  failed_attempts INTEGER DEFAULT 0, -- brute-force protection (max 5 attempts)
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- No RLS — backend service key bypasses it; users never query this table directly
+ALTER TABLE public.otp_verifications DISABLE ROW LEVEL SECURITY;
+
