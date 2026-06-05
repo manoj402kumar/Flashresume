@@ -90,7 +90,6 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedPlan, setSelectedPlan] = useState<string>(initialPlan || "pay_per_use");
-  const [isStudent, setIsStudent] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
@@ -104,10 +103,6 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
     }
   }, [isOpen, initialPlan]);
 
-  const applyStudentStatus = (uData: any) => {
-    // Simple check: just use the is_student flag — no date math needed
-    setIsStudent(!!uData?.is_student);
-  };
 
   const checkUserSession = async () => {
     // Fast path: use pre-loaded user data if provided (avoids 2 extra network calls)
@@ -116,7 +111,6 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
       const credits = prefetchedCredits ?? 0;
       if (directPay && initialPlan) {
         setStep("processing");
-        // Pass user directly to avoid React state closure race condition
         setTimeout(() => handleProceedToPayment(initialPlan, false, prefetchedUser), 100);
       } else if (!forcePlanSelect && credits >= 10) {
         onSuccess();
@@ -130,15 +124,11 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
     if (session?.user) {
       const sessionUser = session.user;
       setUser(sessionUser);
-      const { data } = await supabase.from("users").select("is_student, credits_balance").eq("id", sessionUser.id).single();
-      applyStudentStatus(data);
+      const { data } = await supabase.from("users").select("credits_balance").eq("id", sessionUser.id).single();
       if (directPay && initialPlan) {
-        // Skip plan selection — go straight to payment
         setStep("processing");
-        // Pass user directly to avoid React state closure race condition
         setTimeout(() => handleProceedToPayment(initialPlan, false, sessionUser), 100);
       } else if (!forcePlanSelect && data && data.credits_balance >= 10) {
-        // Auto-pass only when used as a download gate (not Buy More Credits)
         onSuccess();
       } else {
         setStep("plan");
@@ -159,11 +149,9 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
         if (data.user) {
           const loggedInUser = data.user;
           setUser(loggedInUser);
-          const { data: uData } = await supabase.from("users").select("is_student, credits_balance").eq("id", loggedInUser.id).single();
-          applyStudentStatus(uData);
+          const { data: uData } = await supabase.from("users").select("credits_balance").eq("id", loggedInUser.id).single();
           if (directPay && initialPlan) {
             setStep("processing");
-            // Pass user directly to avoid React state closure race condition
             setTimeout(() => handleProceedToPayment(initialPlan, false, loggedInUser), 100);
           } else if (uData && uData.credits_balance >= 10) {
             onSuccess();
@@ -326,9 +314,7 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
       }).eq("id", activeUser.id);
       if (dbError) console.warn("Failed to save student status:", dbError.message);
 
-      setIsStudent(true);
       setSelectedPlan("student");
-      // Pass activeUser explicitly to avoid stale React state closure
       handleProceedToPayment("student", true, activeUser);
     } catch (e: any) {
       setError(e.message);
@@ -350,9 +336,8 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
         roll_number: rollNumber,
         student_verified_at: new Date().toISOString()
       }).eq("id", user?.id);
-      setIsStudent(true);
       setSelectedPlan("student");
-      handleProceedToPayment("student", true); // skip stale state check, go directly to Razorpay
+      handleProceedToPayment("student", true);
     } catch (e: any) {
       setError(e.message);
       setLoading(false);
@@ -360,12 +345,11 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
   };
 
   const handleProceedToPayment = async (overridePlan?: string, alreadyVerified = false, forceUser?: User | null) => {
-    // Use forceUser if provided (avoids stale closure when called right after setUser)
     const activeUser = forceUser ?? user;
     if (!activeUser) return;
     const planToBuy = overridePlan || selectedPlan;
 
-    if (planToBuy === "student" && !isStudent && !alreadyVerified) {
+    if (planToBuy === "student" && !alreadyVerified) {
       setStep("student_verify");
       return;
     }
@@ -735,7 +719,7 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
                         </li>
                       </ul>
                       <p className={`text-[11px] font-bold text-center py-1.5 rounded-lg ${selectedPlan === "student" ? "bg-white/20 text-white" : "bg-tertiary/10 text-tertiary"}`}>
-                        {isStudent ? "✓ Verified Student" : "Requires Verification →"}
+                        Requires Verification →
                       </p>
                       {selectedPlan === "student" && (
                         <button
@@ -743,11 +727,7 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
                           disabled={loading}
                           className="md:hidden w-full mt-4 bg-white text-[#006859] font-bold py-3 rounded-xl transition-all shadow-md flex justify-center items-center gap-2 active:scale-95"
                         >
-                          {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : (
-                            isStudent
-                              ? <>Pay ₹99 <ArrowRight className="w-4 h-4" /></>
-                              : <>Continue <ArrowRight className="w-4 h-4" /></>
-                          )}
+                          {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <>Continue <ArrowRight className="w-4 h-4" /></>}
                         </button>
                       )}
                     </div>
@@ -760,11 +740,7 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
                 <div className="hidden md:flex justify-center mt-5">
                   <button onClick={() => handleProceedToPayment()} disabled={loading}
                     className="w-full max-w-sm bg-primary text-white font-bold py-3.5 rounded-2xl hover:opacity-90 transition-opacity flex justify-center items-center gap-2 shadow-lg shadow-primary/20">
-                    {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : (
-                      selectedPlan === "student" && isStudent
-                        ? <>✓ Already Verified — Pay ₹99 <ArrowRight className="w-4 h-4" /></>
-                        : <>Pay & Continue <ArrowRight className="w-4 h-4" /></>
-                    )}
+                    {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <>Pay & Continue <ArrowRight className="w-4 h-4" /></>}
                   </button>
                 </div>
               </motion.div>
