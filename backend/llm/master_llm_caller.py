@@ -4,6 +4,7 @@ from .deepseek_direct import call_single_deepseek_r1, call_single_deepseek_r2
 from .mistral_fallback import call_single_mistral_r1, call_single_mistral_r2
 from .groq_fallback import call_single_groq_r1, call_single_groq_r2
 from .nvidia_fallback import call_single_nvidia_r1, call_single_nvidia_r2
+from .cloudflare_fallback import call_single_cloudflare_r1, call_single_cloudflare_r2
 from supabase_client import supabase
 
 _LLM_SEMAPHORE = asyncio.Semaphore(5)
@@ -101,22 +102,29 @@ async def _get_pool_models(pool_type: int, is_r1: bool) -> list:
     # Return reordered pool starting at idx
     return pool[idx:] + pool[:idx]
 
-from llm.cloudflare_fallback import call_single_cloudflare_r1, call_single_cloudflare_r2
-
 def _get_provider_for_model(model_id: str) -> str:
     if model_id == "deepseek-v4-flash":
         return "deepseek"
     if model_id.startswith("@cf/"):
         return "cloudflare"
-    # Known Groq prefixes/keywords
-    if any(k in model_id.lower() for k in ["llama", "qwen", "gpt", "allam", "compound", "whisper", "orpheus"]):
-        # Note: if NVIDIA models like "meta/llama" are used, they should be mapped explicitly if we add them back.
-        # Currently, all llama/qwen/gpt in the new 30 list are Groq or Cloudflare (handled above).
+    if model_id.startswith("mistralai/"):
+        return "nvidia"
+        
+    _GROQ_MODELS = {
+        "llama-3.3-70b-versatile",
+        "meta-llama/llama-4-scout-17b-16e-instruct",
+        "qwen/qwen3-32b",
+        "openai/gpt-oss-120b",
+        "openai/gpt-oss-20b",
+        "llama-3.1-8b-instant",
+        "groq/compound",
+        "groq/compound-mini",
+        "allam-2-7b",
+        "openai/gpt-oss-safeguard-20b"
+    }
+    if model_id in _GROQ_MODELS:
         return "groq"
-    if any(k in model_id.lower() for k in ["stral", "nemo", "vibe"]):
-        if model_id.startswith("mistralai/"):
-            return "nvidia"
-        return "mistral"
+        
     return "mistral" # fallback
 
 async def call_llm_balanced(prompt: str, is_r1: bool, preferred_model: str = "", has_credits: bool = False, no_ai_changes: bool = False) -> dict:

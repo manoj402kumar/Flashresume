@@ -71,6 +71,7 @@ def _extract_text(response) -> str | None:
 
 
 async def _call_groq_single(get_client_fn, model: str, prompt: str, max_tokens: int, retries: int = 1) -> dict:
+    max_tokens = min(max_tokens, 4096)
     client = get_client_fn()
     if client is None:
         return {
