@@ -561,7 +561,7 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
                           value={resetOtpValue[index] || ""}
                           onChange={(e) => {
                             const val = e.target.value;
-                            if (val && !/^\d$/.test(val)) return; // Only numbers
+                            if (val && !/^\d$/.test(val)) return;
                             const newVal = resetOtpValue.substring(0, index) + val + resetOtpValue.substring(index + 1);
                             setResetOtpValue(newVal);
                             if (val && index < 5) document.getElementById(`reset-otp-${index + 1}`)?.focus();
@@ -570,6 +570,12 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
                             if (e.key === "Backspace" && !resetOtpValue[index] && index > 0) {
                               document.getElementById(`reset-otp-${index - 1}`)?.focus();
                             }
+                          }}
+                          onPaste={(e) => {
+                            e.preventDefault();
+                            const pasted = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 6);
+                            setResetOtpValue(pasted.padEnd(6, " ").slice(0, 6).trimEnd());
+                            if (pasted.length > 0) document.getElementById(`reset-otp-${Math.min(pasted.length, 5)}`)?.focus();
                           }}
                           className="w-full aspect-square text-center text-lg font-bold bg-surface-container-low border border-surface-container-high rounded-xl outline-none focus:ring-2 focus:ring-primary"
                         />
@@ -810,7 +816,7 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
                               onPaste={(e) => {
                                 e.preventDefault();
                                 const pasted = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 6);
-                                setOtpValue(pasted.padEnd(6, "").slice(0, 6));
+                                setOtpValue(pasted);
                                 if (pasted.length > 0) document.getElementById(`student-otp-${Math.min(pasted.length, 5)}`)?.focus();
                               }}
                               className={`w-11 h-12 text-center text-lg font-black rounded-xl border-2 outline-none transition-all duration-200
