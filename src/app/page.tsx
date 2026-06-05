@@ -36,7 +36,6 @@ import CreditBadge from "@/components/CreditBadge";
 
 import LiveDemoSection from "@/components/LiveDemoSection";
 import TemplatesCarousel from "@/components/TemplatesCarousel";
-import ModelSelector from "@/components/ModelSelector";
 
 export default function App() {
   const router = useRouter();
@@ -871,16 +870,7 @@ export default function App() {
                   </button>
                 )}
 
-                {/* Model Selectors */}
-                {optimizeMode === "jd" && (
-                  <ModelSelector storageKey="r1_preferred_model" label="R1 Model (Analysis)" />
-                )}
-                {optimizeMode === "first_resume" && (
-                  <ModelSelector storageKey="preferred_model" label="R2 Model (Generation)" />
-                )}
-                {optimizeMode === "manual" && (
-                  <ModelSelector storageKey="preferred_model" label="R2 Model (Generation)" />
-                )}
+
 
                 {/* Main CTA */}
                 <button

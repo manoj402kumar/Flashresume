@@ -38,49 +38,81 @@ def _get_rate_limit_type(attempts):
             return "429"
     return None
 
-# POOLS
+# ─────────────────────────────────────────────────────────────────────────────
+# IMPORTANT: In caller function names, r1/r2 = API ACCOUNT NUMBER, not request type.
+#   call_single_mistral_r1 → uses MISTRAL_R1_API_KEY  (Account / Key 1)
+#   call_single_mistral_r2 → uses MISTRAL_R2_API_KEY  (Account / Key 2)
+#
+# POOLS are 3-tuples: (provider, model_id, key_label)
+# The caller is resolved via _CALLERS[(provider, key_label)]:
+#   "Key 1" → r1 caller (Account 1 API key)
+#   "Key 2" → r2 caller (Account 2 API key)
+#
+# This is the only correct way to route — it matches the API account to the
+# pool slot regardless of whether the request is R1 (analyze) or R2 (generate).
+# ─────────────────────────────────────────────────────────────────────────────
+
 POOL_1 = [
-    # Key 1
-    ("mistral", "mistral-medium-3.5", call_single_mistral_r1, "Key 1"),
-    ("nvidia", "mistralai/mistral-medium-3.5-128b", call_single_nvidia_r1, "Key 1"),
-    ("mistral", "mistral-medium-2604", call_single_mistral_r1, "Key 1"),
-    ("nvidia", "meta/llama-4-maverick-17b-128e-instruct", call_single_nvidia_r1, "Key 1"),
-    ("mistral", "mistral-medium-latest", call_single_mistral_r1, "Key 1"),
-    ("nvidia", "mistralai/mistral-nemotron", call_single_nvidia_r1, "Key 1"),
-    # Key 2
-    ("mistral", "mistral-medium-3.5", call_single_mistral_r2, "Key 2"),
-    ("nvidia", "mistralai/mistral-medium-3.5-128b", call_single_nvidia_r2, "Key 2"),
-    ("mistral", "mistral-medium-2604", call_single_mistral_r2, "Key 2"),
-    ("nvidia", "meta/llama-4-maverick-17b-128e-instruct", call_single_nvidia_r2, "Key 2"),
-    ("mistral", "mistral-medium-latest", call_single_mistral_r2, "Key 2"),
-    ("nvidia", "mistralai/mistral-nemotron", call_single_nvidia_r2, "Key 2"),
+    # Key 1 (Account 1)
+    ("mistral", "mistral-medium-3.5",                       "Key 1"),
+    ("nvidia",  "mistralai/mistral-medium-3.5-128b",        "Key 1"),
+    ("mistral", "mistral-medium-2604",                      "Key 1"),
+    ("nvidia",  "meta/llama-4-maverick-17b-128e-instruct",  "Key 1"),
+    ("mistral", "mistral-medium-latest",                    "Key 1"),
+    ("nvidia",  "mistralai/mistral-nemotron",               "Key 1"),
+    # Key 2 (Account 2)
+    ("mistral", "mistral-medium-3.5",                       "Key 2"),
+    ("nvidia",  "mistralai/mistral-medium-3.5-128b",        "Key 2"),
+    ("mistral", "mistral-medium-2604",                      "Key 2"),
+    ("nvidia",  "meta/llama-4-maverick-17b-128e-instruct",  "Key 2"),
+    ("mistral", "mistral-medium-latest",                    "Key 2"),
+    ("nvidia",  "mistralai/mistral-nemotron",               "Key 2"),
 ]
 
 POOL_2 = [
-    # Key 1
-    ("mistral", "mistral-large-latest", call_single_mistral_r1, "Key 1"),
-    ("groq", "llama-3.3-70b-versatile", call_single_groq_r1, "Key 1"),
-    ("cloudflare", "@cf/meta/llama-3.3-70b-instruct-fp8-fast", call_single_cloudflare_r1, "Key 1"),
-    ("nvidia", "mistralai/ministral-14b-instruct-2512", call_single_nvidia_r1, "Key 1"),
-    ("mistral", "ministral-14b-latest", call_single_mistral_r1, "Key 1"),
-    ("cloudflare", "@cf/mistralai/mistral-small-3.1-24b-instruct", call_single_cloudflare_r1, "Key 1"),
-    ("mistral", "mistral-small-latest", call_single_mistral_r1, "Key 1"),
-    # Key 2
-    ("mistral", "mistral-large-latest", call_single_mistral_r2, "Key 2"),
-    ("groq", "llama-3.3-70b-versatile", call_single_groq_r2, "Key 2"),
-    ("cloudflare", "@cf/meta/llama-3.3-70b-instruct-fp8-fast", call_single_cloudflare_r2, "Key 2"),
-    ("nvidia", "mistralai/ministral-14b-instruct-2512", call_single_nvidia_r2, "Key 2"),
-    ("mistral", "ministral-14b-latest", call_single_mistral_r2, "Key 2"),
-    ("cloudflare", "@cf/mistralai/mistral-small-3.1-24b-instruct", call_single_cloudflare_r2, "Key 2"),
-    ("mistral", "mistral-small-latest", call_single_mistral_r2, "Key 2"),
+    # Key 1 (Account 1)
+    ("mistral",    "mistral-large-latest",                         "Key 1"),
+    ("groq",       "llama-3.3-70b-versatile",                      "Key 1"),
+    ("cloudflare", "@cf/meta/llama-3.3-70b-instruct-fp8-fast",     "Key 1"),
+    ("nvidia",     "mistralai/ministral-14b-instruct-2512",        "Key 1"),
+    ("mistral",    "ministral-14b-latest",                         "Key 1"),
+    ("cloudflare", "@cf/mistralai/mistral-small-3.1-24b-instruct", "Key 1"),
+    ("mistral",    "mistral-small-latest",                         "Key 1"),
+    # Key 2 (Account 2)
+    ("mistral",    "mistral-large-latest",                         "Key 2"),
+    ("groq",       "llama-3.3-70b-versatile",                      "Key 2"),
+    ("cloudflare", "@cf/meta/llama-3.3-70b-instruct-fp8-fast",     "Key 2"),
+    ("mistral",    "ministral-14b-latest",                         "Key 2"),
+    ("cloudflare", "@cf/mistralai/mistral-small-3.1-24b-instruct", "Key 2"),
+    ("nvidia",     "mistralai/ministral-14b-instruct-2512",        "Key 2"),
+    ("mistral",    "mistral-small-latest",                         "Key 2"),
 ]
+
+# ─────────────────────────────────────────────────────────────────────────────
+# CALLER LOOKUP — keyed by (provider, key_label).
+# "Key 1" → r1 caller (uses Account 1 API key env var)
+# "Key 2" → r2 caller (uses Account 2 API key env var)
+# ─────────────────────────────────────────────────────────────────────────────
+
+_CALLERS = {
+    ("deepseek",   "Key 1"): call_single_deepseek_r1,
+    ("deepseek",   "Key 2"): call_single_deepseek_r2,
+    ("mistral",    "Key 1"): call_single_mistral_r1,
+    ("mistral",    "Key 2"): call_single_mistral_r2,
+    ("groq",       "Key 1"): call_single_groq_r1,
+    ("groq",       "Key 2"): call_single_groq_r2,
+    ("nvidia",     "Key 1"): call_single_nvidia_r1,
+    ("nvidia",     "Key 2"): call_single_nvidia_r2,
+    ("cloudflare", "Key 1"): call_single_cloudflare_r1,
+    ("cloudflare", "Key 2"): call_single_cloudflare_r2,
+}
 
 _pool1_idx = 0
 _pool2_idx = 0
 _rr_lock = asyncio.Lock()
 
 async def _get_next_rr_index(pool_type: int, pool_size: int) -> int:
-    """Atomic counter via Supabase  shared across all workers."""
+    """Atomic counter via Supabase — shared across all workers."""
     counter_name = f"pool_{pool_type}_global"
     try:
         result = await asyncio.wait_for(
@@ -110,7 +142,7 @@ async def _get_next_rr_index(pool_type: int, pool_size: int) -> int:
 async def _get_pool_models(pool_type: int) -> list:
     pool = POOL_1 if pool_type == 1 else POOL_2
     idx = await _get_next_rr_index(pool_type, len(pool))
-    # Return reordered pool starting at idx
+    # Return reordered pool starting at idx (3-tuples: provider, model_id, key_label)
     return pool[idx:] + pool[:idx]
 
 def _get_provider_for_model(model_id: str) -> str:
@@ -121,52 +153,36 @@ def _get_provider_for_model(model_id: str) -> str:
         return "cloudflare"
     if base_model_id.startswith("mistralai/") or base_model_id.startswith("nvidia/") or base_model_id.startswith("meta/"):
         return "nvidia"
-        
-    _GROQ_MODELS = {
-        "llama-3.3-70b-versatile"
-    }
+    _GROQ_MODELS = {"llama-3.3-70b-versatile"}
     if base_model_id in _GROQ_MODELS:
         return "groq"
-        
-    return "mistral" # fallback
+    return "mistral"  # fallback
 
 async def call_llm_balanced(prompt: str, is_r1: bool, preferred_model: str = "", has_credits: bool = False, no_ai_changes: bool = False) -> dict:
     async with _LLM_SEMAPHORE:
         max_tokens = _R1_MAX_TOKENS if is_r1 else _R2_MAX_TOKENS
         all_attempts = []
-        
+
         # Build Chain
         chain = []
-        
+
         # 1. Explicit Preferred Model Override
         if preferred_model and preferred_model != "auto":
             provider = _get_provider_for_model(preferred_model)
             base_model_id = preferred_model.split("|")[0]
             is_key2 = "|key2" in preferred_model
-            
-            if provider == "deepseek":
-                caller = call_single_deepseek_r2 if is_key2 else call_single_deepseek_r1
-            elif provider == "cloudflare":
-                caller = call_single_cloudflare_r2 if is_key2 else call_single_cloudflare_r1
-            elif provider == "groq":
-                caller = call_single_groq_r2 if is_key2 else call_single_groq_r1
-            elif provider == "nvidia":
-                caller = call_single_nvidia_r2 if is_key2 else call_single_nvidia_r1
-            else:
-                caller = call_single_mistral_r2 if is_key2 else call_single_mistral_r1
-                
             key_label = "Key 2" if is_key2 else "Key 1"
-            chain.append((provider, base_model_id, caller, key_label))
+            chain.append((provider, base_model_id, key_label))
         else:
             if is_r1:
-                # R1 (Analyze): DeepSeek -> Pool 1 -> Pool 2
-                chain.append(("deepseek", "deepseek-v4-flash", call_single_deepseek_r1, "Key 1"))
-                chain.append(("POOL", 1))
-                chain.append(("POOL", 2))
+                # R1 (Analyze): DeepSeek → Pool 1 → Pool 2
+                chain.append(("deepseek", "deepseek-v4-flash", "Key 1"))
+                chain.append(("POOL", 1, None))
+                chain.append(("POOL", 2, None))
             else:
-                # R2 (Generate) & Self-Edit: Pool 1 -> Pool 2 (No DeepSeek)
-                chain.append(("POOL", 1))
-                chain.append(("POOL", 2))
+                # R2 (Generate) & Self-Edit: Pool 1 → Pool 2 (No DeepSeek)
+                chain.append(("POOL", 1, None))
+                chain.append(("POOL", 2, None))
 
         # Execute Chain
         for item in chain:
@@ -176,23 +192,23 @@ async def call_llm_balanced(prompt: str, is_r1: bool, preferred_model: str = "",
             else:
                 models = [item]
 
-            for provider, model_id, caller, key_label in models:
+            for provider, model_id, key_label in models:
                 circuit_key = f"{model_id}_{key_label}"
                 if _is_tripped(circuit_key):
                     all_attempts.append({"model": f"{model_id} - {key_label}", "status": "circuit_breaker_active"})
                     continue
-                
+
+                # ✅ Caller resolved by (provider, key_label) — correct API account always used
+                caller = _CALLERS.get((provider, key_label), call_single_mistral_r1)
                 result = await caller(model_id, prompt, max_tokens)
-                
+
                 if result["success"]:
-                    # Attempt to log with key label included for clarity in UI and DB
                     return _finalize(result, provider, f"{model_id} - {key_label}", "r1" if is_r1 else "r2")
-                    
+
                 err_type = _get_rate_limit_type(result.get("attempts", []))
                 if err_type:
                     _trip_circuit(circuit_key, err_type)
-                
-                # Format attempts correctly
+
                 for att in result.get("attempts", []):
                     att["model"] = f"{model_id} - {key_label}"
                 all_attempts.extend(result.get("attempts", []))

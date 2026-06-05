@@ -49,7 +49,7 @@ import ResumePDFTemplateA4 from "@/components/ResumePDFTemplateA4";
 import dynamic from "next/dynamic";
 import PricingPopup from "@/components/PricingPopup";
 import { supabase } from "@/lib/supabase";
-import { MODELS } from "@/components/ModelSelector";
+
 const MobilePDFPreview = dynamic(
   () => import("@/components/MobilePDFPreview"),
   { ssr: false }
@@ -204,7 +204,7 @@ export default function ResultPage() {
   const [showFeedback, setShowFeedback] = useState(false);
   const [sessionGuid, setSessionGuid] = useState<string>("");
   const [currentUserId, setCurrentUserId] = useState<string>("");
-  const [activeModelName, setActiveModelName] = useState<string>("Auto");
+
   // ── Undo / Redo history ───────────────────────────────────────────────
   const MAX_HISTORY = 50;
   const historyRef = useRef<TemplateV1[]>([]);
@@ -454,18 +454,6 @@ export default function ResultPage() {
         parsed.section_order = ["summary", "education", "experience", "projects", "skills", "certifications"];
       }
 
-      // Use the actual model returned by the backend API if available
-      let finalModelName = "Auto (Best Quality Available)";
-      if (parsed._model_used) {
-        finalModelName = parsed._model_used;
-      } else {
-        const savedModelId = localStorage.getItem("preferred_model") || "";
-        const matchedModel = MODELS.preferred_model.find(m => m.id === savedModelId);
-        if (matchedModel && matchedModel.id !== "") {
-          finalModelName = matchedModel.name;
-        }
-      }
-      setActiveModelName(finalModelName);
 
       setResume(parsed);
       setLoading(false);
@@ -715,7 +703,7 @@ export default function ResultPage() {
             <div>
               <h1 className="font-headline text-lg font-bold text-white leading-tight">Your Resume</h1>
               <p className="text-xs text-white/50 leading-tight flex items-center gap-1">
-                <Sparkles className="w-3 h-3 text-[#12f8d7]" /> AI-Optimized with {activeModelName}
+                <Sparkles className="w-3 h-3 text-[#12f8d7]" /> AI-Optimized
               </p>
             </div>
           </div>
