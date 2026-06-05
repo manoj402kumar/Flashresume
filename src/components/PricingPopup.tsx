@@ -864,12 +864,12 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
 
                 {error && <p className="text-xs text-error text-center bg-error/10 py-2 rounded-lg">{error}</p>}
 
-                <div className="flex gap-2">
-                  <button onClick={() => { setStep("plan"); setError(null); setOtpSent(false); setOtpValue(""); }} className="flex-1 py-3 font-bold text-on-surface-variant hover:bg-surface-container-low rounded-xl transition-colors">Back</button>
+                <div className="flex flex-col-reverse sm:flex-row gap-2">
+                  <button onClick={() => { setStep("plan"); setError(null); setOtpSent(false); setOtpValue(""); }} className="sm:flex-1 py-3 font-bold text-on-surface-variant hover:bg-surface-container-low rounded-xl transition-colors text-center">Back</button>
                   <button
                     onClick={studentMethod === "email" ? (otpSent ? verifyOtp : sendOtp) : verifyStudent}
                     disabled={loading || (studentMethod === "email" && otpSent && otpValue.length !== 6)}
-                    className="flex-1 bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-md shadow-orange-500/30 font-bold py-3 rounded-xl hover:opacity-90 transition-opacity flex justify-center items-center"
+                    className="flex-1 bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-md shadow-orange-500/30 font-bold py-3 px-4 rounded-xl hover:opacity-90 transition-opacity flex justify-center items-center text-sm sm:text-base leading-tight"
                   >
                     {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : studentMethod === "email" ? (otpSent ? "Claim Student Offer →" : "Send OTP") : "Claim Student Offer →"}
                   </button>
