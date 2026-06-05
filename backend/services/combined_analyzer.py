@@ -10,6 +10,9 @@ async def analyze_resume_combined(resume_text: str, job_description: str, prefer
     The LLM directly outputs both all_missing_skills (full, for UI) and
     missing_skills (filtered, for generation step). No Python-side filtering needed.
     """
+    # Smart Truncation: Compress massive PDF whitespaces/newlines into single spaces, then cap at 12000 chars
+    resume_text = " ".join(resume_text.split())[:12000]
+
     prompt = COMBINED_ANALYSIS_PROMPT.format(
         resume_text=resume_text,
         job_description=job_description

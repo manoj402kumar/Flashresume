@@ -100,7 +100,7 @@ async def _call_groq_single(get_client_fn, model: str, prompt: str, max_tokens: 
         except Exception as e:
             err = repr(e)
             attempts.append({"model": model, "status": err[:80]})
-            if any(x in err for x in ["429", "rate_limit", "rate limit"]):
+            if any(x in err for x in ["429", "rate_limit", "rate limit", "413", "Request too large"]):
                 break
             if any(x in err for x in ["404", "model_not_found", "does not exist"]):
                 break

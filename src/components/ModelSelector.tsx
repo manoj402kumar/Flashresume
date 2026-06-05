@@ -17,40 +17,28 @@ export const MODELS = {
     // -- Mistral --
     { id: "mistral-large-latest", name: "Mistral Large (Mistral)" },
     { id: "mistral-medium-latest", name: "Mistral Medium (Mistral)" },
-    { id: "magistral-medium-latest", name: "Magistral Medium (Mistral) (Slow/Reasoning)" },
-    { id: "mistral-medium-2604", name: "Mistral Medium 2604 (Mistral)" },
     { id: "mistral-medium-3.5", name: "Mistral Medium 3.5 (Mistral)" },
+    { id: "mistral-medium-2604", name: "Mistral Medium 2604 (Mistral)" },
     { id: "ministral-14b-latest", name: "Ministral 14B (Mistral)" },
     { id: "mistral-small-latest", name: "Mistral Small (Mistral)" },
-    { id: "magistral-small-latest", name: "Magistral Small (Mistral) (Slow/Reasoning)" },
-    { id: "devstral-latest", name: "Devstral (Mistral)" },
     { id: "open-mistral-nemo", name: "Mistral Nemo (Mistral)" },
     
     // -- Groq --
     { id: "llama-3.3-70b-versatile", name: "Llama 3.3 70B (Groq)" },
     { id: "meta-llama/llama-4-scout-17b-16e-instruct", name: "Llama 4 Scout 17B (Groq)" },
-    { id: "qwen/qwen3-32b", name: "Qwen3 32B (Groq)" },
-    { id: "openai/gpt-oss-120b", name: "GPT-OSS 120B (Groq) (Slow/Reasoning)" },
-    { id: "openai/gpt-oss-20b", name: "GPT-OSS 20B (Groq) (Slow/Reasoning)" },
     { id: "llama-3.1-8b-instant", name: "Llama 3.1 8B (Groq)" },
-    { id: "groq/compound", name: "Groq Compound (Groq)" },
-    { id: "groq/compound-mini", name: "Groq Compound Mini (Groq)" },
-    { id: "allam-2-7b", name: "Allam 2 7B (Groq)" },
-    { id: "openai/gpt-oss-safeguard-20b", name: "GPT-OSS Safeguard 20B (Groq) (Slow/Reasoning)" },
 
     // -- Cloudflare --
-    { id: "@cf/qwen/qwq-32b", name: "QwQ 32B (Cloudflare) (Slow/Reasoning)" },
     { id: "@cf/meta/llama-3.3-70b-instruct-fp8-fast", name: "Llama 3.3 70B Fast (Cloudflare)" },
-    { id: "@cf/openai/gpt-oss-120b", name: "GPT-OSS 120B (Cloudflare) (Slow/Reasoning)" },
-    { id: "@cf/openai/gpt-oss-20b", name: "GPT-OSS 20B (Cloudflare) (Slow/Reasoning)" },
-    { id: "@cf/moonshotai/kimi-k2.6", name: "Kimi K2.6 (Cloudflare)" },
-    { id: "@cf/qwen/qwen3-30b-a3b-fp8", name: "Qwen3 30B (Cloudflare)" },
-    { id: "@cf/meta/llama-4-scout-17b-16e-instruct", name: "Llama 4 Scout 17B (Cloudflare)" },
-    { id: "@cf/google/gemma-4-26b-a4b-it", name: "Gemma 4 26B (Cloudflare)" },
-    { id: "@cf/deepseek-ai/deepseek-r1-distill-qwen-32b", name: "DeepSeek R1 Distill (Cloudflare) (Slow/Reasoning)" },
     { id: "@cf/qwen/qwen2.5-coder-32b-instruct", name: "Qwen 2.5 Coder (Cloudflare)" },
+    { id: "@cf/mistralai/mistral-small-3.1-24b-instruct", name: "Mistral Small 24B (Cloudflare)" },
 
-    // -- NVIDIA (Existing) --
+    // -- NVIDIA --
+    { id: "nvidia/llama-3.1-nemotron-70b-instruct", name: "Llama 3.1 Nemotron 70B (NVIDIA)" },
+    { id: "meta/llama-3.3-70b-instruct", name: "Llama 3.3 70B (NVIDIA)" },
+    { id: "meta/llama-4-maverick-17b-128e-instruct", name: "Llama 4 Maverick 17B (NVIDIA)" },
+    { id: "mistralai/mixtral-8x22b-v0.1", name: "Mixtral 8x22B (NVIDIA)" },
+    { id: "nvidia/nemotron-4-340b-instruct", name: "Nemotron 4 340B (NVIDIA)" },
     { id: "mistralai/mistral-medium-3.5-128b", name: "Mistral Medium 3.5 (NVIDIA)" },
     { id: "mistralai/mistral-nemotron", name: "Mistral Nemotron (NVIDIA)" },
     { id: "mistralai/ministral-14b-instruct-2512", name: "Ministral 14B 2512 (NVIDIA)" }

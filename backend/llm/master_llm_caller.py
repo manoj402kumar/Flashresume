@@ -107,7 +107,7 @@ def _get_provider_for_model(model_id: str) -> str:
         return "deepseek"
     if model_id.startswith("@cf/"):
         return "cloudflare"
-    if model_id.startswith("mistralai/"):
+    if model_id.startswith("mistralai/") or model_id.startswith("nvidia/") or model_id.startswith("meta/"):
         return "nvidia"
         
     _GROQ_MODELS = {
