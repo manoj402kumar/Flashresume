@@ -773,43 +773,82 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
             {/* STUDENT VERIFY STEP */}
             {step === "student_verify" && (
               <motion.div key="student_verify" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-5">
-                <div className="flex bg-surface-container-low rounded-xl p-1 gap-1">
-                  <button onClick={() => setStudentMethod("email")} className={`flex-1 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all flex items-center justify-center gap-1.5 sm:gap-2 ${studentMethod === "email" ? "bg-surface-container-lowest text-on-background shadow-sm" : "text-on-surface-variant hover:text-on-background"}`}>
+
+                {/* Method toggle with OR divider */}
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setStudentMethod("email")}
+                    className={`flex-1 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all flex items-center justify-center gap-1.5 border-2 ${studentMethod === "email" ? "border-orange-400 bg-orange-50 text-orange-600" : "border-surface-container-high bg-surface-container-low text-on-surface-variant hover:border-orange-300"}`}
+                  >
                     <Mail className="w-4 h-4 shrink-0" /> College Email
                   </button>
-                  <button onClick={() => setStudentMethod("details")} className={`flex-1 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all flex items-center justify-center gap-1.5 sm:gap-2 ${studentMethod === "details" ? "bg-surface-container-lowest text-on-background shadow-sm" : "text-on-surface-variant hover:text-on-background"}`}>
+                  <span className="text-xs font-black text-on-surface-variant/50 shrink-0">OR</span>
+                  <button
+                    onClick={() => setStudentMethod("details")}
+                    className={`flex-1 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all flex items-center justify-center gap-1.5 border-2 ${studentMethod === "details" ? "border-orange-400 bg-orange-50 text-orange-600" : "border-surface-container-high bg-surface-container-low text-on-surface-variant hover:border-orange-300"}`}
+                  >
                     <Building className="w-4 h-4 shrink-0" /> College Details
                   </button>
                 </div>
 
                 {studentMethod === "email" ? (
-                  <div className="space-y-3">
+                  <div className="space-y-4">
                     <input
                       type="email"
                       placeholder="Enter your college email"
                       value={studentEmail}
                       onChange={e => { setStudentEmail(e.target.value); setOtpSent(false); setOtpValue(""); setError(null); }}
                       disabled={otpSent}
-                      className="w-full px-4 py-3 bg-surface-container-low border border-surface-container-high rounded-xl outline-none text-sm focus:ring-2 focus:ring-primary disabled:opacity-60"
+                      className="w-full px-4 py-3 bg-surface-container-low border border-surface-container-high rounded-xl outline-none text-sm focus:ring-2 focus:ring-orange-400 disabled:opacity-50 transition-all"
                     />
                     {otpSent && (
-                      <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} className="space-y-2">
-                        <p className="text-xs text-on-surface-variant text-center">Enter the 6-digit code sent to <strong>{studentEmail}</strong></p>
-                        <input
-                          type="text"
-                          inputMode="numeric"
-                          pattern="[0-9]*"
-                          autoComplete="one-time-code"
-                          maxLength={6}
-                          placeholder="_ _ _ _ _ _"
-                          value={otpValue}
-                          onChange={e => { setOtpValue(e.target.value.replace(/\D/g, "")); setError(null); }}
-                          className="w-full px-4 py-3 bg-surface-container-low border-2 border-primary rounded-xl outline-none text-sm text-center tracking-[0.5em] font-bold focus:ring-2 focus:ring-primary"
-                        />
+                      <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} className="space-y-3">
+                        <p className="text-xs text-on-surface-variant text-center">
+                          Enter the 6-digit code sent to <strong className="text-on-background">{studentEmail}</strong>
+                        </p>
+                        {/* Professional 6-box OTP input */}
+                        <div className="flex justify-center gap-2">
+                          {[0, 1, 2, 3, 4, 5].map((index) => (
+                            <input
+                              key={index}
+                              id={`student-otp-${index}`}
+                              type="text"
+                              inputMode="numeric"
+                              pattern="[0-9]*"
+                              maxLength={1}
+                              autoComplete="one-time-code"
+                              value={otpValue[index] || ""}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                if (val && !/^\d$/.test(val)) return;
+                                const newVal = otpValue.substring(0, index) + val + otpValue.substring(index + 1);
+                                setOtpValue(newVal);
+                                setError(null);
+                                if (val && index < 5) document.getElementById(`student-otp-${index + 1}`)?.focus();
+                              }}
+                              onKeyDown={(e) => {
+                                if (e.key === "Backspace" && !otpValue[index] && index > 0) {
+                                  document.getElementById(`student-otp-${index - 1}`)?.focus();
+                                }
+                              }}
+                              onPaste={(e) => {
+                                e.preventDefault();
+                                const pasted = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 6);
+                                setOtpValue(pasted.padEnd(6, "").slice(0, 6));
+                                if (pasted.length > 0) document.getElementById(`student-otp-${Math.min(pasted.length, 5)}`)?.focus();
+                              }}
+                              className={`w-11 h-12 text-center text-lg font-black rounded-xl border-2 outline-none transition-all duration-200
+                                ${otpValue[index]
+                                  ? "border-orange-400 bg-orange-50 text-orange-600 scale-105 shadow-sm shadow-orange-200"
+                                  : "border-surface-container-high bg-surface-container-low text-on-background focus:border-orange-400 focus:bg-orange-50/50"
+                                }`}
+                            />
+                          ))}
+                        </div>
                         <button
                           type="button"
                           onClick={() => { setOtpSent(false); setOtpValue(""); }}
-                          className="text-xs text-on-surface-variant hover:text-primary underline w-full text-center"
+                          className="text-xs text-on-surface-variant hover:text-orange-500 underline w-full text-center transition-colors"
                         >Change email / Resend</button>
                       </motion.div>
                     )}
@@ -817,13 +856,13 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
                 ) : (
                   <div className="space-y-3">
                     <input type="text" placeholder="College Name" value={collegeName} onChange={e => setCollegeName(e.target.value)}
-                      className="w-full px-4 py-3 bg-surface-container-low border border-surface-container-high rounded-xl outline-none text-sm" />
+                      className="w-full px-4 py-3 bg-surface-container-low border border-surface-container-high rounded-xl outline-none text-sm focus:ring-2 focus:ring-orange-400 transition-all" />
                     <input type="text" placeholder="Enrolled Roll Number" value={rollNumber} onChange={e => setRollNumber(e.target.value)}
-                      className="w-full px-4 py-3 bg-surface-container-low border border-surface-container-high rounded-xl outline-none text-sm" />
+                      className="w-full px-4 py-3 bg-surface-container-low border border-surface-container-high rounded-xl outline-none text-sm focus:ring-2 focus:ring-orange-400 transition-all" />
                   </div>
                 )}
 
-                {error && <p className="text-xs text-error text-center bg-error/10 py-2 rounded">{error}</p>}
+                {error && <p className="text-xs text-error text-center bg-error/10 py-2 rounded-lg">{error}</p>}
 
                 <div className="flex gap-2">
                   <button onClick={() => { setStep("plan"); setError(null); setOtpSent(false); setOtpValue(""); }} className="flex-1 py-3 font-bold text-on-surface-variant hover:bg-surface-container-low rounded-xl transition-colors">Back</button>
@@ -837,6 +876,7 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
                 </div>
               </motion.div>
             )}
+
 
             {/* PROCESSING STEP */}
             {step === "processing" && (
