@@ -5,14 +5,12 @@ from pydantic import BaseModel
 import razorpay
 import os
 import random
-import aiosmtplib
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
+import httpx
 from dotenv import load_dotenv
 from supabase_client import supabase, sb
 from datetime import datetime, timedelta, timezone
 
-load_dotenv()
+load_dotenv(override=True)
 
 router = APIRouter()
 from rate_limiter import limiter
@@ -244,11 +242,10 @@ async def deduct_credit(body: DeductRequest, authorization: str = Header(None)):
 
 
 # ── OTP Routes ──────────────────────────────────────────────
+# NOTE: We use Brevo's HTTP API (not SMTP) because Render free tier
+# blocks all outbound SMTP ports (25, 465, 587). HTTP API uses port 443.
 
-BREVO_SMTP_HOST = "smtp-relay.brevo.com"
-BREVO_SMTP_PORT = 587
-BREVO_SMTP_USER = os.getenv("BREVO_SMTP_USER")   # e.g. 980780001@smtp-brevo.com
-BREVO_SMTP_PASS = os.getenv("BREVO_SMTP_PASS")   # The SMTP key value from Brevo
+BREVO_API_KEY = os.getenv("BREVO_API_KEY")        # Brevo API key (not SMTP key)
 BREVO_FROM_EMAIL = os.getenv("BREVO_FROM_EMAIL", "support@flashresume.in")
 BREVO_FROM_NAME = os.getenv("BREVO_FROM_NAME", "Flashresume")
 
@@ -260,15 +257,14 @@ class SendOtpRequest(BaseModel):
 async def send_otp(request: Request, body: SendOtpRequest):
     if not supabase:
         raise HTTPException(status_code=500, detail="Database not configured")
-    if not BREVO_SMTP_USER or not BREVO_SMTP_PASS:
-        raise HTTPException(status_code=500, detail="SMTP not configured")
-    
+    if not BREVO_API_KEY:
+        raise HTTPException(status_code=500, detail="Email service not configured")
+
     email = body.email.strip().lower()
     otp_code = str(random.randint(100000, 999999))
     expires_at = (datetime.now(timezone.utc) + timedelta(minutes=10)).isoformat()
-    
-    # Upsert OTP into a simple table (create this in Supabase if it doesn't exist)
-    # Also reset failed_attempts so locked-out users can retry after requesting a new code
+
+    # Upsert OTP — reset failed_attempts so previously locked users can retry
     try:
         await sb(lambda: supabase.table("otp_verifications").upsert({
             "email": email,
@@ -279,39 +275,45 @@ async def send_otp(request: Request, body: SendOtpRequest):
         }, on_conflict="email").execute())
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"DB error: {str(e)}")
-    
-    # Send email via Brevo SMTP
+
+    # Send email via Brevo HTTP API (port 443 — works on Render free tier)
+    html_body = f"""
+    <div style="font-family: Inter, sans-serif; max-width: 480px; margin: 0 auto; padding: 32px;">
+      <h2 style="color: #006859; font-size: 24px; margin-bottom: 8px;">Your Verification Code</h2>
+      <p style="color: #595c5d; font-size: 14px;">Use this code to unlock the Student Plan on Flashresume:</p>
+      <div style="background: #f5f6f7; border-radius: 16px; padding: 32px; text-align: center; margin: 24px 0;">
+        <span style="font-size: 40px; font-weight: 900; letter-spacing: 12px; color: #006859;">{otp_code}</span>
+      </div>
+      <p style="color: #595c5d; font-size: 12px;">This code expires in <strong>10 minutes</strong>. Do not share it with anyone.</p>
+      <hr style="border: none; border-top: 1px solid #eff1f2; margin: 24px 0;" />
+      <p style="color: #595c5d; font-size: 11px;">Flashresume &mdash; AI-Powered Resume Optimization</p>
+    </div>
+    """
+    payload = {
+        "sender": {"name": BREVO_FROM_NAME, "email": BREVO_FROM_EMAIL},
+        "to": [{"email": email}],
+        "subject": "Your Flashresume Verification Code",
+        "htmlContent": html_body
+    }
     try:
-        msg = MIMEMultipart("alternative")
-        msg["Subject"] = "Your Flashresume Verification Code"
-        msg["From"] = f"{BREVO_FROM_NAME} <{BREVO_FROM_EMAIL}>"
-        msg["To"] = email
-        
-        html_body = f"""
-        <div style="font-family: Inter, sans-serif; max-width: 480px; margin: 0 auto; padding: 32px;">
-          <h2 style="color: #006859; font-size: 24px; margin-bottom: 8px;">Your Verification Code</h2>
-          <p style="color: #595c5d; font-size: 14px;">Use this code to unlock the Student Plan on Flashresume:</p>
-          <div style="background: #f5f6f7; border-radius: 16px; padding: 32px; text-align: center; margin: 24px 0;">
-            <span style="font-size: 40px; font-weight: 900; letter-spacing: 12px; color: #006859;">{otp_code}</span>
-          </div>
-          <p style="color: #595c5d; font-size: 12px;">This code expires in <strong>10 minutes</strong>. Do not share it with anyone.</p>
-          <hr style="border: none; border-top: 1px solid #eff1f2; margin: 24px 0;" />
-          <p style="color: #595c5d; font-size: 11px;">Flashresume &mdash; AI-Powered Resume Optimization</p>
-        </div>
-        """
-        msg.attach(MIMEText(html_body, "html"))
-        
-        await aiosmtplib.send(
-            msg,
-            hostname=BREVO_SMTP_HOST,
-            port=int(BREVO_SMTP_PORT),
-            username=BREVO_SMTP_USER,
-            password=BREVO_SMTP_PASS,
-            start_tls=True,
-        )
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            resp = await client.post(
+                "https://api.brevo.com/v3/smtp/email",
+                json=payload,
+                headers={
+                    "api-key": BREVO_API_KEY,
+                    "Content-Type": "application/json"
+                }
+            )
+        if resp.status_code not in (200, 201):
+            raise HTTPException(status_code=500, detail=f"Email API error: {resp.text}")
+    except httpx.TimeoutException:
+        raise HTTPException(status_code=500, detail="Email service timed out. Please try again.")
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to send email: {str(e)}")
-    
+
     return {"status": "ok", "message": "OTP sent"}
 
 
