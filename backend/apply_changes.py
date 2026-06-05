@@ -1,44 +1,11 @@
-import asyncio
-import time
-from .deepseek_direct import call_single_deepseek_r1, call_single_deepseek_r2
-from .mistral_fallback import call_single_mistral_r1, call_single_mistral_r2
-from .groq_fallback import call_single_groq_r1, call_single_groq_r2
-from .nvidia_fallback import call_single_nvidia_r1, call_single_nvidia_r2
-from .cloudflare_fallback import call_single_cloudflare_r1, call_single_cloudflare_r2
-from supabase_client import supabase
+import os
 
-_LLM_SEMAPHORE = asyncio.Semaphore(5)
+FILE_PATH = r"c:\Users\mummi\Downloads\Desktop\Flash Resume Main 6\Flashresume\backend\llm\master_llm_caller.py"
 
-_R1_MAX_TOKENS = 8000
-_R2_MAX_TOKENS = 8000
+with open(FILE_PATH, "r") as f:
+    content = f.read()
 
-_COOLDOWN_SECS_429 = 120
-_COOLDOWN_SECS_402 = 86400
-_circuit_tripped = {}
-
-def _trip_circuit(model_id: str, error_type: str):
-    cooldown = _COOLDOWN_SECS_429 if error_type == "429" else _COOLDOWN_SECS_402
-    print(f"[{model_id}] Circuit tripped ({error_type}). Cooling down for {cooldown}s.")
-    _circuit_tripped[model_id] = time.time() + cooldown
-
-def _is_tripped(model_id: str) -> bool:
-    if model_id not in _circuit_tripped:
-        return False
-    if time.time() > _circuit_tripped[model_id]:
-        del _circuit_tripped[model_id]
-        return False
-    return True
-
-def _get_rate_limit_type(attempts):
-    for att in attempts:
-        err = str(att.get("status", ""))
-        if any(x in err for x in ["402", "Payment Required"]):
-            return "402"
-        if any(x in err for x in ["429", "rate_limit", "RESOURCE_EXHAUSTED"]):
-            return "429"
-    return None
-
-# POOLS
+new_pools = """# POOLS
 POOL_1 = [
     # Key 1
     ("mistral", "mistral-medium-3.5", call_single_mistral_r1, "Key 1"),
@@ -80,7 +47,7 @@ _pool2_idx = 0
 _rr_lock = asyncio.Lock()
 
 async def _get_next_rr_index(pool_type: int, pool_size: int) -> int:
-    """Atomic counter via Supabase — shared across all workers."""
+    \"\"\"Atomic counter via Supabase â€” shared across all workers.\"\"\"
     counter_name = f"pool_{pool_type}_global"
     try:
         result = await asyncio.wait_for(
@@ -198,24 +165,17 @@ async def call_llm_balanced(prompt: str, is_r1: bool, preferred_model: str = "",
                 att["model"] = f"{model_id} - {key_label}"
             all_attempts.extend(result.get("attempts", []))
 
-        return {"success": False, "all_attempts": all_attempts}
+        return {"success": False, "all_attempts": all_attempts}"""
 
-def _finalize(result: dict, provider: str, model_id: str, r_type: str) -> dict:
-    if supabase and result.get("speed"):
-        import asyncio
-        asyncio.create_task(asyncio.to_thread(
-            lambda: supabase.table("llm_usage").insert({
-                "request_type": r_type,
-                "provider": provider,
-                "model": model_id,
-                "success": True,
-                "speed_secs": result["speed"]
-            }).execute()
-        ))
-    return {"success": True, "text": result["text"], "_model_used": model_id}
+# Find the start of # POOLS
+start_idx = content.find("# POOLS")
+# Find the start of _finalize
+end_idx = content.find("def _finalize")
 
-async def call_llm_r1(prompt: str, preferred_model: str = "", has_credits: bool = False) -> dict:
-    return await call_llm_balanced(prompt, True, preferred_model, has_credits)
-
-async def call_llm_r2(prompt: str, preferred_model: str = "", has_credits: bool = False, no_ai_changes: bool = False) -> dict:
-    return await call_llm_balanced(prompt, False, preferred_model, has_credits, no_ai_changes)
+if start_idx != -1 and end_idx != -1:
+    new_content = content[:start_idx] + new_pools + "\n\n" + content[end_idx:]
+    with open(FILE_PATH, "w") as f:
+        f.write(new_content)
+    print("SUCCESS: Updated master_llm_caller.py")
+else:
+    print("ERROR: Could not find markers.")
