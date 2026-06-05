@@ -80,7 +80,7 @@ _pool2_idx = 0
 _rr_lock = asyncio.Lock()
 
 async def _get_next_rr_index(pool_type: int, pool_size: int) -> int:
-    """Atomic counter via Supabase — shared across all workers."""
+    """Atomic counter via Supabase  shared across all workers."""
     counter_name = f"pool_{pool_type}_global"
     try:
         result = await asyncio.wait_for(
@@ -123,16 +123,7 @@ def _get_provider_for_model(model_id: str) -> str:
         return "nvidia"
         
     _GROQ_MODELS = {
-        "llama-3.3-70b-versatile",
-        "meta-llama/llama-4-scout-17b-16e-instruct",
-        "qwen/qwen3-32b",
-        "openai/gpt-oss-120b",
-        "openai/gpt-oss-20b",
-        "llama-3.1-8b-instant",
-        "groq/compound",
-        "groq/compound-mini",
-        "allam-2-7b",
-        "openai/gpt-oss-safeguard-20b"
+        "llama-3.3-70b-versatile"
     }
     if base_model_id in _GROQ_MODELS:
         return "groq"
@@ -148,7 +139,7 @@ async def call_llm_balanced(prompt: str, is_r1: bool, preferred_model: str = "",
         chain = []
         
         # 1. Explicit Preferred Model Override
-        if preferred_model:
+        if preferred_model and preferred_model != "auto":
             provider = _get_provider_for_model(preferred_model)
             base_model_id = preferred_model.split("|")[0]
             is_key2 = "|key2" in preferred_model
@@ -170,33 +161,41 @@ async def call_llm_balanced(prompt: str, is_r1: bool, preferred_model: str = "",
             if is_r1:
                 # R1 (Analyze): DeepSeek -> Pool 1 -> Pool 2
                 chain.append(("deepseek", "deepseek-v4-flash", call_single_deepseek_r1, "Key 1"))
-                chain.extend(await _get_pool_models(1))
-                chain.extend(await _get_pool_models(2))
+                chain.append(("POOL", 1))
+                chain.append(("POOL", 2))
             else:
                 # R2 (Generate) & Self-Edit: Pool 1 -> Pool 2 (No DeepSeek)
-                chain.extend(await _get_pool_models(1))
-                chain.extend(await _get_pool_models(2))
+                chain.append(("POOL", 1))
+                chain.append(("POOL", 2))
 
         # Execute Chain
-        for provider, model_id, caller, key_label in chain:
-            if _is_tripped(model_id):
-                all_attempts.append({"model": f"{model_id} - {key_label}", "status": "circuit_breaker_active"})
-                continue
-            
-            result = await caller(model_id, prompt, max_tokens)
-            
-            if result["success"]:
-                # Attempt to log with key label included for clarity in UI and DB
-                return _finalize(result, provider, f"{model_id} - {key_label}", "r1" if is_r1 else "r2")
+        for item in chain:
+            if item[0] == "POOL":
+                pool_type = item[1]
+                models = await _get_pool_models(pool_type)
+            else:
+                models = [item]
+
+            for provider, model_id, caller, key_label in models:
+                circuit_key = f"{model_id}_{key_label}"
+                if _is_tripped(circuit_key):
+                    all_attempts.append({"model": f"{model_id} - {key_label}", "status": "circuit_breaker_active"})
+                    continue
                 
-            err_type = _get_rate_limit_type(result.get("attempts", []))
-            if err_type:
-                _trip_circuit(model_id, err_type)
-            
-            # Format attempts correctly
-            for att in result.get("attempts", []):
-                att["model"] = f"{model_id} - {key_label}"
-            all_attempts.extend(result.get("attempts", []))
+                result = await caller(model_id, prompt, max_tokens)
+                
+                if result["success"]:
+                    # Attempt to log with key label included for clarity in UI and DB
+                    return _finalize(result, provider, f"{model_id} - {key_label}", "r1" if is_r1 else "r2")
+                    
+                err_type = _get_rate_limit_type(result.get("attempts", []))
+                if err_type:
+                    _trip_circuit(circuit_key, err_type)
+                
+                # Format attempts correctly
+                for att in result.get("attempts", []):
+                    att["model"] = f"{model_id} - {key_label}"
+                all_attempts.extend(result.get("attempts", []))
 
         return {"success": False, "all_attempts": all_attempts}
 

@@ -10,8 +10,9 @@ interface ModelSelectorProps {
 }
 
 export const MODELS = {
-  r1_preferred_model: "deepseek-v4-flash",
+  r1_preferred_model: "auto",
   options: [
+    { id: "auto", name: "Auto (Production Routing)" },
     { id: "deepseek-v4-flash", name: "DeepSeek V4 Flash (Premium)" },
     
     // -- Mistral --
@@ -57,9 +58,7 @@ export default function ModelSelector({ storageKey, label }: ModelSelectorProps)
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const options = storageKey === "r1_preferred_model" 
-    ? MODELS.r1_preferred_model 
-    : MODELS.preferred_model;
+  const options = MODELS.options;
 
   useEffect(() => {
     // Only access localStorage on client side
