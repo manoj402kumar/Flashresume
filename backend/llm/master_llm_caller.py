@@ -120,7 +120,7 @@ async def _get_next_rr_index(pool_type: int, pool_size: int) -> int:
                     "p_pool_size": pool_size
                 }).execute()
             ),
-            timeout=2.0
+            timeout=0.8
         )
         if result.data is None:
             raise ValueError(f"Supabase RPC returned None for {counter_name}")
@@ -191,7 +191,7 @@ async def call_llm_balanced(prompt: str, is_r1: bool, preferred_model: str = "",
                 models = [item]
 
             for provider, model_id, key_label in models:
-                circuit_key = f"{model_id}_{key_label}"
+                circuit_key = f"{provider}_{key_label}"
                 if _is_tripped(circuit_key):
                     all_attempts.append({"model": f"{model_id} - {key_label}", "status": "circuit_breaker_active"})
                     continue
