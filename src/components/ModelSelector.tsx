@@ -51,7 +51,6 @@ export const MODELS = {
   ]
 };
 
-MODELS.preferred_model = MODELS.r1_preferred_model as any;
 
 export default function ModelSelector({ storageKey, label }: ModelSelectorProps) {
   const [selected, setSelected] = useState("");
