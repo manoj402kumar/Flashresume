@@ -55,7 +55,7 @@ async def _call_deepseek_single(client_getter, model: str, prompt: str, max_toke
         return {"success": False, "text": None, "model": model, "speed": None, "attempts": [{"model": model, "status": "missing_api_key"}]}
     
     attempts = []
-    retries = 1
+    retries = 0
     
     for attempt in range(retries + 1):
         try:

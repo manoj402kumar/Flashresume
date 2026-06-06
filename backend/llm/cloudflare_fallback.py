@@ -28,7 +28,7 @@ def _get_client_r1():
         _client_r1 = AsyncOpenAI(
             base_url=f"https://api.cloudflare.com/client/v4/accounts/{account_id}/ai/v1",
             api_key=api_key,
-            timeout=30.0
+            timeout=60.0
         )
     return _client_r1
 
@@ -77,7 +77,7 @@ def _extract_text(response) -> str | None:
         return None
 
 
-async def _call_cloudflare_single(get_client_fn, model: str, prompt: str, max_tokens: int, retries: int = 1) -> dict:
+async def _call_cloudflare_single(get_client_fn, model: str, prompt: str, max_tokens: int, retries: int = 0) -> dict:
     max_tokens = min(max_tokens, 4096)
     client = get_client_fn()
     if client is None:

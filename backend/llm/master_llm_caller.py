@@ -122,7 +122,7 @@ async def _get_next_rr_index(pool_type: int, pool_size: int) -> int:
                     "p_pool_size": pool_size
                 }).execute()
             ),
-            timeout=0.8
+            timeout=2.0
         )
         if result.data is None:
             raise ValueError(f"Supabase RPC returned None for {counter_name}")

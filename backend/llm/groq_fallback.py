@@ -27,7 +27,7 @@ def _get_client_r1():
         api_key = os.getenv("GROQ_R1_API_KEY")
         if not api_key:
             return None
-        _client_r1 = AsyncGroq(api_key=api_key, timeout=30)
+        _client_r1 = AsyncGroq(api_key=api_key, timeout=60)
     return _client_r1
 
 
@@ -70,7 +70,7 @@ def _extract_text(response) -> str | None:
         return None
 
 
-async def _call_groq_single(get_client_fn, model: str, prompt: str, max_tokens: int, retries: int = 1) -> dict:
+async def _call_groq_single(get_client_fn, model: str, prompt: str, max_tokens: int, retries: int = 0) -> dict:
     max_tokens = min(max_tokens, 4096)
     client = get_client_fn()
     if client is None:
