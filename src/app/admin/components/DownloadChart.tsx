@@ -21,6 +21,11 @@ interface AnalyticsData {
     no_changes: number;
     unknown: number;
   };
+  downloads_by_device?: {
+    desktop: number;
+    mobile: number;
+    unknown: number;
+  };
   trend: TrendPoint[];
 }
 
@@ -193,6 +198,27 @@ export default function DownloadChart() {
             <div className="bg-[#eff1f2]/50 rounded-xl p-3 border-l-4 border-blue-500">
               <div className="text-xs text-[#595c5d] mb-1">First Resume</div>
               <div className="font-bold text-[#2c2f30]">{data.downloads_by_category.no_jd.toLocaleString("en-IN")}</div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Device Breakdown */}
+      {data?.downloads_by_device && (
+        <div className="pt-2">
+          <h3 className="text-sm font-bold text-[#2c2f30] mb-3">Downloads by Device</h3>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+            <div className="bg-[#eff1f2]/50 rounded-xl p-3 border-l-4 border-blue-600">
+              <div className="text-xs text-[#595c5d] mb-1">Desktop</div>
+              <div className="font-bold text-[#2c2f30]">{data.downloads_by_device.desktop.toLocaleString("en-IN")}</div>
+            </div>
+            <div className="bg-[#eff1f2]/50 rounded-xl p-3 border-l-4 border-emerald-500">
+              <div className="text-xs text-[#595c5d] mb-1">Mobile</div>
+              <div className="font-bold text-[#2c2f30]">{data.downloads_by_device.mobile.toLocaleString("en-IN")}</div>
+            </div>
+            <div className="bg-[#eff1f2]/50 rounded-xl p-3 border-l-4 border-gray-400">
+              <div className="text-xs text-[#595c5d] mb-1">Unknown</div>
+              <div className="font-bold text-[#2c2f30]">{data.downloads_by_device.unknown.toLocaleString("en-IN")}</div>
             </div>
           </div>
         </div>

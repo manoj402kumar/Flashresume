@@ -54,7 +54,7 @@ async def get_admin_stats():
             _sb(supabase.table("resume_downloads").select("id", count="exact").gte("downloaded_at", "2026-05-28T00:00:00Z")),
             _sb(supabase.table("subscriptions").select("user_id").eq("is_active", True)),
             _sb(supabase.table("users").select("id", count="exact").gte("created_at", "2026-05-28T00:00:00Z")),
-            _sb(supabase.table("page_visits").select("id", count="exact").gte("created_at", "2026-05-28T00:00:00Z")),
+            _sb(supabase.table("page_visits").select("id", count="exact").gte("visited_at", "2026-05-28T00:00:00Z")),
             _sb(supabase.table("payments").select("id", count="exact").eq("status", "failed").gte("created_at", "2026-05-28T00:00:00Z")),
         )
 
@@ -325,7 +325,7 @@ async def get_analytics_downloads(
 
     try:
         # Fetch downloads with LIMIT 10000 (Blocker 1 Fix)
-        dl_query = supabase.table("resume_downloads").select("user_id, session_id, downloaded_at").limit(10000).order("downloaded_at", desc=True)
+        dl_query = supabase.table("resume_downloads").select("user_id, session_id, downloaded_at, device_type").limit(10000).order("downloaded_at", desc=True)
         if dt_start: dl_query = dl_query.gte("downloaded_at", dt_start.isoformat())
         if dt_end: dl_query = dl_query.lte("downloaded_at", dt_end.isoformat())
         
@@ -376,11 +376,17 @@ async def get_analytics_downloads(
                     session_categories[s["id"]] = cat
 
         category_counts = {"jd_optimized": 0, "no_jd": 0, "no_changes": 0, "unknown": 0}
+        device_counts = {"desktop": 0, "mobile": 0, "unknown": 0}
+        
         for d in downloads:
             sid = d.get("session_id")
             cat = session_categories.get(sid, "unknown") if sid else "unknown"
             if cat in category_counts: category_counts[cat] += 1
             else: category_counts[cat] = 1
+            
+            dev = d.get("device_type") or "unknown"
+            if dev in device_counts: device_counts[dev] += 1
+            else: device_counts["unknown"] += 1
             
         trend = build_trend_data(downloads, dt_start, dt_end, time_filter)
         
@@ -389,6 +395,7 @@ async def get_analytics_downloads(
             "unique_users": unique_users,
             "downloads_by_plan": plan_counts,
             "downloads_by_category": category_counts,
+            "downloads_by_device": device_counts,
             "trend": trend
         }
     except Exception as e:
@@ -426,8 +433,8 @@ async def get_funnel_stats():
     try:
         # All 3 queries in parallel — non-blocking
         landing, result, purchases = await asyncio.gather(
-            _sb(supabase.table("page_visits").select("id", count="exact").eq("page_type", "landing").gte("created_at", "2026-05-28T00:00:00Z")),
-            _sb(supabase.table("page_visits").select("id", count="exact").eq("page_type", "result").gte("created_at", "2026-05-28T00:00:00Z")),
+            _sb(supabase.table("page_visits").select("id", count="exact").eq("page_type", "landing").gte("visited_at", "2026-05-28T00:00:00Z")),
+            _sb(supabase.table("page_visits").select("id", count="exact").eq("page_type", "result").gte("visited_at", "2026-05-28T00:00:00Z")),
             _sb(supabase.table("payments").select("id", count="exact").eq("status", "success").gte("created_at", "2026-05-28T00:00:00Z")),
         )
 

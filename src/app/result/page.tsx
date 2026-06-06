@@ -537,12 +537,6 @@ export default function ResultPage() {
     setUserEmail(session.user.email || "");
     setCurrentUserId(session.user.id);
 
-    // 1. Fetch total credits
-    const { data: creditData } = await supabase.rpc("get_total_active_credits", { p_user_id: session.user.id });
-    const currentCredits = creditData ?? 0;
-    setCredits(currentCredits);
-
-    // 2. Fetch buckets
     const { data: bucketData } = await supabase
       .from("credit_buckets")
       .select("*")
@@ -550,9 +544,16 @@ export default function ResultPage() {
       .in("status", ["active", "queued", "fallback"])
       .gt("remaining_credits", 0)
       .order("created_at", { ascending: true });
-
+      
+    let currentCredits = 0;
     if (bucketData) {
       setBuckets(bucketData);
+      currentCredits = bucketData.reduce((acc, b) => acc + b.remaining_credits, 0);
+      setCredits(currentCredits);
+    } else {
+      const { data: oldData } = await supabase.from("users").select("credits_balance").eq("id", session.user.id).single();
+      currentCredits = oldData?.credits_balance || 0;
+      setCredits(currentCredits);
     }
 
     if (currentCredits >= 10) {
@@ -640,9 +641,11 @@ export default function ResultPage() {
       if (sessionGuid && currentUserId) {
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
         try {
+          const isMobile = window.innerWidth < 768 || /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
+          const deviceType = isMobile ? "mobile" : "desktop";
           const res = await fetch(`${apiUrl}/api/resume/increment-download`, {
             method: "POST",
-            body: JSON.stringify({ session_id: sessionGuid }),
+            body: JSON.stringify({ session_id: sessionGuid, user_id: currentUserId, device_type: deviceType }),
             headers: { "Content-Type": "application/json" }
           });
           if (res.ok) {
@@ -715,7 +718,7 @@ export default function ResultPage() {
             <div>
               <h1 className="font-headline text-lg font-bold text-white leading-tight">Your Resume</h1>
               <p className="text-xs text-white/50 leading-tight flex items-center gap-1">
-                <Sparkles className="w-3 h-3 text-[#12f8d7]" /> AI-Optimized with {activeModelName}
+                <Sparkles className="w-3 h-3 text-[#12f8d7]" /> AI-Optimized
               </p>
             </div>
           </div>

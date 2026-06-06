@@ -48,6 +48,7 @@ async def get_feedback():
 class IncrementDownloadRequest(BaseModel):
     session_id: str
     user_id: str | None = None
+    device_type: str = "unknown"
 
 @router.post("/resume/increment-download")
 async def increment_download(body: IncrementDownloadRequest):
@@ -76,6 +77,7 @@ async def increment_download(body: IncrementDownloadRequest):
             await sb(lambda: supabase.table("resume_downloads").insert({
                 "user_id": actual_user_id,
                 "session_id": body.session_id,
+                "device_type": body.device_type,
             }).execute())
         except Exception:
             pass  # UNIQUE constraint violation = already logged, safe to ignore

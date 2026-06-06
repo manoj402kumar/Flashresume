@@ -36,10 +36,19 @@ export default function CreditBadge({ onTopUpClick }: CreditBadgeProps) {
     // Fetch initial balance
     const fetchCredits = async () => {
       const { data, error } = await supabase
-        .rpc("get_total_active_credits", { p_user_id: user.id });
+        .from("credit_buckets")
+        .select("remaining_credits")
+        .eq("user_id", user.id)
+        .in("status", ["active", "queued", "fallback"])
+        .gt("remaining_credits", 0);
       
-      if (!error && data !== null) {
-        setCredits(data);
+      if (!error && data) {
+        const total = data.reduce((acc, b) => acc + b.remaining_credits, 0);
+        setCredits(total);
+      } else {
+        // Fallback to old users table
+        const { data: uData } = await supabase.from("users").select("credits_balance").eq("id", user.id).single();
+        if (uData) setCredits(uData.credits_balance || 0);
       }
     };
 
@@ -57,9 +66,7 @@ export default function CreditBadge({ onTopUpClick }: CreditBadgeProps) {
           filter: `user_id=eq.${user.id}`,
         },
         async () => {
-          const { data } = await supabase
-            .rpc("get_total_active_credits", { p_user_id: user.id });
-          if (data !== null) setCredits(data);
+          fetchCredits();
         }
       )
       .subscribe();
