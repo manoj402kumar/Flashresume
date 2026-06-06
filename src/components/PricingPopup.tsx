@@ -77,7 +77,7 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
   const [resetSuccessMessage, setResetSuccessMessage] = useState<string | null>(null);
 
   // Student Verify Form
-  const [studentMethod, setStudentMethod] = useState<"details" | "email">("email");
+  const [studentMethod, setStudentMethod] = useState<"details" | "email">("details");
   const [collegeName, setCollegeName] = useState("");
   const [rollNumber, setRollNumber] = useState("");
   const [studentEmail, setStudentEmail] = useState("");
@@ -759,17 +759,17 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
                 {/* Method toggle with OR divider */}
                 <div className="flex items-center gap-2">
                   <button
-                    onClick={() => setStudentMethod("email")}
-                    className={`flex-1 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all flex items-center justify-center gap-1.5 border-2 ${studentMethod === "email" ? "border-orange-400 bg-orange-50 text-orange-600" : "border-surface-container-high bg-surface-container-low text-on-surface-variant hover:border-orange-300"}`}
-                  >
-                    <Mail className="w-4 h-4 shrink-0" /> College Email
-                  </button>
-                  <span className="text-xs font-black text-on-surface-variant/50 shrink-0">OR</span>
-                  <button
                     onClick={() => setStudentMethod("details")}
                     className={`flex-1 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all flex items-center justify-center gap-1.5 border-2 ${studentMethod === "details" ? "border-orange-400 bg-orange-50 text-orange-600" : "border-surface-container-high bg-surface-container-low text-on-surface-variant hover:border-orange-300"}`}
                   >
                     <Building className="w-4 h-4 shrink-0" /> College Details
+                  </button>
+                  <span className="text-xs font-black text-on-surface-variant/50 shrink-0">OR</span>
+                  <button
+                    onClick={() => setStudentMethod("email")}
+                    className={`flex-1 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all flex items-center justify-center gap-1.5 border-2 ${studentMethod === "email" ? "border-orange-400 bg-orange-50 text-orange-600" : "border-surface-container-high bg-surface-container-low text-on-surface-variant hover:border-orange-300"}`}
+                  >
+                    <Mail className="w-4 h-4 shrink-0" /> College Email
                   </button>
                 </div>
 

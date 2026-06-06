@@ -50,12 +50,12 @@ async def get_admin_stats():
     try:
         # Run all 5 DB queries in parallel — non-blocking
         payments_res, downloads, subs_res, users_res, visitors_res, failed_res = await asyncio.gather(
-            _sb(supabase.table("payments").select("amount, user_id, plan_type").eq("status", "success")),
-            _sb(supabase.table("resume_downloads").select("id", count="exact")),
+            _sb(supabase.table("payments").select("amount, user_id, plan_type").eq("status", "success").gte("created_at", "2026-05-28T00:00:00Z")),
+            _sb(supabase.table("resume_downloads").select("id", count="exact").gte("downloaded_at", "2026-05-28T00:00:00Z")),
             _sb(supabase.table("subscriptions").select("user_id").eq("is_active", True)),
-            _sb(supabase.table("users").select("id", count="exact")),
-            _sb(supabase.table("page_visits").select("id", count="exact")),
-            _sb(supabase.table("payments").select("id", count="exact").eq("status", "failed")),
+            _sb(supabase.table("users").select("id", count="exact").gte("created_at", "2026-05-28T00:00:00Z")),
+            _sb(supabase.table("page_visits").select("id", count="exact").gte("created_at", "2026-05-28T00:00:00Z")),
+            _sb(supabase.table("payments").select("id", count="exact").eq("status", "failed").gte("created_at", "2026-05-28T00:00:00Z")),
         )
 
         if payments_res.data:
@@ -113,6 +113,8 @@ async def get_analytics_revenue(
     dt_start = None
     dt_end = now
     
+    PROD_START_DATE = datetime(2026, 5, 28, tzinfo=timezone.utc)
+    
     if time_filter == "today":
         dt_start = now - timedelta(hours=24)
     elif time_filter == "week":
@@ -126,6 +128,9 @@ async def get_analytics_revenue(
             dt_end = dt_end.replace(hour=23, minute=59, second=59)
         except Exception:
             pass
+            
+    if not dt_start or dt_start < PROD_START_DATE:
+        dt_start = PROD_START_DATE
             
     try:
         # Fetch Payments
@@ -242,8 +247,13 @@ def build_trend_data(records, dt_start, dt_end, time_filter, value_key=None, tra
             trend.append({"label": label, "start": start_d, "end": end_d, "value": 0})
     else:
         months = 12
+        PROD_START_DATE = datetime(2026, 5, 28, tzinfo=timezone.utc)
         if time_filter == "custom" and dt_start:
             months = (dt_end.year - dt_start.year) * 12 + dt_end.month - dt_start.month + 1
+        elif time_filter == "all":
+            actual_start = max(dt_start or PROD_START_DATE, PROD_START_DATE)
+            months = (dt_end.year - actual_start.year) * 12 + dt_end.month - actual_start.month + 1
+            months = max(1, months)
         for i in range(months-1, -1, -1):
             m = (now.month - i - 1) % 12 + 1
             y = now.year + ((now.month - i - 1) // 12)
@@ -294,6 +304,8 @@ async def get_analytics_downloads(
     dt_start = None
     dt_end = now
     
+    PROD_START_DATE = datetime(2026, 5, 28, tzinfo=timezone.utc)
+    
     if time_filter == "today":
         dt_start = now - timedelta(hours=24)
     elif time_filter == "week":
@@ -307,6 +319,9 @@ async def get_analytics_downloads(
             dt_end = dt_end.replace(hour=23, minute=59, second=59)
         except Exception:
             pass
+
+    if not dt_start or dt_start < PROD_START_DATE:
+        dt_start = PROD_START_DATE
 
     try:
         # Fetch downloads with LIMIT 10000 (Blocker 1 Fix)
@@ -411,9 +426,9 @@ async def get_funnel_stats():
     try:
         # All 3 queries in parallel — non-blocking
         landing, result, purchases = await asyncio.gather(
-            _sb(supabase.table("page_visits").select("id", count="exact").eq("page_type", "landing")),
-            _sb(supabase.table("page_visits").select("id", count="exact").eq("page_type", "result")),
-            _sb(supabase.table("payments").select("id", count="exact").eq("status", "success")),
+            _sb(supabase.table("page_visits").select("id", count="exact").eq("page_type", "landing").gte("created_at", "2026-05-28T00:00:00Z")),
+            _sb(supabase.table("page_visits").select("id", count="exact").eq("page_type", "result").gte("created_at", "2026-05-28T00:00:00Z")),
+            _sb(supabase.table("payments").select("id", count="exact").eq("status", "success").gte("created_at", "2026-05-28T00:00:00Z")),
         )
 
         def extract_count(res):

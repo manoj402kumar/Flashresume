@@ -36,6 +36,8 @@ def _get_rate_limit_type(attempts):
             return "402"
         if any(x in err for x in ["429", "rate_limit", "RESOURCE_EXHAUSTED"]):
             return "429"
+        if any(x in err for x in ["not configured", "API key not", "missing_api_key"]):
+            return "402"
     return None
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -53,38 +55,34 @@ def _get_rate_limit_type(attempts):
 # ─────────────────────────────────────────────────────────────────────────────
 
 POOL_1 = [
-    # Key 1 (Account 1)
     ("mistral", "mistral-medium-3.5",                       "Key 1"),
-    ("nvidia",  "mistralai/mistral-medium-3.5-128b",        "Key 1"),
-    ("mistral", "mistral-medium-2604",                      "Key 1"),
-    ("nvidia",  "meta/llama-4-maverick-17b-128e-instruct",  "Key 1"),
-    ("mistral", "mistral-medium-latest",                    "Key 1"),
-    ("nvidia",  "mistralai/mistral-nemotron",               "Key 1"),
-    # Key 2 (Account 2)
     ("mistral", "mistral-medium-3.5",                       "Key 2"),
+    ("nvidia",  "mistralai/mistral-medium-3.5-128b",        "Key 1"),
     ("nvidia",  "mistralai/mistral-medium-3.5-128b",        "Key 2"),
+    ("mistral", "mistral-medium-2604",                      "Key 1"),
     ("mistral", "mistral-medium-2604",                      "Key 2"),
+    ("nvidia",  "meta/llama-4-maverick-17b-128e-instruct",  "Key 1"),
     ("nvidia",  "meta/llama-4-maverick-17b-128e-instruct",  "Key 2"),
+    ("mistral", "mistral-medium-latest",                    "Key 1"),
     ("mistral", "mistral-medium-latest",                    "Key 2"),
+    ("nvidia",  "mistralai/mistral-nemotron",               "Key 1"),
     ("nvidia",  "mistralai/mistral-nemotron",               "Key 2"),
 ]
 
 POOL_2 = [
-    # Key 1 (Account 1)
     ("mistral",    "mistral-large-latest",                         "Key 1"),
-    ("groq",       "llama-3.3-70b-versatile",                      "Key 1"),
-    ("cloudflare", "@cf/meta/llama-3.3-70b-instruct-fp8-fast",     "Key 1"),
-    ("nvidia",     "mistralai/ministral-14b-instruct-2512",        "Key 1"),
-    ("mistral",    "ministral-14b-latest",                         "Key 1"),
-    ("cloudflare", "@cf/mistralai/mistral-small-3.1-24b-instruct", "Key 1"),
-    ("mistral",    "mistral-small-latest",                         "Key 1"),
-    # Key 2 (Account 2)
     ("mistral",    "mistral-large-latest",                         "Key 2"),
+    ("groq",       "llama-3.3-70b-versatile",                      "Key 1"),
     ("groq",       "llama-3.3-70b-versatile",                      "Key 2"),
+    ("cloudflare", "@cf/meta/llama-3.3-70b-instruct-fp8-fast",     "Key 1"),
     ("cloudflare", "@cf/meta/llama-3.3-70b-instruct-fp8-fast",     "Key 2"),
-    ("mistral",    "ministral-14b-latest",                         "Key 2"),
-    ("cloudflare", "@cf/mistralai/mistral-small-3.1-24b-instruct", "Key 2"),
+    ("nvidia",     "mistralai/ministral-14b-instruct-2512",        "Key 1"),
     ("nvidia",     "mistralai/ministral-14b-instruct-2512",        "Key 2"),
+    ("mistral",    "ministral-14b-latest",                         "Key 1"),
+    ("mistral",    "ministral-14b-latest",                         "Key 2"),
+    ("cloudflare", "@cf/mistralai/mistral-small-3.1-24b-instruct", "Key 1"),
+    ("cloudflare", "@cf/mistralai/mistral-small-3.1-24b-instruct", "Key 2"),
+    ("mistral",    "mistral-small-latest",                         "Key 1"),
     ("mistral",    "mistral-small-latest",                         "Key 2"),
 ]
 

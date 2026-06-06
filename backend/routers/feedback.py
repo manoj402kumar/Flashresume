@@ -41,7 +41,7 @@ async def submit_feedback(body: FeedbackRequest):
 async def get_feedback():
     if not supabase:
         return []
-    result = await sb(lambda: supabase.table("feedback").select("*, users(email)").order("created_at", desc=True).limit(100).execute())
+    result = await sb(lambda: supabase.table("feedback").select("*, users(email)").gte("created_at", "2026-05-28T00:00:00Z").order("created_at", desc=True).limit(100).execute())
     return result.data
 
 
@@ -109,5 +109,5 @@ async def increment_download(body: IncrementDownloadRequest):
 async def llm_stats():
     if not supabase:
         return []
-    result = await sb(lambda: supabase.table("llm_usage").select("*").order("created_at", desc=True).limit(100).execute())
+    result = await sb(lambda: supabase.table("llm_usage").select("*").gte("created_at", "2026-05-28T00:00:00Z").order("created_at", desc=True).limit(100).execute())
     return result.data
