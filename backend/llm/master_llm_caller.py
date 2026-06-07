@@ -6,6 +6,7 @@ from .groq_fallback import call_single_groq_r1, call_single_groq_r2
 from .nvidia_fallback import call_single_nvidia_r1, call_single_nvidia_r2
 from .cloudflare_fallback import call_single_cloudflare_r1, call_single_cloudflare_r2
 from supabase_client import supabase
+from redis_client import get_redis
 
 _LLM_SEMAPHORE = asyncio.Semaphore(5)
 
@@ -126,23 +127,51 @@ _pool2_idx = 0
 _rr_lock = asyncio.Lock()
 
 async def _get_next_rr_index(pool_type: int) -> int:
-    """Returns current round-robin index without advancing it."""
+    """
+    Reads current RR index from Redis if available.
+    Falls back to local in-memory counter if Redis is down.
+    """
+    redis = await get_redis()
+    if redis:
+        try:
+            val = await asyncio.wait_for(
+                redis.get(f"pool_{pool_type}_idx"),
+                timeout=0.3
+            )
+            return int(val) if val is not None else 0
+        except Exception:
+            pass  # Fall through to local counter
+
+    # Local fallback
     global _pool1_idx, _pool2_idx
     async with _rr_lock:
-        if pool_type == 1:
-            idx = _pool1_idx
-        else:
-            idx = _pool2_idx
-    return idx
+        return _pool1_idx if pool_type == 1 else _pool2_idx
 
 async def _advance_rr_index(pool_type: int, pool_size: int, winner_idx: int):
-    """Advances the counter cleanly to the index AFTER the winning model."""
+    """
+    Advances counter to (winner + 1) % pool_size.
+    Writes to Redis if available, always writes to local counter as backup.
+    """
+    next_idx = (winner_idx + 1) % pool_size
+
+    # Always update local counter (instant, zero cost)
     global _pool1_idx, _pool2_idx
     async with _rr_lock:
         if pool_type == 1:
-            _pool1_idx = (winner_idx + 1) % pool_size
+            _pool1_idx = next_idx
         else:
-            _pool2_idx = (winner_idx + 1) % pool_size
+            _pool2_idx = next_idx
+
+    # Also write to Redis (shared across workers)
+    redis = await get_redis()
+    if redis:
+        try:
+            await asyncio.wait_for(
+                redis.set(f"pool_{pool_type}_idx", next_idx),
+                timeout=0.3
+            )
+        except Exception:
+            pass  # Non-critical — local counter already updated above
 
 async def _get_pool_models(pool_type: int) -> list:
     pool = POOL_1 if pool_type == 1 else POOL_2
