@@ -125,37 +125,28 @@ _pool1_idx = 0
 _pool2_idx = 0
 _rr_lock = asyncio.Lock()
 
-async def _get_next_rr_index(pool_type: int, pool_size: int) -> int:
-    """Atomic counter via Supabase — shared across all workers."""
-    counter_name = f"pool_{pool_type}_global"
-    try:
-        result = await asyncio.wait_for(
-            asyncio.to_thread(
-                lambda: supabase.rpc("increment_rr_counter", {
-                    "p_counter_name": counter_name,
-                    "p_pool_size": pool_size
-                }).execute()
-            ),
-            timeout=0.8
-        )
-        if result.data is None:
-            raise ValueError(f"Supabase RPC returned None for {counter_name}")
-        return int(result.data)
-    except Exception:
-        # Fallback to local lock if Supabase is down or slow
-        global _pool1_idx, _pool2_idx
-        async with _rr_lock:
-            if pool_type == 1:
-                idx = _pool1_idx
-                _pool1_idx = (_pool1_idx + 1) % pool_size
-            else:
-                idx = _pool2_idx
-                _pool2_idx = (_pool2_idx + 1) % pool_size
-        return idx
+async def _get_next_rr_index(pool_type: int) -> int:
+    """Returns current round-robin index without advancing it."""
+    global _pool1_idx, _pool2_idx
+    async with _rr_lock:
+        if pool_type == 1:
+            idx = _pool1_idx
+        else:
+            idx = _pool2_idx
+    return idx
+
+async def _advance_rr_index(pool_type: int, pool_size: int, winner_idx: int):
+    """Advances the counter cleanly to the index AFTER the winning model."""
+    global _pool1_idx, _pool2_idx
+    async with _rr_lock:
+        if pool_type == 1:
+            _pool1_idx = (winner_idx + 1) % pool_size
+        else:
+            _pool2_idx = (winner_idx + 1) % pool_size
 
 async def _get_pool_models(pool_type: int) -> list:
     pool = POOL_1 if pool_type == 1 else POOL_2
-    idx = await _get_next_rr_index(pool_type, len(pool))
+    idx = await _get_next_rr_index(pool_type)
     # Return reordered pool starting at idx (3-tuples: provider, model_id, key_label)
     return pool[idx:] + pool[:idx]
 
@@ -213,9 +204,11 @@ async def call_llm_balanced(prompt: str, is_r1: bool, preferred_model: str = "",
 
         # Execute Chain
         for item in chain:
+            original_pool = None
             if item[0] == "POOL":
                 pool_type = item[1]
                 models = await _get_pool_models(pool_type)
+                original_pool = POOL_1 if pool_type == 1 else POOL_2
             else:
                 models = [item]
 
@@ -231,6 +224,12 @@ async def call_llm_balanced(prompt: str, is_r1: bool, preferred_model: str = "",
 
                 if result["success"]:
                     print(f"[LLM Fallback] Attempted {len(all_attempts)+1} model(s) -> Winner: {model_id} - {key_label} ({result.get('speed', 'N/A')}s)")
+                    if original_pool:
+                        try:
+                            winner_idx = original_pool.index((provider, model_id, key_label))
+                            await _advance_rr_index(pool_type, len(original_pool), winner_idx)
+                        except ValueError:
+                            pass
                     return _finalize(result, provider, f"{model_id} - {key_label}", "r1" if is_r1 else "r2")
 
                 err_type = _get_rate_limit_type(result.get("attempts", []))
