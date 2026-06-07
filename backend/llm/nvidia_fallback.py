@@ -1,6 +1,7 @@
 import os
 import re
 import time
+import asyncio
 import httpx
 from dotenv import load_dotenv
 
@@ -91,11 +92,14 @@ async def _call_nvidia_single(get_client_fn, model: str, prompt: str, max_tokens
     for attempt in range(retries + 1):
         try:
             start = time.time()
-            response = await client.chat.completions.create(
-                model=model,
-                messages=[{"role": "user", "content": prompt}],
-                temperature=0.1,
-                max_tokens=max_tokens,
+            response = await asyncio.wait_for(
+                client.chat.completions.create(
+                    model=model,
+                    messages=[{"role": "user", "content": prompt}],
+                    temperature=0.1,
+                    max_tokens=max_tokens,
+                ),
+                timeout=90
             )
             elapsed = round(time.time() - start, 2)
             text = _extract_text(response)

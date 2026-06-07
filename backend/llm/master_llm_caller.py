@@ -245,15 +245,20 @@ async def call_llm_balanced(prompt: str, is_r1: bool, preferred_model: str = "",
 
 def _finalize(result: dict, provider: str, model_id: str, r_type: str) -> dict:
     if supabase and result.get("speed"):
-        asyncio.create_task(asyncio.to_thread(
-            lambda: supabase.table("llm_usage").insert({
-                "request_type": r_type,
-                "provider": provider,
-                "model": model_id,
-                "success": True,
-                "speed_secs": result["speed"]
-            }).execute()
-        ))
+        async def _log_usage():
+            try:
+                await asyncio.to_thread(
+                    lambda: supabase.table("llm_usage").insert({
+                        "request_type": r_type,
+                        "provider": provider,
+                        "model": model_id,
+                        "success": True,
+                        "speed_secs": result["speed"]
+                    }).execute()
+                )
+            except Exception:
+                pass  # WinError 10035 / any network error — non-critical telemetry
+        asyncio.create_task(_log_usage())
     return {"success": True, "text": result["text"], "_model_used": model_id}
 
 async def call_llm_r1(prompt: str, preferred_model: str = "") -> dict:
