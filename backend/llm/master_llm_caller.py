@@ -78,12 +78,10 @@ POOL_1 = [
     ("nvidia",  "mistralai/mistral-medium-3.5-128b",        "Key 2"),
     ("mistral", "mistral-medium-2604",                      "Key 1"),
     ("mistral", "mistral-medium-2604",                      "Key 2"),
-    ("nvidia",  "meta/llama-4-maverick-17b-128e-instruct",  "Key 1"),
-    ("nvidia",  "meta/llama-4-maverick-17b-128e-instruct",  "Key 2"),
-    ("mistral", "mistral-medium-latest",                    "Key 1"),
-    ("mistral", "mistral-medium-latest",                    "Key 2"),
     ("nvidia",  "mistralai/mistral-nemotron",               "Key 1"),
     ("nvidia",  "mistralai/mistral-nemotron",               "Key 2"),
+    ("mistral", "mistral-medium-latest",                    "Key 1"),
+    ("mistral", "mistral-medium-latest",                    "Key 2"),
 ]
 
 POOL_2 = [

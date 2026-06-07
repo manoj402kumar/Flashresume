@@ -40,8 +40,7 @@ export const MODELS = {
     { id: "@cf/mistralai/mistral-small-3.1-24b-instruct|key2", name: "Mistral Small 24B (Cloudflare) - Key 2" },
 
     // -- NVIDIA --
-    { id: "meta/llama-4-maverick-17b-128e-instruct|key1", name: "Llama 4 Maverick 17B (NVIDIA) - Key 1" },
-    { id: "meta/llama-4-maverick-17b-128e-instruct|key2", name: "Llama 4 Maverick 17B (NVIDIA) - Key 2" },
+
     { id: "mistralai/mistral-medium-3.5-128b|key1", name: "Mistral Medium 3.5 128B (NVIDIA) - Key 1" },
     { id: "mistralai/mistral-medium-3.5-128b|key2", name: "Mistral Medium 3.5 128B (NVIDIA) - Key 2" },
     { id: "mistralai/mistral-nemotron|key1", name: "Mistral Nemotron (NVIDIA) - Key 1" },

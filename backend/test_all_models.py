@@ -43,7 +43,7 @@ PROVIDERS = {
         "url": "https://integrate.api.nvidia.com/v1/chat/completions",
         "headers": {"Authorization": f"Bearer {NVIDIA_KEY}", "Content-Type": "application/json"},
         "models": [
-            "meta/llama-4-maverick-17b-128e-instruct",
+
             "mistralai/mistral-medium-3.5-128b",
             "mistralai/mistral-nemotron",
             "mistralai/ministral-14b-instruct-2512"

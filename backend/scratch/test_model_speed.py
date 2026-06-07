@@ -36,7 +36,10 @@ async def test_model(model_id):
 
 async def main():
     models = [
-        "meta/llama-3.3-70b-instruct"
+        "nvidia/llama-3.3-nemotron-super-49b-v1.5",
+        "nvidia/llama-3.3-nemotron-super-49b-v1",
+        "mistralai/mixtral-8x22b-v0.1",
+        "qwen/qwen3.5-122b-a10b"
     ]
     for model in models:
         await test_model(model)
