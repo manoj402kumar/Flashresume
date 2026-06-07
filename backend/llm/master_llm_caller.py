@@ -205,6 +205,7 @@ async def call_llm_balanced(prompt: str, is_r1: bool, preferred_model: str = "",
         # Execute Chain
         for item in chain:
             original_pool = None
+            pool_type = None
             if item[0] == "POOL":
                 pool_type = item[1]
                 models = await _get_pool_models(pool_type)
