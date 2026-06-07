@@ -39,7 +39,12 @@ export default function GeneratePage() {
     return () => { if (tipTimer.current) clearInterval(tipTimer.current); };
   }, []);
 
+  const hasStartedRef = useRef(false);
+
   useEffect(() => {
+    if (hasStartedRef.current) return;
+    hasStartedRef.current = true;
+
     const generate = async () => {
       try {
         const resumeText = localStorage.getItem("resume_text");
