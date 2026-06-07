@@ -15,7 +15,7 @@ _MAX_RESUME_CHARS = 15_000
 _MAX_JD_CHARS     = 8_000
 
 @router.post("/generate")
-@limiter.limit("5/minute")
+@limiter.limit("100/minute")
 async def generate_resume_endpoint(request: Request, payload: GenerateRequest, authorization: str = Header(None)):
     # Size validation — reject before spending any LLM tokens
     if len(payload.resume_text) > _MAX_RESUME_CHARS:
