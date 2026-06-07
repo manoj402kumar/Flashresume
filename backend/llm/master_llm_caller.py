@@ -156,7 +156,7 @@ def _get_provider_for_model(model_id: str) -> str:
         return "groq"
     return "mistral"  # fallback
 
-async def call_llm_balanced(prompt: str, is_r1: bool, preferred_model: str = "", has_credits: bool = False, no_ai_changes: bool = False) -> dict:
+async def call_llm_balanced(prompt: str, is_r1: bool, preferred_model: str = "", no_ai_changes: bool = False) -> dict:
     async with _LLM_SEMAPHORE:
         max_tokens = _R1_MAX_TOKENS if is_r1 else _R2_MAX_TOKENS
         all_attempts = []
@@ -227,8 +227,8 @@ def _finalize(result: dict, provider: str, model_id: str, r_type: str) -> dict:
         ))
     return {"success": True, "text": result["text"], "_model_used": model_id}
 
-async def call_llm_r1(prompt: str, preferred_model: str = "", has_credits: bool = False) -> dict:
-    return await call_llm_balanced(prompt, True, preferred_model, has_credits)
+async def call_llm_r1(prompt: str, preferred_model: str = "") -> dict:
+    return await call_llm_balanced(prompt, True, preferred_model)
 
-async def call_llm_r2(prompt: str, preferred_model: str = "", has_credits: bool = False, no_ai_changes: bool = False) -> dict:
-    return await call_llm_balanced(prompt, False, preferred_model, has_credits, no_ai_changes)
+async def call_llm_r2(prompt: str, preferred_model: str = "", no_ai_changes: bool = False) -> dict:
+    return await call_llm_balanced(prompt, False, preferred_model, no_ai_changes)

@@ -32,22 +32,6 @@ async def generate_resume_endpoint(request: Request, payload: GenerateRequest, a
                    f"Maximum allowed is {_MAX_JD_CHARS:,} characters."
         )
 
-    # Check Credits securely via Backend
-    has_credits = False
-    if authorization and authorization.startswith("Bearer "):
-        token = authorization.split(" ")[1]
-        try:
-            user_res = await asyncio.to_thread(lambda: supabase.auth.get_user(token))
-            if user_res and hasattr(user_res, 'user') and user_res.user:
-                user_id = user_res.user.id
-                credit_res = await asyncio.to_thread(
-                    lambda: supabase.rpc("get_total_active_credits", {"p_user_id": user_id}).execute()
-                )
-                if credit_res and hasattr(credit_res, 'data') and credit_res.data and credit_res.data > 0:
-                    has_credits = True
-        except Exception as e:
-            print(f"Credit check failed during generate: {e}")
-
     # Step 1: Generate the rewritten resume with Template v1 validation
     try:
         generated, model_used = await generate_resume(
@@ -58,8 +42,7 @@ async def generate_resume_endpoint(request: Request, payload: GenerateRequest, a
             missing_keywords=payload.missing_keywords,
             selected_projects=payload.selected_projects,
             no_ai_changes=payload.no_ai_changes,
-            preferred_model=payload.preferred_model or "",
-            has_credits=has_credits
+            preferred_model=payload.preferred_model or ""
         )
     except ValueError as e:
         raise HTTPException(status_code=500, detail=str(e))

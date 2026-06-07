@@ -5,7 +5,7 @@ from prompts.format_only_prompt import FORMAT_ONLY_PROMPT
 from llm.master_llm_caller import call_llm_r2
 from templates.template_v1_schema import TemplateV1
 
-async def generate_resume(resume_text: str, job_description: str, ats_score_before: int, approved_project: str = "", missing_keywords: list[str] = None, selected_projects: list[str] = None, no_ai_changes: bool = False, preferred_model: str = "", has_credits: bool = False) -> dict:
+async def generate_resume(resume_text: str, job_description: str, ats_score_before: int, approved_project: str = "", missing_keywords: list[str] = None, selected_projects: list[str] = None, no_ai_changes: bool = False, preferred_model: str = "") -> dict:
     is_no_jd_mode = not job_description or not job_description.strip()
 
     # Smart Truncation: Compress massive PDF whitespaces/newlines into single spaces, then cap at 12000 chars
@@ -28,7 +28,7 @@ async def generate_resume(resume_text: str, job_description: str, ats_score_befo
             approved_project=approved_project if approved_project else "none"
         )
 
-    result = await call_llm_r2(prompt, preferred_model, has_credits=has_credits, no_ai_changes=no_ai_changes)
+    result = await call_llm_r2(prompt, preferred_model, no_ai_changes=no_ai_changes)
     
     # Check if LLM call failed
     if not result["success"]:

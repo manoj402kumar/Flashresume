@@ -3,8 +3,6 @@ from models.request_models import AnalyzeRequest
 from models.response_models import CombinedAnalysisResponse
 from services.combined_analyzer import analyze_resume_combined
 from rate_limiter import limiter
-from supabase_client import supabase
-import asyncio
 
 router = APIRouter()
 
@@ -39,28 +37,11 @@ async def analyze_resume(request: Request, payload: AnalyzeRequest, authorizatio
                    f"Maximum allowed is {_MAX_JD_CHARS:,} characters."
         )
 
-    # Check Credits securely via Backend
-    has_credits = False
-    if authorization and authorization.startswith("Bearer "):
-        token = authorization.split(" ")[1]
-        try:
-            user_res = await asyncio.to_thread(lambda: supabase.auth.get_user(token))
-            if user_res and hasattr(user_res, 'user') and user_res.user:
-                user_id = user_res.user.id
-                credit_res = await asyncio.to_thread(
-                    lambda: supabase.rpc("get_total_active_credits", {"p_user_id": user_id}).execute()
-                )
-                if credit_res and hasattr(credit_res, 'data') and credit_res.data and credit_res.data > 0:
-                    has_credits = True
-        except Exception as e:
-            print(f"Credit check failed during analyze: {e}")
-
     try:
         result = await analyze_resume_combined(
             payload.resume_text,
             payload.job_description,
-            payload.preferred_model or "",
-            has_credits=has_credits
+            payload.preferred_model or ""
         )
 
         return CombinedAnalysisResponse(
