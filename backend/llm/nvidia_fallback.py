@@ -1,6 +1,7 @@
 import os
 import re
 import time
+import httpx
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -26,7 +27,12 @@ def _get_client_r1():
         api_key = os.getenv("NVIDIA_R1_API_KEY")
         if not api_key:
             return None
-        _client_r1 = AsyncOpenAI(base_url=_NVIDIA_BASE_URL, api_key=api_key, timeout=60)
+        _client_r1 = AsyncOpenAI(
+            base_url=_NVIDIA_BASE_URL, 
+            api_key=api_key, 
+            timeout=60,
+            http_client=httpx.AsyncClient(http2=False)
+        )
     return _client_r1
 
 
@@ -37,7 +43,12 @@ def _get_client_r2():
         api_key = os.getenv("NVIDIA_R2_API_KEY")
         if not api_key:
             return None
-        _client_r2 = AsyncOpenAI(base_url=_NVIDIA_BASE_URL, api_key=api_key, timeout=90)
+        _client_r2 = AsyncOpenAI(
+            base_url=_NVIDIA_BASE_URL, 
+            api_key=api_key, 
+            timeout=90,
+            http_client=httpx.AsyncClient(http2=False)
+        )
     return _client_r2
 
 
