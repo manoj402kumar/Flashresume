@@ -123,12 +123,10 @@ async def _call_nvidia_single(get_client_fn, model: str, prompt: str, max_tokens
                 break
             if any(x in err for x in ["503", "500", "502", "overloaded", "capacity"]):
                 if attempt < retries:
-                    import asyncio
                     await asyncio.sleep(1)
                 continue
             if "timeout" in err.lower() or "timed out" in err.lower():
                 if attempt < retries:
-                    import asyncio
                     await asyncio.sleep(1)
                 continue
             break
