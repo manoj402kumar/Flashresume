@@ -8,7 +8,7 @@ load_dotenv()
 
 # -------------------------------------------------------------------
 # Dual-client architecture — LAZY INITIALIZED (ASYNC):
-#   R1 client  → NVIDIA_R1_API_KEY  (Account / Email 1)  timeout=30s
+#   R1 client  → NVIDIA_R1_API_KEY  (Account / Email 1)  timeout=60s
 #   R2 client  → NVIDIA_R2_API_KEY  (Account / Email 2)  timeout=90s
 #
 # Clients are created on first use, NOT at module import time.

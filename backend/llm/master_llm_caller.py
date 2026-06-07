@@ -16,12 +16,28 @@ _COOLDOWN_SECS_429 = 120
 _COOLDOWN_SECS_402 = 86400
 _circuit_tripped = {}
 
-def _trip_circuit(model_id: str, error_type: str):
+async def _trip_circuit(model_id: str, error_type: str):
     cooldown = _COOLDOWN_SECS_429 if error_type == "429" else _COOLDOWN_SECS_402
     print(f"[{model_id}] Circuit tripped ({error_type}). Cooling down for {cooldown}s.")
     _circuit_tripped[model_id] = time.time() + cooldown
+    
+    if supabase:
+        try:
+            await asyncio.wait_for(
+                asyncio.to_thread(
+                    lambda: supabase.rpc("trip_circuit_breaker", {
+                        "p_circuit_key": model_id,
+                        "p_cooldown_seconds": cooldown
+                    }).execute()
+                ),
+                timeout=0.8
+            )
+        except Exception:
+            pass
 
-def _is_tripped(model_id: str) -> bool:
+def _is_tripped(model_id: str, db_tripped_keys: set = None) -> bool:
+    if db_tripped_keys and model_id in db_tripped_keys:
+        return True
     if model_id not in _circuit_tripped:
         return False
     if time.time() > _circuit_tripped[model_id]:
@@ -160,6 +176,19 @@ async def call_llm_balanced(prompt: str, is_r1: bool, preferred_model: str = "",
     async with _LLM_SEMAPHORE:
         max_tokens = _R1_MAX_TOKENS if is_r1 else _R2_MAX_TOKENS
         all_attempts = []
+        
+        # 1. Fetch DB tripped keys
+        db_tripped_keys = set()
+        if supabase:
+            try:
+                res = await asyncio.wait_for(
+                    asyncio.to_thread(lambda: supabase.rpc("get_tripped_circuits").execute()),
+                    timeout=0.8
+                )
+                if res.data:
+                    db_tripped_keys = {row["circuit_key"] for row in res.data}
+            except Exception:
+                pass
 
         # Build Chain
         chain = []
@@ -192,7 +221,7 @@ async def call_llm_balanced(prompt: str, is_r1: bool, preferred_model: str = "",
 
             for provider, model_id, key_label in models:
                 circuit_key = f"{provider}_{model_id}_{key_label}"
-                if _is_tripped(circuit_key):
+                if _is_tripped(circuit_key, db_tripped_keys):
                     all_attempts.append({"model": f"{model_id} - {key_label}", "status": "circuit_breaker_active"})
                     continue
 
@@ -201,11 +230,12 @@ async def call_llm_balanced(prompt: str, is_r1: bool, preferred_model: str = "",
                 result = await caller(model_id, prompt, max_tokens)
 
                 if result["success"]:
+                    print(f"[LLM Fallback] Attempted {len(all_attempts)+1} model(s) -> Winner: {model_id} - {key_label} ({result.get('speed', 'N/A')}s)")
                     return _finalize(result, provider, f"{model_id} - {key_label}", "r1" if is_r1 else "r2")
 
                 err_type = _get_rate_limit_type(result.get("attempts", []))
                 if err_type:
-                    _trip_circuit(circuit_key, err_type)
+                    await _trip_circuit(circuit_key, err_type)
 
                 for att in result.get("attempts", []):
                     att["model"] = f"{model_id} - {key_label}"
@@ -215,7 +245,6 @@ async def call_llm_balanced(prompt: str, is_r1: bool, preferred_model: str = "",
 
 def _finalize(result: dict, provider: str, model_id: str, r_type: str) -> dict:
     if supabase and result.get("speed"):
-        import asyncio
         asyncio.create_task(asyncio.to_thread(
             lambda: supabase.table("llm_usage").insert({
                 "request_type": r_type,
