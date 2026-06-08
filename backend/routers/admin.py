@@ -491,7 +491,6 @@ async def apply_referral(body: ApplyReferralRequest, authorization: str = Header
             return {"status": "ok"}
             
         return {"status": "error", "message": "Referral already applied"}
-        return {"status": "skipped", "message": "Already referred"}
     except Exception as e:
         print(f"Apply Referral Error: {str(e)}")
         return {"status": "error", "message": str(e)}
