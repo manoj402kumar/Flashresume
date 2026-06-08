@@ -641,12 +641,16 @@ export default function ResultPage() {
       if (sessionGuid && currentUserId) {
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
         try {
-          const isMobile = window.innerWidth < 768 || /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
+          // CSS pointer query: coarse = finger/touch (mobile), fine = mouse (desktop)
+          // More reliable than screen width or userAgent string
+          const isMobile = window.matchMedia?.("(pointer: coarse)")?.matches
+            ?? /Mobi|Android|iPhone/i.test(navigator.userAgent);
           const deviceType = isMobile ? "mobile" : "desktop";
           const res = await fetch(`${apiUrl}/api/resume/increment-download`, {
             method: "POST",
             body: JSON.stringify({ session_id: sessionGuid, user_id: currentUserId, device_type: deviceType }),
-            headers: { "Content-Type": "application/json" }
+            headers: { "Content-Type": "application/json" },
+            keepalive: true // Essential: mobile browsers suspend JS after link.click(); without this the request gets killed
           });
           if (res.ok) {
             const data = await res.json();

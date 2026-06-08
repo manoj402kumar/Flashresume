@@ -71,7 +71,19 @@ export default function App() {
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setCurrentUser(session?.user ?? null);
+      const user = session?.user ?? null;
+      setCurrentUser(user);
+
+      // Track visit AFTER auth resolves so user_id is known for dev filtering.
+      // Auth reads from localStorage — instant. Tracking is fire-and-forget, never blocks the user.
+      if (process.env.NODE_ENV === "production") {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+        fetch(`${apiUrl}/api/analytics/track-visit`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ page_type: "landing", user_id: user?.id ?? null }),
+        }).catch(() => {}); // silent fail — never block the user
+      }
     });
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, session) => {
       setCurrentUser(session?.user ?? null);
@@ -87,16 +99,7 @@ export default function App() {
     return () => clearTimeout(timer);
   }, []);
 
-  // ── Track every homepage visit (production only) ─────────────────────────
-  useEffect(() => {
-    if (process.env.NODE_ENV !== "production") return; // skip in local dev
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-    fetch(`${apiUrl}/api/analytics/track-visit`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ page_type: "landing" }),
-    }).catch(() => { }); // silent fail — never block the user
-  }, []);
+  // Visit tracking moved inside getSession() above — fires once after auth resolves with correct user_id
 
   // ── Referral Capture: Step 1 ─────────────────────────────────────────────
   // On page load, read ?ref=CODE from the URL and store it in localStorage.

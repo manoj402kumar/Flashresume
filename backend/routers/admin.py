@@ -19,7 +19,7 @@ load_dotenv()
 router = APIRouter()
 
 # Emails excluded from all admin metrics (dev / test accounts)
-DEV_EMAILS = ["testuser@flashresume.in", "devteam@flashresume.in"]
+DEV_EMAILS = ["devteam@flashresume.in"]
 
 _ADMIN_KEY_HEADER = APIKeyHeader(name="X-Admin-Key", auto_error=False)
 
@@ -63,17 +63,24 @@ async def get_admin_stats():
 
         users_query = supabase.table("users").select("id", count="exact").gte("created_at", "2026-05-28T00:00:00Z").not_.in_("email", DEV_EMAILS)
 
-        subs_query = supabase.table("subscriptions").select("user_id").eq("is_active", True)
+        downloads_query = supabase.table("resume_downloads").select("id", count="exact").gte("downloaded_at", "2026-05-28T00:00:00Z")
         if dev_user_ids:
-            subs_query = subs_query.not_.in_("user_id", dev_user_ids)
+            downloads_query = downloads_query.not_.in_("user_id", dev_user_ids)
 
-        payments_res, downloads, subs_res, users_res, visitors_res, failed_res = await asyncio.gather(
+        visitors_query = supabase.table("page_visits").select("id", count="exact").gte("visited_at", "2026-05-28T00:00:00Z")
+        if dev_user_ids:
+            visitors_query = visitors_query.not_.in_("user_id", dev_user_ids)
+
+        failed_query = supabase.table("payments").select("id", count="exact").eq("status", "failed").gte("created_at", "2026-05-28T00:00:00Z")
+        if dev_user_ids:
+            failed_query = failed_query.not_.in_("user_id", dev_user_ids)
+
+        payments_res, downloads, users_res, visitors_res, failed_res = await asyncio.gather(
             _sb(payments_query),
-            _sb(supabase.table("resume_downloads").select("id", count="exact").gte("downloaded_at", "2026-05-28T00:00:00Z")),
-            _sb(subs_query),
+            _sb(downloads_query),
             _sb(users_query),
-            _sb(supabase.table("page_visits").select("id", count="exact").gte("visited_at", "2026-05-28T00:00:00Z")),
-            _sb(supabase.table("payments").select("id", count="exact").eq("status", "failed").gte("created_at", "2026-05-28T00:00:00Z")),
+            _sb(visitors_query),
+            _sb(failed_query),
         )
 
         if payments_res.data:
@@ -84,16 +91,9 @@ async def get_admin_stats():
         else:
             stats["total_downloads"] = len(downloads.data) if downloads.data else 0
 
-        # Unique paid users across ALL 3 plans:
-        # 1. Active subscribers (Regular + Student) from subscriptions table
-        sub_user_ids = set(s["user_id"] for s in (subs_res.data or []) if s.get("user_id"))
-        # 2. Pay-per-use users from payments table
-        ppu_user_ids = set(
-            p["user_id"] for p in (payments_res.data or [])
-            if p.get("plan_type") == "pay_per_use" and p.get("user_id")
-        )
-        # Union → deduplicated unique paid users
-        stats["active_subs"] = len(sub_user_ids | ppu_user_ids)
+        # Paid Subscribers = unique users who paid at least once (regardless of current credits)
+        active_user_ids = set(p["user_id"] for p in (payments_res.data or []) if p.get("user_id"))
+        stats["active_subs"] = len(active_user_ids)
 
         if hasattr(users_res, 'count') and users_res.count is not None:
             stats["total_logins"] = users_res.count
@@ -155,8 +155,9 @@ async def get_analytics_revenue(
         dev_users_res = await _sb(supabase.table("users").select("id").in_("email", DEV_EMAILS))
         dev_user_ids = [u["id"] for u in (dev_users_res.data or [])]
 
-        # Fetch Payments
-        payments_query = supabase.table("payments").select("amount, plan_type, created_at").eq("status", "success")
+        # Fetch Payments — include user_id so we can derive all user-level
+        # metrics (active subs, breakdown counts) from one time-filtered source.
+        payments_query = supabase.table("payments").select("amount, plan_type, created_at, user_id").eq("status", "success")
         if dt_start:
             payments_query = payments_query.gte("created_at", dt_start.isoformat())
         if dt_end:
@@ -165,55 +166,46 @@ async def get_analytics_revenue(
             payments_query = payments_query.eq("plan_type", plan_filter)
         if dev_user_ids:
             payments_query = payments_query.not_.in_("user_id", dev_user_ids)
-            
-        # Build both queries, then fire in parallel — non-blocking
-        subs_query = supabase.table("subscriptions").select("plan_type, created_at").eq("is_active", True)
-        if dt_start:
-            subs_query = subs_query.gte("created_at", dt_start.isoformat())
-        if dt_end:
-            subs_query = subs_query.lte("created_at", dt_end.isoformat())
-        if plan_filter != "all":
-            subs_query = subs_query.eq("plan_type", plan_filter)
-        if dev_user_ids:
-            subs_query = subs_query.not_.in_("user_id", dev_user_ids)
 
-        payments_res, subs_res = await asyncio.gather(
-            _sb(payments_query),
-            _sb(subs_query),
-        )
+        payments_res = await _sb(payments_query)
         payments = payments_res.data or []
-        subs = subs_res.data or []
-        
-        # Calculate Totals
+
+        # Calculate Totals — all derived from the same time-filtered payments.
+        # This ensures Active Subscriptions, Breakdown counts, and Total Purchases
+        # all respect the selected time window consistently.
         total_revenue = sum(p.get("amount", 0) for p in payments) // 100
-        active_subscriptions = len(subs)
-        
-        # Breakdown
+
+        # Active Subscriptions = distinct users who made a payment in this period
+        active_user_ids = set(p["user_id"] for p in payments if p.get("user_id"))
+        active_subscriptions = len(active_user_ids)
+
+        # Breakdown: count purchases and revenue per plan from payments
         plan_counts = {"regular": 0, "student": 0, "pay_per_use": 0}
         plan_mrr = {"regular": 0, "student": 0, "pay_per_use": 0}
-        
-        for s in subs:
-            ptype = s.get("plan_type")
-            if ptype in plan_counts: plan_counts[ptype] += 1
-            else: plan_counts[ptype] = 1
-            
+
         for p in payments:
             ptype = p.get("plan_type")
             amt = p.get("amount", 0) // 100
-            if ptype in plan_mrr: plan_mrr[ptype] += amt
-            else: plan_mrr[ptype] = amt
-            
+            if ptype in plan_counts:
+                plan_counts[ptype] += 1
+            else:
+                plan_counts[ptype] = 1
+            if ptype in plan_mrr:
+                plan_mrr[ptype] += amt
+            else:
+                plan_mrr[ptype] = amt
+
         breakdown = [
             {
                 "name": "Student", "price": 99, "users": plan_counts.get("student", 0), "mrr": plan_mrr.get("student", 0),
                 "color": "bg-[#12f8d7]/15", "textColor": "text-[#006859]", "barColor": "bg-gradient-to-r from-[#006859] to-[#12f8d7]"
             },
             {
-                "name": "Regular", "price": 199, "users": plan_counts.get("regular", 0), "mrr": plan_mrr.get("regular", 0),
+                "name": "Standard", "price": 199, "users": plan_counts.get("regular", 0), "mrr": plan_mrr.get("regular", 0),
                 "color": "bg-purple-50", "textColor": "text-purple-700", "barColor": "bg-gradient-to-r from-purple-500 to-purple-400"
             },
             {
-                "name": "One-Time", "price": 29, "users": 0, "mrr": plan_mrr.get("pay_per_use", 0),
+                "name": "One-Time", "price": 29, "users": plan_counts.get("pay_per_use", 0), "mrr": plan_mrr.get("pay_per_use", 0),
                 "color": "bg-blue-50", "textColor": "text-blue-700", "barColor": "bg-blue-400"
             }
         ]
@@ -221,16 +213,17 @@ async def get_analytics_revenue(
         if plan_filter == "student":
             breakdown = [b for b in breakdown if b["name"] == "Student"]
         elif plan_filter == "regular":
-            breakdown = [b for b in breakdown if b["name"] == "Regular"]
+            breakdown = [b for b in breakdown if b["name"] == "Standard"]
         elif plan_filter == "pay_per_use":
             breakdown = [b for b in breakdown if b["name"] == "One-Time"]
             
         trend = build_trend_data(payments, dt_start, dt_end, time_filter, "amount", lambda x: x // 100)
-        
+
         return {
             "total_revenue": total_revenue,
             "active_subscriptions": active_subscriptions,
-            "subscription_count": len(subs) + len([p for p in payments if p.get("plan_type") == "pay_per_use"]),
+            # Total Purchases = all successful payment transactions in this time window
+            "subscription_count": len(payments),
             "breakdown": breakdown,
             "trend": trend
         }
@@ -364,18 +357,24 @@ async def get_analytics_downloads(
         downloads = dl_res.data or []
         
         user_ids = list(set(d.get("user_id") for d in downloads if d.get("user_id")))
-        
+
+        # Use payments as the single source of truth for plan type.
+        # Most recent successful payment = the plan the user actually paid for,
+        # regardless of whether their subscription is currently active.
         user_plans = {}
         if user_ids:
-            subs_res = await _sb(supabase.table("subscriptions").select("user_id, plan_type").in_("user_id", user_ids).eq("is_active", True))
-            for s in subs_res.data or []:
-                user_plans[s["user_id"]] = s["plan_type"]
-                
-            missing_users = [uid for uid in user_ids if uid not in user_plans]
-            if missing_users:
-                pmt_res = await _sb(supabase.table("payments").select("user_id, plan_type").in_("user_id", missing_users).eq("status", "success").eq("plan_type", "pay_per_use"))
-                for p in pmt_res.data or []:
-                    user_plans[p["user_id"]] = "pay_per_use"
+            pmt_res = await _sb(
+                supabase.table("payments")
+                .select("user_id, plan_type")
+                .in_("user_id", user_ids)
+                .eq("status", "success")
+                .order("created_at", desc=True)
+            )
+            for p in pmt_res.data or []:
+                uid = p.get("user_id")
+                # First occurrence per user = most recent payment (desc order)
+                if uid and uid not in user_plans:
+                    user_plans[uid] = p.get("plan_type", "free")
                     
         if plan_filter != "all":
             downloads = [d for d in downloads if d.get("user_id") and user_plans.get(d["user_id"], "free") == plan_filter]
@@ -407,7 +406,7 @@ async def get_analytics_downloads(
                     session_categories[s["id"]] = cat
 
         category_counts = {"jd_optimized": 0, "no_jd": 0, "no_changes": 0, "unknown": 0}
-        device_counts = {"desktop": 0, "mobile": 0, "unknown": 0}
+        device_counts = {"desktop": 0, "mobile": 0}
         
         for d in downloads:
             sid = d.get("session_id")
@@ -415,9 +414,11 @@ async def get_analytics_downloads(
             if cat in category_counts: category_counts[cat] += 1
             else: category_counts[cat] = 1
             
-            dev = d.get("device_type") or "unknown"
-            if dev in device_counts: device_counts[dev] += 1
-            else: device_counts["unknown"] += 1
+            dev = d.get("device_type") or "desktop"  # NULL = pre-tracking = desktop (mobile was never logged before keepalive fix)
+            if dev == "mobile":
+                device_counts["mobile"] += 1
+            else:
+                device_counts["desktop"] += 1
             
         trend = build_trend_data(downloads, dt_start, dt_end, time_filter)
         
@@ -460,13 +461,32 @@ async def track_visit(body: TrackVisitRequest, background_tasks: BackgroundTasks
 async def get_funnel_stats():
     if not supabase:
         return {"landing": 0, "result": 0, "purchases": 0}
-        
     try:
+        # Exclude dev/test accounts from payments only.
+        # Page visits are tracked anonymously (user_id=NULL), so NOT IN filter
+        # would silently drop all anonymous rows — do NOT apply it to page_visits.
+        dev_users_res = await _sb(supabase.table("users").select("id").in_("email", DEV_EMAILS))
+        dev_user_ids = [u["id"] for u in (dev_users_res.data or [])]
+
+        landing_q  = supabase.table("page_visits").select("id", count="exact").eq("page_type", "landing").gte("visited_at", "2026-05-28T00:00:00Z")
+        result_q   = supabase.table("page_visits").select("id", count="exact").eq("page_type", "result").gte("visited_at", "2026-05-28T00:00:00Z")
+        purchase_q = supabase.table("payments").select("id", count="exact").eq("status", "success").gte("created_at", "2026-05-28T00:00:00Z")
+
+        # Only payments have guaranteed non-null user_id — safe to use NOT IN directly.
+        # For page_visits: user_id can be NULL (anonymous visitors) — use OR to keep
+        # anonymous rows while still excluding known dev/logged-in accounts.
+        # SQL: WHERE user_id IS NULL OR user_id NOT IN (dev_ids)
+        if dev_user_ids:
+            dev_ids_str = ",".join(dev_user_ids)
+            landing_q  = landing_q.or_(f"user_id.is.null,user_id.not.in.({dev_ids_str})")
+            result_q   = result_q.or_(f"user_id.is.null,user_id.not.in.({dev_ids_str})")
+            purchase_q = purchase_q.not_.in_("user_id", dev_user_ids)
+
         # All 3 queries in parallel — non-blocking
         landing, result, purchases = await asyncio.gather(
-            _sb(supabase.table("page_visits").select("id", count="exact").eq("page_type", "landing").gte("visited_at", "2026-05-28T00:00:00Z")),
-            _sb(supabase.table("page_visits").select("id", count="exact").eq("page_type", "result").gte("visited_at", "2026-05-28T00:00:00Z")),
-            _sb(supabase.table("payments").select("id", count="exact").eq("status", "success").gte("created_at", "2026-05-28T00:00:00Z")),
+            _sb(landing_q),
+            _sb(result_q),
+            _sb(purchase_q),
         )
 
         def extract_count(res):
