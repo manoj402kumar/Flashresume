@@ -12,6 +12,9 @@ from datetime import datetime, timedelta, timezone
 
 load_dotenv(override=True)
 
+if not os.getenv("RAZORPAY_WEBHOOK_SECRET"):
+    print("CRITICAL WARNING: RAZORPAY_WEBHOOK_SECRET not set in environment. Webhooks will fail.")
+
 router = APIRouter()
 from rate_limiter import limiter
 
@@ -21,15 +24,22 @@ RAZORPAY_KEY_SECRET = os.getenv("RAZORPAY_KEY_SECRET", "xxxxxxxxxxxxxxxxxxxxxxxx
 client = razorpay.Client(auth=(RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET))
 
 class OrderRequest(BaseModel):
-    amount: int
+    amount: int | None = None  # Deprecated: client amounts are ignored
     plan_type: str
     user_id: str
     email: str = None
 
 @router.post("/payments/create-order")
 @limiter.limit("10/minute")
-async def create_order(request: Request, body: OrderRequest):
-    amount_in_paise = body.amount * 100
+async def create_order(request: Request, body: OrderRequest, authorization: str = Header(None)):
+    PRICES = {
+        "pay_per_use": 2900,
+        "regular": 19900,
+        "student": 9900
+    }
+    amount_in_paise = PRICES.get(body.plan_type)
+    if not amount_in_paise:
+        raise HTTPException(status_code=400, detail="Invalid plan type")
     
     # Ensure user exists in public.users to prevent foreign key constraint violations
     if supabase and body.email:
@@ -80,13 +90,25 @@ class VerifyRequest(BaseModel):
     razorpay_order_id: str
     razorpay_payment_id: str
     razorpay_signature: str
-    user_id: str
-    plan_type: str
-    amount: int
+    user_id: str | None = None  # Deprecated: backend uses DB user_id
+    plan_type: str | None = None # Deprecated: backend uses DB plan_type
+    amount: int | None = None   # Deprecated
     session_id: str | None = None
 
 @router.post("/payments/verify")
-async def verify_payment(body: VerifyRequest):
+async def verify_payment(body: VerifyRequest, authorization: str = Header(None)):
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Missing or invalid Authorization header")
+    
+    try:
+        token = authorization.split(" ")[1]
+        user_res = supabase.auth.get_user(token)
+        if not user_res or not user_res.user:
+            raise HTTPException(status_code=401, detail="Invalid token")
+        auth_user_id = user_res.user.id
+    except Exception:
+        raise HTTPException(status_code=401, detail="Invalid token")
+
     try:
         # Verify the payment signature
         client.utility.verify_payment_signature({
@@ -112,21 +134,27 @@ async def verify_payment(body: VerifyRequest):
             if not update_res.data:
                 return {"status": "already_processed", "message": "Payment already verified"}
             
+            actual_user_id = update_res.data[0]["user_id"]
+            actual_plan_type = update_res.data[0]["plan_type"]
+
+            if auth_user_id != actual_user_id:
+                raise HTTPException(status_code=403, detail="Not authorized to verify this payment")
+            
             # 2. Add Credits and Subscription Record
             PLAN_CREDITS = {
                 "pay_per_use": 20,
                 "regular": 300,
                 "student": 400,
             }
-            credits_to_add = PLAN_CREDITS.get(body.plan_type, 0)
+            credits_to_add = PLAN_CREDITS.get(actual_plan_type, 0)
             
-            validity_days = 60 if body.plan_type == "regular" else 90 if body.plan_type == "student" else 10
+            validity_days = 60 if actual_plan_type == "regular" else 90 if actual_plan_type == "student" else 10
             
             # Atomically add credits using the new bucket system
             bucket_res = await sb(lambda: supabase.rpc("add_credit_bucket", {
-                "p_user_id": body.user_id,
+                "p_user_id": actual_user_id,
                 "p_amount": credits_to_add,
-                "p_plan_type": body.plan_type,
+                "p_plan_type": actual_plan_type,
                 "p_validity_days": validity_days,
                 "p_payment_id": body.razorpay_payment_id
             }).execute())
@@ -136,30 +164,30 @@ async def verify_payment(body: VerifyRequest):
                 raise HTTPException(status_code=500, detail="Credit bucket creation failed")
 
             expires_at = None
-            if body.plan_type == "regular":
+            if actual_plan_type == "regular":
                 expires_at = (datetime.utcnow() + timedelta(days=60)).isoformat()
-            elif body.plan_type == "student":
+            elif actual_plan_type == "student":
                 expires_at = (datetime.utcnow() + timedelta(days=90)).isoformat()
-            elif body.plan_type == "pay_per_use":
+            elif actual_plan_type == "pay_per_use":
                 expires_at = (datetime.utcnow() + timedelta(days=10)).isoformat()
-            await sb(lambda: supabase.table("subscriptions").update({"is_active": False}).eq("user_id", body.user_id).execute())
+            await sb(lambda: supabase.table("subscriptions").update({"is_active": False}).eq("user_id", actual_user_id).execute())
             
             sub_data = {
-                "user_id": body.user_id,
-                "plan_type": body.plan_type,
+                "user_id": actual_user_id,
+                "plan_type": actual_plan_type,
                 "is_active": True,
                 "credits_granted": credits_to_add
             }
             if expires_at:
                 sub_data["expires_at"] = expires_at
-            if body.plan_type == "student":
+            if actual_plan_type == "student":
                 sub_data["student_claimed"] = True
                 
             await sb(lambda: supabase.table("subscriptions").insert(sub_data).execute())
 
             # 3. Award Referral Bonus if the buyer was referred
             try:
-                ref_check = await sb(lambda: supabase.table("users").select("referred_by").eq("id", body.user_id).execute())
+                ref_check = await sb(lambda: supabase.table("users").select("referred_by").eq("id", actual_user_id).execute())
                 referrer_id = ref_check.data[0].get("referred_by") if ref_check.data else None
                 if referrer_id:
                     await sb(lambda: supabase.rpc("add_credit_bucket", {
@@ -169,17 +197,17 @@ async def verify_payment(body: VerifyRequest):
                         "p_validity_days": None,
                         "p_payment_id": body.razorpay_payment_id
                     }).execute())
-                    print(f"Referral bonus awarded: referrer={referrer_id}, buyer={body.user_id}")
+                    print(f"Referral bonus awarded: referrer={referrer_id}, buyer={actual_user_id}")
             except Exception as ref_err:
                 # Never block payment success for referral errors
                 print(f"Referral bonus error (non-critical): {ref_err}")
 
-            # 4. Link session_id to the user
+            # 4. Link session_id to the user (only if session_id is still anonymous)
             if body.session_id:
                 await sb(lambda: supabase.table("resume_sessions").update({
-                    "user_id": body.user_id,
+                    "user_id": actual_user_id,
                     "payment_id": body.razorpay_payment_id
-                }).eq("id", body.session_id).execute())
+                }).eq("id", body.session_id).is_("user_id", None).execute())
 
         return {"status": "ok"}
     except razorpay.errors.SignatureVerificationError:
@@ -190,6 +218,8 @@ async def verify_payment(body: VerifyRequest):
                 "razorpay_payment_id": body.razorpay_payment_id
             }).eq("razorpay_order_id", body.razorpay_order_id).execute())
         raise HTTPException(status_code=400, detail="Payment verification failed")
+    except HTTPException:
+        raise
     except Exception as e:
         print(f"Unexpected Verification Error: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
@@ -367,7 +397,9 @@ async def razorpay_webhook(request: Request):
     signature = request.headers.get("x-razorpay-signature")
     
     # In Razorpay dashboard, when creating the webhook, set this secret
-    WEBHOOK_SECRET = os.getenv("RAZORPAY_WEBHOOK_SECRET", RAZORPAY_KEY_SECRET)
+    WEBHOOK_SECRET = os.getenv("RAZORPAY_WEBHOOK_SECRET")
+    if not WEBHOOK_SECRET:
+        raise HTTPException(status_code=500, detail="Webhook secret not configured")
     
     if not signature:
         raise HTTPException(status_code=400, detail="Missing signature")
@@ -468,4 +500,4 @@ async def razorpay_webhook(request: Request):
         raise HTTPException(status_code=400, detail="Invalid webhook signature")
     except Exception as e:
         print(f"Webhook error: {e}")
-        return {"status": "error", "message": str(e)}
+        raise HTTPException(status_code=500, detail=str(e))

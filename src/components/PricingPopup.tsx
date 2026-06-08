@@ -364,11 +364,17 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
           { amount: 29, plan_type: "pay_per_use" };
 
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
       const orderRes = await fetch(`${apiUrl}/api/payments/create-order`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ amount: planDetails.amount, plan_type: planDetails.plan_type, user_id: activeUser.id, email: activeUser.email }),
+        headers: { 
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify({ plan_type: planDetails.plan_type, user_id: activeUser.id, email: activeUser.email }),
       });
       if (!orderRes.ok) throw new Error("Failed to create payment order.");
       const orderData = await orderRes.json();
@@ -384,16 +390,19 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
         theme: { color: "#6750A4" },
         handler: async (response: any) => {
           try {
+            const { data: { session } } = await supabase.auth.getSession();
+            const token = session?.access_token;
+
             const verifyRes = await fetch(`${apiUrl}/api/payments/verify`, {
               method: "POST",
-              headers: { "Content-Type": "application/json" },
+              headers: { 
+                "Content-Type": "application/json",
+                ...(token ? { Authorization: `Bearer ${token}` } : {})
+              },
               body: JSON.stringify({
                 razorpay_order_id: response.razorpay_order_id,
                 razorpay_payment_id: response.razorpay_payment_id,
                 razorpay_signature: response.razorpay_signature,
-                user_id: activeUser.id,
-                plan_type: planDetails.plan_type,
-                amount: planDetails.amount,
               }),
             });
             if (!verifyRes.ok) throw new Error("Payment verification failed on the server.");
