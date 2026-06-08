@@ -18,6 +18,9 @@ load_dotenv()
 
 router = APIRouter()
 
+# Emails excluded from all admin metrics (dev / test accounts)
+DEV_EMAILS = ["testuser@flashresume.in", "devteam@flashresume.in"]
+
 _ADMIN_KEY_HEADER = APIKeyHeader(name="X-Admin-Key", auto_error=False)
 
 async def require_admin(key: str = Security(_ADMIN_KEY_HEADER)):
@@ -50,11 +53,25 @@ async def get_admin_stats():
         
     try:
         # Run all 5 DB queries in parallel — non-blocking
+        # Fetch dev user IDs once so we can exclude them from all metrics
+        dev_users_res = await _sb(supabase.table("users").select("id").in_("email", DEV_EMAILS))
+        dev_user_ids = [u["id"] for u in (dev_users_res.data or [])]
+
+        payments_query = supabase.table("payments").select("amount, user_id, plan_type").eq("status", "success").gte("created_at", "2026-05-28T00:00:00Z")
+        if dev_user_ids:
+            payments_query = payments_query.not_.in_("user_id", dev_user_ids)
+
+        users_query = supabase.table("users").select("id", count="exact").gte("created_at", "2026-05-28T00:00:00Z").not_.in_("email", DEV_EMAILS)
+
+        subs_query = supabase.table("subscriptions").select("user_id").eq("is_active", True)
+        if dev_user_ids:
+            subs_query = subs_query.not_.in_("user_id", dev_user_ids)
+
         payments_res, downloads, subs_res, users_res, visitors_res, failed_res = await asyncio.gather(
-            _sb(supabase.table("payments").select("amount, user_id, plan_type").eq("status", "success").gte("created_at", "2026-05-28T00:00:00Z")),
+            _sb(payments_query),
             _sb(supabase.table("resume_downloads").select("id", count="exact").gte("downloaded_at", "2026-05-28T00:00:00Z")),
-            _sb(supabase.table("subscriptions").select("user_id").eq("is_active", True)),
-            _sb(supabase.table("users").select("id", count="exact").gte("created_at", "2026-05-28T00:00:00Z")),
+            _sb(subs_query),
+            _sb(users_query),
             _sb(supabase.table("page_visits").select("id", count="exact").gte("visited_at", "2026-05-28T00:00:00Z")),
             _sb(supabase.table("payments").select("id", count="exact").eq("status", "failed").gte("created_at", "2026-05-28T00:00:00Z")),
         )
@@ -134,6 +151,10 @@ async def get_analytics_revenue(
         dt_start = PROD_START_DATE
             
     try:
+        # Exclude dev/test accounts
+        dev_users_res = await _sb(supabase.table("users").select("id").in_("email", DEV_EMAILS))
+        dev_user_ids = [u["id"] for u in (dev_users_res.data or [])]
+
         # Fetch Payments
         payments_query = supabase.table("payments").select("amount, plan_type, created_at").eq("status", "success")
         if dt_start:
@@ -142,6 +163,8 @@ async def get_analytics_revenue(
             payments_query = payments_query.lte("created_at", dt_end.isoformat())
         if plan_filter != "all":
             payments_query = payments_query.eq("plan_type", plan_filter)
+        if dev_user_ids:
+            payments_query = payments_query.not_.in_("user_id", dev_user_ids)
             
         # Build both queries, then fire in parallel — non-blocking
         subs_query = supabase.table("subscriptions").select("plan_type, created_at").eq("is_active", True)
@@ -151,6 +174,8 @@ async def get_analytics_revenue(
             subs_query = subs_query.lte("created_at", dt_end.isoformat())
         if plan_filter != "all":
             subs_query = subs_query.eq("plan_type", plan_filter)
+        if dev_user_ids:
+            subs_query = subs_query.not_.in_("user_id", dev_user_ids)
 
         payments_res, subs_res = await asyncio.gather(
             _sb(payments_query),
@@ -325,10 +350,15 @@ async def get_analytics_downloads(
         dt_start = PROD_START_DATE
 
     try:
-        # Fetch downloads with LIMIT 10000 (Blocker 1 Fix)
+        # Exclude dev/test accounts
+        dev_users_res = await _sb(supabase.table("users").select("id").in_("email", DEV_EMAILS))
+        dev_user_ids = [u["id"] for u in (dev_users_res.data or [])]
+
+        # Fetch downloads with LIMIT 10000
         dl_query = supabase.table("resume_downloads").select("user_id, session_id, downloaded_at, device_type").limit(10000).order("downloaded_at", desc=True)
         if dt_start: dl_query = dl_query.gte("downloaded_at", dt_start.isoformat())
         if dt_end: dl_query = dl_query.lte("downloaded_at", dt_end.isoformat())
+        if dev_user_ids: dl_query = dl_query.not_.in_("user_id", dev_user_ids)
         
         dl_res = await _sb(dl_query)
         downloads = dl_res.data or []
