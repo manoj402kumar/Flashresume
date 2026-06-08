@@ -1,10 +1,11 @@
-from fastapi import APIRouter, HTTPException, BackgroundTasks, Depends, Security
+from fastapi import APIRouter, HTTPException, BackgroundTasks, Depends, Security, Header
 from fastapi.security import APIKeyHeader
 from pydantic import BaseModel
 from typing import Optional
 import os
 import time
 import asyncio
+import hmac
 from dotenv import load_dotenv
 from supabase_client import supabase
 
@@ -21,7 +22,7 @@ _ADMIN_KEY_HEADER = APIKeyHeader(name="X-Admin-Key", auto_error=False)
 
 async def require_admin(key: str = Security(_ADMIN_KEY_HEADER)):
     expected = os.getenv("ADMIN_SECRET_KEY")
-    if not expected or key != expected:
+    if not expected or not hmac.compare_digest(key or "", expected):
         raise HTTPException(status_code=403, detail="Forbidden")
 
 # Server start time for uptime tracking
@@ -455,12 +456,23 @@ async def get_funnel_stats():
 
 class ApplyReferralRequest(BaseModel):
     referral_code: str
-    user_id: str
 
 @router.post("/user/apply-referral")
-async def apply_referral(body: ApplyReferralRequest):
+async def apply_referral(body: ApplyReferralRequest, authorization: str = Header(None)):
     if not supabase:
         return {"status": "error", "message": "Supabase not configured"}
+    
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Missing or invalid Authorization header")
+    
+    try:
+        token = authorization.split(" ")[1]
+        user_res = await asyncio.to_thread(supabase.auth.get_user, token)
+        if not user_res or not user_res.user:
+            raise HTTPException(status_code=401, detail="Invalid token")
+        auth_user_id = user_res.user.id
+    except Exception:
+        raise HTTPException(status_code=401, detail="Invalid token")
     
     try:
         # Find referrer user by code
@@ -470,14 +482,15 @@ async def apply_referral(body: ApplyReferralRequest):
             
         referrer_id = ref_res.data[0]["id"]
         
-        if referrer_id == body.user_id:
+        if referrer_id == auth_user_id:
             return {"status": "error", "message": "Cannot refer yourself"}
             
-        user_res = await _sb(supabase.table("users").select("referred_by").eq("id", body.user_id))
+        user_res = await _sb(supabase.table("users").select("referred_by").eq("id", auth_user_id))
         if user_res.data and user_res.data[0].get("referred_by") is None:
-            await _sb(supabase.table("users").update({"referred_by": referrer_id}).eq("id", body.user_id))
+            await _sb(supabase.table("users").update({"referred_by": referrer_id}).eq("id", auth_user_id))
             return {"status": "ok"}
             
+        return {"status": "error", "message": "Referral already applied"}
         return {"status": "skipped", "message": "Already referred"}
     except Exception as e:
         print(f"Apply Referral Error: {str(e)}")

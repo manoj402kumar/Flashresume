@@ -102,7 +102,7 @@ async def verify_payment(body: VerifyRequest, authorization: str = Header(None))
     
     try:
         token = authorization.split(" ")[1]
-        user_res = supabase.auth.get_user(token)
+        user_res = await asyncio.to_thread(supabase.auth.get_user, token)
         if not user_res or not user_res.user:
             raise HTTPException(status_code=401, detail="Invalid token")
         auth_user_id = user_res.user.id
@@ -238,7 +238,7 @@ async def deduct_credit(body: DeductRequest, authorization: str = Header(None)):
     
     try:
         token = authorization.split(" ")[1]
-        user_res = supabase.auth.get_user(token)
+        user_res = await asyncio.to_thread(supabase.auth.get_user, token)
         if not user_res or not user_res.user:
             raise HTTPException(status_code=401, detail="Invalid token")
         if user_res.user.id != body.user_id:
