@@ -56,7 +56,6 @@ def _get_rate_limit_type(attempts):
         if any(x in err for x in ["not configured", "API key not", "missing_api_key"]):
             return "402"
     return None
-
 # ─────────────────────────────────────────────────────────────────────────────
 # IMPORTANT: In caller function names, r1/r2 = API ACCOUNT NUMBER, not request type.
 #   call_single_mistral_r1 → uses MISTRAL_R1_API_KEY  (Account / Key 1)
