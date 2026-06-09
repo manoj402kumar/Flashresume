@@ -64,7 +64,7 @@ Case 2 — APPROVED_PROJECT is present (not "none"):
 - Use EXACT title and tech_stack from APPROVED_PROJECT — do not change them.
 - Write 3 strong, achievable, realistic bullets.
 - MANDATORY: First bullet must clearly state the real-world problem the project solves (from APPROVED_PROJECT description). Do NOT just list technical steps.
-- Bullet format: Action verb + tech/algorithm/methodology + outcome/scope/result.
+- Bullet format: Action verb + tech/algorithm/methodology + outcome/metric/scope/result.
 - INJECT 70-90% of MISSING KEYWORDS here — fresh bullets give full freedom to weave keywords naturally.
 For the SECOND PROJECT (if in SELECTED_PROJECTS):
 - It exists in RESUME_TEXT — preserve original title, tech_stack, and bullets.

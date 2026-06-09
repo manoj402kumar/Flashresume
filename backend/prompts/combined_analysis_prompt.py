@@ -60,7 +60,7 @@ STEP 4: Build suggested_project (for Case 2 only):
   select a project idea that solves real world problem and aligns with JD's tech stack and requirements.
   title: write a short unique creative name — do NOT reuse examples from this prompt.
   tech_stack: 4-5 technologies from JD's required stack (comma-separated string).
-  description: 2-3 sentences — (a) real-world problem solved, (b) how JD tech is used naturally, (c) outcome. Rich enough to write 3 bullets from.
+  description: 2-3 sentences — (a) real-world problem solved, (b) how JD tech is used naturally, (c)achievable outcome/metric/scope/result for a fresher. Rich enough to write 3 bullets from.
 
 STEP 5: Build the two missing-skills lists:
 a) all_missing_skills — same list from Task 1. Full unfiltered list shown to user.
