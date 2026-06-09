@@ -15,6 +15,7 @@ load_dotenv()
 # -------------------------------------------------------------------
 _client_r1 = None
 _client_r2 = None
+_client_r3 = None
 
 
 def _get_client_r1():
@@ -37,6 +38,17 @@ def _get_client_r2():
             return None
         _client_r2 = Mistral(api_key=api_key, timeout_ms=90000)
     return _client_r2
+
+
+def _get_client_r3():
+    global _client_r3
+    if _client_r3 is None:
+        from mistralai.client import Mistral
+        api_key = os.getenv("MISTRAL_R3_API_KEY")
+        if not api_key:
+            return None
+        _client_r3 = Mistral(api_key=api_key, timeout_ms=90000)
+    return _client_r3
 
 
 def _extract_text(response) -> str | None:
@@ -136,3 +148,8 @@ async def call_single_mistral_r1(model: str, prompt: str, max_tokens: int = 2500
 async def call_single_mistral_r2(model: str, prompt: str, max_tokens: int = 4500) -> dict:
     """Call exactly one Mistral model using the R2 API key (Account 2). R2 timeout=90s."""
     return await _call_mistral_single(_get_client_r2, model, prompt, max_tokens)
+
+
+async def call_single_mistral_r3(model: str, prompt: str, max_tokens: int = 4500) -> dict:
+    """Call exactly one Mistral model using the R3 API key (Account 3). R3 timeout=90s."""
+    return await _call_mistral_single(_get_client_r3, model, prompt, max_tokens)

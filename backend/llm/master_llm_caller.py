@@ -1,7 +1,7 @@
 import asyncio
 import time
 from .deepseek_direct import call_single_deepseek_r1, call_single_deepseek_r2
-from .mistral_fallback import call_single_mistral_r1, call_single_mistral_r2
+from .mistral_fallback import call_single_mistral_r1, call_single_mistral_r2, call_single_mistral_r3
 from .groq_fallback import call_single_groq_r1, call_single_groq_r2
 from .nvidia_fallback import call_single_nvidia_r1, call_single_nvidia_r2
 from .cloudflare_fallback import call_single_cloudflare_r1, call_single_cloudflare_r2
@@ -72,35 +72,44 @@ def _get_rate_limit_type(attempts):
 POOL_1 = [
     ("mistral", "mistral-medium-3.5",                       "Key 1"),
     ("mistral", "mistral-medium-3.5",                       "Key 2"),
+    ("mistral", "mistral-medium-3.5",                       "Key 3"),
     ("mistral", "mistral-medium-2604",                      "Key 1"),
     ("mistral", "mistral-medium-2604",                      "Key 2"),
-    ("nvidia",  "mistralai/mistral-nemotron",               "Key 1"),
-    ("nvidia",  "mistralai/mistral-nemotron",               "Key 2"),
+    ("mistral", "mistral-medium-2604",                      "Key 3"),
     ("mistral", "mistral-medium-latest",                    "Key 1"),
     ("mistral", "mistral-medium-latest",                    "Key 2"),
+    ("mistral", "mistral-medium-latest",                    "Key 3"),
     ("mistral", "mistral-large-2512",                       "Key 1"),
     ("mistral", "mistral-large-2512",                       "Key 2"),
+    ("mistral", "mistral-large-2512",                       "Key 3"),
     ("mistral", "mistral-medium-2508",                      "Key 1"),
     ("mistral", "mistral-medium-2508",                      "Key 2"),
+    ("mistral", "mistral-medium-2508",                      "Key 3"),
+    ("nvidia",  "mistralai/mistral-nemotron",               "Key 1"),
+    ("nvidia",  "mistralai/mistral-nemotron",               "Key 2"),
 ]
 
 POOL_2 = [
     ("mistral",    "mistral-large-latest",                         "Key 1"),
     ("mistral",    "mistral-large-latest",                         "Key 2"),
+    ("mistral",    "mistral-large-latest",                         "Key 3"),
+    ("mistral",    "ministral-14b-latest",                         "Key 1"),
+    ("mistral",    "ministral-14b-latest",                         "Key 2"),
+    ("mistral",    "ministral-14b-latest",                         "Key 3"),
+    ("mistral",    "mistral-small-latest",                         "Key 1"),
+    ("mistral",    "mistral-small-latest",                         "Key 2"),
+    ("mistral",    "mistral-small-latest",                         "Key 3"),
+    ("mistral",    "mistral-small-2506",                           "Key 1"),
+    ("mistral",    "mistral-small-2506",                           "Key 2"),
+    ("mistral",    "mistral-small-2506",                           "Key 3"),
     ("groq",       "llama-3.3-70b-versatile",                      "Key 1"),
     ("groq",       "llama-3.3-70b-versatile",                      "Key 2"),
     ("cloudflare", "@cf/meta/llama-3.3-70b-instruct-fp8-fast",     "Key 1"),
     ("cloudflare", "@cf/meta/llama-3.3-70b-instruct-fp8-fast",     "Key 2"),
     ("nvidia",     "mistralai/ministral-14b-instruct-2512",        "Key 1"),
     ("nvidia",     "mistralai/ministral-14b-instruct-2512",        "Key 2"),
-    ("mistral",    "ministral-14b-latest",                         "Key 1"),
-    ("mistral",    "ministral-14b-latest",                         "Key 2"),
     ("cloudflare", "@cf/mistralai/mistral-small-3.1-24b-instruct", "Key 1"),
     ("cloudflare", "@cf/mistralai/mistral-small-3.1-24b-instruct", "Key 2"),
-    ("mistral",    "mistral-small-latest",                         "Key 1"),
-    ("mistral",    "mistral-small-latest",                         "Key 2"),
-    ("mistral",    "mistral-small-2506",                           "Key 1"),
-    ("mistral",    "mistral-small-2506",                           "Key 2"),
 ]
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -114,6 +123,7 @@ _CALLERS = {
     ("deepseek",   "Key 2"): call_single_deepseek_r2,
     ("mistral",    "Key 1"): call_single_mistral_r1,
     ("mistral",    "Key 2"): call_single_mistral_r2,
+    ("mistral",    "Key 3"): call_single_mistral_r3,
     ("groq",       "Key 1"): call_single_groq_r1,
     ("groq",       "Key 2"): call_single_groq_r2,
     ("nvidia",     "Key 1"): call_single_nvidia_r1,
@@ -191,8 +201,9 @@ async def call_llm_balanced(prompt: str, is_r1: bool, preferred_model: str = "",
         if preferred_model and preferred_model != "auto":
             provider = _get_provider_for_model(preferred_model)
             base_model_id = preferred_model.split("|")[0]
+            is_key3 = "|key3" in preferred_model
             is_key2 = "|key2" in preferred_model
-            key_label = "Key 2" if is_key2 else "Key 1"
+            key_label = "Key 3" if is_key3 else ("Key 2" if is_key2 else "Key 1")
             chain.append((provider, base_model_id, key_label))
         else:
             if is_r1:
