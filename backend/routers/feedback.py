@@ -17,28 +17,38 @@ async def submit_feedback(body: FeedbackRequest):
     if not supabase:
         raise HTTPException(status_code=500, detail="Database not configured")
         
-    session = await sb(lambda: supabase.table("resume_sessions").select("download_count, user_id").eq("id", body.session_id).single().execute())
-    
-    if not session.data:
-        raise HTTPException(404, "Session not found")
-    if session.data["user_id"] != body.user_id:
-        raise HTTPException(403, "Not your session")
-    if (session.data.get("download_count") or 0) < 1:
-        raise HTTPException(400, "Feedback only accepted after first download")
+    if body.session_id:
+        session = await sb(lambda: supabase.table("resume_sessions").select("download_count, user_id").eq("id", body.session_id).single().execute())
+        
+        if not session.data:
+            raise HTTPException(404, "Session not found")
+        if session.data["user_id"] != body.user_id:
+            raise HTTPException(403, "Not your session")
+        if (session.data.get("download_count") or 0) < 1:
+            raise HTTPException(400, "Feedback only accepted after first download")
+    else:
+        # Scratch mode has no session_id
+        if not body.user_id:
+            raise HTTPException(400, "User ID is required for feedback")
         
     # Prevent duplicate feedback for the same session
-    existing = await sb(lambda: supabase.table("feedback")
-        .select("id")
-        .eq("user_id", body.user_id)
-        .eq("session_id", body.session_id)
-        .limit(1)
-        .execute())
+    # Prevent duplicate feedback for the same session (or scratch mode)
+    query = supabase.table("feedback").select("id").eq("user_id", body.user_id)
+    if body.session_id:
+        query = query.eq("session_id", body.session_id)
+    else:
+        # Prevent multiple scratch mode feedbacks per user if desired, or allow them?
+        # The frontend asks once on first download, or 5th global download.
+        # We can just check for null session_id
+        query = query.is_("session_id", "null")
+        
+    existing = await sb(lambda: query.limit(1).execute())
     if existing.data:
         raise HTTPException(409, "Feedback already submitted for this session")
 
     await sb(lambda: supabase.table("feedback").insert({
         "user_id": body.user_id,
-        "session_id": body.session_id,
+        "session_id": body.session_id or None,
         "rating": body.rating,
         "suggestion": body.suggestion
     }).execute())

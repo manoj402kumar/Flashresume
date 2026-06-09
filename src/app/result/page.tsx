@@ -663,7 +663,7 @@ export default function ResultPage() {
       setTimeout(() => URL.revokeObjectURL(url), 1000);
 
       // Trigger feedback on first download
-      if (sessionGuid && currentUserId) {
+      if (currentUserId) {
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
         try {
           // CSS pointer query: coarse = finger/touch (mobile), fine = mouse (desktop)
@@ -673,7 +673,7 @@ export default function ResultPage() {
           const deviceType = isMobile ? "mobile" : "desktop";
           const res = await fetch(`${apiUrl}/api/resume/increment-download`, {
             method: "POST",
-            body: JSON.stringify({ session_id: sessionGuid, user_id: currentUserId, device_type: deviceType }),
+            body: JSON.stringify({ session_id: sessionGuid || "", user_id: currentUserId, device_type: deviceType }),
             headers: { "Content-Type": "application/json" },
             keepalive: true // Essential: mobile browsers suspend JS after link.click(); without this the request gets killed
           });
