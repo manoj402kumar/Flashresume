@@ -58,7 +58,7 @@ CASE 2 — New project needed:
 
 STEP 4: Build suggested_project (for Case 2 only):
   select a project idea that solves real world problem and aligns with JD's tech stack and requirements.
-  title: creative domain-specific product name. Pattern: domain-action word + product suffix. INVENT a unique name — do NOT reuse examples from this prompt.
+  title: write a short unique creative name — do NOT reuse examples from this prompt.
   tech_stack: 4-5 technologies from JD's required stack (comma-separated string).
   description: 2-3 sentences — (a) real-world problem solved, (b) how JD tech is used naturally, (c) outcome. Rich enough to write 3 bullets from.
 

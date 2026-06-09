@@ -19,7 +19,11 @@ export default function FeedbackModal({ userId, sessionId, onClose }: Props) {
   const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
   const handleSubmit = async () => {
-    if (rating === 0) return;
+    // Inline validation — show message instead of silently blocking
+    if (rating === 0) {
+      setError("Please give a rating before submitting.");
+      return;
+    }
     setLoading(true);
     setError("");
     try {
@@ -31,6 +35,12 @@ export default function FeedbackModal({ userId, sessionId, onClose }: Props) {
       
       if (!res.ok) {
         const errData = await res.json().catch(() => ({}));
+        // If already submitted for this session, treat as success gracefully
+        if (res.status === 409) {
+          setSubmitted(true);
+          setTimeout(onClose, 2000);
+          return;
+        }
         throw new Error(errData.detail || "Failed to submit feedback. Please try again.");
       }
       
@@ -71,7 +81,7 @@ export default function FeedbackModal({ userId, sessionId, onClose }: Props) {
                 <button key={s}
                   onMouseEnter={() => setHovered(s)}
                   onMouseLeave={() => setHovered(0)}
-                  onClick={() => setRating(s)}
+                  onClick={() => { setRating(s); setError(""); }}
                   className="p-1 transition-transform hover:scale-110 focus:outline-none"
                 >
                   <Star className={`w-8 h-8 transition-colors ${
@@ -94,9 +104,10 @@ export default function FeedbackModal({ userId, sessionId, onClose }: Props) {
                          focus:ring-primary/50 mb-5 bg-gray-50"
             />
 
+            {/* Submit — always visible, validates rating on click */}
             <button
               onClick={handleSubmit}
-              disabled={rating === 0 || loading}
+              disabled={loading}
               className="w-full bg-primary text-white font-bold py-3 rounded-xl
                          hover:bg-primary/90 disabled:opacity-40 disabled:cursor-not-allowed
                          transition-colors"

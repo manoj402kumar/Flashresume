@@ -62,7 +62,7 @@ const PLANS = [
 
 export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, directPay = false, forcePlanSelect = false, prefetchedUser, prefetchedCredits }: PricingPopupProps) {
   const [step, setStep] = useState<Step>("initializing");
-  const [authMode, setAuthMode] = useState<AuthMode>("login");
+  const [authMode, setAuthMode] = useState<AuthMode>("signup");
   const [user, setUser] = useState<User | null>(null);
 
   // Auth Form
@@ -95,7 +95,7 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
   useEffect(() => {
     if (isOpen) {
       setError(null);
-      setAuthMode("login");
+      setAuthMode("signup");
       setResetSuccessMessage(null);
       setStep("initializing"); // Show loading spinner while checking session
       if (initialPlan) setSelectedPlan(initialPlan);
@@ -124,11 +124,12 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
     if (session?.user) {
       const sessionUser = session.user;
       setUser(sessionUser);
-      const { data } = await supabase.from("users").select("credits_balance").eq("id", sessionUser.id).single();
+      const { data: creditData } = await supabase.rpc("get_total_active_credits", { p_user_id: sessionUser.id });
+      const currentCredits = creditData ?? 0;
       if (directPay && initialPlan) {
         setStep("processing");
         setTimeout(() => handleProceedToPayment(initialPlan, false, sessionUser), 100);
-      } else if (!forcePlanSelect && data && data.credits_balance >= 10) {
+      } else if (!forcePlanSelect && currentCredits >= 10) {
         onSuccess();
       } else {
         setStep("plan");
@@ -149,11 +150,12 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
         if (data.user) {
           const loggedInUser = data.user;
           setUser(loggedInUser);
-          const { data: uData } = await supabase.from("users").select("credits_balance").eq("id", loggedInUser.id).single();
+          const { data: creditData } = await supabase.rpc("get_total_active_credits", { p_user_id: loggedInUser.id });
+          const currentCredits = creditData ?? 0;
           if (directPay && initialPlan) {
             setStep("processing");
             setTimeout(() => handleProceedToPayment(initialPlan, false, loggedInUser), 100);
-          } else if (uData && uData.credits_balance >= 10) {
+          } else if (!forcePlanSelect && currentCredits >= 10) {
             onSuccess();
           } else {
             setStep("plan");
@@ -170,12 +172,19 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
         if (error) throw error;
         if (data.user) {
           if (!data.session) {
+            localStorage.setItem("auth_redirect_pricing", "true");
             setError("Check your email to verify account.");
             setLoading(false);
             return;
           }
           setUser(data.user);
-          setStep("plan");
+          const { data: creditData } = await supabase.rpc("get_total_active_credits", { p_user_id: data.user.id });
+          const currentCredits = creditData ?? 0;
+          if (!forcePlanSelect && currentCredits >= 10) {
+            onSuccess();
+          } else {
+            setStep("plan");
+          }
         }
       }
     } catch (err: any) {
@@ -213,6 +222,7 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
   const handleGoogleLogin = async () => {
     setLoading(true);
     setError(null);
+    localStorage.setItem("auth_redirect_pricing", "true");
     try {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
@@ -225,6 +235,7 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
     } catch (err: any) {
       setError(err.message || "Google login failed");
       setLoading(false);
+      localStorage.removeItem("auth_redirect_pricing");
     }
   };
 
@@ -466,10 +477,10 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
         {/* Header */}
         <div className="px-6 pt-16 pb-2 border-b border-surface-container-low text-center">
           <h2 className="text-2xl font-headline font-bold text-on-background">
-            {step === "initializing" ? "Loading..." : step === "auth" ? "Login / Signup" : step === "processing" ? "Processing..." : step === "student_verify" ? "Student Verification" : "Invest in Yourself"}
+            {step === "initializing" ? "Loading..." : step === "auth" ? (authMode === "login" ? "Log In" : authMode === "signup" ? "Sign Up" : "Reset Password") : step === "processing" ? "Processing..." : step === "student_verify" ? "Student Verification" : "Invest in Yourself"}
           </h2>
           <p className="text-sm text-on-surface-variant mt-1 max-w-lg mx-auto">
-            {step === "initializing" ? "Please wait a moment." : step === "auth" ? "Access your account to download." : step === "processing" ? "Securely setting up Razorpay..." : step === "student_verify" ? "Verify to unlock the ₹99 plan." : "Returns >>> Investment(paying for servers)"}
+            {step === "initializing" ? "Please wait a moment." : step === "auth" ? (authMode === "signup" ? "Create an account to download." : "Access your account to download.") : step === "processing" ? "Securely setting up Razorpay..." : step === "student_verify" ? "Verify to unlock the ₹99 plan." : "Returns >>> Investment(paying for servers)"}
           </p>
         </div>
 

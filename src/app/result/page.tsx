@@ -561,12 +561,37 @@ export default function ResultPage() {
     } else {
       setHasPaidAccess(false);
     }
+    
+    // Auto-open pricing popup if redirected back from auth flow and don't have enough credits
+    if (typeof window !== "undefined" && localStorage.getItem("auth_redirect_pricing") === "true") {
+      localStorage.removeItem("auth_redirect_pricing");
+      if (currentCredits < 10) {
+        setShowPricingPopup(true);
+      }
+    }
+    
     setCheckingAccess(false);
   };
 
-  // Check if user has already paid — skip gate if yes
+  // Check if user has already paid and listen for auth state changes
   useEffect(() => {
     checkAccess();
+    
+    const { data: authListener } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED") {
+        checkAccess();
+      } else if (event === "SIGNED_OUT") {
+        setUserEmail("");
+        setCurrentUserId("");
+        setCredits(0);
+        setBuckets([]);
+        setHasPaidAccess(false);
+      }
+    });
+
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
   }, []);
 
   const handleStartOver = () => {
@@ -656,8 +681,12 @@ export default function ResultPage() {
             const data = await res.json();
             const total = data.total_platform_downloads;
             const isFirstEverDownload = data.user_total_downloads === 1; // True only once per user, across all sessions/days
-            const isGlobalMilestone = total > 0 && total % 10 === 0;
-            if (isFirstEverDownload || isGlobalMilestone) {
+            const isGlobalMilestone = total > 0 && total % 5 === 0;
+            // Guard: never show the first-download modal twice in the same browser
+            // (re-downloading the same session keeps user_total_downloads at 1 due to UNIQUE constraint)
+            const alreadyShownFeedback = localStorage.getItem("fr_feedback_shown") === "true";
+            if ((isFirstEverDownload && !alreadyShownFeedback) || isGlobalMilestone) {
+              if (isFirstEverDownload) localStorage.setItem("fr_feedback_shown", "true");
               setTimeout(() => setShowFeedback(true), 10000);
             }
           }

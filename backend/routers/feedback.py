@@ -26,8 +26,16 @@ async def submit_feedback(body: FeedbackRequest):
     if (session.data.get("download_count") or 0) < 1:
         raise HTTPException(400, "Feedback only accepted after first download")
         
+    # Prevent duplicate feedback for the same session
+    existing = await sb(lambda: supabase.table("feedback")
+        .select("id")
+        .eq("user_id", body.user_id)
+        .eq("session_id", body.session_id)
+        .limit(1)
+        .execute())
+    if existing.data:
+        raise HTTPException(409, "Feedback already submitted for this session")
 
-        
     await sb(lambda: supabase.table("feedback").insert({
         "user_id": body.user_id,
         "session_id": body.session_id,
@@ -54,29 +62,35 @@ class IncrementDownloadRequest(BaseModel):
 async def increment_download(body: IncrementDownloadRequest):
     if not supabase:
         raise HTTPException(status_code=500, detail="Database not configured")
-        
-    # 1. Verify session ownership before doing anything
-    session = await sb(lambda: supabase.table("resume_sessions")
-        .select("download_count, user_id")
-        .eq("id", body.session_id).single().execute())
-    if not session.data:
-        raise HTTPException(404, "Session not found")
-    actual_user_id = session.data.get("user_id")
 
-    # 2. Atomic DB-side increment — no Python read-then-write race
-    updated = await sb(lambda: supabase.rpc("increment_download_count",
-        {"p_session_id": body.session_id}).execute())
-
-    new_count = updated.data or 0
+    new_count = 0
     global_count = 0
     user_total_downloads = 0
 
-    # 3. Log global download (UNIQUE constraint makes this idempotent on retry)
+    # Scratch mode sends empty session_id — skip session lookup & DB increment
+    if body.session_id:
+        # 1. Verify session ownership before doing anything
+        session = await sb(lambda: supabase.table("resume_sessions")
+            .select("download_count, user_id")
+            .eq("id", body.session_id).single().execute())
+        if not session.data:
+            raise HTTPException(404, "Session not found")
+        actual_user_id = session.data.get("user_id")
+
+        # 2. Atomic DB-side increment — no Python read-then-write race
+        updated = await sb(lambda: supabase.rpc("increment_download_count",
+            {"p_session_id": body.session_id}).execute())
+        new_count = updated.data or 0
+    else:
+        # Scratch mode: no session row — use user_id from body directly
+        actual_user_id = body.user_id
+
+    # 3. Log global download and count (UNIQUE constraint makes this idempotent on retry)
     if actual_user_id:
         try:
             await sb(lambda: supabase.table("resume_downloads").insert({
                 "user_id": actual_user_id,
-                "session_id": body.session_id,
+                "session_id": body.session_id or None,
                 "device_type": body.device_type,
             }).execute())
         except Exception:
