@@ -78,6 +78,10 @@ POOL_1 = [
     ("nvidia",  "mistralai/mistral-nemotron",               "Key 2"),
     ("mistral", "mistral-medium-latest",                    "Key 1"),
     ("mistral", "mistral-medium-latest",                    "Key 2"),
+    ("mistral", "mistral-large-2512",                       "Key 1"),
+    ("mistral", "mistral-large-2512",                       "Key 2"),
+    ("mistral", "mistral-medium-2508",                      "Key 1"),
+    ("mistral", "mistral-medium-2508",                      "Key 2"),
 ]
 
 POOL_2 = [
@@ -95,6 +99,8 @@ POOL_2 = [
     ("cloudflare", "@cf/mistralai/mistral-small-3.1-24b-instruct", "Key 2"),
     ("mistral",    "mistral-small-latest",                         "Key 1"),
     ("mistral",    "mistral-small-latest",                         "Key 2"),
+    ("mistral",    "mistral-small-2506",                           "Key 1"),
+    ("mistral",    "mistral-small-2506",                           "Key 2"),
 ]
 
 # ─────────────────────────────────────────────────────────────────────────────

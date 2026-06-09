@@ -16,6 +16,12 @@ export const MODELS = {
     { id: "deepseek-v4-flash", name: "DeepSeek V4 Flash (Premium)" },
     
     // -- Mistral --
+    { id: "mistral-large-2512|key1", name: "Mistral Large 2512 (Mistral) - Key 1" },
+    { id: "mistral-large-2512|key2", name: "Mistral Large 2512 (Mistral) - Key 2" },
+    { id: "mistral-medium-2508|key1", name: "Mistral Medium 2508 (Mistral) - Key 1" },
+    { id: "mistral-medium-2508|key2", name: "Mistral Medium 2508 (Mistral) - Key 2" },
+    { id: "mistral-small-2506|key1", name: "Mistral Small 2506 (Mistral) - Key 1" },
+    { id: "mistral-small-2506|key2", name: "Mistral Small 2506 (Mistral) - Key 2" },
     { id: "mistral-large-latest|key1", name: "Mistral Large (Mistral) - Key 1" },
     { id: "mistral-large-latest|key2", name: "Mistral Large (Mistral) - Key 2" },
     { id: "mistral-medium-latest|key1", name: "Mistral Medium (Mistral) - Key 1" },
