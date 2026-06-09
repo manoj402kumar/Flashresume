@@ -72,8 +72,6 @@ def _get_rate_limit_type(attempts):
 POOL_1 = [
     ("mistral", "mistral-medium-3.5",                       "Key 1"),
     ("mistral", "mistral-medium-3.5",                       "Key 2"),
-    ("nvidia",  "mistralai/mistral-medium-3.5-128b",        "Key 1"),
-    ("nvidia",  "mistralai/mistral-medium-3.5-128b",        "Key 2"),
     ("mistral", "mistral-medium-2604",                      "Key 1"),
     ("mistral", "mistral-medium-2604",                      "Key 2"),
     ("nvidia",  "mistralai/mistral-nemotron",               "Key 1"),

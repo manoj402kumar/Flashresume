@@ -41,8 +41,7 @@ export const MODELS = {
 
     // -- NVIDIA --
 
-    { id: "mistralai/mistral-medium-3.5-128b|key1", name: "Mistral Medium 3.5 128B (NVIDIA) - Key 1" },
-    { id: "mistralai/mistral-medium-3.5-128b|key2", name: "Mistral Medium 3.5 128B (NVIDIA) - Key 2" },
+
     { id: "mistralai/mistral-nemotron|key1", name: "Mistral Nemotron (NVIDIA) - Key 1" },
     { id: "mistralai/mistral-nemotron|key2", name: "Mistral Nemotron (NVIDIA) - Key 2" },
     { id: "mistralai/ministral-14b-instruct-2512|key1", name: "Ministral 14B 2512 (NVIDIA) - Key 1" },
