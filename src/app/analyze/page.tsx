@@ -16,7 +16,6 @@ import {
   Code
 } from "lucide-react";
 import type { CombinedAnalysisResponse } from "@/lib/api";
-import ModelSelector from "@/components/ModelSelector";
 
 
 export default function AnalyzePage() {
@@ -117,13 +116,6 @@ export default function AnalyzePage() {
                   : "Let's increase it."}
               </p>
             </div>
-
-            {analysis.model_used && (
-              <div className="inline-flex items-center gap-2 px-4 py-2 bg-surface rounded-2xl shadow-sm border border-surface-container-high text-xs text-on-surface-variant font-medium mt-4">
-                <Sparkles className="w-3.5 h-3.5 text-[#006859]" />
-                Analyzed by <span className="font-bold text-[#006859]">{analysis.model_used}</span>
-              </div>
-            )}
           </div>
         </motion.div>
 
@@ -306,13 +298,6 @@ export default function AnalyzePage() {
         >
           <div className="absolute inset-0 overflow-hidden rounded-[2rem] pointer-events-none">
             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[#006859]/5 to-transparent skew-x-12 translate-x-[-100%] animate-[shimmer_3s_infinite]"></div>
-          </div>
-
-          <div className="w-full max-w-md relative z-10 mb-4">
-            <p className="text-sm font-bold text-on-background mb-2 flex items-center justify-center gap-2">
-              <Sparkles className="w-4 h-4 text-[#006859]" /> Select Generation Model
-            </p>
-            <ModelSelector storageKey="preferred_model" label="R2 Model (Generation)" />
           </div>
 
           <div className="relative z-10">

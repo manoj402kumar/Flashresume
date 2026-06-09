@@ -751,7 +751,7 @@ export default function ResultPage() {
             <div>
               <h1 className="font-headline text-lg font-bold text-white leading-tight">Your Resume</h1>
               <p className="text-xs text-white/50 leading-tight flex items-center gap-1">
-                <Sparkles className="w-3 h-3 text-[#12f8d7]" /> AI-Optimized with {activeModelName}
+                <Sparkles className="w-3 h-3 text-[#12f8d7]" /> AI-Optimized
               </p>
             </div>
           </div>
