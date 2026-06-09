@@ -17,4 +17,3 @@ slowapi>=0.1.9
 supabase>=2.0.0
 razorpay
 httpx
-redis[asyncio]>=5.0.0
