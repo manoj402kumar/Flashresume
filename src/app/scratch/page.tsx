@@ -477,67 +477,71 @@ export default function ScratchPage() {
       link.href = url;
       link.download = `${resume.heading.name.replace(/\s+/g, "_")}_Resume.pdf`;
 
-      // 1. Deduct credit FIRST (before triggering OS download which can suspend mobile browsers)
+      // 1. Deduct credit FIRST (before triggering OS download actions which suspend mobile browsers)
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
         try {
           await fetch(`${apiUrl}/api/payments/deduct-credit`, {
             method: "POST",
-            headers: { 
+            headers: {
               "Content-Type": "application/json",
               "Authorization": `Bearer ${session.access_token}`
             },
-            body: JSON.stringify({ user_id: session.user.id }),
-            keepalive: true
+            body: JSON.stringify({ user_id: session.user.id, session_id: sessionGuid }),
+            keepalive: true // Essential for mobile: ensures request completes even if page unloads
           });
-          // Re-evaluate access silently (don't await — don't delay download)
+          // Re-evaluate access silently (do not await, to not delay download)
           checkAccess();
         } catch (e) {
           console.error("Failed to deduct credit", e);
         }
       }
 
+      // ✅ FIX: Clear loading state BEFORE triggering iOS download prompt
+      setDownloadingPDF(false);
+
       // 2. Trigger the actual download
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
+
+      // Delay revocation so iOS Safari has time to read the blob into its PDF viewer
       setTimeout(() => URL.revokeObjectURL(url), 1000);
 
-      // 3. Increment download count + trigger feedback (unified logic matching result/page)
-      // Scratch mode has no session_id, so we pass an empty string — backend uses user_id for counting
+      // 3. Trigger feedback on first download (fire-and-forget, no await blocking)
       if (currentUserId) {
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-        try {
-          const isMobile = window.matchMedia?.("(pointer: coarse)")?.matches
-            ?? /Mobi|Android|iPhone/i.test(navigator.userAgent);
-          const deviceType = isMobile ? "mobile" : "desktop";
-          const res = await fetch(`${apiUrl}/api/resume/increment-download`, {
-            method: "POST",
-            body: JSON.stringify({ session_id: sessionGuid || "", user_id: currentUserId, device_type: deviceType }),
-            headers: { "Content-Type": "application/json" },
-            keepalive: true
-          });
-          if (res.ok) {
-            const data = await res.json();
-            const total = data.total_platform_downloads;
-            const isFirstEverDownload = data.user_total_downloads === 1;
-            const isGlobalMilestone = total > 0 && total % 5 === 0;
-            // Guard: never show first-download modal twice (same localStorage key as result/page)
-            const alreadyShownFeedback = localStorage.getItem("fr_feedback_shown") === "true";
-            if ((isFirstEverDownload && !alreadyShownFeedback) || isGlobalMilestone) {
-                if (isFirstEverDownload) localStorage.setItem("fr_feedback_shown", "true");
-                setTimeout(() => setShowFeedback(true), 10000);
-            }
+        // CSS pointer query: coarse = finger/touch (mobile), fine = mouse (desktop)
+        const isMobile = window.matchMedia?.("(pointer: coarse)")?.matches
+          ?? /Mobi|Android|iPhone/i.test(navigator.userAgent);
+        const deviceType = isMobile ? "mobile" : "desktop";
+        
+        fetch(`${apiUrl}/api/resume/increment-download`, {
+          method: "POST",
+          body: JSON.stringify({ session_id: sessionGuid || "", user_id: currentUserId, device_type: deviceType }),
+          headers: { "Content-Type": "application/json" },
+          keepalive: true // Essential: ensures request completes even if OS suspends tab
+        })
+        .then(res => {
+          if (res.ok) return res.json();
+          throw new Error("Network response was not ok");
+        })
+        .then(data => {
+          const total = data.total_platform_downloads;
+          const isFirstEverDownload = data.user_total_downloads === 1;
+          const isGlobalMilestone = total > 0 && total % 5 === 0;
+          const alreadyShownFeedback = localStorage.getItem("fr_feedback_shown") === "true";
+          if ((isFirstEverDownload && !alreadyShownFeedback) || isGlobalMilestone) {
+            if (isFirstEverDownload) localStorage.setItem("fr_feedback_shown", "true");
+            setTimeout(() => setShowFeedback(true), 10000);
           }
-        } catch (e) {
-          console.error("Feedback trigger failed", e);
-        }
+        })
+        .catch(e => console.error("Feedback trigger failed", e));
       }
     } catch (error) {
       console.error("PDF generation failed:", error);
-    } finally {
-      setDownloadingPDF(false);
+      setDownloadingPDF(false); // Only needed here now, since success path clears it earlier
     }
   };
 
