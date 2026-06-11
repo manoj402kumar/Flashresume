@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { motion, AnimatePresence } from "motion/react";
+import { motion, AnimatePresence, animate } from "motion/react";
 import {
   X,
   Sparkles,
@@ -142,8 +142,17 @@ export default function OnboardingTour() {
       return;
     }
 
-    // Scroll first element into view, then measure after scroll settles
-    firstEl.scrollIntoView({ behavior: "smooth", block: "center" });
+    // Fast, custom scroll to ensure elements aren't hidden behind the card
+    const rect = firstEl.getBoundingClientRect();
+    const scrollY = window.scrollY || window.pageYOffset;
+    const offset = isMobile ? 120 : vh * 0.25;
+    const targetY = Math.max(0, rect.top + scrollY - offset);
+
+    animate(scrollY, targetY, {
+      duration: 0.3,
+      ease: [0.22, 1, 0.36, 1],
+      onUpdate: (latest) => window.scrollTo(0, latest)
+    });
 
     setTimeout(() => {
       // Compute union bounding box across all target elements
@@ -191,7 +200,7 @@ export default function OnboardingTour() {
         const left = Math.min(sRight + CARD_GAP, vw - DESKTOP_CARD_W - 12);
         setCardLayout({ mode: "right", top, left });
       }
-    }, 300);
+    }, 320);
   }, [step]);
 
   useEffect(() => { if (active) compute(); }, [step, active, compute]);
