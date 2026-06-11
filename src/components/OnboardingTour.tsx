@@ -31,7 +31,7 @@ const STEPS: TourStep[] = [
     badge: "Welcome",
     title: "Build your perfect resume in 60 seconds",
     description:
-      "Flashresume is India's #1 AI-powered resume builder. Let us walk you through the three simple steps to get your recruiter-ready resume - right now.",
+      "Flashresume is India's #1 AI-powered resume builder. Let us walk you through the three simple steps to get your recruiter-ready resume right now.",
   },
   {
     targetId: "tour-step-1-choose-option",
