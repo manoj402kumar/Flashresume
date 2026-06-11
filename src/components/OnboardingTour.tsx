@@ -39,10 +39,10 @@ const STEPS: TourStep[] = [
     badge: "Step 1 of 3",
     title: "Choose your mode",
     description: (
-      <div className="flex flex-col gap-1.5 mt-1 text-[11px] sm:text-[13px] tracking-tight">
-        <div className="whitespace-nowrap"><span className="text-white/80 font-medium">1. JD Optimize:</span> for a specific job description</div>
-        <div className="whitespace-nowrap"><span className="text-white/80 font-medium">2. Self Edit:</span> to edit manually</div>
-        <div className="whitespace-nowrap"><span className="text-white/80 font-medium">3. First Resume:</span> If you don't have old resume.</div>
+      <div className="flex flex-col gap-1.5 mt-1 text-[12px] sm:text-[13px] tracking-tight">
+        <div><span className="text-white/80 font-medium">1. JD Optimize:</span> to optimize resume for a specific job description</div>
+        <div><span className="text-white/80 font-medium">2. Self Edit:</span> to edit manually</div>
+        <div><span className="text-white/80 font-medium">3. First Resume:</span> If you don't have old resume.</div>
       </div>
     ),
     tip: "💡 Most users pick JD Optimize: it tailors your resume to beat ATS filters.",
@@ -82,7 +82,7 @@ const STEPS: TourStep[] = [
 // ─── Constants ────────────────────────────────────────────────────────────────
 const STORAGE_KEY = "flashresume_tour_done";
 const PAD = 8;   // padding around highlighted element
-const DESKTOP_CARD_W = 360;  // card width on desktop (fits in right margin)
+const DESKTOP_CARD_W = 400;  // card width on desktop (fits in right margin)
 const MOBILE_BOTTOM = 14;   // px from bottom on mobile
 
 interface HighlightBox {
@@ -93,12 +93,11 @@ interface HighlightBox {
   boxShadow: string;
 }
 
-// card is either centred, right-anchored (desktop), or bottom-sheet/top-sheet (mobile)
+// card is either centred, right-anchored (desktop), or bottom-sheet (mobile)
 type CardLayout =
   | { mode: "center" }
   | { mode: "right"; top: number; left: number }
-  | { mode: "bottom-sheet" }
-  | { mode: "top-sheet" };
+  | { mode: "bottom-sheet" };
 
 // ─── Component ────────────────────────────────────────────────────────────────
 export default function OnboardingTour() {
@@ -181,13 +180,8 @@ export default function OnboardingTour() {
       });
 
       // ── card layout ──────────────────────────────────────────────────────
-      const elCenterY = (uTop + uBottom) / 2;
       if (isMobile) {
-        if (elCenterY > vh / 2) {
-          setCardLayout({ mode: "top-sheet" });
-        } else {
-          setCardLayout({ mode: "bottom-sheet" });
-        }
+        setCardLayout({ mode: "bottom-sheet" });
       } else {
         const CARD_H_EST = 360;
         const CARD_GAP = 16;
@@ -270,9 +264,7 @@ export default function OnboardingTour() {
                   animate={
                     cardLayout.mode === "right"
                       ? { top: cardLayout.top, left: cardLayout.left, width: DESKTOP_CARD_W }
-                      : cardLayout.mode === "top-sheet"
-                        ? { top: 85, bottom: "auto", left: 12, right: 12, width: "auto" }
-                        : { top: "auto", bottom: MOBILE_BOTTOM, left: 12, right: 12, width: "auto" }
+                      : { top: "auto", bottom: MOBILE_BOTTOM, left: 12, right: 12, width: "auto" }
                   }
                   transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
                 >
