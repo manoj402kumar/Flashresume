@@ -70,8 +70,12 @@ const STEPS: TourStep[] = [
     icon: <CheckCircle2 className="w-6 h-6 text-[#12f8d7]" />,
     badge: "You're all set!",
     title: "You're ready to get hired 🎉",
-    description:
-      "Choose your mode, fill in your details, and let Flashresume do the rest. Good luck!",
+    description: (
+      <div className="flex flex-col gap-2 mt-1">
+        <p>Choose your mode, fill in your details, and let Flashresume do the rest. Good luck!</p>
+        <p className="text-[#12f8d7]/90 font-medium">Use desktop for better experience.</p>
+      </div>
+    ),
   },
 ];
 
