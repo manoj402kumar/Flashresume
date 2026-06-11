@@ -36,6 +36,7 @@ import CreditBadge from "@/components/CreditBadge";
 
 import LiveDemoSection from "@/components/LiveDemoSection";
 import TemplatesCarousel from "@/components/TemplatesCarousel";
+import OnboardingTour from "@/components/OnboardingTour";
 
 export default function App() {
   const router = useRouter();
@@ -81,7 +82,7 @@ export default function App() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ page_type: "landing", user_id: user?.id ?? null }),
-        }).catch(() => {}); // silent fail — never block the user
+        }).catch(() => { }); // silent fail — never block the user
       }
     });
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, session) => {
@@ -125,7 +126,7 @@ export default function App() {
         const token = session?.access_token;
         const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/api/user/apply-referral`, {
           method: "POST",
-          headers: { 
+          headers: {
             "Content-Type": "application/json",
             ...(token ? { Authorization: `Bearer ${token}` } : {})
           },
@@ -390,7 +391,7 @@ export default function App() {
     // iOS Safari blocks clipboard access if it happens after an 'await'.
     try {
       if (navigator.clipboard && window.isSecureContext) {
-        navigator.clipboard.writeText(url).catch(() => {});
+        navigator.clipboard.writeText(url).catch(() => { });
       } else {
         const textArea = document.createElement("textarea");
         textArea.value = url;
@@ -424,6 +425,8 @@ export default function App() {
 
   return (
     <div className="min-h-screen font-sans overflow-x-hidden" suppressHydrationWarning>
+      {/* Onboarding tour — shown once to first-time visitors (any auth state) */}
+      <OnboardingTour />
       {/* TopNavBar */}
       <nav className="fixed top-0 w-full z-50 glass-header border-b border-surface-container-low">
         <div className="flex justify-between items-center max-w-7xl mx-auto px-4 sm:px-6 py-3 sm:py-4 w-full">
@@ -703,10 +706,10 @@ export default function App() {
               <div className="space-y-4">
 
                 {/* Optimize Mode Selection */}
-                <div className="flex flex-col gap-1.5">
+                <div id="tour-step-1-choose-option" className="flex flex-col gap-1.5">
                   <div className="flex items-center gap-2 ml-0.5">
                     <span className="flex items-center justify-center w-5 h-5 rounded-full bg-[#006859] text-white text-[10px] font-black flex-shrink-0">1</span>
-                    <span className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Choose Mode</span>
+                    <span className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Choose Option</span>
                   </div>
                   <div className="flex flex-row items-center justify-between gap-2 sm:gap-4 bg-surface-container-low rounded-2xl p-1.5 pl-4 sm:pl-5">
                     <div className="flex flex-1 sm:flex-none w-full sm:w-auto gap-1 justify-end">
@@ -760,7 +763,7 @@ export default function App() {
                 {optimizeMode !== "first_resume" && (
                   <>
                     {/* Tab switcher — Upload / Paste */}
-                    <div className="flex flex-col gap-1">
+                    <div id="tour-step-2-upload-resume" className="flex flex-col gap-1">
                       <div className="flex items-center gap-2 mb-1 ml-0.5">
                         <span className="flex items-center justify-center w-5 h-5 rounded-full bg-[#006859] text-white text-[10px] font-black flex-shrink-0">2</span>
                         <span className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Upload Resume</span>
@@ -838,6 +841,7 @@ export default function App() {
                 {/* JD textarea */}
                 {optimizeMode === "jd" && (
                   <motion.div
+                    id="tour-step-3-jd"
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: "auto" }}
                     exit={{ opacity: 0, height: 0 }}
@@ -879,6 +883,7 @@ export default function App() {
 
                 {/* Main CTA */}
                 <button
+                  id="tour-step-cta"
                   onClick={handleGenerate}
                   disabled={loading}
                   className="w-full bg-gradient-to-r from-[#006859] to-[#12f8d7] text-white py-3.5 rounded-2xl font-bold text-base flex items-center justify-center gap-2.5 shadow-[0_8px_30px_rgba(0,104,89,0.3)] hover:shadow-[0_8px_30px_rgba(18,248,215,0.4)] hover:-translate-y-0.5 hover:opacity-90 active:translate-y-0 active:shadow-none transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none"
