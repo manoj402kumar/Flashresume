@@ -145,13 +145,21 @@ export default function OnboardingTour() {
     // Fast, custom scroll to ensure elements aren't hidden behind the card
     const rect = firstEl.getBoundingClientRect();
     const scrollY = window.scrollY || window.pageYOffset;
-    const offset = isMobile ? 120 : vh * 0.25;
+    const offset = isMobile ? 80 : vh * 0.25;
     const targetY = Math.max(0, rect.top + scrollY - offset);
 
+    // Disable CSS smooth scroll temporarily to prevent fighting with JS animation
+    const html = document.documentElement;
+    const oldBehavior = html.style.scrollBehavior;
+    html.style.scrollBehavior = "auto";
+
     animate(scrollY, targetY, {
-      duration: 0.3,
+      duration: 0.35,
       ease: [0.22, 1, 0.36, 1],
-      onUpdate: (latest) => window.scrollTo(0, latest)
+      onUpdate: (latest) => window.scrollTo(0, latest),
+      onComplete: () => {
+        html.style.scrollBehavior = oldBehavior;
+      }
     });
 
     setTimeout(() => {
