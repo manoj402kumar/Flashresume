@@ -260,7 +260,13 @@ export default function OnboardingTour() {
                 initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                 className="fixed inset-0 z-[9010] flex items-center justify-center pointer-events-none px-4"
               >
-                <motion.div layoutId="tour-card-flyer" className="pointer-events-auto w-full max-w-[400px]">
+                <motion.div 
+                  layoutId="tour-card-flyer" 
+                  className="pointer-events-auto w-full max-w-[400px] relative"
+                  initial={false}
+                  animate={{ top: "auto", left: "auto", bottom: "auto", right: "auto" }}
+                  transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+                >
                   <TourCard current={current} step={step} total={STEPS.length}
                     isFirst={step === 0} isLast={step === STEPS.length - 1}
                     onNext={handleNext} onPrev={handlePrev} onSkip={finish} />
