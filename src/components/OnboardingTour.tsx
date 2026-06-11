@@ -31,7 +31,7 @@ const STEPS: TourStep[] = [
     badge: "Welcome",
     title: "Build your perfect resume in 60 seconds",
     description:
-      "Flashresume is India's #1 AI-powered resume builder. Let us walk you through the three simple steps to get your recruiter-ready resume — right now.",
+      "Flashresume is India's #1 AI-powered resume builder. Let us walk you through the three simple steps to get your recruiter-ready resume - right now.",
   },
   {
     targetId: "tour-step-1-choose-option",
@@ -39,7 +39,7 @@ const STEPS: TourStep[] = [
     badge: "Step 1 of 3",
     title: "Choose your mode",
     description: (
-      <div className="flex flex-col gap-1.5 mt-1 text-[13px] tracking-tight">
+      <div className="flex flex-col gap-1.5 mt-1 text-[11px] sm:text-[13px] tracking-tight">
         <div className="whitespace-nowrap"><span className="text-white/80 font-medium">1. JD Optimize:</span> for a specific job description</div>
         <div className="whitespace-nowrap"><span className="text-white/80 font-medium">2. Self Edit:</span> to edit manually</div>
         <div className="whitespace-nowrap"><span className="text-white/80 font-medium">3. First Resume:</span> If you don't have old resume.</div>
@@ -93,11 +93,12 @@ interface HighlightBox {
   boxShadow: string;
 }
 
-// card is either centred, right-anchored (desktop), or bottom-sheet (mobile)
+// card is either centred, right-anchored (desktop), or bottom-sheet/top-sheet (mobile)
 type CardLayout =
   | { mode: "center" }
   | { mode: "right"; top: number; left: number }
-  | { mode: "bottom-sheet" };
+  | { mode: "bottom-sheet" }
+  | { mode: "top-sheet" };
 
 // ─── Component ────────────────────────────────────────────────────────────────
 export default function OnboardingTour() {
@@ -180,8 +181,13 @@ export default function OnboardingTour() {
       });
 
       // ── card layout ──────────────────────────────────────────────────────
+      const elCenterY = (uTop + uBottom) / 2;
       if (isMobile) {
-        setCardLayout({ mode: "bottom-sheet" });
+        if (elCenterY > vh / 2) {
+          setCardLayout({ mode: "top-sheet" });
+        } else {
+          setCardLayout({ mode: "bottom-sheet" });
+        }
       } else {
         const CARD_H_EST = 360;
         const CARD_GAP = 16;
@@ -264,7 +270,9 @@ export default function OnboardingTour() {
                   animate={
                     cardLayout.mode === "right"
                       ? { top: cardLayout.top, left: cardLayout.left, width: DESKTOP_CARD_W }
-                      : { top: "auto", bottom: MOBILE_BOTTOM, left: 12, right: 12, width: "auto" }
+                      : cardLayout.mode === "top-sheet"
+                        ? { top: 85, bottom: "auto", left: 12, right: 12, width: "auto" }
+                        : { top: "auto", bottom: MOBILE_BOTTOM, left: 12, right: 12, width: "auto" }
                   }
                   transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
                 >
