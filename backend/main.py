@@ -5,6 +5,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 from datetime import datetime, timedelta, timezone
+from pydantic import BaseModel
 
 # Load environment variables before importing routers that depend on them
 load_dotenv()
@@ -62,6 +63,55 @@ app.include_router(payments.router, prefix="/api")
 app.include_router(admin.router, prefix="/api")
 app.include_router(sessions.router, prefix="/api")
 app.include_router(feedback.router, prefix="/api")
+
+ACTIVE_SESSIONS = {}
+peak_record = {"count": -1, "timestamp": None}
+
+class PingRequest(BaseModel):
+    user_id: str
+
+@app.post("/api/presence/ping")
+async def ping_presence(data: PingRequest):
+    if not supabase:
+        return {"status": "error"}
+        
+    now = datetime.now(timezone.utc)
+    ACTIVE_SESSIONS[data.user_id] = now
+    
+    # Cleanup stale (older than 60s)
+    stale = [k for k, v in ACTIVE_SESSIONS.items() if (now - v).total_seconds() > 60]
+    for k in stale:
+        del ACTIVE_SESSIONS[k]
+        
+    current_count = len(ACTIVE_SESSIONS)
+    
+    # Lazy load peak on first ping
+    if peak_record["count"] == -1:
+        try:
+            res = await asyncio.to_thread(lambda: supabase.table("system_metrics").select("value").eq("id", "peak_concurrent_users").execute())
+            if hasattr(res, 'data') and res.data and len(res.data) > 0:
+                peak_record["count"] = res.data[0]["value"].get("count", 0)
+                peak_record["timestamp"] = res.data[0]["value"].get("timestamp")
+            else:
+                peak_record["count"] = 0
+        except Exception:
+            pass
+            
+    if current_count > peak_record["count"]:
+        peak_record["count"] = current_count
+        peak_record["timestamp"] = now.isoformat()
+        try:
+            # Upsert new peak in background
+            asyncio.create_task(asyncio.to_thread(
+                lambda: supabase.table("system_metrics").upsert({
+                    "id": "peak_concurrent_users", 
+                    "value": {"count": current_count, "timestamp": now.isoformat()}
+                }).execute()
+            ))
+        except Exception:
+            pass
+            
+    return {"status": "ok", "live": current_count}
 
 @app.get("/")
 def root():

@@ -46,6 +46,8 @@ async def get_admin_stats():
         "total_logins": 0,
         "total_visitors": 0,
         "failed_payments": 0,
+        "peak_concurrent_users": 0,
+        "peak_timestamp": None,
     }
     
     if not supabase:
@@ -75,12 +77,13 @@ async def get_admin_stats():
         if dev_user_ids:
             failed_query = failed_query.not_.in_("user_id", dev_user_ids)
 
-        payments_res, downloads, users_res, visitors_res, failed_res = await asyncio.gather(
+        payments_res, downloads, users_res, visitors_res, failed_res, peak_res = await asyncio.gather(
             _sb(payments_query),
             _sb(downloads_query),
             _sb(users_query),
             _sb(visitors_query),
             _sb(failed_query),
+            _sb(supabase.table("system_metrics").select("value").eq("id", "peak_concurrent_users")),
         )
 
         if payments_res.data:
@@ -109,6 +112,11 @@ async def get_admin_stats():
             stats["failed_payments"] = failed_res.count
         else:
             stats["failed_payments"] = len(failed_res.data) if failed_res.data else 0
+
+        if peak_res.data and len(peak_res.data) > 0:
+            val = peak_res.data[0].get("value", {})
+            stats["peak_concurrent_users"] = val.get("count", 0)
+            stats["peak_timestamp"] = val.get("timestamp")
 
         return stats
     except Exception as e:

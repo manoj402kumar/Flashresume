@@ -77,7 +77,12 @@ function KPICard({ kpi, delay }: { kpi: KPI; delay: number }) {
   );
 }
 
-export default function KPICards({ onlineUsers, stats }: { onlineUsers: number, stats?: { revenue: number, downloads: number, subscribers: number, totalLogins: number, totalVisitors: number, failedPayments: number } }) {
+export default function KPICards({ onlineUsers, stats }: { onlineUsers: number, stats?: { revenue: number, downloads: number, subscribers: number, totalLogins: number, totalVisitors: number, failedPayments: number, peakConcurrentUsers: number, peakTimestamp: string | null } }) {
+  
+  const formattedPeakTime = stats?.peakTimestamp 
+    ? new Date(stats.peakTimestamp).toLocaleString('en-IN', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
+    : 'No data';
+
   const kpis: KPI[] = [
     {
       label: "Total Visitors",
@@ -96,6 +101,15 @@ export default function KPICards({ onlineUsers, stats }: { onlineUsers: number, 
       delta: "Live",
       deltaPositive: true,
       note: "Currently browsing the site",
+    },
+    {
+      label: "Peak Concurrent",
+      value: stats?.peakConcurrentUsers || 0,
+      icon: <TrendingUp className="w-5 h-5 text-amber-600" />,
+      iconBg: "bg-amber-50",
+      delta: "Peak",
+      deltaPositive: true,
+      note: `Achieved: ${formattedPeakTime}`,
     },
     {
       label: "Total Signups",
@@ -145,7 +159,7 @@ export default function KPICards({ onlineUsers, stats }: { onlineUsers: number, 
   ];
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-7 gap-5">
+    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
       {kpis.map((kpi, i) => (
         <KPICard key={kpi.label} kpi={kpi} delay={i * 0.08} />
       ))}

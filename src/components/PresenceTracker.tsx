@@ -51,6 +51,25 @@ export default function PresenceTracker() {
         });
       }
     }
+
+    // 24/7 Backend Peak Tracking Heartbeat
+    const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+    const pingBackend = () => {
+      fetch(`${API_URL}/api/presence/ping`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user_id: anonId }),
+        keepalive: true
+      }).catch(() => {});
+    };
+
+    // Ping immediately on mount/page change
+    pingBackend();
+
+    // Then ping every 30 seconds
+    const pingInterval = setInterval(pingBackend, 30000);
+
+    return () => clearInterval(pingInterval);
   }, [pathname]);
 
   // Cleanup on full unmount
