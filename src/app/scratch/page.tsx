@@ -193,6 +193,21 @@ export default function ScratchPage() {
   const [credits, setCredits] = useState<number>(0);
   const [buckets, setBuckets] = useState<any[]>([]);
   const [showAccountDropdown, setShowAccountDropdown] = useState(false);
+  const accountDropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (accountDropdownRef.current && !accountDropdownRef.current.contains(event.target as Node)) {
+        setShowAccountDropdown(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("touchstart", handleClickOutside, { passive: true });
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("touchstart", handleClickOutside);
+    };
+  }, []);
   const [showMobilePreview, setShowMobilePreview] = useState(true);
   const [showFeedback, setShowFeedback] = useState(false);
   const [sessionGuid, setSessionGuid] = useState<string>("");
@@ -628,8 +643,8 @@ export default function ScratchPage() {
               )}
             </button>
 
-            {/* Account Dropdown */}
-            <div className="relative">
+            {/* Account Details Dropdown */}
+            <div className="relative" ref={accountDropdownRef}>
               <button
                 onClick={() => setShowAccountDropdown(!showAccountDropdown)}
                 className="w-10 h-10 rounded-xl bg-white/6 hover:bg-white/12 border border-white/10 transition-colors flex items-center justify-center relative shadow-sm"

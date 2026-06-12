@@ -1,6 +1,5 @@
 import React from "react";
-import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import BackButton from "@/components/BackButton";
 
 export const metadata = {
   title: "Privacy Policy | Flashresume",
@@ -10,13 +9,7 @@ export default function PrivacyPage() {
   return (
     <div className="min-h-screen pt-24 pb-12 bg-surface">
       <div className="max-w-3xl mx-auto px-6">
-        <Link href="/" className="inline-flex items-center gap-2 text-on-surface-variant hover:text-primary transition-colors mb-8">
-
-          <ArrowLeft className="w-4 h-4" />
-
-          <span>Back to Home</span>
-
-        </Link>
+        <BackButton />
         <h1 className="text-4xl font-headline font-bold mb-8">Privacy Policy</h1>
         <div className="prose prose-invert max-w-none text-on-surface-variant space-y-4">
           <p>Last updated: {new Date().toLocaleDateString()}</p>

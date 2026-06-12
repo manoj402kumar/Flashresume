@@ -56,6 +56,21 @@ export default function App() {
   const [showLoginOnly, setShowLoginOnly] = useState(false);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [showAccountDropdown, setShowAccountDropdown] = useState(false);
+  const accountDropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (accountDropdownRef.current && !accountDropdownRef.current.contains(event.target as Node)) {
+        setShowAccountDropdown(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("touchstart", handleClickOutside, { passive: true });
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("touchstart", handleClickOutside);
+    };
+  }, []);
   const [credits, setCredits] = useState<number>(0);
   const [analysisCountdown, setAnalysisCountdown] = useState<number | null>(null);
   const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -492,7 +507,7 @@ export default function App() {
                 <CreditBadge onTopUpClick={() => { setSelectedPricingPlan(null); setShowDownloadGate(true); }} />
 
                 {/* Account Dropdown */}
-                <div className="relative">
+                <div className="relative" ref={accountDropdownRef}>
                   <button
                     onClick={() => setShowAccountDropdown(!showAccountDropdown)}
                     className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-surface-container-low hover:bg-surface-container-high transition-colors flex items-center justify-center relative shadow-sm"
@@ -504,7 +519,6 @@ export default function App() {
                   <AnimatePresence>
                     {showAccountDropdown && (
                       <>
-                        <div className="fixed inset-0 z-40" aria-hidden="true" onClick={() => setShowAccountDropdown(false)}></div>
                         <motion.div
                           initial={{ opacity: 0, y: 10, scale: 0.95 }}
                           animate={{ opacity: 1, y: 0, scale: 1 }}
