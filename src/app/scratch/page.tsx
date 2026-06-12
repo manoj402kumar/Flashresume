@@ -1150,7 +1150,7 @@ export default function ScratchPage() {
                                   value={customSection.heading}
                                   onChange={(e) => {
                                     const newCustoms = [...(resume.custom_sections || [])];
-                                    newCustoms[customIndex].heading = e.target.value;
+                                    newCustoms[customIndex] = { ...newCustoms[customIndex], heading: e.target.value };
                                     updateResume({ custom_sections: newCustoms });
                                   }}
                                   className="font-headline text-2xl font-bold rounded-xl px-4 py-2 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm w-full"
@@ -1325,7 +1325,7 @@ export default function ScratchPage() {
                                               value={edu.degree || ''}
                                               onChange={(e) => {
                                                 const newEducation = [...resume.education];
-                                                newEducation[idx].degree = e.target.value;
+                                                newEducation[idx] = { ...newEducation[idx], degree: e.target.value };
                                                 updateResume({ education: newEducation });
                                               }}
                                               className="w-full font-bold rounded-xl px-4 py-2 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm"
@@ -1336,7 +1336,7 @@ export default function ScratchPage() {
                                               value={edu.institution || ''}
                                               onChange={(e) => {
                                                 const newEducation = [...resume.education];
-                                                newEducation[idx].institution = e.target.value;
+                                                newEducation[idx] = { ...newEducation[idx], institution: e.target.value };
                                                 updateResume({ education: newEducation });
                                               }}
                                               className="w-full rounded-xl px-4 py-2 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm"
@@ -1348,7 +1348,7 @@ export default function ScratchPage() {
                                                 value={edu.location || ''}
                                                 onChange={(e) => {
                                                   const newEducation = [...resume.education];
-                                                  newEducation[idx].location = e.target.value;
+                                                  newEducation[idx] = { ...newEducation[idx], location: e.target.value };
                                                   updateResume({ education: newEducation });
                                                 }}
                                                 className="rounded-xl px-4 py-2 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm"
@@ -1359,7 +1359,7 @@ export default function ScratchPage() {
                                                 value={edu.duration || ''}
                                                 onChange={(e) => {
                                                   const newEducation = [...resume.education];
-                                                  newEducation[idx].duration = e.target.value;
+                                                  newEducation[idx] = { ...newEducation[idx], duration: e.target.value };
                                                   updateResume({ education: newEducation });
                                                 }}
                                                 className="rounded-xl px-4 py-2 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm"
@@ -1372,7 +1372,7 @@ export default function ScratchPage() {
                                                 value={edu.cgpa || ''}
                                                 onChange={(e) => {
                                                   const newEducation = [...resume.education];
-                                                  newEducation[idx].cgpa = e.target.value;
+                                                  newEducation[idx] = { ...newEducation[idx], cgpa: e.target.value };
                                                   updateResume({ education: newEducation });
                                                 }}
                                                 className="flex-1 min-w-0 rounded-xl px-4 py-2 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm mr-2"
@@ -1453,7 +1453,7 @@ export default function ScratchPage() {
                                               value={exp.job_title || ''}
                                               onChange={(e) => {
                                                 const newExperience = [...resume.experience];
-                                                newExperience[idx].job_title = e.target.value;
+                                                newExperience[idx] = { ...newExperience[idx], job_title: e.target.value };
                                                 updateResume({ experience: newExperience });
                                               }}
                                               className="w-full font-bold rounded-xl px-4 py-2 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm"
@@ -1464,7 +1464,7 @@ export default function ScratchPage() {
                                               value={exp.company || ''}
                                               onChange={(e) => {
                                                 const newExperience = [...resume.experience];
-                                                newExperience[idx].company = e.target.value;
+                                                newExperience[idx] = { ...newExperience[idx], company: e.target.value };
                                                 updateResume({ experience: newExperience });
                                               }}
                                               className="w-full rounded-xl px-4 py-2 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm"
@@ -1476,7 +1476,7 @@ export default function ScratchPage() {
                                                 value={exp.duration || ''}
                                                 onChange={(e) => {
                                                   const newExperience = [...resume.experience];
-                                                  newExperience[idx].duration = e.target.value;
+                                                  newExperience[idx] = { ...newExperience[idx], duration: e.target.value };
                                                   updateResume({ experience: newExperience });
                                                 }}
                                                 className="text-sm rounded-xl px-4 py-2 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm"
@@ -1487,7 +1487,7 @@ export default function ScratchPage() {
                                                 value={exp.location || ''}
                                                 onChange={(e) => {
                                                   const newExperience = [...resume.experience];
-                                                  newExperience[idx].location = e.target.value;
+                                                  newExperience[idx] = { ...newExperience[idx], location: e.target.value };
                                                   updateResume({ experience: newExperience });
                                                 }}
                                                 className="text-sm rounded-xl px-4 py-2 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm"
@@ -1515,7 +1515,9 @@ export default function ScratchPage() {
                                                     value={bullet}
                                                     onChange={(e) => {
                                                       const newExperience = [...resume.experience];
-                                                      newExperience[idx].bullets[bidx] = e.target.value;
+                                                      const newBullets = [...newExperience[idx].bullets];
+                                              newBullets[bidx] = e.target.value;
+                                              newExperience[idx] = { ...newExperience[idx], bullets: newBullets };
                                                       updateResume({ experience: newExperience });
                                                     }}
                                                     className="flex-1 rounded-lg px-3 py-2 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm resize-none"
@@ -1615,7 +1617,7 @@ export default function ScratchPage() {
                                                 value={proj.title}
                                                 onChange={(e) => {
                                                   const newProjects = [...resume.projects];
-                                                  newProjects[idx].title = e.target.value;
+                                                  newProjects[idx] = { ...newProjects[idx], title: e.target.value };
                                                   updateResume({ projects: newProjects });
                                                 }}
                                                 className="w-full font-bold rounded-xl px-4 py-2 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm"
@@ -1627,7 +1629,7 @@ export default function ScratchPage() {
                                                   value={proj.link || ''}
                                                   onChange={(e) => {
                                                     const newProjects = [...resume.projects];
-                                                    newProjects[idx].link = e.target.value;
+                                                    newProjects[idx] = { ...newProjects[idx], link: e.target.value };
                                                     updateResume({ projects: newProjects });
                                                   }}
                                                   className="flex-[1] text-sm rounded-xl px-4 py-2 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm"
@@ -1638,7 +1640,7 @@ export default function ScratchPage() {
                                                   value={proj.link_href || ''}
                                                   onChange={(e) => {
                                                     const newProjects = [...resume.projects];
-                                                    newProjects[idx].link_href = e.target.value;
+                                                    newProjects[idx] = { ...newProjects[idx], link_href: e.target.value };
                                                     updateResume({ projects: newProjects });
                                                   }}
                                                   className="flex-[2] text-sm rounded-xl px-4 py-2 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm"
@@ -1651,7 +1653,7 @@ export default function ScratchPage() {
                                               value={proj.tech_stack}
                                               onChange={(e) => {
                                                 const newProjects = [...resume.projects];
-                                                newProjects[idx].tech_stack = e.target.value;
+                                                newProjects[idx] = { ...newProjects[idx], tech_stack: e.target.value };
                                                 updateResume({ projects: newProjects });
                                               }}
                                               className="w-full text-sm rounded-xl px-4 py-2 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm"
@@ -1688,7 +1690,9 @@ export default function ScratchPage() {
                                                     value={bullet}
                                                     onChange={(e) => {
                                                       const newProjects = [...resume.projects];
-                                                      newProjects[idx].bullets[bidx] = e.target.value;
+                                                      const newBullets = [...newProjects[idx].bullets];
+                                              newBullets[bidx] = e.target.value;
+                                              newProjects[idx] = { ...newProjects[idx], bullets: newBullets };
                                                       updateResume({ projects: newProjects });
                                                     }}
                                                     className="flex-1 rounded-lg px-3 py-2 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm resize-none"
