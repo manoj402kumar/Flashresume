@@ -516,7 +516,49 @@ export default function ScratchPage() {
       // ✅ FIX: Clear loading state BEFORE triggering iOS download prompt
       setDownloadingPDF(false);
 
-      // 2. Trigger the actual download
+      // 2. Determine if we should show feedback (pre-compute BEFORE iOS tab suspension)
+      let shouldShowFeedback = false;
+      if (currentUserId) {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+        const isMobile = window.matchMedia?.("(pointer: coarse)")?.matches ?? /Mobi|Android|iPhone/i.test(navigator.userAgent);
+        const deviceType = isMobile ? "mobile" : "desktop";
+        
+        try {
+          // Await the fetch so it finishes before link.click() freezes the thread on mobile
+          const res = await fetch(`${apiUrl}/api/resume/increment-download`, {
+            method: "POST",
+            body: JSON.stringify({ session_id: sessionGuid || "", user_id: currentUserId, device_type: deviceType }),
+            headers: { "Content-Type": "application/json" }
+          });
+          
+          if (res.ok) {
+            const data = await res.json();
+            const total = data.total_platform_downloads;
+            const isFirstEverDownload = data.user_total_downloads === 1;
+            const isGlobalMilestone = total > 0 && total % 5 === 0;
+            
+            let alreadyShownFeedback = false;
+            try {
+              alreadyShownFeedback = localStorage.getItem("fr_feedback_shown") === "true";
+            } catch (e) {
+              // Ignore QuotaExceededError in iOS Safari Private Mode
+            }
+
+            if ((isFirstEverDownload && !alreadyShownFeedback) || isGlobalMilestone) {
+              shouldShowFeedback = true;
+              if (isFirstEverDownload) {
+                try {
+                  localStorage.setItem("fr_feedback_shown", "true");
+                } catch (e) {}
+              }
+            }
+          }
+        } catch (e) {
+          console.error("Feedback trigger failed", e);
+        }
+      }
+
+      // 3. Trigger the actual download (This suspends the JS thread on mobile!)
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -524,35 +566,9 @@ export default function ScratchPage() {
       // Delay revocation so iOS Safari has time to read the blob into its PDF viewer
       setTimeout(() => URL.revokeObjectURL(url), 1000);
 
-      // 3. Trigger feedback on first download (fire-and-forget, no await blocking)
-      if (currentUserId) {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-        // CSS pointer query: coarse = finger/touch (mobile), fine = mouse (desktop)
-        const isMobile = window.matchMedia?.("(pointer: coarse)")?.matches
-          ?? /Mobi|Android|iPhone/i.test(navigator.userAgent);
-        const deviceType = isMobile ? "mobile" : "desktop";
-        
-        fetch(`${apiUrl}/api/resume/increment-download`, {
-          method: "POST",
-          body: JSON.stringify({ session_id: sessionGuid || "", user_id: currentUserId, device_type: deviceType }),
-          headers: { "Content-Type": "application/json" },
-          keepalive: true // Essential: ensures request completes even if OS suspends tab
-        })
-        .then(res => {
-          if (res.ok) return res.json();
-          throw new Error("Network response was not ok");
-        })
-        .then(data => {
-          const total = data.total_platform_downloads;
-          const isFirstEverDownload = data.user_total_downloads === 1;
-          const isGlobalMilestone = total > 0 && total % 5 === 0;
-          const alreadyShownFeedback = localStorage.getItem("fr_feedback_shown") === "true";
-          if ((isFirstEverDownload && !alreadyShownFeedback) || isGlobalMilestone) {
-            if (isFirstEverDownload) localStorage.setItem("fr_feedback_shown", "true");
-            setTimeout(() => setShowFeedback(true), 10000);
-          }
-        })
-        .catch(e => console.error("Feedback trigger failed", e));
+      // 4. Now register the timeout BEFORE the OS fully freezes the thread
+      if (shouldShowFeedback) {
+        setTimeout(() => setShowFeedback(true), 10000);
       }
     } catch (error) {
       console.error("PDF generation failed:", error);
