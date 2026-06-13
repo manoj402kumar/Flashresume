@@ -1,12 +1,5 @@
 FROM python:3.11-slim
 
-# Install system dependencies (Tesseract OCR for scanned PDF fallback)
-RUN apt-get update -qq && apt-get install -y --no-install-recommends \
-    tesseract-ocr \
-    libgl1 \
-    libglib2.0-0 \
-    && rm -rf /var/lib/apt/lists/*
-
 WORKDIR /app
 
 # Copy requirements and install

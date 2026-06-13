@@ -15,9 +15,9 @@ export interface ParseResponse {
 }
 
 export async function parseResume(file: File): Promise<ParseResponse> {
-  // Validate file size (10MB limit)
-  if (file.size > 10 * 1024 * 1024) {
-    throw new Error("File too large. Maximum size is 10MB.");
+  // Validate file size (5MB limit)
+  if (file.size > 5 * 1024 * 1024) {
+    throw new Error("File too large. Maximum size is 5MB.");
   }
 
   // Validate file type - support PDF, DOCX, JPG, PNG

@@ -826,7 +826,7 @@ export default function App() {
                             <span className="font-headline text-on-background font-bold text-center text-base truncate w-full px-2 mb-1">
                               {file ? file.name : "Drop your current resume"}
                             </span>
-                            <span className="text-sm text-on-surface-variant text-center">PDF, DOCX (Max 10MB)</span>
+                            <span className="text-sm text-on-surface-variant text-center">PDF, DOCX (Max 5MB)</span>
                             {!file && (
                               <span className="mt-3 text-xs font-bold text-[#006859] bg-[#006859]/10 px-3 py-1.5 rounded-full">
                                 Browse files
