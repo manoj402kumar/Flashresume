@@ -33,6 +33,8 @@ SERVER_START_TIME = time.time()
 
 from datetime import datetime, timedelta, timezone
 
+IST_OFFSET = timedelta(hours=5, minutes=30)
+
 
 @router.get("/admin/stats", dependencies=[Depends(require_admin)])
 async def get_admin_stats():
@@ -142,7 +144,9 @@ async def get_analytics_revenue(
     PROD_START_DATE = datetime(2026, 5, 28, tzinfo=timezone.utc)
     
     if time_filter == "today":
-        dt_start = now - timedelta(hours=24)
+        ist_now = now + IST_OFFSET
+        ist_midnight = ist_now.replace(hour=0, minute=0, second=0, microsecond=0)
+        dt_start = ist_midnight - IST_OFFSET
     elif time_filter == "week":
         dt_start = now - timedelta(days=7)
     elif time_filter == "month":
@@ -247,10 +251,14 @@ def build_trend_data(records, dt_start, dt_end, time_filter, value_key=None, tra
     now = dt_end or datetime.now(timezone.utc)
     
     if time_filter == "today":
-        for i in range(23, -1, -1):
-            start_hr = now - timedelta(hours=i+1)
-            end_hr = now - timedelta(hours=i)
-            label = start_hr.strftime("%H:00")
+        ist_now = now + IST_OFFSET
+        ist_midnight = ist_now.replace(hour=0, minute=0, second=0, microsecond=0)
+        utc_midnight = ist_midnight - IST_OFFSET
+        for i in range(24):
+            start_hr = utc_midnight + timedelta(hours=i)
+            end_hr = start_hr + timedelta(hours=1)
+            ist_start_hr = start_hr + IST_OFFSET
+            label = ist_start_hr.strftime("%H:00")
             trend.append({"label": label, "start": start_hr, "end": end_hr, "value": 0})
     elif time_filter == "week" or (time_filter == "custom" and (dt_end - (dt_start or now - timedelta(days=7))).days < 14):
         days = 7
@@ -334,7 +342,9 @@ async def get_analytics_downloads(
     PROD_START_DATE = datetime(2026, 5, 28, tzinfo=timezone.utc)
     
     if time_filter == "today":
-        dt_start = now - timedelta(hours=24)
+        ist_now = now + IST_OFFSET
+        ist_midnight = ist_now.replace(hour=0, minute=0, second=0, microsecond=0)
+        dt_start = ist_midnight - IST_OFFSET
     elif time_filter == "week":
         dt_start = now - timedelta(days=7)
     elif time_filter == "month":
