@@ -212,6 +212,7 @@ export default function ScratchPage() {
   const [showFeedback, setShowFeedback] = useState(false);
   const [sessionGuid, setSessionGuid] = useState<string>("");
   const [currentUserId, setCurrentUserId] = useState<string>("");
+  const [isInspirationExpanded, setIsInspirationExpanded] = useState(true);
   // ── Undo / Redo history
   const MAX_HISTORY = 50;
   const historyRef = useRef<TemplateV1[]>([]);
@@ -883,22 +884,44 @@ export default function ScratchPage() {
                 backgroundSize: "200% 200%"
               }}
             >
-              <div className="px-5 py-4 flex flex-col sm:flex-row items-start sm:items-center gap-4">
-                <div className="flex-1">
-                  <p className="text-xs font-bold tracking-widest uppercase text-white/70 mb-0.5">First time here?</p>
-                  <p className="text-sm font-semibold text-white leading-snug">
-                    Not sure where to start? View our Gold Standard resume for inspiration — see the format, style and content level we recommend.
-                  </p>
+              <div className="px-5 py-4">
+                <div className="flex justify-between items-center">
+                  <p className="text-xs font-bold tracking-widest uppercase text-white/70">First time here?</p>
+                  <button
+                    type="button"
+                    onClick={() => setIsInspirationExpanded(!isInspirationExpanded)}
+                    className="text-white/70 hover:text-white transition-colors p-1 rounded"
+                    aria-label={isInspirationExpanded ? "Collapse banner" : "Expand banner"}
+                  >
+                    {isInspirationExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                  </button>
                 </div>
-                <a
-                  href="/reference_Resume.pdf"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex-shrink-0 flex items-center gap-2 bg-white text-primary font-bold px-5 py-2.5 rounded-xl text-sm hover:shadow-xl hover:scale-105 active:scale-95 transition-all shadow-md whitespace-nowrap"
-                >
-                  <FileText className="w-4 h-4" />
-                  Take Inspiration Resume
-                </a>
+                
+                <AnimatePresence>
+                  {isInspirationExpanded && (
+                    <motion.div 
+                      initial={{ height: 0, opacity: 0, marginTop: 0 }}
+                      animate={{ height: "auto", opacity: 1, marginTop: 12 }}
+                      exit={{ height: 0, opacity: 0, marginTop: 0 }}
+                      className="flex flex-col sm:flex-row items-start sm:items-center gap-4 overflow-hidden"
+                    >
+                      <div className="flex-1">
+                        <p className="text-sm font-semibold text-white leading-snug">
+                          Not sure where to start? View our Gold Standard resume for inspiration — see the format, style and content level we recommend.
+                        </p>
+                      </div>
+                      <a
+                        href="/reference_Resume.pdf"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex-shrink-0 flex items-center gap-2 bg-white text-primary font-bold px-5 py-2.5 rounded-xl text-sm hover:shadow-xl hover:scale-105 active:scale-95 transition-all shadow-md whitespace-nowrap"
+                      >
+                        <FileText className="w-4 h-4" />
+                        Take Inspiration Resume
+                      </a>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
             </motion.div>
             <AnimatePresence mode="wait">
