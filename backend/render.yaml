@@ -4,6 +4,3 @@ services:
     env: docker
     dockerfilePath: ./Dockerfile
     rootDir: backend
-    envVars:
-      - key: PORT
-        value: 8000
