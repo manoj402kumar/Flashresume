@@ -7,10 +7,12 @@ python-docx
 python-dotenv
 pydantic
 requests
+google-genai>=1.0.0
 mistralai>=1.0.0
 groq>=0.11.0
 openai>=1.0.0
 slowapi>=0.1.9
 supabase>=2.0.0
 razorpay
-httpx
+httpx<0.28
+gunicorn

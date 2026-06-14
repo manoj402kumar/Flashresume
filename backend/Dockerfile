@@ -13,5 +13,6 @@ COPY . .
 # Expose port
 EXPOSE 8000
 
-# Run Uvicorn with a single worker to prevent Out Of Memory (OOM) on free tiers
-CMD uvicorn main:app --host 0.0.0.0 --port $PORT
+# Run Gunicorn with Uvicorn workers and worker-cycling to prevent Out Of Memory (OOM) on free tiers
+# --max-requests 100 tells it to silently restart the worker every 100 requests to clear any memory leaks
+CMD gunicorn main:app -w 1 -k uvicorn.workers.UvicornWorker --max-requests 100 --bind 0.0.0.0:${PORT:-8000}
