@@ -1,5 +1,6 @@
 import pdfplumber
 import io
+import gc
 from typing import Tuple
 
 def extract_with_pdfplumber(pdf_bytes: bytes) -> Tuple[str, int]:
@@ -16,6 +17,8 @@ def extract_with_pdfplumber(pdf_bytes: bytes) -> Tuple[str, int]:
             page_text = page.extract_text()
             if page_text:
                 text_parts.append(page_text.strip())
+
+    gc.collect()
 
     full_text = "\n\n".join(text_parts)
     return full_text, page_count

@@ -1,5 +1,6 @@
 import os
 import io
+import gc
 import pypdfium2 as pdfium  # Replaced PyMuPDF with pypdfium2 for better stability
 from docx import Document
 from services.pdf_parser import extract_with_pdfplumber, is_extraction_good
@@ -20,8 +21,8 @@ def extract_from_docx(docx_bytes: bytes) -> dict:
         raise Exception(f"DOCX extraction failed: {str(e)}")
 
 
-def extract_with_pymupdf(pdf_bytes: bytes) -> tuple[str, int]:
-    """Layer 2: pypdfium2 — handles Canva/vector/complex layout PDFs."""
+def extract_with_pypdfium2(pdf_bytes: bytes) -> tuple[str, int]:
+    """Layer 1: pypdfium2 — Fast C++ engine, lightweight memory (~15MB)."""
     doc = pdfium.PdfDocument(pdf_bytes)
     page_count = len(doc)
     text_parts = []
@@ -34,18 +35,21 @@ def extract_with_pymupdf(pdf_bytes: bytes) -> tuple[str, int]:
 def extract_resume_text(pdf_bytes: bytes) -> dict:
     """
     2-layer orchestrator:
-    Layer 1: pdfplumber (fast, standard text PDFs)
-    Layer 2: PyMuPDF (Canva/vector/complex layouts)
+    Layer 1: pypdfium2 (Fast, lightweight C++ engine)
+    Layer 2: pdfplumber (Heavy Python heap, fallback)
     Note: OCR fallback was removed to prevent OOM memory issues on the server.
     """
-    # Layer 1 — pdfplumber
-    text, page_count = extract_with_pdfplumber(pdf_bytes)
+    # Layer 1 — pypdfium2
+    text, page_count = extract_with_pypdfium2(pdf_bytes)
     if is_extraction_good(text):
-        return {"text": text, "page_count": page_count, "parser_used": "pdfplumber"}
+        return {"text": text, "page_count": page_count, "parser_used": "pypdfium2"}
 
-    # Layer 2 — PyMuPDF
-    text, page_count = extract_with_pymupdf(pdf_bytes)
-    if is_extraction_good(text):
-        return {"text": text, "page_count": page_count, "parser_used": "pymupdf"}
+    # Layer 2 — pdfplumber (Fallback)
+    try:
+        text, page_count = extract_with_pdfplumber(pdf_bytes)
+        if is_extraction_good(text):
+            return {"text": text, "page_count": page_count, "parser_used": "pdfplumber"}
+    finally:
+        gc.collect()
 
     raise ValueError("We couldn't read the text in this file. Please upload a standard digital PDF or Word document instead of a scanned image.")
