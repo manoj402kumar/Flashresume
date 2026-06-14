@@ -71,9 +71,12 @@ async def get_admin_stats():
         if dev_user_ids:
             downloads_query = downloads_query.not_.in_("user_id", dev_user_ids)
 
-        # Only count anonymous visitors (not logged in).
-        # This automatically excludes dev users (who have user_ids) and gives pure new user metrics.
-        visitors_query = supabase.table("page_visits").select("id", count="exact").eq("page_type", "landing").is_("user_id", "null").gte("visited_at", "2026-05-28T00:00:00Z")
+        # Total Visitors KPI: Count ALL traffic (all pages, anonymous + logged-in users).
+        # We use OR to keep anonymous rows (user_id IS NULL) while excluding known dev accounts.
+        visitors_query = supabase.table("page_visits").select("id", count="exact").gte("visited_at", "2026-05-28T00:00:00Z")
+        if dev_user_ids:
+            dev_ids_str = ",".join(dev_user_ids)
+            visitors_query = visitors_query.or_(f"user_id.is.null,user_id.not.in.({dev_ids_str})")
 
         one_hour_ago = (datetime.now(timezone.utc) - timedelta(hours=1)).isoformat()
         failed_filter = f"status.eq.failed,and(status.eq.pending,created_at.lte.{one_hour_ago})"

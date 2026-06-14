@@ -61,7 +61,7 @@ export default function FunnelChart() {
       <div className="flex items-start justify-between">
         <div>
           <h2 className="font-headline text-xl font-bold text-[#2c2f30]">Conversion Funnel</h2>
-          <p className="text-sm text-[#595c5d]">User journey from visit to purchase</p>
+          <p className="text-sm text-[#595c5d]">New users conversion pipeline</p>
         </div>
         <span className="flex items-center gap-1 text-xs font-bold text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-full border border-emerald-200">
           <CheckCircle className="w-3 h-3" />
