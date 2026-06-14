@@ -71,12 +71,9 @@ async def get_admin_stats():
         if dev_user_ids:
             downloads_query = downloads_query.not_.in_("user_id", dev_user_ids)
 
-        visitors_query = supabase.table("page_visits").select("id", count="exact").eq("page_type", "landing").gte("visited_at", "2026-05-28T00:00:00Z")
-        if dev_user_ids:
-            # Use OR to keep anonymous rows (user_id IS NULL) while excluding known dev accounts.
-            # NOT IN alone silently drops all NULL rows in SQL — this is the correct fix.
-            dev_ids_str = ",".join(dev_user_ids)
-            visitors_query = visitors_query.or_(f"user_id.is.null,user_id.not.in.({dev_ids_str})")
+        # Only count anonymous visitors (not logged in).
+        # This automatically excludes dev users (who have user_ids) and gives pure new user metrics.
+        visitors_query = supabase.table("page_visits").select("id", count="exact").eq("page_type", "landing").is_("user_id", "null").gte("visited_at", "2026-05-28T00:00:00Z")
 
         one_hour_ago = (datetime.now(timezone.utc) - timedelta(hours=1)).isoformat()
         failed_filter = f"status.eq.failed,and(status.eq.pending,created_at.lte.{one_hour_ago})"
@@ -514,18 +511,16 @@ async def get_funnel_stats():
         dev_users_res = await _sb(supabase.table("users").select("id").in_("email", DEV_EMAILS))
         dev_user_ids = [u["id"] for u in (dev_users_res.data or [])]
 
-        landing_q  = supabase.table("page_visits").select("id", count="exact").eq("page_type", "landing").gte("visited_at", "2026-05-28T00:00:00Z")
-        result_q   = supabase.table("page_visits").select("id", count="exact").eq("page_type", "result").gte("visited_at", "2026-05-28T00:00:00Z")
-        purchase_q = supabase.table("payments").select("id", count="exact").eq("status", "success").gte("created_at", "2026-05-28T00:00:00Z")
+        # 1 & 2. Visits: Only count people who are not signed up/logged in (user_id is null).
+        # This gives pure new user metrics and automatically excludes dev users.
+        landing_q  = supabase.table("page_visits").select("id", count="exact").eq("page_type", "landing").is_("user_id", "null").gte("visited_at", "2026-05-28T00:00:00Z")
+        result_q   = supabase.table("page_visits").select("id", count="exact").eq("page_type", "result").is_("user_id", "null").gte("visited_at", "2026-05-28T00:00:00Z")
+        
+        # 3. Purchases: Fetch user_ids instead of count, to calculate unique paid users
+        purchase_q = supabase.table("payments").select("user_id").eq("status", "success").gte("created_at", "2026-05-28T00:00:00Z")
 
-        # Only payments have guaranteed non-null user_id — safe to use NOT IN directly.
-        # For page_visits: user_id can be NULL (anonymous visitors) — use OR to keep
-        # anonymous rows while still excluding known dev/logged-in accounts.
-        # SQL: WHERE user_id IS NULL OR user_id NOT IN (dev_ids)
+        # Exclude dev accounts from purchases
         if dev_user_ids:
-            dev_ids_str = ",".join(dev_user_ids)
-            landing_q  = landing_q.or_(f"user_id.is.null,user_id.not.in.({dev_ids_str})")
-            result_q   = result_q.or_(f"user_id.is.null,user_id.not.in.({dev_ids_str})")
             purchase_q = purchase_q.not_.in_("user_id", dev_user_ids)
 
         # All 3 queries in parallel — non-blocking
@@ -540,10 +535,13 @@ async def get_funnel_stats():
                 return res.count
             return len(res.data) if res.data else 0
 
+        # Unique paid users
+        unique_buyers = set(p["user_id"] for p in (purchases.data or []) if p.get("user_id"))
+
         return {
             "landing": extract_count(landing),
             "result": extract_count(result),
-            "purchases": extract_count(purchases)
+            "purchases": len(unique_buyers)
         }
     except Exception as e:
         print(f"Funnel Stats Error: {str(e)}")
