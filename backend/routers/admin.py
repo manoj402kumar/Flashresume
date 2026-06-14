@@ -96,9 +96,17 @@ async def get_admin_stats():
         else:
             stats["total_downloads"] = len(downloads.data) if downloads.data else 0
 
-        # Paid Subscribers = unique users who paid at least once (regardless of current credits)
-        active_user_ids = set(p["user_id"] for p in (payments_res.data or []) if p.get("user_id"))
-        stats["active_subs"] = len(active_user_ids)
+        # Active Subscriptions = unique users who paid at least once AND have > 0 credits
+        active_user_ids = list(set(p["user_id"] for p in (payments_res.data or []) if p.get("user_id")))
+        users_with_credits = set()
+        if active_user_ids:
+            chunk_size = 200
+            for i in range(0, len(active_user_ids), chunk_size):
+                chunk = active_user_ids[i:i+chunk_size]
+                b_res = await _sb(supabase.table("credit_buckets").select("user_id").in_("user_id", chunk).gt("remaining_credits", 0))
+                for b in (b_res.data or []):
+                    users_with_credits.add(b["user_id"])
+        stats["active_subs"] = len(users_with_credits)
 
         if hasattr(users_res, 'count') and users_res.count is not None:
             stats["total_logins"] = users_res.count
@@ -187,21 +195,44 @@ async def get_analytics_revenue(
         # all respect the selected time window consistently.
         total_revenue = sum(p.get("amount", 0) for p in payments) // 100
 
-        # Active Subscriptions = distinct users who made a payment in this period
-        active_user_ids = set(p["user_id"] for p in payments if p.get("user_id"))
-        active_subscriptions = len(active_user_ids)
+        # Active Subscriptions = distinct users who made a payment in this period AND have > 0 credits
+        active_user_ids = list(set(p["user_id"] for p in payments if p.get("user_id")))
+        users_with_credits = set()
+        if active_user_ids:
+            chunk_size = 200
+            for i in range(0, len(active_user_ids), chunk_size):
+                chunk = active_user_ids[i:i+chunk_size]
+                b_res = await _sb(supabase.table("credit_buckets").select("user_id").in_("user_id", chunk).gt("remaining_credits", 0))
+                for b in (b_res.data or []):
+                    users_with_credits.add(b["user_id"])
+        
+        active_subscriptions = len(users_with_credits)
 
-        # Breakdown: count purchases and revenue per plan from payments
+        # Breakdown: count active users per plan and total revenue per plan
         plan_counts = {"regular": 0, "student": 0, "pay_per_use": 0}
         plan_mrr = {"regular": 0, "student": 0, "pay_per_use": 0}
 
+        # 1. Calculate unique active users per plan
+        # Map each active user to their most recent plan in this time window
+        user_latest_plan = {}
+        sorted_payments = sorted(payments, key=lambda x: x.get("created_at", ""), reverse=True)
+        for p in sorted_payments:
+            uid = p.get("user_id")
+            if uid and uid not in user_latest_plan:
+                user_latest_plan[uid] = p.get("plan_type")
+
+        for uid in users_with_credits:
+            ptype = user_latest_plan.get(uid)
+            if ptype:
+                if ptype in plan_counts:
+                    plan_counts[ptype] += 1
+                else:
+                    plan_counts[ptype] = 1
+
+        # 2. Calculate Total MRR/Revenue (sum all successful transactions, regardless of credit status)
         for p in payments:
             ptype = p.get("plan_type")
             amt = p.get("amount", 0) // 100
-            if ptype in plan_counts:
-                plan_counts[ptype] += 1
-            else:
-                plan_counts[ptype] = 1
             if ptype in plan_mrr:
                 plan_mrr[ptype] += amt
             else:
