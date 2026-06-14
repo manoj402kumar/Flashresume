@@ -35,7 +35,7 @@ export default function FunnelChart() {
     },
     {
       id: "result",
-      label: "Reached /result",
+      label: "Reached /result or /scratch",
       icon: FileText,
       value: stats.result,
       color: "from-[#12f8d7] to-[#0de8cc]",

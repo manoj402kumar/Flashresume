@@ -591,6 +591,25 @@ export default function ResultPage() {
   // Check if user has already paid and listen for auth state changes
   useEffect(() => {
     checkAccess();
+
+    // Track /result page visit for funnel analytics (mirrors landing page tracking)
+    // Fire-and-forget — never blocks the user, production only
+    if (process.env.NODE_ENV === "production") {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+      const urlParams = new URLSearchParams(window.location.search);
+      const sessionId = urlParams.get("session_id") || null;
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        fetch(`${apiUrl}/api/analytics/track-visit`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            page_type: "result",
+            session_id: sessionId,
+            user_id: session?.user?.id ?? null,
+          }),
+        }).catch(() => {}); // silent fail — never block the user
+      });
+    }
     
     const { data: authListener } = supabase.auth.onAuthStateChange((event) => {
       if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED") {

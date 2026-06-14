@@ -150,8 +150,14 @@ export default function AdminPage() {
     channel
       .on("presence", { event: "sync" }, () => {
         const state = channel.presenceState();
-        // Count unique users
-        setOnlineUsers(Object.keys(state).length);
+        // Count unique users by their anonId payload, so multiple tabs = 1 user
+        const uniqueUsers = new Set();
+        Object.values(state).forEach((presences: any) => {
+          presences.forEach((p: any) => {
+            if (p.user) uniqueUsers.add(p.user);
+          });
+        });
+        setOnlineUsers(uniqueUsers.size);
       })
       .subscribe();
 

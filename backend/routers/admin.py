@@ -71,11 +71,16 @@ async def get_admin_stats():
         if dev_user_ids:
             downloads_query = downloads_query.not_.in_("user_id", dev_user_ids)
 
-        visitors_query = supabase.table("page_visits").select("id", count="exact").gte("visited_at", "2026-05-28T00:00:00Z")
+        visitors_query = supabase.table("page_visits").select("id", count="exact").eq("page_type", "landing").gte("visited_at", "2026-05-28T00:00:00Z")
         if dev_user_ids:
-            visitors_query = visitors_query.not_.in_("user_id", dev_user_ids)
+            # Use OR to keep anonymous rows (user_id IS NULL) while excluding known dev accounts.
+            # NOT IN alone silently drops all NULL rows in SQL — this is the correct fix.
+            dev_ids_str = ",".join(dev_user_ids)
+            visitors_query = visitors_query.or_(f"user_id.is.null,user_id.not.in.({dev_ids_str})")
 
-        failed_query = supabase.table("payments").select("id", count="exact").eq("status", "failed").gte("created_at", "2026-05-28T00:00:00Z")
+        one_hour_ago = (datetime.now(timezone.utc) - timedelta(hours=1)).isoformat()
+        failed_filter = f"status.eq.failed,and(status.eq.pending,created_at.lte.{one_hour_ago})"
+        failed_query = supabase.table("payments").select("id", count="exact").or_(failed_filter).gte("created_at", "2026-05-28T00:00:00Z")
         if dev_user_ids:
             failed_query = failed_query.not_.in_("user_id", dev_user_ids)
 
@@ -96,17 +101,9 @@ async def get_admin_stats():
         else:
             stats["total_downloads"] = len(downloads.data) if downloads.data else 0
 
-        # Active Subscriptions = unique users who paid at least once AND have > 0 credits
-        active_user_ids = list(set(p["user_id"] for p in (payments_res.data or []) if p.get("user_id")))
-        users_with_credits = set()
-        if active_user_ids:
-            chunk_size = 200
-            for i in range(0, len(active_user_ids), chunk_size):
-                chunk = active_user_ids[i:i+chunk_size]
-                b_res = await _sb(supabase.table("credit_buckets").select("user_id").in_("user_id", chunk).gt("remaining_credits", 0))
-                for b in (b_res.data or []):
-                    users_with_credits.add(b["user_id"])
-        stats["active_subs"] = len(users_with_credits)
+        # Paid Subscribers = unique users who paid at least once (regardless of current credits)
+        active_user_ids = set(p["user_id"] for p in (payments_res.data or []) if p.get("user_id"))
+        stats["active_subs"] = len(active_user_ids)
 
         if hasattr(users_res, 'count') and users_res.count is not None:
             stats["total_logins"] = users_res.count
@@ -175,8 +172,7 @@ async def get_analytics_revenue(
         dev_users_res = await _sb(supabase.table("users").select("id").in_("email", DEV_EMAILS))
         dev_user_ids = [u["id"] for u in (dev_users_res.data or [])]
 
-        # Fetch Payments — include user_id so we can derive all user-level
-        # metrics (active subs, breakdown counts) from one time-filtered source.
+        # Fetch Payments — time-filtered, for revenue totals, trend, and breakdown.
         payments_query = supabase.table("payments").select("amount, plan_type, created_at, user_id").eq("status", "success")
         if dt_start:
             payments_query = payments_query.gte("created_at", dt_start.isoformat())
@@ -187,52 +183,47 @@ async def get_analytics_revenue(
         if dev_user_ids:
             payments_query = payments_query.not_.in_("user_id", dev_user_ids)
 
-        payments_res = await _sb(payments_query)
+        # Active Subscriptions — unique users who currently have credits > 0.
+        # Source of truth: credit_buckets table (remaining_credits column).
+        # This matches exactly what result/page.tsx reads to check user access.
+        # status IN ('active', 'queued', 'fallback') AND remaining_credits > 0
+        # Runs in PARALLEL with payments query — zero added latency.
+        active_users_query = (
+            supabase.table("credit_buckets")
+            .select("user_id")
+            .in_("status", ["active", "queued", "fallback"])
+            .gt("remaining_credits", 0)
+        )
+        if dev_user_ids:
+            active_users_query = active_users_query.not_.in_("user_id", dev_user_ids)
+
+        payments_res, active_users_res = await asyncio.gather(
+            _sb(payments_query),
+            _sb(active_users_query),
+        )
         payments = payments_res.data or []
 
-        # Calculate Totals — all derived from the same time-filtered payments.
-        # This ensures Active Subscriptions, Breakdown counts, and Total Purchases
-        # all respect the selected time window consistently.
+        # Total Revenue — sum of all successful payments in the selected time window
         total_revenue = sum(p.get("amount", 0) for p in payments) // 100
 
-        # Active Subscriptions = distinct users who made a payment in this period AND have > 0 credits
-        active_user_ids = list(set(p["user_id"] for p in payments if p.get("user_id")))
-        users_with_credits = set()
-        if active_user_ids:
-            chunk_size = 200
-            for i in range(0, len(active_user_ids), chunk_size):
-                chunk = active_user_ids[i:i+chunk_size]
-                b_res = await _sb(supabase.table("credit_buckets").select("user_id").in_("user_id", chunk).gt("remaining_credits", 0))
-                for b in (b_res.data or []):
-                    users_with_credits.add(b["user_id"])
-        
-        active_subscriptions = len(users_with_credits)
+        # Count DISTINCT users (one user can have multiple bucket rows)
+        active_subscriptions = len(set(
+            r["user_id"] for r in (active_users_res.data or []) if r.get("user_id")
+        ))
 
-        # Breakdown: count active users per plan and total revenue per plan
+        # Breakdown: count purchases and revenue per plan from payments
         plan_counts = {"regular": 0, "student": 0, "pay_per_use": 0}
         plan_mrr = {"regular": 0, "student": 0, "pay_per_use": 0}
 
-        # 1. Calculate unique active users per plan
-        # Map each active user to their most recent plan in this time window
-        user_latest_plan = {}
-        sorted_payments = sorted(payments, key=lambda x: x.get("created_at", ""), reverse=True)
-        for p in sorted_payments:
-            uid = p.get("user_id")
-            if uid and uid not in user_latest_plan:
-                user_latest_plan[uid] = p.get("plan_type")
-
-        for uid in users_with_credits:
-            ptype = user_latest_plan.get(uid)
-            if ptype:
-                if ptype in plan_counts:
-                    plan_counts[ptype] += 1
-                else:
-                    plan_counts[ptype] = 1
-
-        # 2. Calculate Total MRR/Revenue (sum all successful transactions, regardless of credit status)
+        # Calculate total transactions per plan and Total MRR/Revenue
         for p in payments:
             ptype = p.get("plan_type")
             amt = p.get("amount", 0) // 100
+            if ptype in plan_counts:
+                plan_counts[ptype] += 1
+            else:
+                plan_counts[ptype] = 1
+                
             if ptype in plan_mrr:
                 plan_mrr[ptype] += amt
             else:
@@ -449,17 +440,23 @@ async def get_analytics_downloads(
                     output = s.get("generated_output") or {}
                     cat = output.get("_category")
                     if not cat:
-                        # Legacy fallback: check score
+                        # Legacy fallback: no _category field on old sessions.
+                        # ats_score_after > 0 means a JD was used → jd_optimized.
+                        # ats_score_after = 0 means no JD → no_jd (First Resume).
+                        # There is no true "unknown" — every session is one of the 3 categories.
                         score = output.get("ats_score_after", 0)
-                        cat = "jd_optimized" if score > 0 else "unknown"
+                        cat = "jd_optimized" if score > 0 else "no_jd"
                     session_categories[s["id"]] = cat
 
-        category_counts = {"jd_optimized": 0, "no_jd": 0, "no_changes": 0, "unknown": 0}
+        # No "unknown" category — every download belongs to one of the 3 real categories.
+        # Downloads with no session_id are classified as no_jd (no JD/session context).
+        category_counts = {"jd_optimized": 0, "no_jd": 0, "no_changes": 0}
         device_counts = {"desktop": 0, "mobile": 0}
         
         for d in downloads:
             sid = d.get("session_id")
-            cat = session_categories.get(sid, "unknown") if sid else "unknown"
+            # No session_id = no JD was used → no_jd (First Resume)
+            cat = session_categories.get(sid, "no_jd") if sid else "no_jd"
             if cat in category_counts: category_counts[cat] += 1
             else: category_counts[cat] = 1
             

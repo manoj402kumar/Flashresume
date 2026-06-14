@@ -370,6 +370,24 @@ export default function ScratchPage() {
   // Check if user has already paid and listen for auth state changes
   useEffect(() => {
     checkAccess();
+
+    // Track /scratch page visit under page_type='result' for funnel analytics.
+    // Both /result and /scratch represent the same funnel step: "reached the resume editor".
+    // Fire-and-forget — never blocks the user, production only.
+    if (process.env.NODE_ENV === "production") {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        fetch(`${apiUrl}/api/analytics/track-visit`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            page_type: "result",
+            session_id: null,
+            user_id: session?.user?.id ?? null,
+          }),
+        }).catch(() => {}); // silent fail — never block the user
+      });
+    }
     
     const { data: authListener } = supabase.auth.onAuthStateChange((event) => {
       if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED") {

@@ -78,8 +78,8 @@ function KPICard({ kpi, delay }: { kpi: KPI; delay: number }) {
 }
 
 export default function KPICards({ onlineUsers, stats }: { onlineUsers: number, stats?: { revenue: number, downloads: number, subscribers: number, totalLogins: number, totalVisitors: number, failedPayments: number, peakConcurrentUsers: number, peakTimestamp: string | null } }) {
-  
-  const formattedPeakTime = stats?.peakTimestamp 
+
+  const formattedPeakTime = stats?.peakTimestamp
     ? new Date(stats.peakTimestamp).toLocaleString('en-IN', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
     : 'No data';
 
@@ -127,7 +127,7 @@ export default function KPICards({ onlineUsers, stats }: { onlineUsers: number, 
       iconBg: "bg-amber-50",
       delta: "Active",
       deltaPositive: true,
-      note: "unique paying users",
+      note: "Total unique paid users",
     },
     {
       label: "Total Downloads",

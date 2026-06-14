@@ -495,6 +495,24 @@ async def razorpay_webhook(request: Request):
                     
                 await sb(lambda: supabase.table("subscriptions").insert(sub_data).execute())
                 
+        elif event == "payment.failed":
+            payment_entity = payload.get('payload', {}).get('payment', {}).get('entity', {})
+            order_id = payment_entity.get('order_id')
+            payment_id = payment_entity.get('id')
+            
+            if not order_id or not supabase:
+                return {"status": "ignored"}
+                
+            await sb(
+                lambda: supabase.table("payments").update({
+                    "status": "failed",
+                    "razorpay_payment_id": payment_id
+                })
+                .eq("razorpay_order_id", order_id)
+                .eq("status", "pending")
+                .execute()
+            )
+            
         return {"status": "ok"}
     except razorpay.errors.SignatureVerificationError:
         raise HTTPException(status_code=400, detail="Invalid webhook signature")

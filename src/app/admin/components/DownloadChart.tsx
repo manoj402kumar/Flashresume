@@ -19,7 +19,6 @@ interface AnalyticsData {
     jd_optimized: number;
     no_jd: number;
     no_changes: number;
-    unknown: number;
   };
   downloads_by_device?: {
     desktop: number;
@@ -102,8 +101,8 @@ export default function DownloadChart() {
                   key={f.id}
                   onClick={() => setTimeFilter(f.id)}
                   className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${timeFilter === f.id
-                      ? "bg-white text-[#006859] shadow-sm"
-                      : "text-[#595c5d] hover:text-[#2c2f30]"
+                    ? "bg-white text-[#006859] shadow-sm"
+                    : "text-[#595c5d] hover:text-[#2c2f30]"
                     }`}
                 >
                   {f.label}
@@ -164,7 +163,7 @@ export default function DownloadChart() {
       {dByPlan && (
         <div className="pt-2">
           <h3 className="text-sm font-bold text-[#2c2f30] mb-3">Downloads by Plan</h3>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
             <div className="bg-[#eff1f2]/50 rounded-xl p-3 border-l-4 border-[#6750A4]">
               <div className="text-xs text-[#595c5d] mb-1">Standard</div>
               <div className="font-bold text-[#2c2f30]">{dByPlan.regular.toLocaleString("en-IN")}</div>
@@ -177,6 +176,10 @@ export default function DownloadChart() {
               <div className="text-xs text-[#595c5d] mb-1">One-Time</div>
               <div className="font-bold text-[#2c2f30]">{dByPlan.pay_per_use.toLocaleString("en-IN")}</div>
             </div>
+            <div className="bg-[#eff1f2]/50 rounded-xl p-3 border-l-4 border-slate-400">
+              <div className="text-xs text-[#595c5d] mb-1">Free</div>
+              <div className="font-bold text-[#2c2f30]">{(dByPlan.free ?? 0).toLocaleString("en-IN")}</div>
+            </div>
           </div>
         </div>
       )}
@@ -186,14 +189,17 @@ export default function DownloadChart() {
         <div className="pt-2">
           <h3 className="text-sm font-bold text-[#2c2f30] mb-3">Downloads by AI Mode</h3>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+            {/* jd_optimized: user chose "JD Optimize" mode and provided a job description */}
             <div className="bg-[#eff1f2]/50 rounded-xl p-3 border-l-4 border-[#006859]">
               <div className="text-xs text-[#595c5d] mb-1">JD Optimized</div>
               <div className="font-bold text-[#2c2f30]">{data.downloads_by_category.jd_optimized.toLocaleString("en-IN")}</div>
             </div>
+            {/* no_changes: user chose "Self Edit" mode — no AI optimization applied */}
             <div className="bg-[#eff1f2]/50 rounded-xl p-3 border-l-4 border-amber-500">
-              <div className="text-xs text-[#595c5d] mb-1">No Changes(manual edits)</div>
+              <div className="text-xs text-[#595c5d] mb-1">Self Edit (no AI)</div>
               <div className="font-bold text-[#2c2f30]">{data.downloads_by_category.no_changes.toLocaleString("en-IN")}</div>
             </div>
+            {/* no_jd: user went through generate flow but submitted with no job description */}
             <div className="bg-[#eff1f2]/50 rounded-xl p-3 border-l-4 border-blue-500">
               <div className="text-xs text-[#595c5d] mb-1">First Resume</div>
               <div className="font-bold text-[#2c2f30]">{data.downloads_by_category.no_jd.toLocaleString("en-IN")}</div>

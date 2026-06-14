@@ -170,6 +170,7 @@ export default function RevenuePanel() {
           <div className="text-3xl font-bold font-headline text-[#2c2f30] mt-2">
             {data?.active_subscriptions || 0}
           </div>
+          <div className="text-xs text-[#595c5d]/70 mt-1">Users with credits &gt; 0 right now</div>
         </div>
         <div className="bg-surface-container-low rounded-2xl p-5 border border-[#eff1f2] flex flex-col justify-between">
           <div className="text-sm font-medium text-[#595c5d]">Total Purchases</div>
