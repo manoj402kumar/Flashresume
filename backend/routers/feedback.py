@@ -103,8 +103,8 @@ async def increment_download(body: IncrementDownloadRequest):
                 "session_id": body.session_id or None,
                 "device_type": body.device_type,
             }).execute())
-        except Exception:
-            pass  # UNIQUE constraint violation = already logged, safe to ignore
+        except Exception as e:
+            print(f"Download log failed: {e}")  # ⚠️ Logs real DB/Network crashes to Render!
 
         try:
             # Count total platform downloads (across all users) and this user's total
