@@ -12,7 +12,7 @@ interface Feedback {
   users?: { email: string };
 }
 
-export default function FeedbackPanel() {
+export default function FeedbackPanel({ totalDownloads = 0 }: { totalDownloads?: number }) {
   const [feedbacks, setFeedbacks] = useState<Feedback[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -35,12 +35,21 @@ export default function FeedbackPanel() {
   const avgRating = feedbacks.length > 0 ? (feedbacks.reduce((sum, f) => sum + f.rating, 0) / feedbacks.length).toFixed(1) : "—";
   const fiveStars = feedbacks.length > 0 ? Math.round((feedbacks.filter(f => f.rating === 5).length / feedbacks.length) * 100) + "%" : "—";
 
+  const remainder = totalDownloads % 5;
+  const nextFeedbackIn = remainder === 0 ? 0 : 5 - remainder;
+
   return (
     <div className="bg-white rounded-[1.5rem] p-6 border border-[#eff1f2] shadow-sm">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h2 className="font-headline text-xl font-bold text-[#2c2f30]">User Feedback</h2>
           <p className="text-sm text-[#595c5d]">Ratings, comments & timestamps</p>
+        </div>
+        <div className={`border rounded-lg px-3 py-1.5 text-right ${nextFeedbackIn === 0 ? 'bg-yellow-50 border-yellow-200' : 'bg-[#12f8d7]/10 border-[#006859]/20'}`}>
+          <p className={`text-[10px] font-bold uppercase tracking-wider ${nextFeedbackIn === 0 ? 'text-yellow-700' : 'text-[#006859]'}`}>Next Global Trigger</p>
+          <p className={`text-sm font-bold ${nextFeedbackIn === 0 ? 'text-yellow-800' : 'text-[#2c2f30]'}`}>
+            {nextFeedbackIn === 0 ? "🔔 Next Download!" : `In ${nextFeedbackIn} ${nextFeedbackIn === 1 ? 'download' : 'downloads'}`}
+          </p>
         </div>
       </div>
 

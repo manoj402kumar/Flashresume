@@ -293,7 +293,7 @@ export default function AdminPage() {
 
           {/* -- Feedback ------------------------------------------- */}
           <section id="feedback" ref={setRef("feedback")}>
-            <FeedbackPanel />
+            <FeedbackPanel totalDownloads={stats.downloads} />
           </section>
 
         </main>

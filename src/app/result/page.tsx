@@ -733,7 +733,7 @@ export default function ResultPage() {
 
       // 4. Now register the timeout BEFORE the OS fully freezes the thread
       if (shouldShowFeedback) {
-        setTimeout(() => setShowFeedback(true), 10000);
+        setTimeout(() => setShowFeedback(true), 5000);
       }
     } catch (error) {
       console.error("PDF generation failed:", error);
