@@ -553,9 +553,12 @@ export default function ScratchPage() {
           
           if (res.ok) {
             const data = await res.json();
-            const userDownloads = data.user_total_downloads;
-            const milestones = [1, 5, 10, 25];
-            if (milestones.includes(userDownloads)) {
+            const isFirstEverDownload = data.user_total_downloads === 1;
+            const isGlobalMilestone = data.total_platform_downloads > 0 && data.total_platform_downloads % 5 === 0;
+            const feedbackKey = `fr_feedback_shown_${sessionGuid}`;
+
+            if ((isFirstEverDownload || isGlobalMilestone) && !sessionStorage.getItem(feedbackKey)) {
+              sessionStorage.setItem(feedbackKey, "true");
               shouldShowFeedback = true;
             }
           }
