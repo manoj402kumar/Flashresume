@@ -15,5 +15,13 @@ else:
     supabase = None
 
 async def sb(query_lambda):
-    """Wraps any synchronous Supabase query in asyncio.to_thread."""
-    return await asyncio.to_thread(query_lambda)
+    """Wraps any synchronous Supabase query in asyncio.to_thread with auto-reconnect."""
+    try:
+        return await asyncio.to_thread(query_lambda)
+    except Exception as e:
+        if "ConnectionTerminated" in str(e) or "error_code:9" in str(e):
+            print("[Supabase] HTTP/2 Connection dropped. Reconnecting...")
+            global supabase
+            supabase = create_client(_url, _key)
+            return await asyncio.to_thread(query_lambda)
+        raise
