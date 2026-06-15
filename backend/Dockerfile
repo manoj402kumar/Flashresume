@@ -15,4 +15,4 @@ EXPOSE 8000
 
 # Run Gunicorn with Uvicorn workers and worker-cycling to prevent Out Of Memory (OOM) on free tiers
 # --max-requests 100 tells it to silently restart the worker every 100 requests to clear any memory leaks
-CMD gunicorn main:app -w 2 -k uvicorn.workers.UvicornWorker --max-requests 100 --max-requests-jitter 20 --bind 0.0.0.0:${PORT:-8000}
+CMD gunicorn main:app -w 1 -k uvicorn.workers.UvicornWorker --max-requests 100 --max-requests-jitter 20 --bind 0.0.0.0:${PORT:-8000}
