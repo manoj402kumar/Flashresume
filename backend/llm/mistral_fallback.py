@@ -21,7 +21,10 @@ _client_r3 = None
 def _get_client_r1():
     global _client_r1
     if _client_r1 is None:
-        from mistralai.client import Mistral
+        try:
+            from mistralai import Mistral
+        except ImportError:
+            from mistralai.client import Mistral
         api_key = os.getenv("MISTRAL_R1_API_KEY")
         if not api_key:
             return None
@@ -32,7 +35,10 @@ def _get_client_r1():
 def _get_client_r2():
     global _client_r2
     if _client_r2 is None:
-        from mistralai.client import Mistral
+        try:
+            from mistralai import Mistral
+        except ImportError:
+            from mistralai.client import Mistral
         api_key = os.getenv("MISTRAL_R2_API_KEY")
         if not api_key:
             return None
@@ -43,7 +49,10 @@ def _get_client_r2():
 def _get_client_r3():
     global _client_r3
     if _client_r3 is None:
-        from mistralai.client import Mistral
+        try:
+            from mistralai import Mistral
+        except ImportError:
+            from mistralai.client import Mistral
         api_key = os.getenv("MISTRAL_R3_API_KEY")
         if not api_key:
             return None
