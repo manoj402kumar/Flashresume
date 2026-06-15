@@ -2,7 +2,6 @@ import asyncio
 import time
 from .deepseek_direct import call_single_deepseek_r1, call_single_deepseek_r2
 from .mistral_fallback import call_single_mistral_r1, call_single_mistral_r2, call_single_mistral_r3
-from .groq_fallback import call_single_groq_r1, call_single_groq_r2
 from .nvidia_fallback import call_single_nvidia_r1, call_single_nvidia_r2
 from .cloudflare_fallback import call_single_cloudflare_r1, call_single_cloudflare_r2
 from supabase_client import supabase
@@ -102,8 +101,6 @@ POOL_2 = [
     ("mistral",    "mistral-small-2506",                           "Key 1"),
     ("mistral",    "mistral-small-2506",                           "Key 2"),
     ("mistral",    "mistral-small-2506",                           "Key 3"),
-    ("groq",       "llama-3.3-70b-versatile",                      "Key 1"),
-    ("groq",       "llama-3.3-70b-versatile",                      "Key 2"),
     ("cloudflare", "@cf/meta/llama-3.3-70b-instruct-fp8-fast",     "Key 1"),
     ("cloudflare", "@cf/meta/llama-3.3-70b-instruct-fp8-fast",     "Key 2"),
     ("nvidia",     "mistralai/ministral-14b-instruct-2512",        "Key 1"),
@@ -124,8 +121,6 @@ _CALLERS = {
     ("mistral",    "Key 1"): call_single_mistral_r1,
     ("mistral",    "Key 2"): call_single_mistral_r2,
     ("mistral",    "Key 3"): call_single_mistral_r3,
-    ("groq",       "Key 1"): call_single_groq_r1,
-    ("groq",       "Key 2"): call_single_groq_r2,
     ("nvidia",     "Key 1"): call_single_nvidia_r1,
     ("nvidia",     "Key 2"): call_single_nvidia_r2,
     ("cloudflare", "Key 1"): call_single_cloudflare_r1,
@@ -171,9 +166,7 @@ def _get_provider_for_model(model_id: str) -> str:
         return "cloudflare"
     if base_model_id.startswith("mistralai/") or base_model_id.startswith("nvidia/") or base_model_id.startswith("meta/"):
         return "nvidia"
-    _GROQ_MODELS = {"llama-3.3-70b-versatile"}
-    if base_model_id in _GROQ_MODELS:
-        return "groq"
+
     return "mistral"  # fallback
 
 async def call_llm_balanced(prompt: str, is_r1: bool, preferred_model: str = "", no_ai_changes: bool = False) -> dict:

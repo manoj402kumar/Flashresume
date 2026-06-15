@@ -36,7 +36,7 @@ API runs on [http://localhost:8000](http://localhost:8000)
 ## 🎯 Core Features
 
 - **3-Layer PDF Parsing**: pdfplumber → PyMuPDF → Tesseract OCR
-- **4-Provider LLM Fallback**: Gemini → Mistral → Groq → Cerebras (99.9% uptime)
+- **Multi-Provider LLM Fallback**: DeepSeek → Mistral → NVIDIA → Cloudflare (99.9% uptime)
 - **Smart ATS Optimization**: Preserves good content, enhances weak content
 - **MAX 2 Projects**: Enforced at prompt + code + schema levels
 - **Authentic Metrics**: Only countable, technical, or measured metrics
@@ -55,10 +55,10 @@ API runs on [http://localhost:8000](http://localhost:8000)
 
 ### Backend
 - FastAPI + Python 3.10+
-- Google Gemini API (`gemini-2.5-flash`)
-- Mistral AI (`mistral-medium-latest`)
-- Groq (`llama-3.3-70b-versatile`)
-- Cerebras (`llama-3.3-70b`)
+- DeepSeek API
+- Mistral AI
+- NVIDIA API
+- Cloudflare Workers AI
 
 ---
 
@@ -66,10 +66,10 @@ API runs on [http://localhost:8000](http://localhost:8000)
 
 ### Backend `.env`
 ```bash
-GEMINI_API_KEY=your_gemini_key
+DEEPSEEK_API_KEY=your_deepseek_key
 MISTRAL_API_KEY=your_mistral_key
-GROQ_API_KEY=your_groq_key
-CEREBRAS_API_KEY=your_cerebras_key
+NVIDIA_API_KEY=your_nvidia_key
+CLOUDFLARE_API_KEY=your_cloudflare_key
 
 # Optional: set preferred LLM provider
 PREFERRED_LLM=gemini
@@ -99,10 +99,9 @@ NEXT_PUBLIC_API_URL=http://localhost:8000
 
 ```
 Request
-  └─► Gemini (gemini-2.5-flash → gemini-2.5-flash-lite → gemma-3-27b)
-        └─► Mistral (mistral-medium → mistral-large → open-mistral-nemo)
-              └─► Groq (llama-3.3-70b → llama-4-scout → qwen-qwq-32b → llama3-8b)
-                    └─► Cerebras (llama-3.3-70b → qwen-3-32b → llama3.1-8b)
+        └─► Mistral (mistral-medium → mistral-large)
+              └─► NVIDIA (mistral-nemotron → ministral-14b)
+                    └─► Cloudflare (llama-3.3-70b-fast)
 ```
 
 Set `PREFERRED_LLM=mistral` (or any provider) in `.env` to change primary order.

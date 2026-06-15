@@ -25,7 +25,7 @@ interface ProviderStats {
 
 const PROVIDER_META: Record<string, { label: string; color: string; bg: string }> = {
   gemini:     { label: "Gemini",     color: "text-[#006859]",  bg: "bg-[#12f8d7]/15" },
-  groq:       { label: "Groq",       color: "text-purple-600", bg: "bg-purple-50" },
+
   mistral:    { label: "Mistral",    color: "text-orange-600", bg: "bg-orange-50" },
   cerebras:   { label: "Cerebras",   color: "text-blue-600",   bg: "bg-blue-50" },
   cloudflare: { label: "Cloudflare", color: "text-rose-600",   bg: "bg-rose-50" },

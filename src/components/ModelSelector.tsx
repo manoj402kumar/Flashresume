@@ -43,10 +43,7 @@ export const MODELS = {
     { id: "mistral-small-latest|key1", name: "Mistral Small (Mistral) - Key 1" },
     { id: "mistral-small-latest|key2", name: "Mistral Small (Mistral) - Key 2" },
     { id: "mistral-small-latest|key3", name: "Mistral Small (Mistral) - Key 3" },
-    
-    // -- Groq --
-    { id: "llama-3.3-70b-versatile|key1", name: "Llama 3.3 70B (Groq) - Key 1" },
-    { id: "llama-3.3-70b-versatile|key2", name: "Llama 3.3 70B (Groq) - Key 2" },
+
 
     // -- Cloudflare --
     { id: "@cf/meta/llama-3.3-70b-instruct-fp8-fast|key1", name: "Llama 3.3 70B Fast (Cloudflare) - Key 1" },
