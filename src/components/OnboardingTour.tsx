@@ -223,12 +223,25 @@ export default function OnboardingTour() {
   // ── nav ───────────────────────────────────────────────────────────────────
   const handleNext = () => step < STEPS.length - 1 ? setStep(s => s + 1) : finish();
   const handlePrev = () => { if (step > 0) setStep(s => s - 1); };
-  const finish = () => { localStorage.setItem(STORAGE_KEY, "true"); setActive(false); };
+  const finish = () => {
+    localStorage.setItem(STORAGE_KEY, "true");
+    setActive(false);
+    // Scroll the upload card into full view (clear fixed navbar of ~80px)
+    setTimeout(() => {
+      const el = document.getElementById("upload-card");
+      if (el) {
+        const y = el.getBoundingClientRect().top + window.scrollY - 100;
+        window.scrollTo({ top: Math.max(0, y), behavior: "smooth" });
+      }
+    }, 80); // slight delay so the overlay fades out first
+  };
 
   if (!active) return null;
 
   const current = STEPS[step];
-  const isCentred = cardLayout.mode === "center";
+  // Derive centred directly from the step definition so there's no 1-frame lag
+  // where cardLayout still holds the previous step's anchored position.
+  const isCentred = !current?.targetId;
   const DARK = "rgba(0,0,0,0.80)";
 
   return (
@@ -253,41 +266,40 @@ export default function OnboardingTour() {
           {active && <div className="fixed inset-0 z-[9001]" onClick={e => e.stopPropagation()} />}
 
           {/* ── Tour card ────────────────────────────────────────────────── */}
-          <AnimatePresence>
-            {isCentred && (
+          <AnimatePresence mode="wait">
+            {isCentred ? (
+              // Steps with no targetId → card floats centred in the viewport.
+              // No layoutId here — absolute/fixed coordinate systems don't mix
+              // with flexbox centering and cause the card to land in the wrong place.
               <motion.div
                 key="centered-wrapper"
-                initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                initial={{ opacity: 0, scale: 0.95, y: 16 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 8 }}
+                transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
                 className="fixed inset-0 z-[9010] flex items-center justify-center pointer-events-none px-4"
               >
-                <motion.div 
-                  layoutId="tour-card-flyer" 
-                  className="pointer-events-auto w-full max-w-[400px] relative"
-                  initial={false}
-                  animate={{ top: "auto", left: "auto", bottom: "auto", right: "auto" }}
-                  transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-                >
+                <div className="pointer-events-auto w-full max-w-[400px] relative">
                   <TourCard current={current} step={step} total={STEPS.length}
                     isFirst={step === 0} isLast={step === STEPS.length - 1}
                     onNext={handleNext} onPrev={handlePrev} onSkip={finish} />
-                </motion.div>
+                </div>
               </motion.div>
-            )}
-
-            {!isCentred && (
+            ) : (
+              // Steps with a targetId → card is anchored next to the spotlight.
               <motion.div
                 key="anchored-wrapper"
                 initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                transition={{ duration: 0.25 }}
                 className="fixed inset-0 z-[9010] pointer-events-none"
               >
                 <motion.div
-                  layoutId="tour-card-flyer"
                   className="pointer-events-auto absolute"
                   initial={false}
                   animate={
                     cardLayout.mode === "right"
                       ? { top: cardLayout.top, left: cardLayout.left, width: DESKTOP_CARD_W }
-                      : { top: "auto", bottom: MOBILE_BOTTOM, left: 12, right: 12, width: "auto" }
+                      : { bottom: MOBILE_BOTTOM, left: 12, right: 12, width: "auto" }
                   }
                   transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
                 >

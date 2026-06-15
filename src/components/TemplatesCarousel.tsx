@@ -1,162 +1,352 @@
 "use client";
 
 import { motion } from "motion/react";
-import { ChevronLeft, ChevronRight, Sparkles, ExternalLink } from "lucide-react";
-import { useRef, useEffect, useState, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { X, ArrowRight, Sparkles, CheckCircle2 } from "lucide-react";
+import { useState } from "react";
 import Image from "next/image";
 
-const TEMPLATES = [
+const AFTER_TEMPLATES = [
   {
     id: "classic-a4",
-    name: "Classic Professional",
-    format: "US Letter",
+    name: "Template1",
     badge: "Most Popular",
     badgeColor: "from-[#006859] to-[#12f8d7]",
-    description: "Clean, ATS-optimized layout trusted by recruiters worldwide.",
-    tags: ["ATS-Friendly", "US Letter", "Clean Layout"],
-    accentColor: "#006859",
-    image: "/classic-a4.png", // <--- PLACE YOUR IMAGE IN public/classic-a4.png
+    image: "/classic-a4.png",
   },
   {
     id: "modern-letter",
-    name: "Modern Executive",
-    format: "A4",
+    name: "Template2",
     badge: "Editor's Pick",
     badgeColor: "from-violet-600 to-indigo-500",
-    description: "Premium design with bold typography for standout applications.",
-    tags: ["A4 Format", "Bold Design", "Modern"],
-    accentColor: "#7c3aed",
-    image: "/modern-letter.png", // <--- PLACE YOUR IMAGE IN public/modern-letter.png
+    image: "/modern-letter.png",
   },
 ];
 
-// (ResumePreviewCard removed in favor of next/image)
-
 export default function TemplatesCarousel() {
-  const router = useRouter();
-  const [activeIdx, setActiveIdx] = useState(0);
-  const [isAutoPlaying, setIsAutoPlaying] = useState(true);
-  const autoRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [activeAfter, setActiveAfter] = useState(0);
+  const [lightbox, setLightbox] = useState<{ src: string; alt: string } | null>(null);
 
-  const go = useCallback((dir: 1 | -1) => {
-    setActiveIdx((prev) => (prev + dir + TEMPLATES.length) % TEMPLATES.length);
-    setIsAutoPlaying(false);
-    // Resume auto-play after 4s of inactivity
-    if (autoRef.current) clearInterval(autoRef.current);
-    autoRef.current = setInterval(() => {
-      setActiveIdx((p) => (p + 1) % TEMPLATES.length);
-    }, 3500);
-  }, []);
-
-  useEffect(() => {
-    autoRef.current = setInterval(() => {
-      setActiveIdx((p) => (p + 1) % TEMPLATES.length);
-    }, 3500);
-    return () => { if (autoRef.current) clearInterval(autoRef.current); };
-  }, []);
-
-  const active = TEMPLATES[activeIdx];
+  const active = AFTER_TEMPLATES[activeAfter];
 
   return (
-    <section className="py-24 overflow-hidden">
-      <div className="max-w-7xl mx-auto px-0 sm:px-6">
+    <>
+      <section className="py-16 sm:py-24 overflow-hidden relative">
+        {/* Subtle background glow */}
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] bg-[#006859]/6 blur-[120px] rounded-full" />
+        </div>
 
-        {/* Section Header — matches Use Cases pattern */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="mb-16 text-center px-6 sm:px-0"
-        >
-          <span className="font-sans text-xs font-bold uppercase tracking-widest text-primary mb-3 block">
-            Designed to get you hired
-          </span>
-          <h2 className="font-headline text-4xl md:text-5xl font-bold text-on-background leading-tight">
-            The 1% Resumes
-          </h2>
-        </motion.div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 relative z-10">
 
-        {/* Carousel */}
-        <motion.div
-          initial={{ opacity: 0, y: 28 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.55, delay: 0.1 }}
-          className="relative max-w-5xl mx-auto flex items-center justify-center overflow-visible"
-        >
-          {/* Main card layout - centered with wide bounds for peek effect */}
-          <div className="relative w-full px-0 sm:px-20 flex items-center justify-center">
-            
-            {/* Preview side (Center Card Size) */}
-            <div className="relative w-[94%] sm:w-[96%] max-w-[420px] md:max-w-[500px] aspect-[1/1.414] mx-auto z-10">
-              
-              {/* Previous button - Overlaid on top of templates */}
-              <button
-                onClick={() => go(-1)}
-                aria-label="Previous template"
-                className="absolute left-2 sm:-left-6 lg:-left-12 top-1/2 -translate-y-1/2 z-30 w-10 h-10 lg:w-12 lg:h-12 rounded-full bg-[#006859]/90 sm:bg-[#006859] hover:bg-[#005145] active:scale-95 flex items-center justify-center shadow-xl shadow-[#006859]/30 transition-all duration-200 border-2 border-white/20 sm:border-white/10 backdrop-blur-sm sm:backdrop-blur-none"
+          {/* Section Header */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+            className="mb-10 sm:mb-16 text-center"
+          >
+            <span className="font-sans text-xs font-bold uppercase tracking-widest text-primary mb-3 block">
+              Designed to get you hired
+            </span>
+            <h2 className="font-headline text-4xl md:text-5xl font-bold text-on-background leading-tight">
+              The 1% Resumes
+            </h2>
+            <p className="text-on-surface-variant mt-3 text-base sm:text-lg max-w-xl mx-auto">
+              Flashresume makes in seconds.
+            </p>
+          </motion.div>
+
+          {/* Before vs After Layout */}
+          <div className="flex flex-col lg:flex-row items-stretch justify-center gap-4 sm:gap-6 lg:gap-0 max-w-5xl mx-auto">
+
+            {/* ── BEFORE card ─────────────────────────────────────── */}
+            <motion.div
+              initial={{ opacity: 0, x: -40 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
+              className="flex-1 flex flex-col min-w-0"
+            >
+              {/* Label */}
+              <div className="flex items-center gap-2 mb-3 px-1">
+                <div className="flex items-center gap-1.5 bg-red-500/10 border border-red-500/25 text-red-500 text-xs font-black uppercase tracking-widest px-3 py-1.5 rounded-full">
+                  <X className="w-3 h-3" strokeWidth={3} />
+                  Before Flashresume
+                </div>
+              </div>
+
+              {/* Card */}
+              <div
+                className="relative flex-1 bg-surface-container-lowest rounded-2xl sm:rounded-[1.75rem] border-2 border-red-500/20 shadow-[0_8px_40px_rgba(239,68,68,0.08)] overflow-hidden cursor-zoom-in group"
+                onClick={() => setLightbox({ src: "/before_resume.png", alt: "Before Flashresume" })}
               >
-                <ChevronLeft className="w-5 h-5 text-white font-black" strokeWidth={3} />
-              </button>
+                {/* Noise/red glow overlay */}
+                <div className="absolute inset-0 bg-gradient-to-b from-red-500/4 to-transparent pointer-events-none z-10" />
 
-              {/* Next button - Overlaid on top of templates */}
-              <button
-                onClick={() => go(1)}
-                aria-label="Next template"
-                className="absolute right-2 sm:-right-6 lg:-right-12 top-1/2 -translate-y-1/2 z-30 w-10 h-10 lg:w-12 lg:h-12 rounded-full bg-[#006859]/90 sm:bg-[#006859] hover:bg-[#005145] active:scale-95 flex items-center justify-center shadow-xl shadow-[#006859]/30 transition-all duration-200 border-2 border-white/20 sm:border-white/10 backdrop-blur-sm sm:backdrop-blur-none"
-              >
-                <ChevronRight className="w-5 h-5 text-white font-black" strokeWidth={3} />
-              </button>
-              {TEMPLATES.map((tmpl, i) => (
-                <motion.div
-                  key={tmpl.id}
-                  initial={false}
-                  animate={{
-                    opacity: i === activeIdx ? 1 : 0.4,
-                    scale: i === activeIdx ? 1 : 0.85,
-                    x: i === activeIdx ? "0%" : i < activeIdx ? "-85%" : "85%",
-                    zIndex: i === activeIdx ? 20 : 0
-                  }}
-                  transition={{ duration: 0.5, ease: [0.32, 0.72, 0, 1] }}
-                  className="absolute inset-0"
-                  style={{ pointerEvents: i === activeIdx ? "auto" : "none" }}
-                >
-                  {/* Resume card */}
-                  <div className="h-full bg-surface-container-lowest rounded-[1.25rem] sm:rounded-[2rem] border border-surface-container-high shadow-[0_20px_60px_rgba(0,104,89,0.10)] p-0 sm:p-4 flex flex-col relative overflow-hidden">
-                    {/* Glow halos */}
+                {/* Pain-point labels */}
+                <div className="absolute top-3 right-3 z-20 flex flex-col gap-1.5">
+                  {["Cluttered layout", "No ATS structure", "Poor formatting"].map((t) => (
+                    <span key={t} className="flex items-center gap-1 bg-red-500/90 text-white text-[9px] sm:text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm backdrop-blur-sm">
+                      <X className="w-2.5 h-2.5 flex-shrink-0" strokeWidth={3} />
+                      {t}
+                    </span>
+                  ))}
+                </div>
+
+                {/* Zoom hint */}
+                <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                  <span className="text-[10px] font-bold text-white bg-black/60 backdrop-blur-sm px-2.5 py-1 rounded-full">Click to enlarge</span>
+                </div>
+
+                {/* Resume image */}
+                <div className="relative w-full aspect-[1/1.414]">
+                  <Image
+                    src="/before_resume.png"
+                    alt="Resume before Flashresume"
+                    fill
+                    className="object-cover object-top"
+                    sizes="(max-width: 1024px) 100vw, 40vw"
+                  />
+                  {/* Faded red overlay hint */}
+                  <div className="absolute inset-0 bg-red-500/5" />
+
+                  {/* ── REJECTED Stamp ── */}
+                  <div
+                    className="absolute bottom-5 right-4 pointer-events-none z-30"
+                    style={{ transform: "rotate(-18deg)" }}
+                  >
                     <div
-                      className="absolute -top-12 -right-12 w-48 h-48 rounded-full blur-[80px] -z-0 pointer-events-none opacity-20"
-                      style={{ background: tmpl.accentColor }}
-                    />
-                    {/* Badge */}
-                    <div className="flex justify-between items-start mb-0 sm:mb-3 relative z-10 p-2 sm:p-0">
-                      <span className={`inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full bg-gradient-to-r ${tmpl.badgeColor} text-white shadow-sm`}>
-                        <Sparkles className="w-2.5 h-2.5" />
-                        {tmpl.badge}
-                      </span>
-                      <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest bg-surface-container-low px-2.5 py-1 rounded-full border border-surface-container-high">
-                        {tmpl.format}
+                      style={{
+                        border: "3px solid rgba(220,38,38,0.55)",
+                        boxShadow: "inset 0 0 0 1.5px rgba(220,38,38,0.55)",
+                        padding: "5px 12px",
+                        borderRadius: "5px",
+                        mixBlendMode: "multiply",
+                      }}
+                    >
+                      <span
+                        style={{
+                          fontFamily: "'Georgia', 'Times New Roman', serif",
+                          fontWeight: 900,
+                          fontSize: "clamp(14px, 3.5vw, 22px)",
+                          letterSpacing: "0.18em",
+                          color: "rgba(220,38,38,0.65)",
+                          textTransform: "uppercase",
+                          lineHeight: 1,
+                          display: "block",
+                          mixBlendMode: "multiply",
+                          userSelect: "none",
+                        }}
+                      >
+                        REJECTED
                       </span>
                     </div>
-                    {/* Resume preview image */}
-                    <div className="flex-1 relative z-10 w-full h-full rounded-b-[1.25rem] sm:rounded-xl overflow-hidden shadow-sm bg-white border-0 sm:border sm:border-surface-container-highest">
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* ── Center Divider / Arrow ────────────────────────────── */}
+            <div className="flex lg:flex-col items-center justify-center lg:px-4 xl:px-6 shrink-0 gap-3 lg:gap-4">
+              {/* Desktop vertical line — top */}
+              <div className="hidden lg:block w-px flex-1 bg-gradient-to-b from-transparent via-surface-container-highest to-transparent" />
+              {/* Mobile horizontal line — left */}
+              <div className="block lg:hidden h-px flex-1 bg-gradient-to-r from-transparent via-surface-container-highest to-transparent" />
+
+              <motion.div
+                initial={{ opacity: 0, scale: 0.5 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.3, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+                className="w-10 h-10 sm:w-12 sm:h-12 rounded-full flash-gradient flex items-center justify-center shadow-lg shadow-[#006859]/30 shrink-0 rotate-90 lg:rotate-0"
+              >
+                <ArrowRight className="w-5 h-5 sm:w-6 sm:h-6 text-white" strokeWidth={2.5} />
+              </motion.div>
+
+              {/* Desktop vertical line — bottom */}
+              <div className="hidden lg:block w-px flex-1 bg-gradient-to-b from-transparent via-surface-container-highest to-transparent" />
+              {/* Mobile horizontal line — right */}
+              <div className="block lg:hidden h-px flex-1 bg-gradient-to-r from-transparent via-surface-container-highest to-transparent" />
+            </div>
+
+            {/* ── AFTER card ──────────────────────────────────────── */}
+            <motion.div
+              initial={{ opacity: 0, x: 40 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
+              className="flex-1 flex flex-col min-w-0"
+            >
+              {/* Label */}
+              <div className="flex items-center gap-2 mb-3 px-1">
+                <div className="flex items-center gap-1.5 bg-[#006859]/12 border border-[#006859]/30 text-[#006859] text-xs font-black uppercase tracking-widest px-3 py-1.5 rounded-full">
+                  <Sparkles className="w-3 h-3" />
+                  After Flashresume
+                </div>
+              </div>
+
+              {/* Card */}
+              <div
+                className="relative flex-1 bg-surface-container-lowest rounded-2xl sm:rounded-[1.75rem] border-2 border-[#006859]/25 shadow-[0_8px_40px_rgba(0,104,89,0.12)] overflow-hidden cursor-zoom-in group"
+                onClick={() => setLightbox({ src: active.image, alt: `After Flashresume – ${active.name}` })}
+              >
+                {/* Green glow overlay */}
+                <div className="absolute inset-0 bg-gradient-to-b from-[#006859]/4 to-transparent pointer-events-none z-10" />
+
+                {/* Quality labels */}
+                <div className="absolute top-3 right-3 z-20 flex flex-col gap-1.5">
+                  {["ATS optimized", "Recruiter-ready", "Professional layout"].map((t) => (
+                    <span key={t} className="flex items-center gap-1 bg-[#006859]/90 text-white text-[9px] sm:text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm backdrop-blur-sm">
+                      <CheckCircle2 className="w-2.5 h-2.5 flex-shrink-0" />
+                      {t}
+                    </span>
+                  ))}
+                </div>
+
+                {/* Template badge */}
+                <div className="absolute top-3 left-3 z-20">
+                  <span className={`inline-flex items-center gap-1 text-[9px] sm:text-[10px] font-black uppercase tracking-widest px-2.5 py-0.5 rounded-full bg-gradient-to-r ${active.badgeColor} text-white shadow-sm`}>
+                    <Sparkles className="w-2 h-2" />
+                    {active.badge}
+                  </span>
+                </div>
+
+                {/* Zoom hint */}
+                <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                  <span className="text-[10px] font-bold text-white bg-black/60 backdrop-blur-sm px-2.5 py-1 rounded-full">Click to enlarge</span>
+                </div>
+
+                {/* Resume image */}
+                <div className="relative w-full aspect-[1/1.414]">
+                  {AFTER_TEMPLATES.map((tmpl, i) => (
+                    <motion.div
+                      key={tmpl.id}
+                      className="absolute inset-0"
+                      initial={false}
+                      animate={{ opacity: i === activeAfter ? 1 : 0 }}
+                      transition={{ duration: 0.4 }}
+                    >
                       <Image
                         src={tmpl.image}
                         alt={tmpl.name}
                         fill
                         className="object-cover object-top"
-                        sizes="(max-width: 1024px) 100vw, 50vw"
+                        sizes="(max-width: 1024px) 100vw, 40vw"
                       />
+                    </motion.div>
+                  ))}
+
+                  {/* ── ACCEPTED Stamp ── */}
+                  <div
+                    className="absolute bottom-5 right-4 pointer-events-none z-30"
+                    style={{ transform: "rotate(-18deg)" }}
+                  >
+                    <div
+                      style={{
+                        border: "3px solid rgba(0,104,89,0.50)",
+                        boxShadow: "inset 0 0 0 1.5px rgba(0,104,89,0.50)",
+                        padding: "5px 12px",
+                        borderRadius: "5px",
+                        mixBlendMode: "multiply",
+                      }}
+                    >
+                      <span
+                        style={{
+                          fontFamily: "'Georgia', 'Times New Roman', serif",
+                          fontWeight: 900,
+                          fontSize: "clamp(14px, 3.5vw, 22px)",
+                          letterSpacing: "0.18em",
+                          color: "rgba(0,104,89,0.60)",
+                          textTransform: "uppercase",
+                          lineHeight: 1,
+                          display: "block",
+                          mixBlendMode: "multiply",
+                          userSelect: "none",
+                        }}
+                      >
+                        ACCEPTED
+                      </span>
                     </div>
                   </div>
-                </motion.div>
-              ))}
-            </div>
+                </div>
+              </div>
+
+              {/* Template switcher tabs */}
+              <div className="flex gap-2 mt-3 px-1">
+                {AFTER_TEMPLATES.map((tmpl, i) => (
+                  <button
+                    key={tmpl.id}
+                    onClick={() => setActiveAfter(i)}
+                    className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold transition-all duration-200 border ${i === activeAfter
+                      ? "bg-[#006859] text-white border-[#006859] shadow-md shadow-[#006859]/20"
+                      : "bg-surface-container-low text-on-surface-variant border-surface-container-high hover:bg-surface-container-high"
+                      }`}
+                  >
+                    {tmpl.name}
+                  </button>
+                ))}
+              </div>
+            </motion.div>
 
           </div>
+
+          {/* CTA block — text visible on all screens, button desktop-only */}
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.45, duration: 0.5 }}
+            className="flex flex-col items-center gap-3 mt-12"
+          >
+            <p className="text-on-surface-variant text-sm text-center">
+              Your resume can look like this in{" "}
+              <span className="text-primary font-bold">60 seconds</span>
+            </p>
+            <button
+              onClick={() => document.getElementById("upload-card")?.scrollIntoView({ behavior: "smooth", block: "center" })}
+              className="hidden md:block flash-gradient text-white font-bold px-14 py-5 rounded-full hover:opacity-90 hover:-translate-y-0.5 transition-all active:scale-95 shadow-xl shadow-primary/25 text-lg tracking-wide"
+            >
+              Get Started →
+            </button>
+          </motion.div>
+
+        </div>
+      </section>
+
+      {/* Lightbox */}
+      {lightbox && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 z-[200] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
+          onClick={() => setLightbox(null)}
+        >
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+            className="relative max-w-xl w-full max-h-[90vh] rounded-2xl overflow-hidden shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <Image
+              src={lightbox.src}
+              alt={lightbox.alt}
+              width={800}
+              height={1131}
+              className="w-full h-auto object-top"
+              style={{ maxHeight: "90vh", objectFit: "contain" }}
+            />
+            <button
+              onClick={() => setLightbox(null)}
+              className="absolute top-3 right-3 w-9 h-9 bg-black/60 backdrop-blur-sm rounded-full flex items-center justify-center text-white hover:bg-black/80 transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </motion.div>
         </motion.div>
-      </div>
-    </section>
+      )}
+    </>
   );
 }
