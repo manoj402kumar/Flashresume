@@ -693,7 +693,8 @@ export default function ResultPage() {
 
       // 2. Determine if we should show feedback (pre-compute BEFORE iOS tab suspension)
       let shouldShowFeedback = false;
-      if (currentUserId) {
+      const activeUserId = session?.user?.id || currentUserId;
+      if (activeUserId) {
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
         const isMobile = window.matchMedia?.("(pointer: coarse)")?.matches ?? /Mobi|Android|iPhone/i.test(navigator.userAgent);
         const deviceType = isMobile ? "mobile" : "desktop";
@@ -702,30 +703,16 @@ export default function ResultPage() {
           // Await the fetch so it finishes before link.click() freezes the thread on mobile
           const res = await fetch(`${apiUrl}/api/resume/increment-download`, {
             method: "POST",
-            body: JSON.stringify({ session_id: sessionGuid || "", user_id: currentUserId, device_type: deviceType }),
+            body: JSON.stringify({ session_id: sessionGuid || "", user_id: activeUserId, device_type: deviceType }),
             headers: { "Content-Type": "application/json" }
           });
           
           if (res.ok) {
             const data = await res.json();
-            const total = data.total_platform_downloads;
-            const isFirstEverDownload = data.user_total_downloads === 1;
-            const isGlobalMilestone = total > 0 && total % 5 === 0;
-            
-            let alreadyShownFeedback = false;
-            try {
-              alreadyShownFeedback = localStorage.getItem("fr_feedback_shown") === "true";
-            } catch (e) {
-              // Ignore QuotaExceededError in iOS Safari Private Mode
-            }
-
-            if ((isFirstEverDownload && !alreadyShownFeedback) || isGlobalMilestone) {
+            const userDownloads = data.user_total_downloads;
+            const milestones = [1, 5, 10, 25];
+            if (milestones.includes(userDownloads)) {
               shouldShowFeedback = true;
-              if (isFirstEverDownload) {
-                try {
-                  localStorage.setItem("fr_feedback_shown", "true");
-                } catch (e) {}
-              }
             }
           }
         } catch (e) {
