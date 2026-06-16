@@ -114,8 +114,20 @@ export default function OnboardingTour() {
     }
   }, []);
 
+  // ── Lock body scroll when active ─────────────────────────────────────────
+  useEffect(() => {
+    if (active) {
+      document.body.style.overflow = "hidden";
+      document.documentElement.style.overflow = "hidden";
+    }
+    return () => {
+      document.body.style.overflow = "";
+      document.documentElement.style.overflow = "";
+    };
+  }, [active]);
+
   // ── compute spotlight + card position ────────────────────────────────────
-  const compute = useCallback(() => {
+  const computeHighlightOnly = useCallback(() => {
     const vh = window.innerHeight;
     const vw = window.innerWidth;
     const isMobile = vw < 768;
@@ -130,10 +142,12 @@ export default function OnboardingTour() {
       return;
     }
 
-    // Resolve IDs — may be a single string or an array
     const ids = Array.isArray(current.targetId) ? current.targetId : [current.targetId];
-    const firstEl = document.getElementById(ids[0]);
-    if (!firstEl) {
+    const rects = ids
+      .map(id => document.getElementById(id)?.getBoundingClientRect())
+      .filter((r): r is DOMRect => !!r);
+
+    if (rects.length === 0) {
       setHighlight({
         top: vh / 2, left: vw / 2, width: 0, height: 0,
         boxShadow: "0 0 0 0px rgba(18,248,215,0), 0 0 0 0px rgba(18,248,215,0), 0 0 0 20000px rgba(0,0,0,0.80)"
@@ -142,83 +156,125 @@ export default function OnboardingTour() {
       return;
     }
 
-    // Fast, custom scroll to ensure elements aren't hidden behind the card
-    const rect = firstEl.getBoundingClientRect();
-    const scrollY = window.scrollY || window.pageYOffset;
-    const offset = isMobile ? 80 : vh * 0.25;
-    const targetY = Math.max(0, rect.top + scrollY - offset);
+    const uTop = Math.min(...rects.map(r => r.top));
+    const uBottom = Math.max(...rects.map(r => r.bottom));
+    const uLeft = Math.min(...rects.map(r => r.left));
+    const uRight = Math.max(...rects.map(r => r.right));
 
-    // Disable CSS smooth scroll temporarily to prevent fighting with JS animation
-    const html = document.documentElement;
-    const oldBehavior = html.style.scrollBehavior;
-    html.style.scrollBehavior = "auto";
+    // ── Spotlight + Overlay coordinates ─────────────────────────────────
+    const sTop = uTop - PAD;
+    const sBottom = uBottom + PAD;
+    const sLeft = uLeft - PAD;
+    const sRight = uRight + PAD;
 
-    animate(scrollY, targetY, {
-      duration: 0.35,
-      ease: [0.22, 1, 0.36, 1],
-      onUpdate: (latest) => window.scrollTo(0, latest),
-      onComplete: () => {
-        html.style.scrollBehavior = oldBehavior;
-      }
+    setHighlight({
+      top: sTop,
+      left: sLeft,
+      width: sRight - sLeft,
+      height: sBottom - sTop,
+      boxShadow: "0 0 0 2.5px rgba(18,248,215,1), 0 0 22px 4px rgba(18,248,215,0.28), 0 0 0 20000px rgba(0,0,0,0.80)"
     });
 
-    setTimeout(() => {
-      // Compute union bounding box across all target elements
-      const rects = ids
-        .map(id => document.getElementById(id)?.getBoundingClientRect())
-        .filter((r): r is DOMRect => !!r);
-
-      if (rects.length === 0) {
-        setHighlight({
-          top: vh / 2, left: vw / 2, width: 0, height: 0,
-          boxShadow: "0 0 0 0px rgba(18,248,215,0), 0 0 0 0px rgba(18,248,215,0), 0 0 0 20000px rgba(0,0,0,0.80)"
-        });
-        setCardLayout({ mode: "center" });
-        return;
-      }
-
-      const uTop = Math.min(...rects.map(r => r.top));
-      const uBottom = Math.max(...rects.map(r => r.bottom));
-      const uLeft = Math.min(...rects.map(r => r.left));
-      const uRight = Math.max(...rects.map(r => r.right));
-
-      // ── Spotlight + Overlay coordinates ─────────────────────────────────
-      const sTop = uTop - PAD;
-      const sBottom = uBottom + PAD;
-      const sLeft = uLeft - PAD;
-      const sRight = uRight + PAD;
-
-      setHighlight({
-        top: sTop,
-        left: sLeft,
-        width: sRight - sLeft,
-        height: sBottom - sTop,
-        boxShadow: "0 0 0 2.5px rgba(18,248,215,1), 0 0 22px 4px rgba(18,248,215,0.28), 0 0 0 20000px rgba(0,0,0,0.80)"
-      });
-
-      // ── card layout ──────────────────────────────────────────────────────
-      if (isMobile) {
-        setCardLayout({ mode: "bottom-sheet" });
-      } else {
-        const CARD_H_EST = 360;
-        const CARD_GAP = 16;
-        const elCenterY = (uTop + uBottom) / 2;
-        const idealTop = elCenterY - CARD_H_EST / 2;
-        const top = Math.max(12, Math.min(idealTop, vh - CARD_H_EST - 12));
-        const left = Math.min(sRight + CARD_GAP, vw - DESKTOP_CARD_W - 12);
-        setCardLayout({ mode: "right", top, left });
-      }
-    }, 320);
+    // ── card layout ──────────────────────────────────────────────────────
+    if (isMobile) {
+      setCardLayout({ mode: "bottom-sheet" });
+    } else {
+      const CARD_H_EST = 360;
+      const CARD_GAP = 16;
+      const elCenterY = (uTop + uBottom) / 2;
+      const idealTop = elCenterY - CARD_H_EST / 2;
+      const top = Math.max(12, Math.min(idealTop, vh - CARD_H_EST - 12));
+      const left = Math.min(sRight + CARD_GAP, vw - DESKTOP_CARD_W - 12);
+      setCardLayout({ mode: "right", top, left });
+    }
   }, [step]);
 
-  useEffect(() => { if (active) compute(); }, [step, active, compute]);
-
+  // ── scroll and setup highlight on step change ────────────────────────────
   useEffect(() => {
     if (!active) return;
-    window.addEventListener("resize", compute);
-    window.addEventListener("scroll", compute, true);
-    return () => { window.removeEventListener("resize", compute); window.removeEventListener("scroll", compute, true); };
-  }, [active, compute]);
+    
+    const current = STEPS[step];
+    if (!current?.targetId) {
+      computeHighlightOnly();
+      return;
+    }
+
+    const ids = Array.isArray(current.targetId) ? current.targetId : [current.targetId];
+    const firstEl = document.getElementById(ids[0]);
+    if (!firstEl) {
+      computeHighlightOnly();
+      return;
+    }
+
+    // Unlock temporarily so smooth scrolling physically works on iOS and Desktop
+    document.body.style.overflow = "";
+    document.documentElement.style.overflow = "";
+
+    const rect = firstEl.getBoundingClientRect();
+    const vh = window.innerHeight;
+    const offset = window.innerWidth < 768 ? 80 : vh * 0.25;
+    const scrollY = window.scrollY || window.pageYOffset;
+    const targetY = Math.max(0, rect.top + scrollY - offset);
+
+    // Native smooth scroll
+    window.scrollTo({ top: targetY, behavior: "smooth" });
+
+    let finished = false;
+    const finishScroll = () => {
+      if (finished) return;
+      finished = true;
+      document.body.style.overflow = "hidden";
+      document.documentElement.style.overflow = "hidden";
+      computeHighlightOnly();
+    };
+
+    let lastY = window.scrollY || window.pageYOffset;
+    let stableFrames = 0;
+    let rafId: number;
+
+    const checkScroll = () => {
+      if (finished) return;
+      
+      const currentY = window.scrollY || window.pageYOffset;
+      // If scroll position hasn't changed by at least 0.5px
+      if (Math.abs(currentY - lastY) < 0.5) {
+        stableFrames++;
+        // If stable for ~5 frames (~80ms), we consider the smooth scroll finished
+        if (stableFrames > 5) {
+          finishScroll();
+          return;
+        }
+      } else {
+        stableFrames = 0;
+        lastY = currentY;
+      }
+      
+      // Keep computing the highlight so it perfectly tracks the element during scroll!
+      computeHighlightOnly();
+      rafId = requestAnimationFrame(checkScroll);
+    };
+
+    // Start tracking the scroll
+    rafId = requestAnimationFrame(checkScroll);
+
+    // Safety fallback (if RAF fails or scroll takes an absurdly long time e.g. >1.5s)
+    const safetyFallback = setTimeout(() => {
+      finishScroll();
+    }, 1500);
+
+    return () => {
+      finished = true;
+      if (rafId) cancelAnimationFrame(rafId);
+      clearTimeout(safetyFallback);
+    };
+  }, [step, active, computeHighlightOnly]);
+
+  // ── resize listener ──────────────────────────────────────────────────────
+  useEffect(() => {
+    if (!active) return;
+    window.addEventListener("resize", computeHighlightOnly);
+    return () => window.removeEventListener("resize", computeHighlightOnly);
+  }, [active, computeHighlightOnly]);
 
   // ── nav ───────────────────────────────────────────────────────────────────
   const handleNext = () => step < STEPS.length - 1 ? setStep(s => s + 1) : finish();
