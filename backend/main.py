@@ -66,6 +66,7 @@ app.include_router(feedback.router, prefix="/api")
 
 ACTIVE_SESSIONS = {}
 peak_record = {"count": -1, "timestamp": None}
+_peak_upsert_tasks: set = set()  # Hold references to prevent GC
 
 class PingRequest(BaseModel):
     user_id: str
@@ -95,19 +96,21 @@ async def ping_presence(data: PingRequest):
             else:
                 peak_record["count"] = 0
         except Exception:
-            pass
+            peak_record["count"] = 0  # Safe fallback — never leave at -1
             
     if current_count > peak_record["count"]:
         peak_record["count"] = current_count
         peak_record["timestamp"] = now.isoformat()
         try:
-            # Upsert new peak in background
-            asyncio.create_task(asyncio.to_thread(
+            # Upsert new peak — store task reference to prevent GC before completion
+            task = asyncio.create_task(asyncio.to_thread(
                 lambda: supabase.table("system_metrics").upsert({
-                    "id": "peak_concurrent_users", 
+                    "id": "peak_concurrent_users",
                     "value": {"count": current_count, "timestamp": now.isoformat()}
                 }).execute()
             ))
+            _peak_upsert_tasks.add(task)
+            task.add_done_callback(_peak_upsert_tasks.discard)
         except Exception:
             pass
             
