@@ -1995,9 +1995,9 @@ export default function ScratchPage() {
                                               </button>
                                             </div>
                                           ) : (
-                                            cat.skills.length > 0 && <p className="font-semibold text-on-background mb-2">{cat.label || "Custom"}:</p>
+                                            (cat.label.trim() !== "" || cat.skills.length > 0) && <p className="font-semibold text-on-background mb-2">{cat.label || "Custom"}:</p>
                                           )}
-                                          {(editMode || cat.skills.length > 0) && (
+                                          {(editMode || cat.label.trim() !== "" || cat.skills.length > 0) && (
                                             <EditableSkillTags
                                               skills={cat.skills}
                                               onChange={(newSkills) => {
