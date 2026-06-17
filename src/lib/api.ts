@@ -182,6 +182,10 @@ export interface TemplateV1 {
     cloud_services: string[];
     developer_tools: string[];
     miscellaneous: string[];
+    custom_categories?: Array<{
+      label: string;
+      skills: string[];
+    }>;
   };
   changes: string[];
   ai_suggestions?: string[] | null;
