@@ -154,7 +154,7 @@ export default function KPICards({ onlineUsers, stats }: { onlineUsers: number, 
       iconBg: "bg-red-50",
       delta: "All Time",
       deltaPositive: false,
-      note: "Incomplete transactions",
+      note: "Technical/Gateway failures",
     },
   ];
 

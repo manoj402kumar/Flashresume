@@ -78,9 +78,7 @@ async def get_admin_stats():
             dev_ids_str = ",".join(dev_user_ids)
             visitors_query = visitors_query.or_(f"user_id.is.null,user_id.not.in.({dev_ids_str})")
 
-        one_hour_ago = (datetime.now(timezone.utc) - timedelta(hours=1)).isoformat()
-        failed_filter = f"status.eq.failed,and(status.eq.pending,created_at.lte.{one_hour_ago})"
-        failed_query = supabase.table("payments").select("id", count="exact").or_(failed_filter).gte("created_at", "2026-05-28T00:00:00Z")
+        failed_query = supabase.table("payments").select("id", count="exact").eq("status", "failed").gte("created_at", "2026-05-28T00:00:00Z")
         if dev_user_ids:
             failed_query = failed_query.not_.in_("user_id", dev_user_ids)
 
