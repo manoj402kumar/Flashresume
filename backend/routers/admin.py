@@ -63,13 +63,15 @@ async def get_admin_stats():
 
         payments_query = supabase.table("payments").select("amount, user_id, plan_type").eq("status", "success").gte("created_at", "2026-05-28T00:00:00Z")
         if dev_user_ids:
-            payments_query = payments_query.not_.in_("user_id", dev_user_ids)
+            dev_ids_str = ",".join(dev_user_ids)
+            payments_query = payments_query.or_(f"user_id.is.null,user_id.not.in.({dev_ids_str})")
 
         users_query = supabase.table("users").select("id", count="exact").gte("created_at", "2026-05-28T00:00:00Z").not_.in_("email", DEV_EMAILS)
 
         downloads_query = supabase.table("resume_downloads").select("id", count="exact").gte("downloaded_at", "2026-05-28T00:00:00Z")
         if dev_user_ids:
-            downloads_query = downloads_query.not_.in_("user_id", dev_user_ids)
+            dev_ids_str = ",".join(dev_user_ids)
+            downloads_query = downloads_query.or_(f"user_id.is.null,user_id.not.in.({dev_ids_str})")
 
         # Total Visitors KPI: Count ALL traffic (all pages, anonymous + logged-in users).
         # We use OR to keep anonymous rows (user_id IS NULL) while excluding known dev accounts.
@@ -80,7 +82,8 @@ async def get_admin_stats():
 
         failed_query = supabase.table("payments").select("id", count="exact").eq("status", "failed").gte("created_at", "2026-05-28T00:00:00Z")
         if dev_user_ids:
-            failed_query = failed_query.not_.in_("user_id", dev_user_ids)
+            dev_ids_str = ",".join(dev_user_ids)
+            failed_query = failed_query.or_(f"user_id.is.null,user_id.not.in.({dev_ids_str})")
 
         payments_res, downloads, users_res, visitors_res, failed_res, peak_res = await asyncio.gather(
             _sb(payments_query),

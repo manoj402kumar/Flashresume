@@ -126,7 +126,7 @@ async def verify_payment(body: VerifyRequest, authorization: str = Header(None))
                     "razorpay_signature": body.razorpay_signature,
                 })
                 .eq("razorpay_order_id", body.razorpay_order_id)
-                .eq("status", "pending")
+                .in_("status", ["pending", "failed"])
                 .select()
                 .execute()
             )
@@ -423,7 +423,7 @@ async def razorpay_webhook(request: Request):
             pending_res = await sb(
                 lambda: supabase.table("payments").select("*")
                 .eq("razorpay_order_id", order_id)
-                .eq("status", "pending")
+                .in_("status", ["pending", "failed"])
                 .execute()
             )
             
@@ -443,7 +443,7 @@ async def razorpay_webhook(request: Request):
                     "razorpay_signature": "webhook_verified",
                 })
                 .eq("razorpay_order_id", order_id)
-                .eq("status", "pending")
+                .in_("status", ["pending", "failed"])
                 .select()
                 .execute()
             )
