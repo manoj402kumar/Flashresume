@@ -469,6 +469,20 @@ export default function ResumePDFTemplateLetter({ resume, showHighlights = false
                         />
                       </View>
                     )}
+                    {(resume.technical_skills?.custom_categories || [])
+                      .filter(cat => cat.label.trim() !== "" || cat.skills.length > 0)
+                      .map((cat, idx) => (
+                      <View key={`custom-${idx}`} style={styles.skillCategoryRow}>
+                        <Text style={styles.skillLabel}>{cat.label || "Custom"}</Text>
+                        <HighlightedText
+                          text={cat.skills.length > 0 ? `: ${cat.skills.join(", ")}` : ""}
+                          matched={matchedKeywords}
+                          missing={missingKeywords}
+                          showHighlights={showHighlights}
+                          style={styles.skillList}
+                        />
+                      </View>
+                    ))}
                   </View>
                 </View>
               );

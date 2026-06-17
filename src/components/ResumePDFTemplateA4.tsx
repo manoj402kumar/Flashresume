@@ -495,6 +495,20 @@ export default function ResumePDFTemplateA4({ resume, showHighlights = false, ma
                         />
                       </View>
                     )}
+                    {(resume.technical_skills?.custom_categories || [])
+                      .filter(cat => cat.label.trim() !== "" || cat.skills.length > 0)
+                      .map((cat, idx) => (
+                      <View key={`custom-${idx}`} style={styles.skillCategory}>
+                        <Text style={styles.skillLabel}>{(cat.label || "Custom") + (cat.skills.length > 0 ? ":" : "")}</Text>
+                        <HighlightedText
+                          text={cat.skills.join(", ")}
+                          matched={matchedKeywords}
+                          missing={missingKeywords}
+                          showHighlights={showHighlights}
+                          style={styles.skillList}
+                        />
+                      </View>
+                    ))}
                   </View>
                 </View>
               );

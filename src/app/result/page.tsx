@@ -2268,6 +2268,67 @@ export default function ResultPage() {
                                       />
                                     </div>
                                   )}
+
+                                  {/* Custom skill rows */}
+                                  {(resume.technical_skills.custom_categories || []).map((cat, catIdx) => (
+                                    <div key={catIdx} className="relative group">
+                                      {editMode ? (
+                                        <div className="flex items-center gap-2 mb-2">
+                                          <input
+                                            type="text"
+                                            value={cat.label}
+                                            onChange={(e) => {
+                                              const updated = [...(resume.technical_skills.custom_categories || [])];
+                                              updated[catIdx] = { ...updated[catIdx], label: e.target.value };
+                                              updateResume({ technical_skills: { ...resume.technical_skills, custom_categories: updated } });
+                                            }}
+                                            placeholder="Category name (e.g. Operating Systems)"
+                                            className="font-semibold text-sm rounded-lg px-3 py-1.5 border border-dashed border-primary/40 bg-primary/5 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 text-on-background min-w-[180px] transition-all"
+                                          />
+                                          <button
+                                            type="button"
+                                            onClick={() => {
+                                              const updated = (resume.technical_skills.custom_categories || []).filter((_, i) => i !== catIdx);
+                                              updateResume({ technical_skills: { ...resume.technical_skills, custom_categories: updated } });
+                                            }}
+                                            className="text-xs text-red-400 hover:text-red-600 font-semibold px-2 py-1 rounded-lg hover:bg-red-50 transition-colors flex-shrink-0"
+                                          >
+                                            Remove row
+                                          </button>
+                                        </div>
+                                      ) : (
+                                        cat.skills.length > 0 && <p className="font-semibold text-on-background mb-2">{cat.label || "Custom"}:</p>
+                                      )}
+                                      {(editMode || cat.skills.length > 0) && (
+                                        <EditableSkillTags
+                                          skills={cat.skills}
+                                          onChange={(newSkills) => {
+                                            const updated = [...(resume.technical_skills.custom_categories || [])];
+                                            updated[catIdx] = { ...updated[catIdx], skills: newSkills };
+                                            updateResume({ technical_skills: { ...resume.technical_skills, custom_categories: updated } });
+                                          }}
+                                          editMode={editMode}
+                                          colorClass="bg-violet-500/10 text-violet-700"
+                                          showHighlights={false}
+                                        />
+                                      )}
+                                    </div>
+                                  ))}
+
+                                  {/* Add custom row button */}
+                                  {editMode && (
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        const updated = [...(resume.technical_skills.custom_categories || []), { label: '', skills: [] }];
+                                        updateResume({ technical_skills: { ...resume.technical_skills, custom_categories: updated } });
+                                      }}
+                                      className="mt-2 flex items-center gap-2 px-4 py-2 rounded-xl border-2 border-dashed border-primary/30 text-primary/70 hover:border-primary hover:text-primary hover:bg-primary/5 text-sm font-semibold transition-all duration-200 w-full justify-center"
+                                    >
+                                      <PlusCircle className="w-4 h-4" />
+                                      Add custom row
+                                    </button>
+                                  )}
                                 </div>
                               </>
                             </div>
