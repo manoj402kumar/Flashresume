@@ -127,8 +127,13 @@ _CALLERS = {
     ("cloudflare", "Key 2"): call_single_cloudflare_r2,
 }
 
-_pool1_idx = 0
-_pool2_idx = 0
+def _get_start_idx(pool_size: int, offset: int = 0) -> int:
+    # Seed with current minute so each worker restart in a different minute gets a different guaranteed start slot
+    minute_bucket = int(time.time() // 60)
+    return (minute_bucket + offset) % pool_size
+
+_pool1_idx = _get_start_idx(len(POOL_1), offset=0)
+_pool2_idx = _get_start_idx(len(POOL_2), offset=7)
 _rr_lock = asyncio.Lock()
 
 async def _get_next_rr_index(pool_type: int) -> int:
