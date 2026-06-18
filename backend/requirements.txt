@@ -3,6 +3,7 @@ uvicorn
 python-multipart
 pdfplumber
 pypdfium2
+pypdf
 python-docx
 python-dotenv
 pydantic
