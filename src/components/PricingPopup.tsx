@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { X, Loader2, Download, Crown, GraduationCap, CheckCircle2, ArrowRight, Building, Mail, Hash, Eye, EyeOff } from "lucide-react";
+import { X, Loader2, Download, Crown, GraduationCap, CheckCircle2, ArrowRight, Building, Mail, Hash, Eye, EyeOff, Star, Quote } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { User } from "@supabase/supabase-js";
 
@@ -60,7 +60,76 @@ const PLANS = [
   },
 ];
 
+// ── Review Banner ─────────────────────────────────────────────────────────────
+const PLAN_REVIEW = {
+  quote: "Before Flashresume: 4-5 job applications/day → rejection mails. After Flashresume: 20-30 job applications/day → shortlisting mails.",
+  author: "Rahul M.",
+  role: "Software Engineer",
+  avatar: "RM",
+  avatarColor: "from-[#006859] to-[#12f8d7]",
+};
+
+const SCRATCH_REVIEW = {
+  quote: "I could not find a tool like Flashresume anywhere on the entire internet. It's simply unmatched.",
+  author: "Priya S.",
+  role: "Final Year B.Tech Student",
+  avatar: "PS",
+  avatarColor: "from-violet-600 to-purple-400",
+};
+
+function ReviewBanner({ review }: { review: typeof PLAN_REVIEW }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.45, ease: "easeOut" }}
+      className="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-[#0e1a17] to-[#111827] px-4 py-4 mt-4 shadow-xl"
+    >
+      {/* subtle shimmer line */}
+      <div className="absolute inset-x-0 top-0 h-[1.5px] bg-gradient-to-r from-transparent via-[#12f8d7]/50 to-transparent" />
+
+      {/* Quote icon */}
+      <Quote className="absolute top-3 right-3 w-8 h-8 text-[#12f8d7]/10" />
+
+      {/* Stars */}
+      <div className="flex gap-0.5 mb-2.5">
+        {[...Array(5)].map((_, i) => (
+          <Star key={i} className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+        ))}
+      </div>
+
+      {/* Quote text */}
+      <p className="text-[13px] sm:text-sm leading-relaxed text-white/80 font-medium mb-3 pr-4">
+        &ldquo;{review.quote}&rdquo;
+      </p>
+
+      {/* Author */}
+      <div className="flex items-center gap-2.5">
+        <div className={`w-8 h-8 rounded-full bg-gradient-to-br ${review.avatarColor} flex items-center justify-center text-[11px] font-black text-white flex-shrink-0 shadow-md`}>
+          {review.avatar}
+        </div>
+        <div>
+          <p className="text-[12px] font-bold text-white leading-tight">{review.author}</p>
+          <p className="text-[10px] text-white/40 leading-tight">{review.role}</p>
+        </div>
+        <div className="ml-auto">
+          <span className="text-[9px] font-bold tracking-widest text-[#12f8d7]/60 uppercase">Verified User</span>
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
 export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, directPay = false, forcePlanSelect = false, prefetchedUser, prefetchedCredits }: PricingPopupProps) {
+  const [isScratchPage, setIsScratchPage] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setIsScratchPage(window.location.pathname.includes("/scratch"));
+    }
+  }, []);
+
   const [step, setStep] = useState<Step>("initializing");
   const [authMode, setAuthMode] = useState<AuthMode>("signup");
   const [user, setUser] = useState<User | null>(null);
@@ -381,7 +450,7 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
       const orderRes = await fetch(`${apiUrl}/api/payments/create-order`, {
         method: "POST",
-        headers: { 
+        headers: {
           "Content-Type": "application/json",
           ...(token ? { Authorization: `Bearer ${token}` } : {})
         },
@@ -406,7 +475,7 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
 
             const verifyRes = await fetch(`${apiUrl}/api/payments/verify`, {
               method: "POST",
-              headers: { 
+              headers: {
                 "Content-Type": "application/json",
                 ...(token ? { Authorization: `Bearer ${token}` } : {})
               },
@@ -639,6 +708,8 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
                     </button>
                   </form>
                 )}
+                {/* Review for auth step — scratch page gets its own quote */}
+                <ReviewBanner review={isScratchPage ? SCRATCH_REVIEW : PLAN_REVIEW} />
               </motion.div>
             )}
 
@@ -744,7 +815,7 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
                           <span className={`text-left font-medium text-[12px] ${selectedPlan === "student" ? "text-white" : "text-on-background"}`}>All Premium Features</span>
                         </li>
                       </ul>
-                      <p className={`text-[11px] font-bold text-center py-1.5 rounded-lg ${selectedPlan === "student" ? "bg-white/20 text-white" : "bg-tertiary/10 text-tertiary"}`}>
+                      <p className={`hidden md:block text-[11px] font-bold text-center py-1.5 rounded-lg ${selectedPlan === "student" ? "bg-white/20 text-white" : "bg-tertiary/10 text-tertiary"}`}>
                         Requires Verification →
                       </p>
                       {selectedPlan === "student" && (
@@ -769,6 +840,9 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
                     {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <>Pay & Continue <ArrowRight className="w-4 h-4" /></>}
                   </button>
                 </div>
+
+                {/* Review banner — scratch page gets its own quote */}
+                <ReviewBanner review={isScratchPage ? SCRATCH_REVIEW : PLAN_REVIEW} />
               </motion.div>
             )}
 
