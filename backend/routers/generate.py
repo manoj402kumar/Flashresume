@@ -42,7 +42,8 @@ async def generate_resume_endpoint(request: Request, payload: GenerateRequest, a
             missing_keywords=payload.missing_keywords,
             selected_projects=payload.selected_projects,
             no_ai_changes=payload.no_ai_changes,
-            preferred_model=payload.preferred_model or ""
+            preferred_model=payload.preferred_model or "",
+            extracted_links=payload.extracted_links.model_dump() if payload.extracted_links else None,
         )
     except ValueError as e:
         raise HTTPException(status_code=500, detail=str(e))

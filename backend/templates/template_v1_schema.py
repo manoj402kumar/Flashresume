@@ -6,8 +6,11 @@ class Heading(BaseModel):
     phone: str
     email: str
     linkedin_url: str
+    linkedin_url_href: Optional[str] = None
     github_url: Optional[str] = None
+    github_url_href: Optional[str] = None
     portfolio_url: Optional[str] = None
+    portfolio_url_href: Optional[str] = None
 
 class Education(BaseModel):
     institution: str
@@ -26,7 +29,8 @@ class Experience(BaseModel):
 class Project(BaseModel):
     title: str
     tech_stack: str
-    link: Optional[str] = None  # Live link or GitHub link - user can add in editable form
+    link: Optional[str] = None       # Visible display text — always "Link" (never the raw URL)
+    link_href: Optional[str] = None  # Actual https:// URL matched from extracted PDF links
     bullets: list[str]
 
 class TechnicalSkills(BaseModel):

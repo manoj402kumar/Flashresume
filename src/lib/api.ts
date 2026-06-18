@@ -8,10 +8,15 @@ const BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 // STEP 1: Parse Resume (PDF Upload or Text Paste)
 // ────────────────────────────────────────────────────────────────────────────
 
+export interface ExtractedLinks {
+  all_urls?:  string[];
+}
+
 export interface ParseResponse {
   resume_text: string;
   page_count: number;
-  parser_used: "pdfplumber" | "gemini_vision";
+  parser_used: "pdfplumber" | "gemini_vision" | "pypdfium2" | "python-docx";
+  extracted_links?: ExtractedLinks;
 }
 
 export async function parseResume(file: File): Promise<ParseResponse> {
@@ -136,6 +141,7 @@ export interface GenerateRequest {
   selected_projects?: string[];
   preferred_model?: string;
   no_ai_changes?: boolean;
+  extracted_links?: ExtractedLinks | null;
 }
 
 export interface TemplateV1 {

@@ -27,6 +27,8 @@ export default function AnalyzePage() {
   const [loading, setLoading] = useState(true);
   const [projectApproved, setProjectApproved] = useState(true);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [extractedLinks, setExtractedLinks] = useState<any>(null);
+  const [showDebug, setShowDebug] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -54,6 +56,12 @@ export default function AnalyzePage() {
     console.log("[DEBUG] requires_consent:", parsedAnalysis.requires_consent);
 
     setAnalysis(parsedAnalysis);
+    
+    const linksData = localStorage.getItem("extracted_links");
+    if (linksData) {
+      setExtractedLinks(JSON.parse(linksData));
+    }
+
     setLoading(false);
   }, [router]);
 
@@ -352,6 +360,8 @@ export default function AnalyzePage() {
             </button>
           </div>
         </motion.div>
+
+
       </div>
     </div>
   );

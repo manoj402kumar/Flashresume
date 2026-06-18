@@ -236,6 +236,10 @@ export default function App() {
       setParsing(true);
       parseResume(droppedFile).then(parseResult => {
         setParsedText(parseResult.resume_text);
+        // Store extracted links for later use in the generate step
+        if (parseResult.extracted_links) {
+          localStorage.setItem("extracted_links", JSON.stringify(parseResult.extracted_links));
+        }
       }).catch(err => {
         console.log("Auto-parse failed:", err.message);
       }).finally(() => {
@@ -259,6 +263,10 @@ export default function App() {
       try {
         const parseResult = await parseResume(selectedFile);
         setParsedText(parseResult.resume_text);
+        // Store extracted links for later use in the generate step
+        if (parseResult.extracted_links) {
+          localStorage.setItem("extracted_links", JSON.stringify(parseResult.extracted_links));
+        }
       } catch (err: any) {
         // Silent fail - user can click button if needed
         console.log("Auto-parse failed:", err.message);
@@ -310,16 +318,30 @@ export default function App() {
 
     try {
       let finalResumeText = resumeText;
+      let finalExtractedLinks = null;
 
       if (inputType === "file" && file) {
         // Use auto-parsed text if already available (parsed on upload)
-        // Only re-parse if auto-parse didn't finish yet (e.g. user clicked very fast)
         if (parsedText) {
           finalResumeText = parsedText;
+          // Retrieve the links that were saved during auto-parse
+          const autoParsedLinks = localStorage.getItem("extracted_links");
+          if (autoParsedLinks) {
+            finalExtractedLinks = JSON.parse(autoParsedLinks);
+          }
         } else {
           const parseResult = await parseResume(file);
           finalResumeText = parseResult.resume_text;
+          if (parseResult.extracted_links) {
+            finalExtractedLinks = parseResult.extracted_links;
+          }
         }
+      }
+
+      // Now clear everything and save the fresh ones
+      localStorage.removeItem("extracted_links");
+      if (finalExtractedLinks) {
+        localStorage.setItem("extracted_links", JSON.stringify(finalExtractedLinks));
       }
 
       localStorage.setItem("resume_text", finalResumeText);

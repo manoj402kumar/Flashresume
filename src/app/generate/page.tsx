@@ -51,12 +51,15 @@ export default function GeneratePage() {
         const jobDescription = localStorage.getItem("job_description");
         const analysisData = localStorage.getItem("analysis");
         const approvedProjectData = localStorage.getItem("approved_project");
+        const extractedLinksData = localStorage.getItem("extracted_links");
 
         if (!resumeText || analysisData === null) { router.push("/"); return; }
 
         const analysis = JSON.parse(analysisData);
         const approvedProject = approvedProjectData ? JSON.parse(approvedProjectData) : null;
         const preferredModel = localStorage.getItem("preferred_model") || undefined;
+        // Parse extracted links — null-safe, falls back to undefined if not present
+        const extractedLinks = extractedLinksData ? JSON.parse(extractedLinksData) : undefined;
 
         setProgress(10);
         await new Promise((r) => setTimeout(r, 800));
@@ -76,6 +79,7 @@ export default function GeneratePage() {
           selected_projects: analysis.selected_projects || [],
           preferred_model: preferredModel,
           no_ai_changes: noAiChanges,
+          extracted_links: extractedLinks ?? null,
         });
 
         setProgress(70);

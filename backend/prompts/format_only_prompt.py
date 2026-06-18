@@ -8,6 +8,7 @@ You are a pure JSON formatter. Your ONLY job is to take the provided RESUME_TEXT
 4. Keep all data EXACTLY as written in RESUME_TEXT.
 5. If a section is missing in RESUME_TEXT, leave the array/object empty.
 6. Categorize the skills correctly based on the Skills section ONLY, without adding or removing any.
+7. Extract ALL projects, ALL education, and ALL experience entries from the resume. Do NOT skip, truncate, or limit them to match the JSON template's single example.
 
 AFTER FORMATTING: Generate "ai_suggestions" — 5-9 honest, personalized, actionable career tips based ONLY on what you can read in RESUME_TEXT (their tech stack, experience level, CGPA, certifications, and visible gaps). There is no job description — tips must be grounded in the candidate's actual profile.
 
@@ -28,6 +29,14 @@ CONDITIONAL tips (only if genuinely applicable and missing based on RESUME_TEXT)
 - if basic projects: "Try to build projects that solves the real problem that you are facing or other people are facing"
 Address the user as 'you'. Output as a flat array of plain strings. Keep each suggestion under 40 words. Be direct and specific — no generic filler.
 
+HEADING FIELD RULES:
+- linkedin_url: Display text as "Linkedin"
+- linkedin_url_href: Actual URL. Find and match the correct LinkedIn profile URL from ALL_URLS. If none found, infer from RESUME_TEXT and use "https://linkedin.com/in/username".
+- github_url: Display text. Format as "github.com/username" (strip https://).
+- github_url_href: Actual URL. Find and match the correct GitHub profile URL from ALL_URLS. If none found, infer from RESUME_TEXT and use "https://github.com/username".
+- portfolio_url: Display text. Format as "Portfolio".
+- portfolio_url_href: Actual URL. Find and match the correct Portfolio/Personal site URL from ALL_URLS. If none found, use only if a deployed portfolio clearly exists in RESUME_TEXT.
+
 OUTPUT FORMAT (Template v1):
 - Return ONLY valid JSON below.
 - DO NOT use markdown formatting (like **bold**, *italics*, # headers, etc.) inside the JSON string values. Use plain text only.
@@ -37,9 +46,12 @@ OUTPUT FORMAT (Template v1):
     "name": "Full Name",
     "phone": "+91-XXXXXXXXXX",
     "email": "email@example.com",
-    "linkedin_url": "linkedin.com/in/username",
+    "linkedin_url": "Linkedin",
+    "linkedin_url_href": "refer ALL_URLS",
     "github_url": "github.com/username",
-    "portfolio_url": "portfolio.com"
+    "github_url_href": "refer ALL_URLS",
+    "portfolio_url": "Portfolio",
+    "portfolio_url_href": "refer ALL_URLS"
   }},
   "summary": "<exact summary from RESUME_TEXT>",
   "education": [
@@ -68,6 +80,7 @@ OUTPUT FORMAT (Template v1):
       "title": "<exact project title from RESUME_TEXT>",
       "tech_stack": "<exact tech stack from RESUME_TEXT>",
       "link": "Link",
+      "link_href": "<matched https:// URL from ALL_URLS, or empty string>",
       "bullets": [
         "<exact bullet from RESUME_TEXT>"
       ]
@@ -100,4 +113,9 @@ OUTPUT FORMAT (Template v1):
 
 RESUME_TEXT:
 {resume_text}
+
+ALL_URLS (all https:// URLs found in PDF — match these to heading fields and projects via context):
+{all_urls_list}
+
+Note: "null" means the link was not found. Do NOT invent a URL if null.
 """

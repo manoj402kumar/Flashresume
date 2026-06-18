@@ -632,7 +632,7 @@ export default function ResultPage() {
     // Only clear resume workflow keys — do NOT clear auth session
     ["resume_text", "job_description", "analysis", "generated_resume",
       "no_jd_mode", "no_ai_changes", "approved_project", "preferred_model",
-      "resume_history", "resume_history_index"].forEach(
+      "resume_history", "resume_history_index", "extracted_links"].forEach(
         (key) => localStorage.removeItem(key)
       );
     router.push("/");

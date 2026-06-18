@@ -4,6 +4,7 @@ import gc
 import pypdfium2 as pdfium  # Replaced PyMuPDF with pypdfium2 for better stability
 from docx import Document
 from services.pdf_parser import extract_with_pdfplumber, is_extraction_good
+from services.pdf_link_extractor import extract_pdf_links
 
 
 def extract_from_docx(docx_bytes: bytes) -> dict:
@@ -15,7 +16,9 @@ def extract_from_docx(docx_bytes: bytes) -> dict:
         return {
             "text": text if text else "Unable to extract text from DOCX.",
             "page_count": 1,
-            "parser_used": "python-docx"
+            "parser_used": "python-docx",
+            # DOCX: we cannot extract hyperlinks without deeper XML parsing — return empty
+            "extracted_links": {"all_urls": []},
         }
     except Exception as e:
         raise Exception(f"DOCX extraction failed: {str(e)}")
@@ -38,17 +41,34 @@ def extract_resume_text(pdf_bytes: bytes) -> dict:
     Layer 1: pypdfium2 (Fast, lightweight C++ engine)
     Layer 2: pdfplumber (Heavy Python heap, fallback)
     Note: OCR fallback was removed to prevent OOM memory issues on the server.
+
+    Additionally runs pdf_link_extractor in-process to harvest real hyperlink
+    URLs from PDF annotation objects (invisible to plain-text extraction).
     """
     # Layer 1 — pypdfium2
     text, page_count = extract_with_pypdfium2(pdf_bytes)
     if is_extraction_good(text):
-        return {"text": text, "page_count": page_count, "parser_used": "pypdfium2"}
+        # Run link extractor on the same PDF bytes (annotation walk + regex on text)
+        extracted_links = extract_pdf_links(pdf_bytes, resume_text=text)
+        return {
+            "text": text,
+            "page_count": page_count,
+            "parser_used": "pypdfium2",
+            "extracted_links": extracted_links,
+        }
 
     # Layer 2 — pdfplumber (Fallback)
     try:
         text, page_count = extract_with_pdfplumber(pdf_bytes)
         if is_extraction_good(text):
-            return {"text": text, "page_count": page_count, "parser_used": "pdfplumber"}
+            # Still run the link extractor — annotation walk doesn't depend on text quality
+            extracted_links = extract_pdf_links(pdf_bytes, resume_text=text)
+            return {
+                "text": text,
+                "page_count": page_count,
+                "parser_used": "pdfplumber",
+                "extracted_links": extracted_links,
+            }
     finally:
         gc.collect()
 

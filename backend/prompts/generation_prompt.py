@@ -19,6 +19,7 @@ INPUT LABELS:
 - SELECTED_PROJECTS: pre-determined project titles to include, max 2. For Case 2, first entry is the APPROVED_PROJECT title (see bottom)
 - APPROVED_PROJECT: For Case 2 only — new project as "Title | Tech Stack: ... | Description: ...". "none" means Case 1 (see bottom)
 - ATS_SCORE_BEFORE: original ATS score — output as-is in ats_score_before field (see bottom)
+- EXTRACTED_LINKS: URLs pre-extracted from PDF annotation layer (see bottom). Use for heading and project link_href fields.
 
 KEYWORD DEFINITIONS:
 - Tech Stack Keywords: Languages (Java, Python, C++), Frameworks (Angular, Spring Boot, Django, Express.js, Node.js), Libraries (React, NumPy, Pandas), Databases (MongoDB, PostgreSQL), Cloud (AWS, Azure), Dev Tools (Docker, Kubernetes).
@@ -57,7 +58,8 @@ Step 4: Projects (CRITICAL)
 What counts as a project: ONLY entries explicitly under "PROJECTS" or similar section with a title, tech stack, and at least 1 bullet. "Developed 12+ projects" or "see GitHub" is NOT a project. Skills listings do NOT imply projects. Work experience bullets are NOT projects.
 
 PROJECT SELECTION: Include ONLY projects whose titles appear in SELECTED_PROJECTS. If 1 entry → output 1 project. If 2 → output 2.
-PROJECT LINK: Always set "link": "Link" for all projects.
+PROJECT LINK: Always set "link": "Link" for all projects (visible display text — never the raw URL).
+PROJECT LINK_HREF: From the ALL_URLS list in EXTRACTED_LINKS (see bottom), match the most contextually relevant URL to each project using the project title and tech stack as clues. Set "link_href" to the full https:// URL if a match is found, or "" if no match. Do NOT reuse the LinkedIn or GitHub profile URL as a project link.
 
 Case 2 — APPROVED_PROJECT is present (not "none"):
 - The approved project is NEW — do NOT look for it in RESUME_TEXT.
@@ -144,9 +146,12 @@ Check 3 — NO FABRICATION: No job/degree not in RESUME_TEXT. No skill not from 
 Only output JSON after passing all three checks.
 
 HEADING FIELD RULES:
-- github_url: Include if in RESUME_TEXT and profile has 3+ repos. Format: "github.com/username" (no https://).
-- portfolio_url: Include only if deployed portfolio with live projects. Format: "portfolio.com" or "username.github.io".
-- linkedin_url: Format: "linkedin.com/in/username" (no https://).
+- linkedin_url: Display text as "Linkedin"
+- linkedin_url_href: Actual URL. Find and match the correct LinkedIn profile URL from ALL_URLS. If none found, infer from RESUME_TEXT and use "https://linkedin.com/in/username".
+- github_url: Display text. Format as "github.com/username" (strip https://).
+- github_url_href: Actual URL. Find and match the correct GitHub profile URL from ALL_URLS. If none found, infer from RESUME_TEXT and use "https://github.com/username".
+- portfolio_url: Display text. Format as "Portfolio".
+- portfolio_url_href: Actual URL. Find and match the correct Portfolio/Personal site URL from ALL_URLS. If none found, use only if a deployed portfolio clearly exists in RESUME_TEXT.
 
 OUTPUT FORMAT:
 {{
@@ -155,9 +160,12 @@ OUTPUT FORMAT:
     "name": "Full Name",
     "phone": "+91-XXXXXXXXXX",
     "email": "email@example.com",
-    "linkedin_url": "linkedin.com/in/username",
+    "linkedin_url": "Linkedin",
+    "linkedin_url_href": "refer ALL_URLS",
     "github_url": "github.com/username",
-    "portfolio_url": "portfolio.com"
+    "github_url_href": "refer ALL_URLS",
+    "portfolio_url": "Portfolio",
+    "portfolio_url_href": "refer ALL_URLS"
   }},
   "summary": "follow above rules",
   "education": [
@@ -183,6 +191,7 @@ OUTPUT FORMAT:
       "title": "<exact project title>",
       "tech_stack": "<exact tech stack, max 7 prioritized>",
       "link": "Link",
+      "link_href": "<matched https:// URL from ALL_URLS, or empty string>",
       "bullets": ["<follow step 4 algorithm>"]
     }}
   ],
@@ -232,4 +241,9 @@ SELECTED PROJECTS (include ONLY these — exclude all others):
 
 APPROVED_PROJECT (for Case 2 — "none" means Case 1):
 {approved_project}
+
+ALL_URLS (all https:// URLs found in PDF — match these to heading fields and projects via context):
+{all_urls_list}
+
+Note: "null" means the link was not found. Do NOT invent a URL if null.
 """

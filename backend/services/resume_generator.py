@@ -5,17 +5,27 @@ from prompts.format_only_prompt import FORMAT_ONLY_PROMPT
 from llm.master_llm_caller import call_llm_r2
 from templates.template_v1_schema import TemplateV1
 
-async def generate_resume(resume_text: str, job_description: str, ats_score_before: int, approved_project: str = "", missing_keywords: list[str] = None, selected_projects: list[str] = None, no_ai_changes: bool = False, preferred_model: str = "") -> dict:
+async def generate_resume(resume_text: str, job_description: str, ats_score_before: int, approved_project: str = "", missing_keywords: list[str] = None, selected_projects: list[str] = None, no_ai_changes: bool = False, preferred_model: str = "", extracted_links: dict | None = None) -> dict:
     is_no_jd_mode = not job_description or not job_description.strip()
 
     # Smart Truncation: Compress massive PDF whitespaces/newlines into single spaces, then cap at 12000 chars
     resume_text = " ".join(resume_text.split())[:12000]
 
+    # ── Format extracted link context ──────────────────────────────────────
+    links         = extracted_links or {}
+    all_urls_raw  = links.get("all_urls", []) or []
+    # Format all_urls as a numbered list for the LLM
+    if all_urls_raw:
+        all_urls_list = "\n".join(f"  {i+1}. {url}" for i, url in enumerate(all_urls_raw))
+    else:
+        all_urls_list = "  (none found)"
+
     # Route to correct prompt based on JD presence and flags
     if no_ai_changes or is_no_jd_mode:
         prompt = FORMAT_ONLY_PROMPT.format(
             resume_text=resume_text,
-            ats_score_before=ats_score_before
+            ats_score_before=ats_score_before,
+            all_urls_list=all_urls_list
         )
     else:
         # JD Optimization mode — pass approved_project as clean variable (not injected into resume_text)
@@ -25,7 +35,8 @@ async def generate_resume(resume_text: str, job_description: str, ats_score_befo
             ats_score_before=ats_score_before,
             missing_keywords=", ".join(missing_keywords) if missing_keywords else "None",
             selected_projects=", ".join(selected_projects) if selected_projects else "(No pre-selection — pick the 2 most JD-relevant projects from RESUME_TEXT only. Max 2.)",
-            approved_project=approved_project if approved_project else "none"
+            approved_project=approved_project if approved_project else "none",
+            all_urls_list=all_urls_list,
         )
 
     result = await call_llm_r2(prompt, preferred_model, no_ai_changes=no_ai_changes)
@@ -115,8 +126,8 @@ async def generate_resume(resume_text: str, job_description: str, ats_score_befo
         validated = TemplateV1(**data)
         validated_dict = validated.model_dump()
         
-        # ENFORCE MAX 2 PROJECTS (Code-level guarantee)
-        if len(validated_dict.get("projects", [])) > 2:
+        # ENFORCE MAX 2 PROJECTS (Code-level guarantee ONLY for JD Optimization)
+        if len(validated_dict.get("projects", [])) > 2 and not (is_no_jd_mode or no_ai_changes):
             # Keep only top 2 projects (LLM should have ranked by relevance)
             removed_projects = [p["title"] for p in validated_dict["projects"][2:]]
             validated_dict["projects"] = validated_dict["projects"][:2]
