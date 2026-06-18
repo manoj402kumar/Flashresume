@@ -36,6 +36,7 @@ import CreditBadge from "@/components/CreditBadge";
 
 import LiveDemoSection from "@/components/LiveDemoSection";
 import TemplatesCarousel from "@/components/TemplatesCarousel";
+import ModelSelector from "@/components/ModelSelector";
 import OnboardingTour from "@/components/OnboardingTour";
 
 export default function App() {
@@ -893,6 +894,23 @@ export default function App() {
                 )}
 
                 {/* Main CTA */}
+                {(() => {
+                  const isDevMode = currentUser?.email === "testuser@flashresume.in" || currentUser?.email === "devteam@flashresume.in";
+                  if (!isDevMode) return null;
+                  return (
+                    <>
+                      {optimizeMode === "jd" && (
+                        <ModelSelector storageKey="r1_preferred_model" label="R1 Model (Analysis)" />
+                      )}
+                      {optimizeMode === "first_resume" && (
+                        <ModelSelector storageKey="preferred_model" label="R2 Model (Generation)" />
+                      )}
+                      {optimizeMode === "manual" && (
+                        <ModelSelector storageKey="preferred_model" label="R2 Model (Generation)" />
+                      )}
+                    </>
+                  );
+                })()}
                 <button
                   id="tour-step-cta"
                   onClick={handleGenerate}
