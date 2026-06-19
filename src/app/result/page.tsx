@@ -215,6 +215,23 @@ export default function ResultPage() {
       document.removeEventListener("touchstart", handleClickOutside);
     };
   }, []);
+  // ── Disable right-click & block print-to-PDF on this page ──────────────
+  useEffect(() => {
+    const blockContextMenu = (e: MouseEvent) => e.preventDefault();
+    document.addEventListener("contextmenu", blockContextMenu);
+
+    // Inject a <style> tag that blanks the page for any print attempt (Ctrl+P, File→Print, Save as PDF)
+    const style = document.createElement("style");
+    style.id = "no-print-result";
+    style.textContent = "@media print { body { display: none !important; } }";
+    document.head.appendChild(style);
+
+    return () => {
+      document.removeEventListener("contextmenu", blockContextMenu);
+      document.getElementById("no-print-result")?.remove();
+    };
+  }, []);
+
   const [showMobilePreview, setShowMobilePreview] = useState(true);
   const [showFeedback, setShowFeedback] = useState(false);
   const [sessionGuid, setSessionGuid] = useState<string>("");
@@ -2664,24 +2681,26 @@ export default function ResultPage() {
             )}
           </div>
 
-          <div className="flex-1 w-full bg-surface-container-lowest">
-            <PDFViewer key={`${selectedTemplate}-${showHighlights ? "on" : "off"}-${(resume.section_order || []).join('-')}-${(resume.custom_sections || []).map(s => s.heading + (s.bullets || []).map(b => typeof b === 'string' ? b : b.text || '').join('')).join('|')}`} width="100%" height="100%" className="border-none" showToolbar={false}>
-              {selectedTemplate === "templateLetter" ? (
-                <ResumePDFTemplateLetter
-                  resume={resume}
-                  showHighlights={showHighlights}
-                  matchedKeywords={matchedKeywords}
-                  missingKeywords={missingKeywords}
-                />
-              ) : (
-                <ResumePDFTemplateA4
-                  resume={resume}
-                  showHighlights={showHighlights}
-                  matchedKeywords={matchedKeywords}
-                  missingKeywords={missingKeywords}
-                />
-              )}
-            </PDFViewer>
+          <div className="flex-1 w-full bg-[#0c0f12] overflow-y-auto px-4 py-8 sm:px-8 sm:py-12 flex justify-center items-start">
+            <div className="relative bg-white shadow-2xl rounded-sm ring-1 ring-white/20 w-full max-w-[850px] transition-all duration-300">
+              <MobilePDFPreview key={`desktop-${selectedTemplate}`} refreshKey={JSON.stringify({ resume, showHighlights, matchedKeywords, missingKeywords })}>
+                {selectedTemplate === "templateLetter" ? (
+                  <ResumePDFTemplateLetter
+                    resume={resume}
+                    showHighlights={showHighlights}
+                    matchedKeywords={matchedKeywords}
+                    missingKeywords={missingKeywords}
+                  />
+                ) : (
+                  <ResumePDFTemplateA4
+                    resume={resume}
+                    showHighlights={showHighlights}
+                    matchedKeywords={matchedKeywords}
+                    missingKeywords={missingKeywords}
+                  />
+                )}
+              </MobilePDFPreview>
+            </div>
           </div>
         </div>
       </div>

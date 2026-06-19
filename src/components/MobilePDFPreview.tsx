@@ -98,6 +98,7 @@ export default function MobilePDFPreview({ children, refreshKey }: Props) {
                 renderTextLayer={false}
                 renderAnnotationLayer={false}
                 width={containerWidth}
+                devicePixelRatio={typeof window !== 'undefined' ? Math.max(window.devicePixelRatio || 1, 2) : 2}
               />
               {i < numPages - 1 && (
                 <div style={{ height: "2px", background: "#000", width: "100%" }} />

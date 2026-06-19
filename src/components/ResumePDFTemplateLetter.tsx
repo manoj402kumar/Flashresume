@@ -224,9 +224,9 @@ function HighlightedText({ text, matched, missing, showHighlights, style }: { te
         if (type) {
           const bgColor = type === "matched" ? "#fef08a" : "#bbf7d0";
           const textColor = type === "matched" ? "#854d0e" : "#166534"; // Dark Amber and Dark Green for visibility if bg drops
-          return <Text key={i} style={{ backgroundColor: bgColor, color: textColor, fontWeight: "bold" }}>{part}</Text>;
+          return <Text key={i} style={{ backgroundColor: bgColor, color: textColor }}>{part}</Text>;
         }
-        return <Text key={i}>{part}</Text>;
+        return part; // Return raw string to reduce nested <Text> nodes which breaks Yoga wrapping
       })}
     </Text>
   );
