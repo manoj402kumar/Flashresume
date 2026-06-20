@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { X, Loader2, Download, Crown, GraduationCap, CheckCircle2, ArrowRight, Building, Mail, Hash, Eye, EyeOff, Star, Quote } from "lucide-react";
+import { X, Loader2, Download, Crown, GraduationCap, CheckCircle2, ArrowRight, Building, Mail, Hash, Star, Quote } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { User } from "@supabase/supabase-js";
 
@@ -31,7 +31,6 @@ const GoogleIcon = () => (
 );
 
 type Step = "initializing" | "auth" | "plan" | "student_verify" | "processing";
-type AuthMode = "login" | "signup" | "forgot_password" | "verify_otp" | "reset_password";
 
 const PLANS = [
   {
@@ -131,19 +130,7 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
   }, []);
 
   const [step, setStep] = useState<Step>("initializing");
-  const [authMode, setAuthMode] = useState<AuthMode>("signup");
   const [user, setUser] = useState<User | null>(null);
-
-  // Auth Form
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-
-  // Forgot Password Flow State (Isolated to prevent cross-contamination)
-  const [resetEmail, setResetEmail] = useState("");
-  const [resetOtpValue, setResetOtpValue] = useState("");
-  const [resetPassword, setResetPassword] = useState("");
-  const [resetConfirmPassword, setResetConfirmPassword] = useState("");
-  const [resetSuccessMessage, setResetSuccessMessage] = useState<string | null>(null);
 
   // Student Verify Form
   const [studentMethod, setStudentMethod] = useState<"details" | "email">("details");
@@ -159,13 +146,10 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedPlan, setSelectedPlan] = useState<string>(initialPlan || "pay_per_use");
-  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
       setError(null);
-      setAuthMode("signup");
-      setResetSuccessMessage(null);
       setStep("initializing"); // Show loading spinner while checking session
       if (initialPlan) setSelectedPlan(initialPlan);
       checkUserSession();
@@ -208,86 +192,6 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
     }
   };
 
-  const handleAuth = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError(null);
-    try {
-      if (authMode === "login") {
-        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) throw error;
-        if (data.user) {
-          const loggedInUser = data.user;
-          setUser(loggedInUser);
-          const { data: creditData } = await supabase.rpc("get_total_active_credits", { p_user_id: loggedInUser.id });
-          const currentCredits = creditData ?? 0;
-          if (directPay && initialPlan) {
-            setStep("processing");
-            setTimeout(() => handleProceedToPayment(initialPlan, false, loggedInUser), 100);
-          } else if (!forcePlanSelect && currentCredits >= 10) {
-            onSuccess();
-          } else {
-            setStep("plan");
-          }
-        }
-      } else {
-        const { data, error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            emailRedirectTo: `${window.location.origin}${window.location.pathname}${window.location.search}`
-          }
-        });
-        if (error) throw error;
-        if (data.user) {
-          if (!data.session) {
-            localStorage.setItem("auth_redirect_pricing", "true");
-            setError("Check your email to verify account.");
-            setLoading(false);
-            return;
-          }
-          setUser(data.user);
-          const { data: creditData } = await supabase.rpc("get_total_active_credits", { p_user_id: data.user.id });
-          const currentCredits = creditData ?? 0;
-          if (!forcePlanSelect && currentCredits >= 10) {
-            onSuccess();
-          } else {
-            setStep("plan");
-          }
-        }
-      }
-    } catch (err: any) {
-      const msg: string = err.message || "";
-      if (msg.includes("Invalid login credentials") || msg.includes("invalid_credentials")) {
-        // Check if the email exists in our users table to give a specific message
-        try {
-          const { data: existingUser } = await supabase
-            .from("users")
-            .select("id")
-            .eq("email", email.trim().toLowerCase())
-            .maybeSingle();
-          if (existingUser) {
-            setError("Incorrect password. Please try again or reset your password.");
-          } else {
-            setError("No account found with this email. Please sign up to get started.");
-          }
-        } catch {
-          setError("Incorrect email or password. Please try again.");
-        }
-      } else if (msg.includes("Email not confirmed")) {
-        setError("Please verify your email first. Check your inbox for the confirmation link.");
-      } else if (msg.includes("User already registered")) {
-        setError("An account with this email already exists. Try logging in instead.");
-      } else if (msg.includes("Password should be")) {
-        setError("Password must be at least 6 characters.");
-      } else {
-        setError(msg || "Authentication failed. Please try again.");
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleGoogleLogin = async () => {
     setLoading(true);
     setError(null);
@@ -308,45 +212,7 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
     }
   };
 
-  const handleForgotPassword = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!resetEmail.trim()) return;
-    setLoading(true); setError(null);
-    try {
-      const { error } = await supabase.auth.resetPasswordForEmail(resetEmail.trim());
-      if (error) throw error;
-      setAuthMode("verify_otp");
-    } catch (err: any) { setError(err.message); }
-    finally { setLoading(false); }
-  };
 
-  const handleVerifyOtp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (resetOtpValue.length !== 6) { setError("Please enter a valid 6-digit code."); return; }
-    setLoading(true); setError(null);
-    try {
-      const { error } = await supabase.auth.verifyOtp({ email: resetEmail.trim(), token: resetOtpValue, type: 'recovery' });
-      if (error) throw error;
-      setAuthMode("reset_password");
-    } catch (err: any) { setError(err.message); }
-    finally { setLoading(false); }
-  };
-
-  const handleResetPassword = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (resetPassword !== resetConfirmPassword) { setError("Passwords do not match."); return; }
-    if (resetPassword.length < 6) { setError("Password must be at least 6 characters."); return; }
-    setLoading(true); setError(null);
-    try {
-      const { error } = await supabase.auth.updateUser({ password: resetPassword });
-      if (error) throw error;
-      await supabase.auth.signOut(); // Security: sign out to clear recovery session
-      setAuthMode("login");
-      setResetSuccessMessage("Password successfully reset! Please log in with your new password.");
-      setResetEmail(""); setResetOtpValue(""); setResetPassword(""); setResetConfirmPassword("");
-    } catch (err: any) { setError(err.message); }
-    finally { setLoading(false); }
-  };
 
   const sendOtp = async () => {
     if (!studentEmail.trim()) { setError("Please enter your email."); return; }
@@ -546,10 +412,10 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
         {/* Header */}
         <div className="px-6 pt-16 pb-2 border-b border-surface-container-low text-center">
           <h2 className="text-2xl font-headline font-bold text-on-background">
-            {step === "initializing" ? "Loading..." : step === "auth" ? (authMode === "login" ? "Log In" : authMode === "signup" ? "Sign Up" : "Reset Password") : step === "processing" ? "Processing..." : step === "student_verify" ? "Student Verification" : "Invest in Yourself"}
+            {step === "initializing" ? "Loading..." : step === "auth" ? "Sign In to Continue" : step === "processing" ? "Processing..." : step === "student_verify" ? "Student Verification" : "Invest in Yourself"}
           </h2>
           <p className="text-sm text-on-surface-variant mt-1 max-w-lg mx-auto">
-            {step === "initializing" ? "Please wait a moment." : step === "auth" ? (authMode === "signup" ? "Create an account to download." : "Access your account to download.") : step === "processing" ? "Securely setting up Razorpay..." : step === "student_verify" ? "Verify to unlock the ₹99 plan." : "Returns >>> Investment(paying for servers)"}
+            {step === "initializing" ? "Please wait a moment." : step === "auth" ? "Use your Google account to access downloads." : step === "processing" ? "Securely setting up Razorpay..." : step === "student_verify" ? "Verify to unlock the ₹99 plan." : "Returns >>> Investment(paying for servers)"}
           </p>
         </div>
 
@@ -563,151 +429,31 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
               </motion.div>
             )}
 
-            {/* AUTH STEP */}
+            {/* AUTH STEP — Google only */}
             {step === "auth" && (
               <motion.div key="auth" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-4">
-                {(authMode === "login" || authMode === "signup") && (
-                  <>
-                    {resetSuccessMessage && authMode === "login" && (
-                      <p className="text-xs text-green-500 bg-green-500/10 px-3 py-2 rounded-lg text-center mb-2">
-                        {resetSuccessMessage}
-                      </p>
-                    )}
-                    <form onSubmit={handleAuth} className="space-y-4">
-                      <input type="email" required placeholder="Email" value={email} onChange={e => setEmail(e.target.value)}
-                        className="w-full px-4 py-3 bg-surface-container-low border border-surface-container-high rounded-xl outline-none focus:ring-2 focus:ring-primary text-sm" />
-                      <div className="space-y-1">
-                        <div className="relative">
-                          <input type={showPassword ? "text" : "password"} required placeholder="Password" value={password} onChange={e => setPassword(e.target.value)}
-                            className="w-full px-4 pr-10 py-3 bg-surface-container-low border border-surface-container-high rounded-xl outline-none focus:ring-2 focus:ring-primary text-sm" />
-                          <button
-                            type="button"
-                            onClick={() => setShowPassword(!showPassword)}
-                            className="absolute right-4 top-1/2 -translate-y-1/2 text-on-surface-variant/50 hover:text-on-surface-variant focus:outline-none"
-                          >
-                            {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                          </button>
-                        </div>
-                        {authMode === "login" && (
-                          <div className="flex justify-end">
-                            <button type="button" onClick={() => { setAuthMode("forgot_password"); setError(null); setResetSuccessMessage(null); }} className="text-xs text-primary font-bold hover:underline">
-                              Forgot password?
-                            </button>
-                          </div>
-                        )}
-                      </div>
+                {error && <p className="text-xs text-error bg-error/10 px-3 py-2 rounded-lg text-center">{error}</p>}
 
-                      {error && <p className="text-xs text-error bg-error/10 px-3 py-2 rounded-lg">{error}</p>}
-
-                      <button type="submit" disabled={loading} className="w-full bg-primary text-white font-bold py-3 rounded-xl hover:opacity-90 transition-opacity">
-                        {loading ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : authMode === "login" ? "Log In" : "Sign Up"}
-                      </button>
-                    </form>
-
-                    <div className="relative flex items-center py-2">
-                      <div className="flex-grow border-t border-surface-container-high"></div>
-                      <span className="flex-shrink-0 mx-4 text-on-surface-variant text-xs">Or continue with</span>
-                      <div className="flex-grow border-t border-surface-container-high"></div>
-                    </div>
-
-                    <button
-                      onClick={handleGoogleLogin}
-                      disabled={loading}
-                      className="w-full bg-surface-container-lowest border border-surface-container-high text-on-background font-bold py-3 rounded-xl hover:bg-surface-container-low transition-colors flex justify-center items-center gap-3 shadow-sm"
-                    >
+                <button
+                  id="pricing-google-signin-btn"
+                  onClick={handleGoogleLogin}
+                  disabled={loading}
+                  className="w-full bg-surface-container-lowest border-2 border-primary/40 hover:border-primary text-on-background font-bold py-4 rounded-xl hover:bg-surface-container-low transition-all flex justify-center items-center gap-3 shadow-sm"
+                >
+                  {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : (
+                    <>
                       <GoogleIcon />
-                      Google
-                    </button>
+                      Continue with Google
+                    </>
+                  )}
+                </button>
 
-                    <p className="text-center text-xs text-on-surface-variant">
-                      {authMode === "login" ? "Don't have an account? " : "Already have an account? "}
-                      <button onClick={() => { setAuthMode(authMode === "login" ? "signup" : "login"); setError(null); }} className="text-primary font-bold hover:underline">
-                        {authMode === "login" ? "Sign up" : "Log in"}
-                      </button>
-                    </p>
-                  </>
-                )}
+                <p className="text-center text-xs text-on-surface-variant">
+                  By continuing, you agree to our{" "}
+                  <a href="/terms" className="text-primary hover:underline font-medium">Terms</a>{" "}and{" "}
+                  <a href="/privacy" className="text-primary hover:underline font-medium">Privacy Policy</a>.
+                </p>
 
-                {authMode === "forgot_password" && (
-                  <form onSubmit={handleForgotPassword} className="space-y-4">
-                    <p className="text-sm text-on-surface-variant mb-2">Enter your email address and we will send you a 6-digit code to reset your password.</p>
-                    <input type="email" required placeholder="Email address" value={resetEmail} onChange={e => setResetEmail(e.target.value)}
-                      className="w-full px-4 py-3 bg-surface-container-low border border-surface-container-high rounded-xl outline-none focus:ring-2 focus:ring-primary text-sm" />
-                    {error && <p className="text-xs text-error bg-error/10 px-3 py-2 rounded-lg">{error}</p>}
-                    <button type="submit" disabled={loading} className="w-full bg-primary text-white font-bold py-3 rounded-xl hover:opacity-90 transition-opacity">
-                      {loading ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : "Send Reset Code"}
-                    </button>
-                    <button type="button" onClick={() => setAuthMode("login")} className="w-full text-xs text-on-surface-variant font-bold hover:underline mt-2">Back to login</button>
-                  </form>
-                )}
-
-                {authMode === "verify_otp" && (
-                  <form onSubmit={handleVerifyOtp} className="space-y-4">
-                    <p className="text-sm text-on-surface-variant mb-2">Enter the 6-digit code sent to <span className="font-bold text-on-background">{resetEmail}</span></p>
-                    <div className="flex justify-between gap-2">
-                      {[0, 1, 2, 3, 4, 5].map((index) => (
-                        <input key={index} id={`reset-otp-${index}`} type="text" maxLength={1} inputMode="numeric" pattern="[0-9]*" autoComplete="one-time-code"
-                          value={resetOtpValue[index] || ""}
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            if (val && !/^\d$/.test(val)) return;
-                            const newVal = resetOtpValue.substring(0, index) + val + resetOtpValue.substring(index + 1);
-                            setResetOtpValue(newVal);
-                            if (val && index < 5) document.getElementById(`reset-otp-${index + 1}`)?.focus();
-                          }}
-                          onKeyDown={(e) => {
-                            if (e.key === "Backspace" && !resetOtpValue[index] && index > 0) {
-                              document.getElementById(`reset-otp-${index - 1}`)?.focus();
-                            }
-                          }}
-                          onPaste={(e) => {
-                            e.preventDefault();
-                            const pasted = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 6);
-                            setResetOtpValue(pasted.padEnd(6, " ").slice(0, 6).trimEnd());
-                            if (pasted.length > 0) document.getElementById(`reset-otp-${Math.min(pasted.length, 5)}`)?.focus();
-                          }}
-                          className="w-full aspect-square text-center text-lg font-bold bg-surface-container-low border border-surface-container-high rounded-xl outline-none focus:ring-2 focus:ring-primary"
-                        />
-                      ))}
-                    </div>
-                    {error && <p className="text-xs text-error bg-error/10 px-3 py-2 rounded-lg">{error}</p>}
-                    <button type="submit" disabled={loading} className="w-full bg-primary text-white font-bold py-3 rounded-xl hover:opacity-90 transition-opacity">
-                      {loading ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : "Verify Code"}
-                    </button>
-                  </form>
-                )}
-
-                {authMode === "reset_password" && (
-                  <form onSubmit={handleResetPassword} className="space-y-4">
-                    <p className="text-sm text-on-surface-variant mb-2">Create a new password for your account.</p>
-                    <div className="relative">
-                      <input type={showPassword ? "text" : "password"} required placeholder="New Password" value={resetPassword} onChange={e => setResetPassword(e.target.value)}
-                        className="w-full px-4 pr-10 py-3 bg-surface-container-low border border-surface-container-high rounded-xl outline-none focus:ring-2 focus:ring-primary text-sm" />
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-4 top-1/2 -translate-y-1/2 text-on-surface-variant/50 hover:text-on-surface-variant focus:outline-none"
-                      >
-                        {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                      </button>
-                    </div>
-                    <div className="relative">
-                      <input type={showPassword ? "text" : "password"} required placeholder="Confirm New Password" value={resetConfirmPassword} onChange={e => setResetConfirmPassword(e.target.value)}
-                        className="w-full px-4 pr-10 py-3 bg-surface-container-low border border-surface-container-high rounded-xl outline-none focus:ring-2 focus:ring-primary text-sm" />
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-4 top-1/2 -translate-y-1/2 text-on-surface-variant/50 hover:text-on-surface-variant focus:outline-none"
-                      >
-                        {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                      </button>
-                    </div>
-                    {error && <p className="text-xs text-error bg-error/10 px-3 py-2 rounded-lg">{error}</p>}
-                    <button type="submit" disabled={loading} className="w-full bg-primary text-white font-bold py-3 rounded-xl hover:opacity-90 transition-opacity">
-                      {loading ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : "Update Password"}
-                    </button>
-                  </form>
-                )}
                 {/* Review for auth step — scratch page gets its own quote */}
                 <ReviewBanner review={isScratchPage ? SCRATCH_REVIEW : PLAN_REVIEW} />
               </motion.div>
