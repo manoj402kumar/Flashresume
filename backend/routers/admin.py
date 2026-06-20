@@ -19,7 +19,7 @@ load_dotenv()
 router = APIRouter()
 
 # Emails excluded from all admin metrics (dev / test accounts)
-DEV_EMAILS = ["devteam@flashresume.in"]
+DEV_EMAILS = ["flashresume.in@gmail.com"]
 
 _ADMIN_KEY_HEADER = APIKeyHeader(name="X-Admin-Key", auto_error=False)
 

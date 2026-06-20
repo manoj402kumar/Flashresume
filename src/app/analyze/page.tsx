@@ -140,7 +140,7 @@ export default function AnalyzePage() {
             </div>
 
             {(() => {
-              const isDevMode = currentUser?.email === "testuser@flashresume.in" || currentUser?.email === "devteam@flashresume.in";
+              const isDevMode = currentUser?.email === "flashresume.in@gmail.com";
               if (!isDevMode) return null;
               return analysis.model_used && (
                 <div className="inline-flex items-center gap-2 px-4 py-2 bg-surface rounded-2xl shadow-sm border border-surface-container-high text-xs text-on-surface-variant font-medium mt-4">
@@ -334,7 +334,7 @@ export default function AnalyzePage() {
           </div>
 
           {(() => {
-            const isDevMode = currentUser?.email === "testuser@flashresume.in" || currentUser?.email === "devteam@flashresume.in";
+            const isDevMode = currentUser?.email === "flashresume.in@gmail.com";
             if (!isDevMode) return null;
             return (
               <div className="w-full max-w-md relative z-10 mb-4">

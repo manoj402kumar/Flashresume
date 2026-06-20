@@ -917,7 +917,7 @@ export default function App() {
 
                 {/* Main CTA */}
                 {(() => {
-                  const isDevMode = currentUser?.email === "testuser@flashresume.in" || currentUser?.email === "devteam@flashresume.in";
+                  const isDevMode = currentUser?.email === "flashresume.in@gmail.com";
                   if (!isDevMode) return null;
                   return (
                     <>

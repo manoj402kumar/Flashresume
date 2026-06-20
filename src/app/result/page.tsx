@@ -806,7 +806,7 @@ export default function ResultPage() {
               <h1 className="font-headline text-lg font-bold text-white leading-tight">Your Resume</h1>
               <p className="text-xs text-white/50 leading-tight flex items-center gap-1">
                 {(() => {
-                  const isDevMode = userEmail === "testuser@flashresume.in" || userEmail === "devteam@flashresume.in";
+                  const isDevMode = userEmail === "flashresume.in@gmail.com";
                   return (
                     <>
                       <Sparkles className="w-3 h-3 text-[#12f8d7]" /> AI-Optimized{isDevMode && activeModelName ? ` with ${activeModelName}` : ''}
