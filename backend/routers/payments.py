@@ -490,7 +490,7 @@ async def razorpay_webhook(request: Request):
                     )
                     if existing_bucket.data:
                         print(f"[WEBHOOK][IDEMPOTENCY] Credits already granted for payment {payment_id}, skipping.")
-                        return {"status": "already_processed"}
+                        return {"status": "already_processed", "message": "Credits already granted"}
                 except Exception as idem_err:
                     print(f"[WEBHOOK][IDEMPOTENCY CHECK FAILED] {idem_err} — falling through to insert")
                     # Fall through — DB constraint will protect us
