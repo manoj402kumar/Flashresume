@@ -149,7 +149,25 @@ async def verify_payment(body: VerifyRequest, authorization: str = Header(None))
             credits_to_add = PLAN_CREDITS.get(actual_plan_type, 0)
             
             validity_days = 60 if actual_plan_type == "regular" else 90 if actual_plan_type == "student" else 10
-            
+
+            # Idempotency guard: skip if credits already granted for this (payment_id, user_id) pair.
+            # Wrapped in try/except so a DB timeout falls through to the insert — the Postgres
+            # UNIQUE index on (payment_id, user_id) is the true safety net.
+            try:
+                existing_bucket = await sb(
+                    lambda: supabase.table("credit_buckets")
+                    .select("id")
+                    .eq("payment_id", body.razorpay_payment_id)
+                    .eq("user_id", actual_user_id)
+                    .execute()
+                )
+                if existing_bucket.data:
+                    print(f"[VERIFY][IDEMPOTENCY] Credits already granted for payment {body.razorpay_payment_id}, skipping.")
+                    return {"status": "already_processed", "message": "Credits already granted"}
+            except Exception as idem_err:
+                print(f"[VERIFY][IDEMPOTENCY CHECK FAILED] {idem_err} — falling through to insert")
+                # Fall through — DB constraint will protect us
+
             # Atomically add credits using the new bucket system
             bucket_res = await sb(lambda: supabase.rpc("add_credit_bucket", {
                 "p_user_id": actual_user_id,
@@ -458,6 +476,24 @@ async def razorpay_webhook(request: Request):
                 credits_to_add = PLAN_CREDITS.get(plan_type, 0)
                 
                 validity_days = 60 if plan_type == "regular" else 90 if plan_type == "student" else 10
+
+                # Idempotency guard: skip if credits already granted for this (payment_id, user_id) pair.
+                # Wrapped in try/except so a DB timeout falls through to the insert — the Postgres
+                # UNIQUE index on (payment_id, user_id) is the true safety net.
+                try:
+                    existing_bucket = await sb(
+                        lambda: supabase.table("credit_buckets")
+                        .select("id")
+                        .eq("payment_id", payment_id)
+                        .eq("user_id", user_id)
+                        .execute()
+                    )
+                    if existing_bucket.data:
+                        print(f"[WEBHOOK][IDEMPOTENCY] Credits already granted for payment {payment_id}, skipping.")
+                        return {"status": "already_processed"}
+                except Exception as idem_err:
+                    print(f"[WEBHOOK][IDEMPOTENCY CHECK FAILED] {idem_err} — falling through to insert")
+                    # Fall through — DB constraint will protect us
 
                 bucket_res = await sb(lambda: supabase.rpc("add_credit_bucket", {
                     "p_user_id": user_id,
