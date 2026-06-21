@@ -195,6 +195,7 @@ export interface TemplateV1 {
   };
   changes: string[];
   ai_suggestions?: string[] | null;
+  job_strategy?: JobStrategyItem[] | null;
   section_order?: string[];
   custom_sections?: Array<{
     id: string;
@@ -206,6 +207,12 @@ export interface TemplateV1 {
   ats_score_after: number;
   session_id?: string;
   _model_used?: string;
+}
+
+export interface JobStrategyItem {
+  role: string;
+  match: "Strong" | "Good" | "Moderate";
+  search_queries: string[];
 }
 
 export async function generateResume(

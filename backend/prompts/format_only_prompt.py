@@ -29,6 +29,12 @@ CONDITIONAL tips (only if genuinely applicable and missing based on RESUME_TEXT)
 - if basic projects: "Try to build projects that solves the real problem that you are facing or other people are facing"
 Address the user as 'you'. Output as a flat array of plain strings. Keep each suggestion under 40 words. Be direct and specific — no generic filler.
 
+AFTER GENERATING ai_suggestions: Generate "job_strategy" — analyze RESUME_TEXT to identify 3-5 job roles that best fit the candidate's actual background(skills, projects, experience level, education). For each role output:
+- the goal is to search jobs where their resume can be easily shortlisted.
+- role: clear job title with tech stack e.g. "Frontend Developer (React/Next.js)"
+- match: "Strong", "Good", or "Moderate"
+- search_queries: exactly 2 specific, ready-to-use Google search sentences the candidate can use to find this job (ALWAYS include role, key tech, experience level, location — use Hyderabad or Bengaluru as default; location is MANDATORY, and optionally platform like site:linkedin.com or site:naukri.com(don't include site for every query)).
+
 HEADING FIELD RULES:
 - linkedin_url: Display text as "Linkedin"
 - linkedin_url_href: Actual URL. Find and match the correct LinkedIn profile URL from ALL_URLS. If none found, infer from RESUME_TEXT and use "https://linkedin.com/in/username".
@@ -106,6 +112,16 @@ OUTPUT FORMAT (Template v1):
     "<Personalized suggestion 3>",
     "<Personalized suggestion 4>",
     "<Personalized suggestion 5>"
+  ],
+  "job_strategy": [
+    {{
+      "role": "<Job Role Title e.g. Full Stack Developer (React/Node.js)>",
+      "match": "<Strong | Good | Moderate>",
+      "search_queries": [
+        "<Ready-to-use Google search sentence 1>",
+        "<Ready-to-use Google search sentence 2>"
+      ]
+    }}
   ],
   "ats_score_before": {ats_score_before},
   "ats_score_after": 0

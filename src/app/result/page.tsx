@@ -28,7 +28,10 @@ import {
   User,
   Trash2,
   Undo2,
-  Redo2
+  Redo2,
+  Search,
+  ExternalLink,
+  MapPin
 } from "lucide-react";
 
 // Utility: move element in array from index `from` to index `to`
@@ -38,6 +41,7 @@ function arrayMove<T>(arr: T[], from: number, to: number): T[] {
   result.splice(to > from ? to - 1 : to, 0, moved);
   return result;
 }
+
 import type { TemplateV1 } from "@/lib/api";
 import {
   isBulletEnhanced,
@@ -589,7 +593,7 @@ export default function ResultPage() {
       .in("status", ["active", "queued", "fallback"])
       .gt("remaining_credits", 0)
       .order("created_at", { ascending: true });
-      
+
     let currentCredits = 0;
     if (bucketData) {
       setBuckets(bucketData);
@@ -606,7 +610,7 @@ export default function ResultPage() {
     } else {
       setHasPaidAccess(false);
     }
-    
+
     // Auto-open pricing popup if redirected back from auth flow and don't have enough credits
     if (typeof window !== "undefined" && localStorage.getItem("auth_redirect_pricing") === "true") {
       localStorage.removeItem("auth_redirect_pricing");
@@ -614,7 +618,7 @@ export default function ResultPage() {
         setShowPricingPopup(true);
       }
     }
-    
+
     setCheckingAccess(false);
   };
 
@@ -637,10 +641,10 @@ export default function ResultPage() {
             session_id: sessionId,
             user_id: session?.user?.id ?? null,
           }),
-        }).catch(() => {}); // silent fail — never block the user
+        }).catch(() => { }); // silent fail — never block the user
       });
     }
-    
+
     const { data: authListener } = supabase.auth.onAuthStateChange((event) => {
       if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED") {
         checkAccess();
@@ -728,7 +732,7 @@ export default function ResultPage() {
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
         const isMobile = window.matchMedia?.("(pointer: coarse)")?.matches ?? /Mobi|Android|iPhone/i.test(navigator.userAgent);
         const deviceType = isMobile ? "mobile" : "desktop";
-        
+
         try {
           // Await the fetch so it finishes before link.click() freezes the thread on mobile
           const res = await fetch(`${apiUrl}/api/resume/increment-download`, {
@@ -736,7 +740,7 @@ export default function ResultPage() {
             body: JSON.stringify({ session_id: sessionGuid || "", user_id: activeUserId, device_type: deviceType }),
             headers: { "Content-Type": "application/json" }
           });
-          
+
           if (res.ok) {
             const data = await res.json();
             const isFirstEverDownload = data.user_total_downloads === 1;
@@ -944,6 +948,17 @@ export default function ResultPage() {
                         )}
 
                         <div className="pt-2 space-y-2 border-t border-surface-container-low mt-2">
+                          {/* View Full Profile */}
+                          <button
+                            onClick={() => {
+                              setShowAccountDropdown(false);
+                              window.open("/profile", "_blank");
+                            }}
+                            className="w-full py-2.5 bg-gradient-to-r from-primary/10 to-secondary/10 hover:from-primary/20 hover:to-secondary/20 text-primary border border-primary/20 text-sm font-bold rounded-xl transition-all flex items-center justify-center gap-2"
+                          >
+                            👤 View Full Profile →
+                          </button>
+
                           <button
                             onClick={() => {
                               setShowAccountDropdown(false);
@@ -1878,8 +1893,8 @@ export default function ResultPage() {
                                                 onChange={(e) => {
                                                   const newExperience = [...resume.experience];
                                                   const newBullets = [...newExperience[idx].bullets];
-                                              newBullets[bidx] = e.target.value;
-                                              newExperience[idx] = { ...newExperience[idx], bullets: newBullets };
+                                                  newBullets[bidx] = e.target.value;
+                                                  newExperience[idx] = { ...newExperience[idx], bullets: newBullets };
                                                   updateResume({ experience: newExperience });
                                                 }}
                                                 className="flex-1 rounded-lg px-3 py-2 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm resize-none"
@@ -2053,8 +2068,8 @@ export default function ResultPage() {
                                                 onChange={(e) => {
                                                   const newProjects = [...resume.projects];
                                                   const newBullets = [...newProjects[idx].bullets];
-                                              newBullets[bidx] = e.target.value;
-                                              newProjects[idx] = { ...newProjects[idx], bullets: newBullets };
+                                                  newBullets[bidx] = e.target.value;
+                                                  newProjects[idx] = { ...newProjects[idx], bullets: newBullets };
                                                   updateResume({ projects: newProjects });
                                                 }}
                                                 className="flex-1 rounded-lg px-3 py-2 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm resize-none"
@@ -2503,9 +2518,137 @@ export default function ResultPage() {
                   transition={{ duration: 0.3 }}
                   className="w-full max-w-2xl mx-auto space-y-5"
                 >
+                  {/* ── Sub-section Nav Pills ── */}
+                  <div className="flex gap-2 flex-wrap">
+                    {resume.job_strategy && resume.job_strategy.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => document.getElementById('ai-analysis-job-strategy')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-amber-500/10 text-amber-600 border border-amber-400/25 hover:bg-amber-500/20 hover:border-amber-400/50 transition-all active:scale-95"
+                      >
+                        💼 Job Strategy
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => document.getElementById('ai-analysis-suggestions')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-[#006859]/10 text-[#006859] border border-[#006859]/25 hover:bg-[#006859]/20 hover:border-[#006859]/50 transition-all active:scale-95"
+                    >
+                      💡 AI Suggestions
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => document.getElementById('ai-analysis-changes')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-[#12f8d7]/10 text-[#0a9980] border border-[#12f8d7]/25 hover:bg-[#12f8d7]/20 hover:border-[#12f8d7]/50 transition-all active:scale-95"
+                    >
+                      ✨ AI Changes
+                    </button>
+                  </div>
+
+                  {/* ── Job Strategy Card ── (shown first) */}
+                  {resume.job_strategy && resume.job_strategy.length > 0 && (
+                    <div id="ai-analysis-job-strategy" className="rounded-[2rem] overflow-hidden shadow-xl border border-amber-500/20">
+                      {/* Header */}
+                      <div className="bg-gradient-to-r from-amber-600 to-orange-500 px-6 py-4 flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0">
+                          <MapPin className="w-4 h-4 text-white" />
+                        </div>
+                        <div>
+                          <h3 className="text-white font-bold text-base leading-tight">Job Strategy</h3>
+                          <p className="text-white/70 text-xs">Best-fit roles from your original resume + search queries</p>
+                        </div>
+                        <span className="ml-auto bg-white/20 text-white text-xs font-bold px-2.5 py-1 rounded-full">
+                          {resume.job_strategy.length} roles
+                        </span>
+                      </div>
+
+                      {/* Role Cards */}
+                      <div className="bg-surface-container-lowest px-5 py-5 space-y-4">
+                        {resume.job_strategy.map((item, idx) => {
+                          const matchColor =
+                            item.match === "Strong"
+                              ? "bg-emerald-500/15 text-emerald-600 border-emerald-400/30"
+                              : item.match === "Good"
+                                ? "bg-blue-500/15 text-blue-600 border-blue-400/30"
+                                : "bg-amber-500/15 text-amber-600 border-amber-400/30";
+                          const matchDot =
+                            item.match === "Strong"
+                              ? "bg-emerald-500"
+                              : item.match === "Good"
+                                ? "bg-blue-500"
+                                : "bg-amber-500";
+                          return (
+                            <motion.div
+                              key={idx}
+                              initial={{ opacity: 0, y: 12 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{ delay: 0.08 + idx * 0.07 }}
+                              className="p-4 rounded-2xl bg-amber-500/5 border border-amber-400/15 hover:bg-amber-500/10 transition-colors"
+                            >
+                              {/* Role title + match badge */}
+                              <div className="flex items-center gap-2 mb-3 flex-wrap">
+                                <div className="w-6 h-6 rounded-full bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center text-white text-[10px] font-black flex-shrink-0">
+                                  {idx + 1}
+                                </div>
+                                <p className="font-bold text-sm text-on-background flex-1">{item.role}</p>
+                                <span className={`inline-flex items-center gap-1 text-[10px] font-black px-2 py-0.5 rounded-full border ${matchColor}`}>
+                                  <span className={`w-1.5 h-1.5 rounded-full ${matchDot}`} />
+                                  {item.match} Match
+                                </span>
+                              </div>
+
+                              {/* Google Search Query Pills */}
+                              <div className="space-y-2">
+                                <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider flex items-center gap-1">
+                                  <Search className="w-3 h-3" /> Search on Google
+                                </p>
+                                {item.search_queries.map((query, qIdx) => {
+                                  const isLocked = credits === 0 && qIdx === 0;
+                                  if (isLocked) {
+                                    return (
+                                      <button
+                                        key={qIdx}
+                                        type="button"
+                                        onClick={() => { setPricingTrigger("download"); setShowPricingPopup(true); }}
+                                        className="relative flex items-start gap-2 w-full text-left px-3 py-2 rounded-xl bg-white/60 border border-amber-300/30 overflow-hidden group cursor-pointer"
+                                      >
+                                        <Search className="w-3.5 h-3.5 text-amber-500 flex-shrink-0 mt-0.5 opacity-30" />
+                                        <span className="text-xs text-on-background leading-relaxed flex-1 font-medium blur-sm select-none pointer-events-none">
+                                          {query}
+                                        </span>
+                                        <div className="absolute inset-0 flex items-center justify-center gap-1.5 bg-amber-50/80 backdrop-blur-[2px] rounded-xl">
+                                          <span className="text-sm">🔒</span>
+                                          <span className="text-xs font-bold text-amber-700">Unlock full strategy</span>
+                                          <span className="text-[10px] font-black bg-amber-500 text-white px-2 py-0.5 rounded-full ml-1">Upgrade</span>
+                                        </div>
+                                      </button>
+                                    );
+                                  }
+                                  return (
+                                    <a
+                                      key={qIdx}
+                                      href={`https://www.google.com/search?q=${encodeURIComponent(query)}`}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="flex items-start gap-2 w-full text-left px-3 py-2 rounded-xl bg-white/60 border border-amber-300/30 hover:bg-amber-50 hover:border-amber-400/50 transition-all group"
+                                    >
+                                      <Search className="w-3.5 h-3.5 text-amber-500 flex-shrink-0 mt-0.5 group-hover:scale-110 transition-transform" />
+                                      <span className="text-xs text-on-background leading-relaxed flex-1 font-medium">{query}</span>
+                                      <ExternalLink className="w-3 h-3 text-amber-400 flex-shrink-0 mt-0.5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                    </a>
+                                  );
+                                })}
+                              </div>
+                            </motion.div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
                   {/* AI Suggestions Card */}
                   {resume.ai_suggestions && resume.ai_suggestions.length > 0 && (
-                    <div className="rounded-[2rem] overflow-hidden shadow-xl border border-[#006859]/15">
+                    <div id="ai-analysis-suggestions" className="rounded-[2rem] overflow-hidden shadow-xl border border-[#006859]/15">
                       {/* Header */}
                       <div className="bg-gradient-to-r from-[#006859] to-[#0a9980] px-6 py-4 flex items-center gap-3">
                         <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0">
@@ -2515,7 +2658,7 @@ export default function ResultPage() {
                         </div>
                         <div>
                           <h3 className="text-white font-bold text-base leading-tight">AI Suggestions</h3>
-                          <p className="text-white/70 text-xs">Personalized growth tips for your next steps</p>
+                          <p className="text-white/70 text-xs">These tips make you stand among top1% applicants</p>
                         </div>
                         <span className="ml-auto bg-white/20 text-white text-xs font-bold px-2.5 py-1 rounded-full">
                           {resume.ai_suggestions.length}
@@ -2523,26 +2666,41 @@ export default function ResultPage() {
                       </div>
                       {/* Suggestions List */}
                       <div className="bg-surface-container-lowest px-6 py-5 space-y-3">
-                        {resume.ai_suggestions.map((tip, idx) => (
-                          <motion.div
-                            key={idx}
-                            initial={{ opacity: 0, x: -16 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ delay: 0.1 + idx * 0.06 }}
-                            className="flex items-start gap-3 p-3 rounded-xl bg-[#006859]/5 border border-[#006859]/10 hover:bg-[#006859]/10 transition-colors"
-                          >
-                            <div className="w-5 h-5 rounded-full bg-gradient-to-br from-[#006859] to-[#12f8d7] flex items-center justify-center text-white text-[10px] font-black flex-shrink-0 mt-0.5">
-                              {idx + 1}
-                            </div>
-                            <p className="text-sm text-on-background leading-relaxed flex-1">{tip}</p>
-                          </motion.div>
-                        ))}
+                        {resume.ai_suggestions.map((tip, idx) => {
+                          const total = resume.ai_suggestions!.length;
+                          const isLocked = credits === 0 && idx >= total - 3;
+                          return (
+                            <motion.div
+                              key={idx}
+                              initial={{ opacity: 0, x: -16 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              transition={{ delay: 0.1 + idx * 0.06 }}
+                              className={`relative flex items-start gap-3 p-3 rounded-xl border transition-colors overflow-hidden ${isLocked
+                                ? "bg-[#006859]/5 border-[#006859]/10 cursor-pointer"
+                                : "bg-[#006859]/5 border-[#006859]/10 hover:bg-[#006859]/10"
+                                }`}
+                              onClick={isLocked ? () => { setPricingTrigger("download"); setShowPricingPopup(true); } : undefined}
+                            >
+                              <div className="w-5 h-5 rounded-full bg-gradient-to-br from-[#006859] to-[#12f8d7] flex items-center justify-center text-white text-[10px] font-black flex-shrink-0 mt-0.5">
+                                {idx + 1}
+                              </div>
+                              <p className={`text-sm text-on-background leading-relaxed flex-1 ${isLocked ? "blur-sm select-none pointer-events-none" : ""}`}>{tip}</p>
+                              {isLocked && (
+                                <div className="absolute inset-0 flex items-center justify-center gap-1.5 bg-[#e8faf7]/80 backdrop-blur-[2px] rounded-xl">
+                                  <span className="text-sm">🔒</span>
+                                  <span className="text-xs font-bold text-[#006859]">Unlock all tips</span>
+                                  <span className="text-[10px] font-black bg-[#006859] text-white px-2 py-0.5 rounded-full ml-1">Upgrade</span>
+                                </div>
+                              )}
+                            </motion.div>
+                          );
+                        })}
                       </div>
                     </div>
                   )}
 
                   {/* AI Analysis Card */}
-                  <div className="rounded-[2rem] overflow-hidden shadow-xl border border-[#006859]/15">
+                  <div id="ai-analysis-changes" className="rounded-[2rem] overflow-hidden shadow-xl border border-[#006859]/15">
                     {/* Header */}
                     <div className="bg-gradient-to-r from-[#006859] to-[#0a9980] px-6 py-4 flex items-center gap-3">
                       <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0">
@@ -2736,7 +2894,7 @@ export default function ResultPage() {
       {/* The 5-Second Teaser Auth Wall */}
       <PricingPopup
         isOpen={showTeaserAuthGate}
-        onClose={() => {}} // Un-closable: force login to continue
+        onClose={() => { }} // Un-closable: force login to continue
         onSuccess={() => setShowTeaserAuthGate(false)}
         directPay={false}
         forcePlanSelect={false}

@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Optional, Union
+from typing import Optional, Union, List
 
 class Heading(BaseModel):
     name: str
@@ -41,6 +41,11 @@ class TechnicalSkills(BaseModel):
     developer_tools: list[str]
     miscellaneous: list[str] = []
 
+class JobStrategyItem(BaseModel):
+    role: str
+    match: str  # "Strong" | "Good" | "Moderate"
+    search_queries: list[str]
+
 class TemplateV1(BaseModel):
     template_id: str = "v1"
     heading: Heading
@@ -54,5 +59,6 @@ class TemplateV1(BaseModel):
     technical_skills: TechnicalSkills
     changes: list[str]
     ai_suggestions: Optional[list[str]] = None
+    job_strategy: Optional[List[JobStrategyItem]] = None
     ats_score_before: int
     ats_score_after: int

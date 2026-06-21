@@ -624,6 +624,15 @@ export default function App() {
                               <button
                                 onClick={() => {
                                   setShowAccountDropdown(false);
+                                  window.open("/profile", "_blank");
+                                }}
+                                className="w-full py-2.5 bg-gradient-to-r from-primary/10 to-secondary/10 hover:from-primary/20 hover:to-secondary/20 text-primary border border-primary/20 text-sm font-bold rounded-xl transition-all flex items-center justify-center gap-2"
+                              >
+                                👤 View Full Profile →
+                              </button>
+                              <button
+                                onClick={() => {
+                                  setShowAccountDropdown(false);
                                   document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' });
                                 }}
                                 className="w-full py-2.5 bg-surface-container-low hover:bg-surface-container-high text-on-background text-sm font-bold rounded-xl transition-colors"

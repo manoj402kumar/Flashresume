@@ -138,6 +138,12 @@ RULES:
    - If approved project was suggested → include: "Build the [project title] project using [tech stack] — this directly fills your [JD tech] gap and gives you something concrete to show recruiters."
    - Suggest 1 specific certfication relevant to the JD tech stack.
    - Address user as "you". Output as flat array of plain strings. Only give suggestions when genuinely needed.
+5. "job_strategy" field: Analyze RESUME_TEXT (original uploaded resume — NOT the optimized output) to determine the 3-5 job roles that best match the candidate's actual background.
+   - the goal is to search jobs where their resume can be easily shortlisted.
+   - Base this ONLY on skills, experience, projects, and education in RESUME_TEXT.
+   - For each role output: role name, match level ("Strong" / "Good" / "Moderate"), and exactly 2 Google search sentences.
+   - Search sentences must be specific, ready-to-use queries a job seeker can type into Google. ALWAYS include: role, key tech stack, experience level (fresher/junior/senior), location (use Hyderabad or Bengaluru — India's top tech hubs), and optionally platform (e.g. site:linkedin.com or site:naukri.com dont include site for all queries). Location is MANDATORY — never omit it.
+   - Output as array of objects, 3-5 items.
 
 MANDATORY SELF-VALIDATION (run before writing JSON output):
 Check 1 — MISSING KEYWORDS COVERAGE: For each keyword in "MISSING KEYWORDS TO INJECT", verify it appears in the JSON output. If not → insert it before finalizing.
@@ -213,6 +219,16 @@ OUTPUT FORMAT:
     "<Personalized suggestion 3>",
     "<Personalized suggestion 4>",
     "<Personalized suggestion 5>"
+  ],
+  "job_strategy": [
+    {{
+      "role": "<Job Role Title e.g. Backend Developer (Java/Spring Boot)>",
+      "match": "<Strong | Good | Moderate>",
+      "search_queries": [
+        "<Ready-to-use Google search sentence 1 for this role>",
+        "<Ready-to-use Google search sentence 2 for this role>"
+      ]
+    }}
   ],
   "changes": [
     "Rewrote Summary: [old] → [new]",
