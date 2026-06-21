@@ -49,13 +49,13 @@ const PLANS = [
   },
   {
     id: "regular",
-    name: "Most Popular",
+    name: "Standard Plan",
     price: 199,
     priceDisplay: "₹199",
     period: "/2 Months",
     description: "300 Credits (30 Resumes)",
     icon: <Crown className="w-5 h-5 text-amber-400" />,
-    badge: "Standard Plan",
+    badge: null,
     borderClass: "border-primary",
     features: ["300 Credits", "Valid for 2 Months", "All Premium Features"],
   },
@@ -121,6 +121,15 @@ function ReviewBanner({ review }: { review: typeof PLAN_REVIEW }) {
   );
 }
 // ─────────────────────────────────────────────────────────────────────────────
+
+function getTomorrowDate(): string {
+  const d = new Date();
+  d.setDate(d.getDate() + 1);
+  const dd = String(d.getDate()).padStart(2, "0");
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const yyyy = d.getFullYear();
+  return `${dd}/${mm}/${yyyy}`;
+}
 
 export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, directPay = false, forcePlanSelect = false, prefetchedUser, prefetchedCredits, disableClose = false, loginOnly = false }: PricingPopupProps) {
   const [isScratchPage, setIsScratchPage] = useState(false);
@@ -409,6 +418,16 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
   if (!isOpen) return null;
 
   return (
+    <>
+    <style>{`
+      @keyframes badge-shine {
+        0%   { transform: translateX(-120%) skewX(-20deg); }
+        100% { transform: translateX(220%) skewX(-20deg); }
+      }
+      .badge-shine-inner {
+        animation: badge-shine 2.5s ease-in-out infinite;
+      }
+    `}</style>
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
@@ -532,15 +551,20 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
                   <div onClick={() => setSelectedPlan("student")}
                     className={`relative w-full md:w-auto flex flex-col p-4 md:p-5 rounded-2xl md:rounded-3xl border-2 cursor-pointer transition-all duration-300 ${selectedPlan === "student" ? "border-transparent bg-gradient-to-b from-[#006859] to-[#12f8d7] shadow-xl md:scale-105 text-white" : "border-tertiary/50 bg-gradient-to-br from-tertiary-container/20 to-surface-container-lowest hover:border-tertiary hover:shadow-md"}`}>
 
+
                     {/* Selection indicator top-right */}
                     <div className={`absolute top-3 right-3 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-200 z-10 ${selectedPlan === "student" ? "border-white bg-white scale-110" : "border-on-surface-variant/30"}`}>
                       {selectedPlan === "student" && <CheckCircle2 className="w-4 h-4 text-[#006859]" />}
                     </div>
 
-                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 flex items-center gap-1 text-[10px] font-black px-3 py-0.5 rounded-full shadow-md whitespace-nowrap tracking-wider border z-20 bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-orange-500/30 border-orange-400/50">
+                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 overflow-hidden flex items-center gap-1.5 text-[10px] font-black px-3 py-0.5 rounded-full shadow-lg whitespace-nowrap tracking-wider border z-20 bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-orange-500/40 border-orange-400/50">
+                      {/* Shine sweep */}
+                      <span className="badge-shine-inner pointer-events-none absolute inset-0 w-1/3 bg-gradient-to-r from-transparent via-white/40 to-transparent" />
                       STUDENT OFFER
+                      <span className="relative bg-white/25 text-white rounded-full px-1.5 py-0 text-[9px] font-black tracking-wide border border-white/30">50% OFF</span>
                     </div>
 
+                    {/* Mobile: icon + name left, price block right — stacked cleanly */}
                     <div className="flex flex-row md:flex-col items-center md:text-center gap-3 md:gap-0 mb-3 md:mb-4 pr-10 md:pr-4">
                       <div className={`w-10 h-10 rounded-xl flex-shrink-0 flex items-center justify-center md:mb-2 transition-colors ${selectedPlan === "student" ? "bg-white/20 text-white" : "bg-tertiary/20"}`}>
                         <GraduationCap className={`w-5 h-5 ${selectedPlan === "student" ? "text-white opacity-90" : "text-tertiary"}`} />
@@ -549,12 +573,17 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
                         <h4 className="font-bold text-base mb-0 md:mb-0.5">Student Plan</h4>
                         <p className={`text-[11px] md:mb-2 ${selectedPlan === "student" ? "text-white/90" : "text-on-surface-variant"}`}>400 Credits (40 Resumes)</p>
                       </div>
-                      <div className="flex flex-col text-right md:text-center md:mb-1">
-                        <div className="flex items-end justify-end md:justify-center gap-1">
-                          <p className={`font-black text-xl md:text-3xl ${selectedPlan === "student" ? "text-white" : "text-tertiary"}`}>₹99</p>
-                          <p className={`text-[10px] md:text-sm line-through mb-0.5 md:mb-1 ${selectedPlan === "student" ? "text-white/60" : "text-on-surface-variant opacity-60"}`}>₹199</p>
+
+                      {/* Price block — vertical stack on mobile, centered on desktop */}
+                      <div className="flex flex-col items-end md:items-center md:mb-1 flex-shrink-0">
+                        {/* Strikethrough + badge row */}
+                        <div className="flex items-center gap-1.5 mb-0.5">
+                          <p className={`text-[11px] line-through leading-none ${selectedPlan === "student" ? "text-white/55" : "text-on-surface-variant opacity-60"}`}>₹199</p>
+                          <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-md leading-none tracking-wide ${selectedPlan === "student" ? "bg-white/25 text-white border border-white/30" : "bg-orange-500/15 text-orange-600 border border-orange-400/40"}`}>50% OFF</span>
                         </div>
-                        <p className={`text-[10px] md:text-[11px] font-medium mt-0.5 ${selectedPlan === "student" ? "text-white/90" : "text-on-surface-variant"}`}>/3 months</p>
+                        {/* Big price */}
+                        <p className={`font-black text-2xl md:text-3xl leading-none ${selectedPlan === "student" ? "text-white" : "text-tertiary"}`}>₹99</p>
+                        <p className={`text-[10px] md:text-[11px] font-medium mt-0.5 ${selectedPlan === "student" ? "text-white/80" : "text-on-surface-variant"}`}>/3 months</p>
                       </div>
                     </div>
 
@@ -573,9 +602,19 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
                           <span className={`text-left font-medium text-[12px] ${selectedPlan === "student" ? "text-white" : "text-on-background"}`}>All Premium Features</span>
                         </li>
                       </ul>
-                      <p className={`hidden md:block text-[11px] font-bold text-center py-1.5 rounded-lg ${selectedPlan === "student" ? "bg-white/20 text-white" : "bg-tertiary/10 text-tertiary"}`}>
-                        Requires Verification →
-                      </p>
+
+                      {/* Deadline pill — centered below features, mirrors top badge style */}
+                      <div className="flex justify-center mt-1 mb-2">
+                        <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black tracking-wide border shadow-sm whitespace-nowrap ${
+                          selectedPlan === "student"
+                            ? "bg-white/20 border-white/30 text-white"
+                            : "bg-orange-500/10 border-orange-400/40 text-orange-600"
+                        }`}>
+                          <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse flex-shrink-0" />
+                          Grab before {getTomorrowDate()}
+                        </div>
+                      </div>
+
                       {selectedPlan === "student" && (
                         <button
                           onClick={() => handleProceedToPayment()}
@@ -724,5 +763,6 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
         </div>
       </motion.div >
     </div >
+    </>
   );
 }
