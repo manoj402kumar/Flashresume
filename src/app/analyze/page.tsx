@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import type { CombinedAnalysisResponse } from "@/lib/api";
 import ModelSelector from "@/components/ModelSelector";
+import AuthModal from "@/components/AuthModal";
 import { supabase } from "@/lib/supabase";
 import type { User } from "@supabase/supabase-js";
 
@@ -28,6 +29,7 @@ export default function AnalyzePage() {
   const [projectApproved, setProjectApproved] = useState(true);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [extractedLinks, setExtractedLinks] = useState<any>(null);
+  const [showAuthModal, setShowAuthModal] = useState(false);
   const [showDebug, setShowDebug] = useState(false);
 
   useEffect(() => {
@@ -66,6 +68,11 @@ export default function AnalyzePage() {
   }, [router]);
 
   const handleProceed = () => {
+    // Auth gate: require login before consuming AI generation credits
+    if (!currentUser) {
+      setShowAuthModal(true);
+      return;
+    }
     // Save project approval if needed
     if (analysis?.requires_consent && analysis.suggested_project && projectApproved) {
       localStorage.setItem("approved_project", JSON.stringify(analysis.suggested_project));
@@ -91,6 +98,7 @@ export default function AnalyzePage() {
   }
 
   return (
+    <>
     <div className="min-h-screen bg-surface font-sans py-10 px-4 md:py-16 md:px-8">
       <div className="max-w-5xl mx-auto space-y-8">
         {/* Header */}
@@ -364,5 +372,22 @@ export default function AnalyzePage() {
 
       </div>
     </div>
+
+    {/* Auth gate — shown when anonymous user clicks Generate */}
+    <AuthModal
+      isOpen={showAuthModal}
+      onClose={() => setShowAuthModal(false)}
+      onSuccess={() => {
+        setShowAuthModal(false);
+        // Re-check session then proceed
+        supabase.auth.getSession().then(({ data: { session } }) => {
+          if (session?.user) {
+            setCurrentUser(session.user);
+            handleProceed();
+          }
+        });
+      }}
+    />
+    </>
   );
 }
