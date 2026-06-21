@@ -62,7 +62,7 @@ export default function ProfilePage() {
               <ChevronLeft className="w-5 h-5" />
             </button>
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-lg shadow-primary/20">
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#006859] to-[#12f8d7] flex items-center justify-center shadow-lg shadow-[#006859]/20">
                 <User className="w-4 h-4 text-white" />
               </div>
               <div>
@@ -84,7 +84,7 @@ export default function ProfilePage() {
               onClick={() => setActiveTab("profile")}
               className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all ${
                 activeTab === "profile" 
-                  ? "bg-primary text-white shadow-md shadow-primary/20" 
+                  ? "bg-[#006859] text-white shadow-md shadow-[#006859]/20" 
                   : "text-on-surface-variant hover:bg-surface-container-low"
               }`}
             >
@@ -94,7 +94,7 @@ export default function ProfilePage() {
               onClick={() => setActiveTab("tracker")}
               className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all ${
                 activeTab === "tracker" 
-                  ? "bg-primary text-white shadow-md shadow-primary/20" 
+                  ? "bg-[#006859] text-white shadow-md shadow-[#006859]/20" 
                   : "text-on-surface-variant hover:bg-surface-container-low"
               }`}
             >

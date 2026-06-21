@@ -215,7 +215,7 @@ export function ApplicationTracker({ userId }: { userId: string }) {
       {/* Table */}
       <div className="rounded-2xl border border-on-surface-variant/15 overflow-visible">
         {/* Header row */}
-        <div className="grid grid-cols-[36px_1fr_1fr_1fr_110px_130px_36px] gap-0 bg-surface-container-low border-b border-on-surface-variant/10 px-3 py-2 rounded-t-2xl">
+        <div className="hidden md:grid grid-cols-[36px_1fr_1fr_1fr_110px_130px_36px] gap-0 bg-surface-container-low border-b border-on-surface-variant/10 px-3 py-2 rounded-t-2xl">
           {["#", "Company", "Job Role", "Job URL", "Applied Date", "Status", ""].map((h, i) => (
             <span key={i} className="text-[10px] font-black uppercase tracking-wider text-on-surface-variant truncate px-1">{h}</span>
           ))}
@@ -238,60 +238,87 @@ export function ApplicationTracker({ userId }: { userId: string }) {
                   initial={{ opacity: 0, x: -8 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: idx * 0.03 }}
-                  className="grid grid-cols-[36px_1fr_1fr_1fr_110px_130px_36px] gap-0 px-3 py-1.5 items-center hover:bg-surface-container-lowest/50 transition-colors"
+                  className="flex flex-col md:grid md:grid-cols-[36px_1fr_1fr_1fr_110px_130px_36px] gap-3 md:gap-0 p-4 md:px-3 md:py-1.5 items-start md:items-center hover:bg-surface-container-lowest/50 transition-colors border-b border-on-surface-variant/10 md:border-b-0 last:border-b-0"
                 >
-                  {/* S.No */}
-                  <span className="text-xs font-bold text-on-surface-variant/60 text-center">{app.sno}</span>
+                  {/* Mobile Header: # and Delete */}
+                  <div className="flex md:hidden w-full items-center justify-between mb-1">
+                    <span className="text-xs font-bold text-on-surface-variant/60 text-center">#{app.sno}</span>
+                    <button
+                      type="button"
+                      onClick={() => deleteRow(app.id)}
+                      className="flex items-center justify-center p-1 text-on-surface-variant/30 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+
+                  {/* Desktop S.No */}
+                  <span className="hidden md:block text-xs font-bold text-on-surface-variant/60 text-center">{app.sno}</span>
 
                   {/* Company */}
-                  <input
-                    value={app.company}
-                    onChange={e => updateField(app.id, "company", e.target.value)}
-                    placeholder="Company"
-                    className="text-xs font-medium text-on-background bg-transparent border-0 outline-none px-1 py-1 w-full placeholder:text-on-surface-variant/30 focus:bg-surface-container-lowest rounded"
-                  />
+                  <div className="w-full">
+                    <span className="md:hidden text-[10px] font-bold text-on-surface-variant uppercase tracking-wider mb-1 block">Company</span>
+                    <input
+                      value={app.company}
+                      onChange={e => updateField(app.id, "company", e.target.value)}
+                      placeholder="Company"
+                      className="text-sm md:text-xs font-medium text-on-background bg-surface-container-lowest md:bg-transparent border border-on-surface-variant/10 md:border-0 outline-none px-3 md:px-1 py-2 md:py-1 w-full placeholder:text-on-surface-variant/30 focus:ring-1 focus:ring-primary/30 rounded-lg md:rounded"
+                    />
+                  </div>
 
                   {/* Job Role */}
-                  <input
-                    value={app.job_role}
-                    onChange={e => updateField(app.id, "job_role", e.target.value)}
-                    placeholder="Role"
-                    className="text-xs font-medium text-on-background bg-transparent border-0 outline-none px-1 py-1 w-full placeholder:text-on-surface-variant/30 focus:bg-surface-container-lowest rounded"
-                  />
+                  <div className="w-full">
+                    <span className="md:hidden text-[10px] font-bold text-on-surface-variant uppercase tracking-wider mb-1 block">Job Role</span>
+                    <input
+                      value={app.job_role}
+                      onChange={e => updateField(app.id, "job_role", e.target.value)}
+                      placeholder="Role"
+                      className="text-sm md:text-xs font-medium text-on-background bg-surface-container-lowest md:bg-transparent border border-on-surface-variant/10 md:border-0 outline-none px-3 md:px-1 py-2 md:py-1 w-full placeholder:text-on-surface-variant/30 focus:ring-1 focus:ring-primary/30 rounded-lg md:rounded"
+                    />
+                  </div>
 
                   {/* Job URL */}
-                  <div className="flex items-center gap-1 px-1">
-                    <input
-                      value={app.job_url}
-                      onChange={e => updateField(app.id, "job_url", e.target.value)}
-                      placeholder="https://…"
-                      className="text-xs font-medium text-on-background bg-transparent border-0 outline-none py-1 w-full placeholder:text-on-surface-variant/30 focus:bg-surface-container-lowest rounded min-w-0"
-                    />
-                    {app.job_url && (
-                      <a href={app.job_url} target="_blank" rel="noopener noreferrer" className="flex-shrink-0">
-                        <ExternalLink className="w-3 h-3 text-primary/60 hover:text-primary transition-colors" />
-                      </a>
-                    )}
+                  <div className="w-full">
+                    <span className="md:hidden text-[10px] font-bold text-on-surface-variant uppercase tracking-wider mb-1 block">Job URL</span>
+                    <div className="flex items-center gap-2 md:gap-1 px-1">
+                      <input
+                        value={app.job_url}
+                        onChange={e => updateField(app.id, "job_url", e.target.value)}
+                        placeholder="https://…"
+                        className="text-sm md:text-xs font-medium text-on-background bg-surface-container-lowest md:bg-transparent border border-on-surface-variant/10 md:border-0 outline-none px-3 md:px-1 py-2 md:py-1 w-full placeholder:text-on-surface-variant/30 focus:ring-1 focus:ring-primary/30 rounded-lg md:rounded min-w-0"
+                      />
+                      {app.job_url && (
+                        <a href={app.job_url} target="_blank" rel="noopener noreferrer" className="flex-shrink-0 p-2 md:p-0 bg-surface-container-low md:bg-transparent rounded-lg md:rounded-none">
+                          <ExternalLink className="w-4 h-4 md:w-3 md:h-3 text-[#006859]/60 hover:text-[#006859] transition-colors" />
+                        </a>
+                      )}
+                    </div>
                   </div>
 
                   {/* Applied Date */}
-                  <input
-                    type="date"
-                    value={app.applied_date}
-                    onChange={e => updateField(app.id, "applied_date", e.target.value)}
-                    className="text-xs font-medium text-on-background bg-transparent border-0 outline-none px-1 py-1 w-full focus:bg-surface-container-lowest rounded cursor-pointer"
-                  />
+                  <div className="w-full">
+                    <span className="md:hidden text-[10px] font-bold text-on-surface-variant uppercase tracking-wider mb-1 block">Applied Date</span>
+                    <input
+                      type="date"
+                      value={app.applied_date}
+                      onChange={e => updateField(app.id, "applied_date", e.target.value)}
+                      className="text-sm md:text-xs font-medium text-on-background bg-surface-container-lowest md:bg-transparent border border-on-surface-variant/10 md:border-0 outline-none px-3 md:px-1 py-2 md:py-1 w-full focus:ring-1 focus:ring-primary/30 rounded-lg md:rounded cursor-pointer"
+                    />
+                  </div>
 
                   {/* Status dropdown */}
-                  <div className="relative px-1" ref={openStatusId === app.id ? statusDropdownRef : null}>
+                  <div className="w-full relative md:px-1" ref={openStatusId === app.id ? statusDropdownRef : null}>
+                    <span className="md:hidden text-[10px] font-bold text-on-surface-variant uppercase tracking-wider mb-1 block">Status</span>
                     <button
                       type="button"
                       onClick={() => setOpenStatusId(openStatusId === app.id ? null : app.id)}
-                      className={`w-full flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold ${cfg.bg} ${cfg.text} transition-all`}
+                      className={`w-full flex items-center justify-between md:justify-start gap-2 md:gap-1 px-3 md:px-2 py-2 md:py-1 rounded-lg text-sm md:text-[10px] font-bold ${cfg.bg} ${cfg.text} transition-all border border-transparent md:border-0`}
                     >
-                      {cfg.icon}
-                      <span className="flex-1 text-left truncate">{cfg.label}</span>
-                      <ChevronDown className="w-3 h-3 flex-shrink-0 opacity-60" />
+                      <div className="flex items-center gap-2 md:gap-1">
+                        {cfg.icon}
+                        <span className="flex-1 text-left truncate">{cfg.label}</span>
+                      </div>
+                      <ChevronDown className="w-4 h-4 md:w-3 md:h-3 flex-shrink-0 opacity-60" />
                     </button>
 
                     <AnimatePresence>
@@ -300,7 +327,7 @@ export function ApplicationTracker({ userId }: { userId: string }) {
                           initial={{ opacity: 0, y: -4, scale: 0.95 }}
                           animate={{ opacity: 1, y: 0, scale: 1 }}
                           exit={{ opacity: 0, y: -4, scale: 0.95 }}
-                          className="absolute bottom-full left-0 mb-1 w-36 bg-surface border border-surface-container-high rounded-xl shadow-xl z-50 overflow-hidden"
+                          className="absolute bottom-full left-0 mb-1 w-full md:w-36 bg-surface border border-surface-container-high rounded-xl shadow-xl z-50 overflow-hidden"
                         >
                           {(["Applied", "Interview", "Offer", "Rejected", "No Response"] as AppStatus[]).map(s => {
                             const sc = STATUS_CONFIG[s];
@@ -320,11 +347,11 @@ export function ApplicationTracker({ userId }: { userId: string }) {
                     </AnimatePresence>
                   </div>
 
-                  {/* Delete */}
+                  {/* Desktop Delete */}
                   <button
                     type="button"
                     onClick={() => deleteRow(app.id)}
-                    className="flex items-center justify-center p-1 text-on-surface-variant/30 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                    className="hidden md:flex items-center justify-center p-1 text-on-surface-variant/30 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
@@ -420,8 +447,8 @@ export function ProfileTab({ userEmail, credits }: { userEmail: string; credits:
   return (
     <div className="space-y-5">
       {/* Avatar + Email */}
-      <div className="flex items-center gap-4 p-5 rounded-2xl bg-gradient-to-r from-primary/5 to-secondary/5 border border-primary/10">
-        <div className="w-14 h-14 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white text-xl font-black flex-shrink-0 shadow-lg shadow-primary/20">
+      <div className="flex items-center gap-4 p-5 rounded-2xl bg-gradient-to-r from-[#006859]/5 to-[#12f8d7]/5 border border-[#006859]/10">
+        <div className="w-14 h-14 rounded-full bg-gradient-to-br from-[#006859] to-[#12f8d7] flex items-center justify-center text-white text-xl font-black flex-shrink-0 shadow-lg shadow-[#006859]/20">
           {initials}
         </div>
         <div className="min-w-0">
@@ -432,13 +459,13 @@ export function ProfileTab({ userEmail, credits }: { userEmail: string; credits:
 
       {/* Stats Grid */}
       <div className="grid grid-cols-2 gap-3">
-        <div className="p-4 rounded-2xl bg-surface-container-low border border-primary/10 flex flex-col items-center text-center">
-          <Zap className="w-5 h-5 text-primary mb-2" />
+        <div className="p-4 rounded-2xl bg-surface-container-low border border-[#006859]/10 flex flex-col items-center text-center">
+          <Zap className="w-5 h-5 text-[#006859] mb-2" />
           <p className="text-3xl font-black text-on-background">{profileData.credits ?? "—"}</p>
           <p className="text-xs text-on-surface-variant font-semibold mt-1">Available Credits</p>
         </div>
-        <div className="p-4 rounded-2xl bg-surface-container-low border border-primary/10 flex flex-col items-center text-center">
-          <CreditCard className="w-5 h-5 text-primary mb-2" />
+        <div className="p-4 rounded-2xl bg-surface-container-low border border-[#006859]/10 flex flex-col items-center text-center">
+          <CreditCard className="w-5 h-5 text-[#006859] mb-2" />
           <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-black border ${planColors[profileData.plan] || planColors["Free"]}`}>
             {profileData.plan}
           </span>
@@ -447,8 +474,8 @@ export function ProfileTab({ userEmail, credits }: { userEmail: string; credits:
       </div>
 
       {profileData.validUntil && profileData.plan !== "Free" && (
-        <div className="flex items-center gap-3 p-4 rounded-2xl bg-surface-container-low border border-primary/10">
-          <Calendar className="w-5 h-5 text-primary flex-shrink-0" />
+        <div className="flex items-center gap-3 p-4 rounded-2xl bg-surface-container-low border border-[#006859]/10">
+          <Calendar className="w-5 h-5 text-[#006859] flex-shrink-0" />
           <div>
             <p className="text-xs font-bold text-on-surface-variant uppercase tracking-wider">Valid Until</p>
             <p className="text-sm font-bold text-on-background">
