@@ -34,6 +34,7 @@ AFTER GENERATING ai_suggestions: Generate "job_strategy" — analyze RESUME_TEXT
 - role: clear job title with tech stack e.g. "Frontend Developer (React/Next.js)"
 - match: "Strong", "Good", or "Moderate"
 - search_queries: exactly 2 specific, ready-to-use Google search sentences the candidate can use to find this job (ALWAYS include role, key tech, experience level, location — use Hyderabad or Bengaluru as default; location is MANDATORY, and optionally platform like site:linkedin.com or site:naukri.com(don't include site for every query)).
+- if user is fresher or new graudate or no prior work experience(dont consider projects as experience) suggest entry level roles like intern, associate.
 
 HEADING FIELD RULES:
 - linkedin_url: Display text as "Linkedin"
