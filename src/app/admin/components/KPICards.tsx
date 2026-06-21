@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { motion } from "motion/react";
 import {
   Users, TrendingUp, Download, CreditCard,
-  ArrowUpRight, Activity, AlertCircle,
+  ArrowUpRight, Activity, AlertCircle, ShieldAlert
 } from "lucide-react";
 
 // -- Animated counter hook --------------------------------------------------
@@ -77,7 +77,7 @@ function KPICard({ kpi, delay }: { kpi: KPI; delay: number }) {
   );
 }
 
-export default function KPICards({ onlineUsers, stats }: { onlineUsers: number, stats?: { revenue: number, downloads: number, subscribers: number, totalLogins: number, totalVisitors: number, failedPayments: number, peakConcurrentUsers: number, peakTimestamp: string | null } }) {
+export default function KPICards({ onlineUsers, stats }: { onlineUsers: number, stats?: { revenue: number, downloads: number, subscribers: number, totalLogins: number, totalVisitors: number, failedPayments: number, peakConcurrentUsers: number, peakTimestamp: string | null, highRiskUsers?: number } }) {
 
   const formattedPeakTime = stats?.peakTimestamp
     ? new Date(stats.peakTimestamp).toLocaleString('en-IN', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
@@ -155,6 +155,15 @@ export default function KPICards({ onlineUsers, stats }: { onlineUsers: number, 
       delta: "All Time",
       deltaPositive: false,
       note: "Technical/Gateway failures",
+    },
+    {
+      label: "High Risk Users",
+      value: stats?.highRiskUsers || 0,
+      icon: <ShieldAlert className="w-5 h-5 text-red-600" />,
+      iconBg: "bg-red-50",
+      delta: "Warning",
+      deltaPositive: false,
+      note: "Generations > 5 without downloads",
     },
   ];
 

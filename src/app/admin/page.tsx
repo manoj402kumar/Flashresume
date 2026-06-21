@@ -131,7 +131,7 @@ export default function AdminPage() {
   const [activeSection, setActiveSection] = useState("overview");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [onlineUsers, setOnlineUsers] = useState(0);
-  const [stats, setStats] = useState({ revenue: 0, downloads: 0, subscribers: 0, totalLogins: 0, totalVisitors: 0, failedPayments: 0, peakConcurrentUsers: 0, peakTimestamp: null as string | null });
+  const [stats, setStats] = useState({ revenue: 0, downloads: 0, subscribers: 0, totalLogins: 0, totalVisitors: 0, failedPayments: 0, peakConcurrentUsers: 0, peakTimestamp: null as string | null, highRiskUsers: 0 });
   const [uptime, setUptime] = useState("—");
   const [time, setTime] = useState("");
   const sectionRefs = useRef<Record<string, HTMLElement | null>>({});
@@ -187,6 +187,7 @@ export default function AdminPage() {
           failedPayments: json.failed_payments ?? 0,
           peakConcurrentUsers: json.peak_concurrent_users ?? 0,
           peakTimestamp: json.peak_timestamp ?? null,
+          highRiskUsers: json.high_risk_users ?? 0,
         });
       } catch { /* offline */ }
     };
