@@ -50,7 +50,6 @@ async def get_admin_stats():
         "failed_payments": 0,
         "peak_concurrent_users": 0,
         "peak_timestamp": None,
-        "high_risk_users": 0,
     }
     
     if not supabase:
@@ -86,17 +85,13 @@ async def get_admin_stats():
             dev_ids_str = ",".join(dev_user_ids)
             failed_query = failed_query.or_(f"user_id.is.null,user_id.not.in.({dev_ids_str})")
 
-        # High-risk users: consecutive generations > 5 without a download — potential freeloader/scraper
-        high_risk_query = supabase.table("users").select("id", count="exact").gt("fraud_tracker_counter", 5).not_.in_("email", DEV_EMAILS)
-
-        payments_res, downloads, users_res, visitors_res, failed_res, peak_res, high_risk_res = await asyncio.gather(
+        payments_res, downloads, users_res, visitors_res, failed_res, peak_res = await asyncio.gather(
             _sb(payments_query),
             _sb(downloads_query),
             _sb(users_query),
             _sb(visitors_query),
             _sb(failed_query),
             _sb(supabase.table("system_metrics").select("value").eq("id", "peak_concurrent_users")),
-            _sb(high_risk_query),
         )
 
         if payments_res.data:
@@ -130,11 +125,6 @@ async def get_admin_stats():
             val = peak_res.data[0].get("value", {})
             stats["peak_concurrent_users"] = val.get("count", 0)
             stats["peak_timestamp"] = val.get("timestamp")
-
-        if hasattr(high_risk_res, 'count') and high_risk_res.count is not None:
-            stats["high_risk_users"] = high_risk_res.count
-        else:
-            stats["high_risk_users"] = len(high_risk_res.data) if high_risk_res.data else 0
 
         return stats
     except Exception as e:
