@@ -19,6 +19,8 @@ interface PricingPopupProps {
   forcePlanSelect?: boolean; // always show plan cards (e.g. Buy More Credits)
   prefetchedUser?: User | null; // pre-loaded user to skip session fetch
   prefetchedCredits?: number; // pre-loaded credit balance
+  disableClose?: boolean; // completely hides the 'X' button
+  loginOnly?: boolean; // if true, instantly calls onSuccess upon detecting user, skipping credit checks
 }
 
 const GoogleIcon = () => (
@@ -120,7 +122,7 @@ function ReviewBanner({ review }: { review: typeof PLAN_REVIEW }) {
 }
 // ─────────────────────────────────────────────────────────────────────────────
 
-export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, directPay = false, forcePlanSelect = false, prefetchedUser, prefetchedCredits }: PricingPopupProps) {
+export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, directPay = false, forcePlanSelect = false, prefetchedUser, prefetchedCredits, disableClose = false, loginOnly = false }: PricingPopupProps) {
   const [isScratchPage, setIsScratchPage] = useState(false);
 
   useEffect(() => {
@@ -162,7 +164,9 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
     if (prefetchedUser) {
       setUser(prefetchedUser);
       const credits = prefetchedCredits ?? 0;
-      if (directPay && initialPlan) {
+      if (loginOnly) {
+        onSuccess();
+      } else if (directPay && initialPlan) {
         setStep("processing");
         setTimeout(() => handleProceedToPayment(initialPlan, false, prefetchedUser), 100);
       } else if (!forcePlanSelect && credits >= 10) {
@@ -179,7 +183,9 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
       setUser(sessionUser);
       const { data: creditData } = await supabase.rpc("get_total_active_credits", { p_user_id: sessionUser.id });
       const currentCredits = creditData ?? 0;
-      if (directPay && initialPlan) {
+      if (loginOnly) {
+        onSuccess();
+      } else if (directPay && initialPlan) {
         setStep("processing");
         setTimeout(() => handleProceedToPayment(initialPlan, false, sessionUser), 100);
       } else if (!forcePlanSelect && currentCredits >= 10) {
@@ -406,9 +412,11 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
         exit={{ opacity: 0, scale: 0.95 }}
         className={`bg-surface rounded-3xl w-full ${step === "plan" ? "max-w-3xl" : "max-w-md"} shadow-2xl overflow-hidden relative border border-surface-container-high max-h-[95vh] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]`}
       >
-        <button onClick={onClose} className="absolute top-4 right-4 p-2 bg-surface-container-low hover:bg-surface-container-high rounded-full transition-colors z-10">
-          <X className="w-5 h-5 text-on-surface-variant" />
-        </button>
+        {!disableClose && (
+          <button onClick={onClose} className="absolute top-4 right-4 p-2 bg-surface-container-low hover:bg-surface-container-high rounded-full transition-colors z-10">
+            <X className="w-5 h-5 text-on-surface-variant" />
+          </button>
+        )}
         {/* Header */}
         <div className="px-6 pt-16 pb-2 border-b border-surface-container-low text-center">
           <h2 className="text-2xl font-headline font-bold text-on-background">

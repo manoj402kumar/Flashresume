@@ -38,7 +38,6 @@ import LiveDemoSection from "@/components/LiveDemoSection";
 import TemplatesCarousel from "@/components/TemplatesCarousel";
 import ModelSelector from "@/components/ModelSelector";
 import OnboardingTour from "@/components/OnboardingTour";
-import AuthModal from "@/components/AuthModal";
 
 export default function App() {
   const router = useRouter();
@@ -84,7 +83,6 @@ export default function App() {
   const [purchaseSuccess, setPurchaseSuccess] = useState(false);
   const [activeTooltip, setActiveTooltip] = useState<"nav" | "dropdown" | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const [showAuthModalForManual, setShowAuthModalForManual] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -310,12 +308,7 @@ export default function App() {
       }
     }
 
-    // Auth gate for Self Edit (manual) mode — require login before consuming AI credits
     // First Resume (scratch) is intentionally excluded for low-friction onboarding
-    if (optimizeMode === "manual" && !currentUser) {
-      setShowAuthModalForManual(true);
-      return;
-    }
 
     setLoading(true);
     setError("");
@@ -1354,22 +1347,7 @@ export default function App() {
         forcePlanSelect={false}
         prefetchedUser={currentUser}
         prefetchedCredits={credits}
-      />
-      {/* Auth gate for Self Edit (manual) mode */}
-      <AuthModal
-        isOpen={showAuthModalForManual}
-        onClose={() => setShowAuthModalForManual(false)}
-        onSuccess={() => {
-          setShowAuthModalForManual(false);
-          // Re-fetch session to update currentUser, then retry generation
-          supabase.auth.getSession().then(({ data: { session } }) => {
-            if (session?.user) {
-              setCurrentUser(session.user);
-              // Small delay to allow state to propagate before retrying
-              setTimeout(() => handleGenerate(), 100);
-            }
-          });
-        }}
+        loginOnly={true}
       />
     </div>
   );
