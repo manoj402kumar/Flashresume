@@ -32,6 +32,17 @@ async def generate_resume_endpoint(request: Request, payload: GenerateRequest, a
                    f"Maximum allowed is {_MAX_JD_CHARS:,} characters."
         )
 
+    # Decode the Supabase JWT to identify the user — used for fraud tracking and session ownership.
+    # This is non-blocking and fully isolated from the generation path.
+    user_id: str | None = None
+    if authorization and authorization.startswith("Bearer ") and supabase:
+        token = authorization.split(" ", 1)[1]
+        try:
+            user_resp = await asyncio.to_thread(lambda: supabase.auth.get_user(token))
+            user_id = user_resp.user.id if user_resp and user_resp.user else None
+        except Exception:
+            pass  # Never block generation for auth decode failures
+
     # Step 1: Generate the rewritten resume with Template v1 validation
     try:
         generated, model_used = await generate_resume(
@@ -48,7 +59,7 @@ async def generate_resume_endpoint(request: Request, payload: GenerateRequest, a
     except ValueError as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-    # Step 2: Assign ats_score_after — random between 86–93 when JD is present
+    # Step 2: Assign ats_score_after — random between 86-93 when JD is present
     # (missing keywords are already injected into the resume, no re-scoring needed)
     if payload.job_description and payload.job_description.strip():
         ats_after = random.randint(86, 93)
@@ -68,12 +79,14 @@ async def generate_resume_endpoint(request: Request, payload: GenerateRequest, a
         generated["_category"] = "jd_optimized"
 
     # Step 4: Save to resume_sessions table (non-blocking — frees event loop during DB round-trip)
+    # Also saves user_id for session ownership tracking now that we decode the JWT above.
     if supabase:
         try:
             res = await asyncio.to_thread(
                 lambda: supabase.table("resume_sessions").insert({
                     "resume_text": payload.resume_text,
-                    "generated_output": generated
+                    "generated_output": generated,
+                    **({"user_id": user_id} if user_id else {}),
                 }).execute()
             )
             if res.data:
@@ -81,6 +94,15 @@ async def generate_resume_endpoint(request: Request, payload: GenerateRequest, a
         except Exception as e:
             print(f"Failed to save resume_session: {e}")
 
+    # Step 5: Increment fraud tracker counter — fire-and-forget, never blocks the response.
+    # Counts consecutive generations without a download. Reset happens in deduct_credits_v2 on download.
+    if supabase and user_id:
+        try:
+            asyncio.create_task(asyncio.to_thread(
+                lambda: supabase.rpc("increment_fraud_counter", {"p_user_id": user_id}).execute()
+            ))
+        except Exception:
+            pass  # Never block generation for tracking failures
+
     # Return Template v1 JSON directly (no wrapper)
     return JSONResponse(content=generated)
-
