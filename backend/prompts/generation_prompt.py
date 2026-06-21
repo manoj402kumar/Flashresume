@@ -144,7 +144,7 @@ RULES:
    - For each role output: role name, match level ("Strong" / "Good" / "Moderate"), and exactly 2 Google search sentences.
    - Search sentences must be specific, ready-to-use queries a job seeker can type into Google. ALWAYS include: role, key tech stack, experience level (fresher/junior/senior), location (use Hyderabad or Bengaluru — India's top tech hubs), and optionally platform (e.g. site:linkedin.com or site:naukri.com dont include site for all queries). Location is MANDATORY — never omit it.
    - Output as array of objects, 3-5 items.
-   - if user is fresher or new graudate or no prior work experience(dont consider projects as experience) suggest entry level roles like intern, associate.
+   - if user is fresher or new graudate or no prior work experience(dont consider projects as experience) suggest entry level roles like intern.
 
 
 MANDATORY SELF-VALIDATION (run before writing JSON output):
