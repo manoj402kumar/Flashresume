@@ -201,7 +201,9 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
   const handleGoogleLogin = async () => {
     setLoading(true);
     setError(null);
-    localStorage.setItem("auth_redirect_pricing", "true");
+    if (!loginOnly) {
+      localStorage.setItem("auth_redirect_pricing", "true");
+    }
     try {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
@@ -214,7 +216,9 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
     } catch (err: any) {
       setError(err.message || "Google login failed");
       setLoading(false);
-      localStorage.removeItem("auth_redirect_pricing");
+      if (!loginOnly) {
+        localStorage.removeItem("auth_redirect_pricing");
+      }
     }
   };
 
