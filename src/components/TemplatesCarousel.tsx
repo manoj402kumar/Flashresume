@@ -70,7 +70,7 @@ export default function TemplatesCarousel() {
             >
               {/* Label */}
               <div className="flex items-center gap-2 mb-3 px-1">
-                <div className="flex items-center gap-1.5 bg-red-500/10 border border-red-500/25 text-red-500 text-xs font-black uppercase tracking-widest px-3 py-1.5 rounded-full">
+                <div className="flex items-center gap-1.5 bg-[#7f1d1d]/10 border border-[#7f1d1d]/30 text-[#991b1b] text-xs font-black uppercase tracking-widest px-3 py-1.5 rounded-full">
                   <X className="w-3 h-3" strokeWidth={3} />
                   Before Flashresume
                 </div>
@@ -78,16 +78,16 @@ export default function TemplatesCarousel() {
 
               {/* Card */}
               <div
-                className="relative flex-1 bg-surface-container-lowest rounded-2xl sm:rounded-[1.75rem] border-2 border-red-500/20 shadow-[0_8px_40px_rgba(239,68,68,0.08)] overflow-hidden cursor-zoom-in group"
+                className="relative flex-1 bg-surface-container-lowest rounded-2xl sm:rounded-[1.75rem] border-2 border-[#7f1d1d]/25 shadow-[0_8px_40px_rgba(127,29,29,0.12)] overflow-hidden cursor-zoom-in group"
                 onClick={() => setLightbox({ src: "/before_resume.png", alt: "Before Flashresume" })}
               >
                 {/* Noise/red glow overlay */}
-                <div className="absolute inset-0 bg-gradient-to-b from-red-500/4 to-transparent pointer-events-none z-10" />
+                <div className="absolute inset-0 bg-gradient-to-b from-[#7f1d1d]/5 to-transparent pointer-events-none z-10" />
 
                 {/* Pain-point labels */}
                 <div className="absolute top-3 right-3 z-20 flex flex-col gap-1.5">
                   {["Cluttered layout", "No ATS structure", "Poor formatting"].map((t) => (
-                    <span key={t} className="flex items-center gap-1 bg-red-500/90 text-white text-[9px] sm:text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm backdrop-blur-sm">
+                    <span key={t} className="flex items-center gap-1 bg-[#7f1d1d] text-white text-[9px] sm:text-[10px] font-bold px-2 py-0.5 rounded-full shadow-md backdrop-blur-sm">
                       <X className="w-2.5 h-2.5 flex-shrink-0" strokeWidth={3} />
                       {t}
                     </span>
@@ -109,7 +109,7 @@ export default function TemplatesCarousel() {
                     sizes="(max-width: 1024px) 100vw, 40vw"
                   />
                   {/* Faded red overlay hint */}
-                  <div className="absolute inset-0 bg-red-500/5" />
+                  <div className="absolute inset-0 bg-[#7f1d1d]/4" />
 
                   {/* ── REJECTED Stamp ── */}
                   <div
@@ -118,8 +118,8 @@ export default function TemplatesCarousel() {
                   >
                     <div
                       style={{
-                        border: "3px solid rgba(220,38,38,0.55)",
-                        boxShadow: "inset 0 0 0 1.5px rgba(220,38,38,0.55)",
+                        border: "3px solid rgba(127,29,29,0.65)",
+                        boxShadow: "inset 0 0 0 1.5px rgba(127,29,29,0.65)",
                         padding: "5px 12px",
                         borderRadius: "5px",
                         mixBlendMode: "multiply",
@@ -131,7 +131,7 @@ export default function TemplatesCarousel() {
                           fontWeight: 900,
                           fontSize: "clamp(14px, 3.5vw, 22px)",
                           letterSpacing: "0.18em",
-                          color: "rgba(220,38,38,0.65)",
+                          color: "rgba(127,29,29,0.80)",
                           textTransform: "uppercase",
                           lineHeight: 1,
                           display: "block",
