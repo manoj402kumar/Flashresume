@@ -21,6 +21,19 @@ INPUT LABELS:
 - ATS_SCORE_BEFORE: original ATS score — output as-is in ats_score_before field (see bottom)
 - EXTRACTED_LINKS: URLs pre-extracted from PDF annotation layer (see bottom). Use for heading and project link_href fields.
 
+
+❗ JOB STRATEGY RULES (read this BEFORE the optimization algorithm below):
+The "job_strategy" JSON field must be computed from RESUME_TEXT alone. Read RESUME_TEXT now and mentally identify the candidate's actual tech skills, experience level, and project domains.
+- 🚨 CRITICAL: IGNORE JOB_DESCRIPTION COMPLETELY FOR THIS FIELD. Do NOT suggest roles from the JD.
+- Determine 3-5 job roles that best match the candidate's actual background.
+- The goal is to suggest roles where their original resume can easily get shortlisted.
+- Base this ONLY on skills, experience, projects, and education found in RESUME_TEXT.
+- For each role output: role name, match level ("Strong" / "Good" / "Moderate"), and exactly 2 ready-to-use Google search sentences.
+- Search sentences MUST include: role, key tech stack, experience level (fresher/junior/senior), location (Hyderabad or Bengaluru). Location is MANDATORY.
+- Optionally add platform for one query (e.g. site:linkedin.com or site:naukri.com) — not both.
+- Output as array of 3-5 objects.
+- If the candidate is a fresher, new graduate, or has no prior full-time work experience (projects do NOT count as experience), suggest entry-level / intern roles.
+
 KEYWORD DEFINITIONS:
 - Tech Stack Keywords: Languages (Java, Python, C++), Frameworks (Angular, Spring Boot, Django, Express.js, Node.js), Libraries (React, NumPy, Pandas), Databases (MongoDB, PostgreSQL), Cloud (AWS, Azure), Dev Tools (Docker, Kubernetes).
 - Non-Tech Stack Keywords: General concepts (REST APIs, Microservices, OOP), Methodologies (Agile, CI/CD), Practices (Debugging, Testing, Code Review).
@@ -138,13 +151,7 @@ RULES:
    - If approved project was suggested → include: "Build the [project title] project using [tech stack] — this directly fills your [JD tech] gap and gives you something concrete to show recruiters."
    - Suggest 1 specific certfication relevant to the JD tech stack.
    - Address user as "you". Output as flat array of plain strings. Only give suggestions when genuinely needed.
-5. "job_strategy" field: Analyze RESUME_TEXT (original uploaded resume — NOT the optimized output) to determine the 3-5 job roles that best match the candidate's actual background.
-   - the goal is to search jobs where their resume can be easily shortlisted.
-   - Base this ONLY on skills, experience, projects, and education in RESUME_TEXT.
-   - For each role output: role name, match level ("Strong" / "Good" / "Moderate"), and exactly 2 Google search sentences.
-   - Search sentences must be specific, ready-to-use queries a job seeker can type into Google. ALWAYS include: role, key tech stack, experience level (fresher/junior/senior), location (use Hyderabad or Bengaluru — India's top tech hubs), and optionally platform (e.g. site:linkedin.com or site:naukri.com dont include site for all queries). Location is MANDATORY — never omit it.
-   - Output as array of objects, 3-5 items.
-   - if user is fresher or new graudate or no prior work experience(dont consider projects as experience) suggest entry level roles like intern.
+5. "job_strategy" field: Follow the JOB STRATEGY RULES defined at the top of this prompt.
 
 
 MANDATORY SELF-VALIDATION (run before writing JSON output):
@@ -175,6 +182,16 @@ OUTPUT FORMAT:
     "portfolio_url": "Portfolio",
     "portfolio_url_href": "refer ALL_URLS"
   }},
+  "job_strategy": [
+    {{
+      "role": "<Job Role Title e.g. Backend Developer (Java/Spring Boot)>",
+      "match": "<Strong | Good | Moderate>",
+      "search_queries": [
+        "<Ready-to-use Google search sentence 1 for this role>",
+        "<Ready-to-use Google search sentence 2 for this role>"
+      ]
+    }}
+  ],
   "summary": "follow above rules",
   "education": [
     {{
@@ -221,16 +238,6 @@ OUTPUT FORMAT:
     "<Personalized suggestion 3>",
     "<Personalized suggestion 4>",
     "<Personalized suggestion 5>"
-  ],
-  "job_strategy": [
-    {{
-      "role": "<Job Role Title e.g. Backend Developer (Java/Spring Boot)>",
-      "match": "<Strong | Good | Moderate>",
-      "search_queries": [
-        "<Ready-to-use Google search sentence 1 for this role>",
-        "<Ready-to-use Google search sentence 2 for this role>"
-      ]
-    }}
   ],
   "changes": [
     "Rewrote Summary: [old] → [new]",

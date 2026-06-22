@@ -497,7 +497,13 @@ export default function ResultPage() {
         } catch (e) { }
       }
 
-      setNoJdMode(localStorage.getItem("no_jd_mode") === "true");
+      const isNoJd = localStorage.getItem("no_jd_mode") === "true";
+      setNoJdMode(isNoJd);
+      // JD optimization mode → default to "AI Analysis" panel
+      if (!isNoJd) {
+        setEditMode(false);
+        setShowChanges(true);
+      }
 
       if (!parsed.section_order || parsed.section_order.length === 0) {
         parsed.section_order = ["summary", "education", "experience", "projects", "skills", "certifications"];
