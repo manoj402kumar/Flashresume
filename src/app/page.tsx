@@ -690,9 +690,6 @@ export default function App() {
 
 
       <main className="pt-24">
-        {/* ── Templates Section ──────────────────────────────────────── */}
-        <TemplatesCarousel />
-
         {/* Hero Section */}
         <section className="max-w-5xl mx-auto px-4 sm:px-6 py-12 md:py-16 flex flex-col items-center">
 
@@ -972,6 +969,9 @@ export default function App() {
         </section>
 
 
+
+        {/* ── Templates Section ──────────────────────────────────────── */}
+        <TemplatesCarousel />
 
         {/* Use Cases Section */}
 
