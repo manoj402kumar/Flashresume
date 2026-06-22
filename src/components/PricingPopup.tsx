@@ -38,8 +38,8 @@ const PLANS = [
   {
     id: "pay_per_use",
     name: "One-Time",
-    price: 29,
-    priceDisplay: "₹29",
+    price: 39,
+    priceDisplay: "₹39",
     period: "/10 Days",
     description: "2 resume downloads",
     icon: <Download className="w-5 h-5 text-on-surface-variant" />,
@@ -326,7 +326,7 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
     const planDetails =
       planToBuy === "student" ? { amount: 99, plan_type: "student" } :
         planToBuy === "regular" ? { amount: 199, plan_type: "regular" } :
-          { amount: 29, plan_type: "pay_per_use" };
+          { amount: 39, plan_type: "pay_per_use" };
 
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -571,7 +571,7 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
                       </div>
                       <div className="flex-1 text-left md:text-center">
                         <h4 className="font-bold text-base mb-0 md:mb-0.5">Student Plan</h4>
-                        <p className={`text-[11px] md:mb-2 ${selectedPlan === "student" ? "text-white/90" : "text-on-surface-variant"}`}>400 Credits (40 Resumes)</p>
+                        <p className={`text-[11px] md:mb-2 ${selectedPlan === "student" ? "text-white/90" : "text-on-surface-variant"}`}>300 Credits (30 Resumes)</p>
                       </div>
 
                       {/* Price block — vertical stack on mobile, centered on desktop */}
@@ -591,7 +591,7 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
                       <ul className="space-y-2 text-sm mb-3">
                         <li className="flex items-start gap-2">
                           <CheckCircle2 className={`w-4 h-4 flex-shrink-0 mt-0.5 ${selectedPlan === "student" ? "text-white" : "text-tertiary"}`} />
-                          <span className={`text-left font-medium text-[12px] ${selectedPlan === "student" ? "text-white" : "text-on-background"}`}>400 Credits</span>
+                          <span className={`text-left font-medium text-[12px] ${selectedPlan === "student" ? "text-white" : "text-on-background"}`}>300 Credits</span>
                         </li>
                         <li className="flex items-start gap-2">
                           <CheckCircle2 className={`w-4 h-4 flex-shrink-0 mt-0.5 ${selectedPlan === "student" ? "text-white" : "text-tertiary"}`} />

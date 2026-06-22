@@ -33,7 +33,7 @@ class OrderRequest(BaseModel):
 @limiter.limit("10/minute")
 async def create_order(request: Request, body: OrderRequest, authorization: str = Header(None)):
     PRICES = {
-        "pay_per_use": 2900,
+        "pay_per_use": 3900,
         "regular": 19900,
         "student": 9900
     }
@@ -144,7 +144,7 @@ async def verify_payment(body: VerifyRequest, authorization: str = Header(None))
             PLAN_CREDITS = {
                 "pay_per_use": 20,
                 "regular": 300,
-                "student": 400,
+                "student": 300,
             }
             credits_to_add = PLAN_CREDITS.get(actual_plan_type, 0)
             
@@ -471,7 +471,7 @@ async def razorpay_webhook(request: Request):
                 PLAN_CREDITS = {
                     "pay_per_use": 20,
                     "regular": 300,
-                    "student": 400,
+                    "student": 300,
                 }
                 credits_to_add = PLAN_CREDITS.get(plan_type, 0)
                 

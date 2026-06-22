@@ -39,7 +39,7 @@ const TIME_FILTERS = [
 
 const PLAN_FILTERS = [
   { id: "all", label: "All Plans" },
-  { id: "pay_per_use", label: "₹29 One-Time" },
+  { id: "pay_per_use", label: "₹39 One-Time" },
   { id: "student", label: "₹99 Student" },
   { id: "regular", label: "₹199 Standard" },
 ];

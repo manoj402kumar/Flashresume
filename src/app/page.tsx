@@ -1068,7 +1068,7 @@ export default function App() {
                 </div>
                 <h3 className="font-headline text-2xl font-bold mb-1">One-Time</h3>
                 <p className={`text-sm mb-4 ${hoveredPlan === "pay_per_use" ? "text-white/90" : "text-on-surface-variant"}`}>2 resume downloads</p>
-                <div className="text-4xl font-black mb-1">₹29</div>
+                <div className="text-4xl font-black mb-1">₹39</div>
                 <p className={`text-sm mb-8 ${hoveredPlan === "pay_per_use" ? "text-white/90" : "text-on-surface-variant"}`}>/10 Days</p>
                 <ul className="space-y-3 mb-10 text-left flex-grow">
                   <li className={`flex items-center gap-3 ${hoveredPlan === "pay_per_use" ? "text-white" : "text-on-surface-variant"}`}>
@@ -1147,13 +1147,13 @@ export default function App() {
                   <Verified className={`w-5 h-5 ${hoveredPlan === "student" ? "text-white opacity-90" : "text-amber-500"}`} />
                 </div>
                 <h3 className="font-headline text-2xl font-bold mb-1">Student Plan</h3>
-                <p className={`text-sm mb-4 transition-colors ${hoveredPlan === "student" ? "text-white/90" : "text-on-surface-variant"}`}>400 Credits (40 Resumes)</p>
+                <p className={`text-sm mb-4 transition-colors ${hoveredPlan === "student" ? "text-white/90" : "text-on-surface-variant"}`}>300 Credits (30 Resumes)</p>
                 <div className="text-4xl font-black mb-1">₹99</div>
                 <p className={`text-sm mb-8 transition-colors ${hoveredPlan === "student" ? "text-white/90" : "text-on-surface-variant"}`}>/3 months</p>
                 <ul className="space-y-3 mb-10 text-left flex-grow">
                   <li className={`flex items-center gap-3 transition-colors ${hoveredPlan === "student" ? "text-white" : "text-on-surface-variant"}`}>
                     <CheckCircle2 className={`w-4 h-4 flex-shrink-0 transition-colors ${hoveredPlan === "student" ? "text-white" : "text-primary"}`} />
-                    400 Credits
+                    300 Credits
                   </li>
                   <li className={`flex items-center gap-3 transition-colors ${hoveredPlan === "student" ? "text-white" : "text-on-surface-variant"}`}>
                     <CheckCircle2 className={`w-4 h-4 flex-shrink-0 transition-colors ${hoveredPlan === "student" ? "text-white" : "text-primary"}`} />
