@@ -607,7 +607,7 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
                       <div className="flex justify-center mt-1 mb-2">
                         <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black tracking-wide border shadow-sm whitespace-nowrap ${
                           selectedPlan === "student"
-                            ? "bg-white/20 border-white/30 text-white"
+                            ? "bg-gradient-to-r from-orange-500 to-amber-500 border-orange-400 text-white shadow-lg shadow-orange-500/20"
                             : "bg-orange-500/10 border-orange-400/40 text-orange-600"
                         }`}>
                           <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse flex-shrink-0" />
