@@ -15,49 +15,44 @@ export const MODELS = {
     { id: "auto", name: "Auto (Production Routing)" },
     { id: "deepseek-v4-flash", name: "DeepSeek V4 Flash (Premium)" },
     
-    // -- Mistral --
-    { id: "mistral-large-2512|key1", name: "Mistral Large 2512 (Mistral) - Key 1" },
-    { id: "mistral-large-2512|key2", name: "Mistral Large 2512 (Mistral) - Key 2" },
-    { id: "mistral-large-2512|key3", name: "Mistral Large 2512 (Mistral) - Key 3" },
-    { id: "mistral-medium-2508|key1", name: "Mistral Medium 2508 (Mistral) - Key 1" },
-    { id: "mistral-medium-2508|key2", name: "Mistral Medium 2508 (Mistral) - Key 2" },
-    { id: "mistral-medium-2508|key3", name: "Mistral Medium 2508 (Mistral) - Key 3" },
-    { id: "mistral-small-2506|key1", name: "Mistral Small 2506 (Mistral) - Key 1" },
-    { id: "mistral-small-2506|key2", name: "Mistral Small 2506 (Mistral) - Key 2" },
-    { id: "mistral-small-2506|key3", name: "Mistral Small 2506 (Mistral) - Key 3" },
-    { id: "mistral-large-latest|key1", name: "Mistral Large (Mistral) - Key 1" },
-    { id: "mistral-large-latest|key2", name: "Mistral Large (Mistral) - Key 2" },
-    { id: "mistral-large-latest|key3", name: "Mistral Large (Mistral) - Key 3" },
-    { id: "mistral-medium-latest|key1", name: "Mistral Medium (Mistral) - Key 1" },
-    { id: "mistral-medium-latest|key2", name: "Mistral Medium (Mistral) - Key 2" },
-    { id: "mistral-medium-latest|key3", name: "Mistral Medium (Mistral) - Key 3" },
+    // -- Pool 1 (Primary Fallbacks) --
     { id: "mistral-medium-3.5|key1", name: "Mistral Medium 3.5 (Mistral) - Key 1" },
     { id: "mistral-medium-3.5|key2", name: "Mistral Medium 3.5 (Mistral) - Key 2" },
     { id: "mistral-medium-3.5|key3", name: "Mistral Medium 3.5 (Mistral) - Key 3" },
     { id: "mistral-medium-2604|key1", name: "Mistral Medium 2604 (Mistral) - Key 1" },
     { id: "mistral-medium-2604|key2", name: "Mistral Medium 2604 (Mistral) - Key 2" },
     { id: "mistral-medium-2604|key3", name: "Mistral Medium 2604 (Mistral) - Key 3" },
+    { id: "mistral-medium-latest|key1", name: "Mistral Medium (Mistral) - Key 1" },
+    { id: "mistral-medium-latest|key2", name: "Mistral Medium (Mistral) - Key 2" },
+    { id: "mistral-medium-latest|key3", name: "Mistral Medium (Mistral) - Key 3" },
+    { id: "mistral-large-2512|key1", name: "Mistral Large 2512 (Mistral) - Key 1" },
+    { id: "mistral-large-2512|key2", name: "Mistral Large 2512 (Mistral) - Key 2" },
+    { id: "mistral-large-2512|key3", name: "Mistral Large 2512 (Mistral) - Key 3" },
+    { id: "mistral-medium-2508|key1", name: "Mistral Medium 2508 (Mistral) - Key 1" },
+    { id: "mistral-medium-2508|key2", name: "Mistral Medium 2508 (Mistral) - Key 2" },
+    { id: "mistral-medium-2508|key3", name: "Mistral Medium 2508 (Mistral) - Key 3" },
+    { id: "mistralai/mistral-nemotron|key1", name: "Mistral Nemotron (NVIDIA) - Key 1" },
+    { id: "mistralai/mistral-nemotron|key2", name: "Mistral Nemotron (NVIDIA) - Key 2" },
+
+    // -- Pool 2 (Secondary Fallbacks) --
+    { id: "mistral-large-latest|key1", name: "Mistral Large (Mistral) - Key 1" },
+    { id: "mistral-large-latest|key2", name: "Mistral Large (Mistral) - Key 2" },
+    { id: "mistral-large-latest|key3", name: "Mistral Large (Mistral) - Key 3" },
     { id: "ministral-14b-latest|key1", name: "Ministral 14B (Mistral) - Key 1" },
     { id: "ministral-14b-latest|key2", name: "Ministral 14B (Mistral) - Key 2" },
     { id: "ministral-14b-latest|key3", name: "Ministral 14B (Mistral) - Key 3" },
     { id: "mistral-small-latest|key1", name: "Mistral Small (Mistral) - Key 1" },
     { id: "mistral-small-latest|key2", name: "Mistral Small (Mistral) - Key 2" },
     { id: "mistral-small-latest|key3", name: "Mistral Small (Mistral) - Key 3" },
-
-
-    // -- Cloudflare --
+    { id: "mistral-small-2506|key1", name: "Mistral Small 2506 (Mistral) - Key 1" },
+    { id: "mistral-small-2506|key2", name: "Mistral Small 2506 (Mistral) - Key 2" },
+    { id: "mistral-small-2506|key3", name: "Mistral Small 2506 (Mistral) - Key 3" },
     { id: "@cf/meta/llama-3.3-70b-instruct-fp8-fast|key1", name: "Llama 3.3 70B Fast (Cloudflare) - Key 1" },
     { id: "@cf/meta/llama-3.3-70b-instruct-fp8-fast|key2", name: "Llama 3.3 70B Fast (Cloudflare) - Key 2" },
-    { id: "@cf/mistralai/mistral-small-3.1-24b-instruct|key1", name: "Mistral Small 24B (Cloudflare) - Key 1" },
-    { id: "@cf/mistralai/mistral-small-3.1-24b-instruct|key2", name: "Mistral Small 24B (Cloudflare) - Key 2" },
-
-    // -- NVIDIA --
-
-
-    { id: "mistralai/mistral-nemotron|key1", name: "Mistral Nemotron (NVIDIA) - Key 1" },
-    { id: "mistralai/mistral-nemotron|key2", name: "Mistral Nemotron (NVIDIA) - Key 2" },
     { id: "mistralai/ministral-14b-instruct-2512|key1", name: "Ministral 14B 2512 (NVIDIA) - Key 1" },
-    { id: "mistralai/ministral-14b-instruct-2512|key2", name: "Ministral 14B 2512 (NVIDIA) - Key 2" }
+    { id: "mistralai/ministral-14b-instruct-2512|key2", name: "Ministral 14B 2512 (NVIDIA) - Key 2" },
+    { id: "@cf/mistralai/mistral-small-3.1-24b-instruct|key1", name: "Mistral Small 24B (Cloudflare) - Key 1" },
+    { id: "@cf/mistralai/mistral-small-3.1-24b-instruct|key2", name: "Mistral Small 24B (Cloudflare) - Key 2" }
   ]
 };
 
