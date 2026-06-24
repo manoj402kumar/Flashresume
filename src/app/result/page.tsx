@@ -1104,7 +1104,7 @@ export default function ResultPage() {
                     </div>
                     <span className="text-[9px] font-black uppercase tracking-widest text-[#006859]">After</span>
                     <span className="text-base font-black text-transparent bg-clip-text bg-gradient-to-r from-[#006859] to-[#12f8d7] leading-none">{resume.ats_score_after}</span>
-                    <span className="bg-gradient-to-r from-[#006859] to-[#12f8d7] text-white px-2 py-0.5 rounded-lg text-[9px] font-black whitespace-nowrap ml-1">+{scoreImprovement} PTS</span>
+                    <span className="bg-gradient-to-r from-[#006859] to-[#12f8d7] text-white px-2 py-0.5 rounded-lg text-[9px] font-black whitespace-nowrap ml-1">+{scoreImprovement} ATS</span>
                   </>
                 )}
               </div>
