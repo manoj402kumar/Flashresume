@@ -38,8 +38,8 @@ const PLANS = [
   {
     id: "pay_per_use",
     name: "One-Time",
-    price: 39,
-    priceDisplay: "₹39",
+    price: 29,
+    priceDisplay: "₹29",
     period: "/10 Days",
     description: "2 resume downloads",
     icon: <Download className="w-5 h-5 text-on-surface-variant" />,
@@ -337,7 +337,7 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
     const planDetails =
       planToBuy === "student" ? { amount: 99, plan_type: "student" } :
         planToBuy === "regular" ? { amount: 199, plan_type: "regular" } :
-          { amount: 39, plan_type: "pay_per_use" };
+          { amount: 29, plan_type: "pay_per_use" };
 
     try {
       const { data: { session } } = await supabase.auth.getSession();
