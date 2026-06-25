@@ -142,6 +142,7 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
 
   const [step, setStep] = useState<Step>("initializing");
   const [user, setUser] = useState<User | null>(null);
+  const [isAlreadyVerified, setIsAlreadyVerified] = useState(false);
 
   // Student Verify Form
   const [studentMethod, setStudentMethod] = useState<"details" | "email">("details");
@@ -172,6 +173,10 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
     // Fast path: use pre-loaded user data if provided (avoids 2 extra network calls)
     if (prefetchedUser) {
       setUser(prefetchedUser);
+      const { data: userData } = await supabase.from("users").select("is_student, student_verified_at").eq("id", prefetchedUser.id).single();
+      if (userData?.is_student && userData?.student_verified_at) {
+        setIsAlreadyVerified(true);
+      }
       const credits = prefetchedCredits ?? 0;
       if (loginOnly) {
         onSuccess();
@@ -190,6 +195,12 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
     if (session?.user) {
       const sessionUser = session.user;
       setUser(sessionUser);
+      
+      const { data: userData } = await supabase.from("users").select("is_student, student_verified_at").eq("id", sessionUser.id).single();
+      if (userData?.is_student && userData?.student_verified_at) {
+        setIsAlreadyVerified(true);
+      }
+
       const { data: creditData } = await supabase.rpc("get_total_active_credits", { p_user_id: sessionUser.id });
       const currentCredits = creditData ?? 0;
       if (loginOnly) {
@@ -314,7 +325,7 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
     if (!activeUser) return;
     const planToBuy = overridePlan || selectedPlan;
 
-    if (planToBuy === "student" && !alreadyVerified) {
+    if (planToBuy === "student" && !alreadyVerified && !isAlreadyVerified) {
       setStep("student_verify");
       return;
     }
