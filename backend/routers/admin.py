@@ -67,27 +67,18 @@ async def get_admin_stats():
             dev_ids_str = ",".join(dev_user_ids)
             payments_query = payments_query.or_(f"user_id.is.null,user_id.not.in.({dev_ids_str})")
 
-        users_query = supabase.table("users").select("id", count="exact").gte("created_at", "2026-05-28T00:00:00Z").not_.in_("email", DEV_EMAILS)
+        users_query = supabase.table("users").select("id", count="exact").gte("created_at", "2026-05-28T00:00:00Z")
 
         downloads_query = supabase.table("resume_downloads").select("id", count="exact").gte("downloaded_at", "2026-05-28T00:00:00Z")
-        if dev_user_ids:
-            dev_ids_str = ",".join(dev_user_ids)
-            downloads_query = downloads_query.or_(f"user_id.is.null,user_id.not.in.({dev_ids_str})")
 
         # Total Visitors KPI: Count ALL traffic (all pages, anonymous + logged-in users).
-        # We use OR to keep anonymous rows (user_id IS NULL) while excluding known dev accounts.
+        # We keep all anonymous and logged-in rows.
         visitors_query = supabase.table("page_visits").select("id", count="exact").gte("visited_at", "2026-05-28T00:00:00Z")
-        if dev_user_ids:
-            dev_ids_str = ",".join(dev_user_ids)
-            visitors_query = visitors_query.or_(f"user_id.is.null,user_id.not.in.({dev_ids_str})")
 
         failed_query = supabase.table("payments").select("id", count="exact").eq("status", "failed").gte("created_at", "2026-05-28T00:00:00Z")
-        if dev_user_ids:
-            dev_ids_str = ",".join(dev_user_ids)
-            failed_query = failed_query.or_(f"user_id.is.null,user_id.not.in.({dev_ids_str})")
 
         # High-risk users: consecutive generations > 5 without a download — potential freeloader/scraper
-        high_risk_query = supabase.table("users").select("id", count="exact").gt("fraud_tracker_counter", 5).not_.in_("email", DEV_EMAILS)
+        high_risk_query = supabase.table("users").select("id", count="exact").gt("fraud_tracker_counter", 5)
 
         payments_res, downloads, users_res, visitors_res, failed_res, peak_res, high_risk_res = await asyncio.gather(
             _sb(payments_query),
@@ -402,7 +393,6 @@ async def get_analytics_downloads(
         dl_query = supabase.table("resume_downloads").select("user_id, session_id, downloaded_at, device_type").limit(10000).order("downloaded_at", desc=True)
         if dt_start: dl_query = dl_query.gte("downloaded_at", dt_start.isoformat())
         if dt_end: dl_query = dl_query.lte("downloaded_at", dt_end.isoformat())
-        if dev_user_ids: dl_query = dl_query.not_.in_("user_id", dev_user_ids)
         
         dl_res = await _sb(dl_query)
         downloads = dl_res.data or []
