@@ -699,11 +699,18 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
                               type="text"
                               inputMode="numeric"
                               pattern="[0-9]*"
-                              maxLength={1}
+                              maxLength={6}
                               autoComplete="one-time-code"
                               value={otpValue[index] || ""}
                               onChange={(e) => {
                                 const val = e.target.value;
+                                if (val.length > 1) {
+                                  const digits = val.replace(/\D/g, "").slice(0, 6);
+                                  setOtpValue(digits);
+                                  setError(null);
+                                  document.getElementById(`student-otp-${Math.min(digits.length, 5)}`)?.focus();
+                                  return;
+                                }
                                 if (val && !/^\d$/.test(val)) return;
                                 const newVal = otpValue.substring(0, index) + val + otpValue.substring(index + 1);
                                 setOtpValue(newVal);
