@@ -21,7 +21,17 @@ export const metadata: Metadata = {
     "AI resume builder",
     "resume templates for freshers",
     "ATS resume checker",
-    "job description resume match"
+    "job description resume match",
+    "resume and job description match",
+    "resume jd optimizer tool",
+    "match resume with job description AI",
+    "ATS resume scan",
+    "JD and resume matcher",
+    "JD resume ATS checker",
+    "CV optimizer",
+    "resume score checker",
+    "resume job description optimizer",
+    "resume job description checker"
   ],
   authors: [{ name: "Flashresume" }],
   creator: "Flashresume",
