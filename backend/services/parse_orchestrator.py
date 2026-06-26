@@ -5,6 +5,7 @@ import pypdfium2 as pdfium  # Replaced PyMuPDF with pypdfium2 for better stabili
 from docx import Document
 from services.pdf_parser import extract_with_pdfplumber, is_extraction_good
 from services.pdf_link_extractor import extract_pdf_links
+from services.docx_link_extractor import extract_docx_links
 
 
 def extract_from_docx(docx_bytes: bytes) -> dict:
@@ -13,12 +14,14 @@ def extract_from_docx(docx_bytes: bytes) -> dict:
         doc = Document(io.BytesIO(docx_bytes))
         paragraphs = [para.text.strip() for para in doc.paragraphs if para.text.strip()]
         text = '\n\n'.join(paragraphs)
+        
+        extracted_links = extract_docx_links(doc, resume_text=text)
+        
         return {
             "text": text if text else "Unable to extract text from DOCX.",
             "page_count": 1,
             "parser_used": "python-docx",
-            # DOCX: we cannot extract hyperlinks without deeper XML parsing — return empty
-            "extracted_links": {"all_urls": []},
+            "extracted_links": extracted_links,
         }
     except Exception as e:
         raise Exception(f"DOCX extraction failed: {str(e)}")
