@@ -241,7 +241,7 @@ async def get_analytics_revenue(
                 "color": "bg-purple-50", "textColor": "text-purple-700", "barColor": "bg-gradient-to-r from-purple-500 to-purple-400"
             },
             {
-                "name": "One-Time", "price": 39, "users": plan_counts.get("pay_per_use", 0), "mrr": plan_mrr.get("pay_per_use", 0),
+                "name": "One-Time", "price": 29, "users": plan_counts.get("pay_per_use", 0), "mrr": plan_mrr.get("pay_per_use", 0),
                 "color": "bg-blue-50", "textColor": "text-blue-700", "barColor": "bg-blue-400"
             }
         ]

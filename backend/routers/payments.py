@@ -33,7 +33,7 @@ class OrderRequest(BaseModel):
 @limiter.limit("10/minute")
 async def create_order(request: Request, body: OrderRequest, authorization: str = Header(None)):
     PRICES = {
-        "pay_per_use": 3900,
+        "pay_per_use": 2900,
         "regular": 19900,
         "student": 9900
     }
