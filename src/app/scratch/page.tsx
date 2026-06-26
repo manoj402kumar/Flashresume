@@ -823,7 +823,13 @@ export default function ScratchPage() {
           </div>
           <div className="w-full px-4 flex justify-center">
             <div className="relative bg-white shadow-2xl rounded-sm ring-1 ring-white/20 transition-all duration-300"
-              style={{ width: "100%", maxWidth: selectedTemplate === "templateLetter" ? "calc((85vh - 6rem) * 0.707)" : "calc((85vh - 6rem) * 0.774)" }}>
+              style={{
+                width: "100%",
+                maxWidth: selectedTemplate === "templateLetter" ? "calc((85vh - 6rem) * 0.707)" : "calc((85vh - 6rem) * 0.774)",
+                aspectRatio: selectedTemplate === "templateLetter" ? "8.5 / 11" : "210 / 297",
+                minHeight: "400px"
+              }}
+            >
               <MobilePDFPreview key={`mobile-${selectedTemplate}`} refreshKey={JSON.stringify({ resume, showHighlights, matchedKeywords, missingKeywords })}>
                 {selectedTemplate === "templateLetter" ? (
                   <ResumePDFTemplateLetter resume={resume} showHighlights={showHighlights} matchedKeywords={matchedKeywords} missingKeywords={missingKeywords} />
@@ -915,7 +921,7 @@ export default function ScratchPage() {
           )}
 
           {/* Scrollable Panel Content */}
-          <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:px-8 lg:py-6 pb-24 hide-scrollbar bg-[#0f1117]">
+          <div className="flex-1 overflow-y-auto overscroll-y-contain p-4 sm:p-6 lg:px-8 lg:py-6 pb-24 hide-scrollbar bg-[#0f1117]">
 
             {/* ── Inspiration Banner ── */}
             <motion.div
@@ -2346,7 +2352,12 @@ export default function ScratchPage() {
           </div>
 
           <div className="flex-1 w-full bg-[#0c0f12] overflow-y-auto px-4 py-8 sm:px-8 sm:py-12 flex justify-center items-start">
-            <div className="relative bg-white shadow-2xl rounded-sm ring-1 ring-white/20 w-full max-w-[850px] transition-all duration-300">
+            <div className="relative bg-white shadow-2xl rounded-sm ring-1 ring-white/20 w-full max-w-[850px] transition-all duration-300"
+              style={{
+                aspectRatio: selectedTemplate === "templateLetter" ? "8.5 / 11" : "210 / 297",
+                minHeight: "400px"
+              }}
+            >
               <MobilePDFPreview key={`desktop-${selectedTemplate}`} refreshKey={JSON.stringify({ resume, showHighlights, matchedKeywords, missingKeywords })}>
                 {selectedTemplate === "templateLetter" ? (
                   <ResumePDFTemplateLetter
