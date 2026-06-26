@@ -261,13 +261,43 @@ export default function ResultPage() {
   const [canUndo, setCanUndo] = useState(false);
   const [canRedo, setCanRedo] = useState(false);
 
-  const updateResume = (updates: Partial<TemplateV1>) => {
+  const lastEditTimeRef = useRef<number>(0);
+  const chunkStartTimeRef = useRef<number>(0);
+
+  const updateResume = (updates: Partial<TemplateV1>, opts?: { immediate?: boolean }) => {
     setResume((prev) => {
       if (!prev) return null;
       const next = { ...prev, ...updates };
+      const now = Date.now();
+      const timeSinceLast = now - lastEditTimeRef.current;
+      const chunkDuration = now - chunkStartTimeRef.current;
+
+      const prevStr = JSON.stringify(prev);
+      const nextStr = JSON.stringify(next);
+      const lengthDelta = Math.abs(nextStr.length - prevStr.length);
+      const isPaste = lengthDelta > 20;
+
+      const shouldCoalesce =
+        !opts?.immediate &&
+        !isPaste &&
+        timeSinceLast < 1000 &&
+        chunkDuration < 3000 &&
+        historyRef.current.length > 0;
+
       const truncated = historyRef.current.slice(0, historyIndexRef.current + 1);
-      truncated.push(next);
-      if (truncated.length > MAX_HISTORY) truncated.shift();
+
+      if (shouldCoalesce) {
+        truncated[truncated.length - 1] = next;
+      } else {
+        truncated.push(next);
+        chunkStartTimeRef.current = now;
+      }
+
+      lastEditTimeRef.current = now;
+      if (truncated.length > MAX_HISTORY) {
+        truncated.shift();
+        historyIndexRef.current = Math.max(0, historyIndexRef.current - 1);
+      }
       historyRef.current = truncated;
       historyIndexRef.current = truncated.length - 1;
       setCanUndo(historyIndexRef.current > 0);
@@ -339,7 +369,7 @@ export default function ResultPage() {
     const rawTo = Math.max(0, Math.min(insertionIndex, currentOrder.length));
     if (rawTo !== fromIdx && rawTo !== fromIdx + 1) {
       const newOrder = arrayMove(currentOrder, fromIdx, rawTo);
-      updateResume({ section_order: newOrder });
+      updateResume({ section_order: newOrder }, { immediate: true });
     }
     setDraggingId(null); draggingIdRef.current = null;
     setInsertionIndex(null); insertionIndexRef.current = null;
@@ -353,14 +383,14 @@ export default function ResultPage() {
   const moveSectionUp = (idx: number) => {
     if (idx === 0 || !resume) return;
     const currentOrder = resume.section_order || ["summary", "education", "experience", "projects", "skills", "certifications"];
-    updateResume({ section_order: arrayMove(currentOrder, idx, idx - 1) });
+    updateResume({ section_order: arrayMove(currentOrder, idx, idx - 1) }, { immediate: true });
   };
 
   const moveSectionDown = (idx: number) => {
     if (!resume) return;
     const currentOrder = resume.section_order || ["summary", "education", "experience", "projects", "skills", "certifications"];
     if (idx >= currentOrder.length - 1) return;
-    updateResume({ section_order: arrayMove(currentOrder, idx, idx + 2) });
+    updateResume({ section_order: arrayMove(currentOrder, idx, idx + 2) }, { immediate: true });
   };
 
   // ── Touch drag support (mobile) ──────────────────────────────────────────
@@ -415,7 +445,7 @@ export default function ResultPage() {
       const rawTo = Math.max(0, Math.min(currentInsertionIndex, currentOrder.length));
       if (rawTo !== fromIdx && rawTo !== fromIdx + 1) {
         const newOrder = arrayMove(currentOrder, fromIdx, rawTo);
-        updateResume({ section_order: newOrder });
+        updateResume({ section_order: newOrder }, { immediate: true });
       }
     }
     setDraggingId(null); draggingIdRef.current = null;
@@ -1242,7 +1272,7 @@ export default function ResultPage() {
                         bullets: [{ text: '', url: '' }]
                       }];
                       const newOrder = [...(resume.section_order || ['summary', 'education', 'experience', 'projects', 'skills', 'certifications']), newCustomId];
-                      updateResume({ custom_sections: newCustoms, section_order: newOrder });
+                      updateResume({ custom_sections: newCustoms, section_order: newOrder }, { immediate: true });
                       selectEditSection(newCustomId);
                     }}
                     className="w-full sm:w-auto flex items-center justify-center sm:justify-start gap-1 sm:gap-1.5 px-1.5 sm:px-3 py-1.5 rounded-full text-[10px] sm:text-xs font-bold whitespace-nowrap transition-all duration-200 border border-white/10 text-white/50 hover:bg-white/10 hover:text-white/80"
@@ -1510,7 +1540,7 @@ export default function ResultPage() {
                                   onChange={(e) => {
                                     const newCustoms = [...(resume.custom_sections || [])];
                                     newCustoms[customIndex] = { ...newCustoms[customIndex], heading: e.target.value };
-                                    updateResume({ custom_sections: newCustoms });
+                                    updateResume({ custom_sections: newCustoms }, { immediate: true });
                                   }}
                                   className="font-headline text-2xl font-bold rounded-xl px-4 py-2 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm w-full"
                                   placeholder="Section Heading"
@@ -1538,7 +1568,7 @@ export default function ResultPage() {
                                           } else {
                                             (newCustoms[customIndex].bullets![bidx] as any).text = e.target.value;
                                           }
-                                          updateResume({ custom_sections: newCustoms });
+                                          updateResume({ custom_sections: newCustoms }, { immediate: true });
                                         }}
                                         className="w-full sm:flex-[2] rounded-lg px-3 py-2 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm resize-none min-w-0"
                                         rows={2}
@@ -1554,7 +1584,7 @@ export default function ResultPage() {
                                           } else {
                                             (newCustoms[customIndex].bullets![bidx] as any).url = e.target.value;
                                           }
-                                          updateResume({ custom_sections: newCustoms });
+                                          updateResume({ custom_sections: newCustoms }, { immediate: true });
                                         }}
                                         className="w-full sm:flex-[1] text-xs rounded-lg px-3 py-2 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm min-w-0"
                                         placeholder="Behind URL (e.g., leetcode.com/user)"
@@ -1583,7 +1613,7 @@ export default function ResultPage() {
                                     const newCustoms = [...(resume.custom_sections || [])];
                                     if (!newCustoms[customIndex].bullets) newCustoms[customIndex].bullets = [];
                                     newCustoms[customIndex].bullets!.push({ text: '', url: '' });
-                                    updateResume({ custom_sections: newCustoms });
+                                    updateResume({ custom_sections: newCustoms }, { immediate: true });
                                   }}
                                   className="px-3 py-1 text-sm text-primary hover:bg-primary/10 rounded-lg transition-colors font-semibold"
                                 >
@@ -1594,7 +1624,7 @@ export default function ResultPage() {
                                   onClick={() => {
                                     const newCustoms = (resume.custom_sections || []).filter((_, i) => i !== customIndex);
                                     const newOrder = (resume.section_order || []).filter(id => id !== sectionId);
-                                    updateResume({ custom_sections: newCustoms, section_order: newOrder });
+                                    updateResume({ custom_sections: newCustoms, section_order: newOrder }, { immediate: true });
                                     setActiveEditSection('contact');
                                   }}
                                   className="flex-shrink-0 px-3 py-1 text-sm text-red-500 hover:bg-red-50 rounded-lg transition-colors font-semibold"
@@ -1675,7 +1705,7 @@ export default function ResultPage() {
                                   type="button"
                                   onClick={() => {
                                     const newEducation = [...resume.education, { institution: '', location: '', degree: '', duration: '', cgpa: '' }];
-                                    updateResume({ education: newEducation });
+                                    updateResume({ education: newEducation }, { immediate: true });
                                   }}
                                   className="flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 hover:bg-primary/20 text-primary text-xs font-bold rounded-xl transition-colors border border-primary/20 flex-shrink-0"
                                 >
@@ -1753,7 +1783,7 @@ export default function ResultPage() {
                                             type="button"
                                             onClick={() => {
                                               const newEducation = resume.education.filter((_, i) => i !== idx);
-                                              updateResume({ education: newEducation });
+                                              updateResume({ education: newEducation }, { immediate: true });
                                             }}
                                             className="flex-shrink-0 px-3 py-1 text-sm text-red-500 hover:bg-red-50 rounded-lg transition-colors font-semibold"
                                           >
@@ -1775,7 +1805,7 @@ export default function ResultPage() {
                                     <button
                                       onClick={() => {
                                         const newEducation = [...resume.education, { institution: '', location: '', degree: '', duration: '', cgpa: '' }];
-                                        updateResume({ education: newEducation });
+                                        updateResume({ education: newEducation }, { immediate: true });
                                       }}
                                       className="px-4 py-2 bg-primary/10 text-primary font-bold rounded-xl hover:bg-primary/20 transition-colors"
                                       type="button"
@@ -1814,7 +1844,7 @@ export default function ResultPage() {
                                   type="button"
                                   onClick={() => {
                                     const newExperience = [...resume.experience, { job_title: '', company: '', location: '', duration: '', bullets: [''] }];
-                                    updateResume({ experience: newExperience });
+                                    updateResume({ experience: newExperience }, { immediate: true });
                                   }}
                                   className="flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 hover:bg-primary/20 text-primary text-xs font-bold rounded-xl transition-colors border border-primary/20 flex-shrink-0"
                                 >
@@ -1925,7 +1955,7 @@ export default function ResultPage() {
                                           onClick={() => {
                                             const newExperience = [...resume.experience];
                                             newExperience[idx].bullets.push('');
-                                            updateResume({ experience: newExperience });
+                                            updateResume({ experience: newExperience }, { immediate: true });
                                           }}
                                           className="px-3 py-1 text-sm text-primary hover:bg-primary/10 rounded-lg transition-colors font-semibold"
                                         >
@@ -1935,7 +1965,7 @@ export default function ResultPage() {
                                           type="button"
                                           onClick={() => {
                                             const newExperience = resume.experience.filter((_, i) => i !== idx);
-                                            updateResume({ experience: newExperience });
+                                            updateResume({ experience: newExperience }, { immediate: true });
                                           }}
                                           className="flex-shrink-0 px-3 py-1 text-sm text-red-500 hover:bg-red-50 rounded-lg transition-colors font-semibold"
                                         >
@@ -1950,7 +1980,7 @@ export default function ResultPage() {
                                     <button
                                       onClick={() => {
                                         const newExperience = [...resume.experience, { job_title: '', company: '', location: '', duration: '', bullets: [''] }];
-                                        updateResume({ experience: newExperience });
+                                        updateResume({ experience: newExperience }, { immediate: true });
                                       }}
                                       className="px-4 py-2 bg-primary/10 text-primary font-bold rounded-xl hover:bg-primary/20 transition-colors"
                                       type="button"
@@ -2100,7 +2130,7 @@ export default function ResultPage() {
                                           onClick={() => {
                                             const newProjects = [...resume.projects];
                                             newProjects[idx].bullets.push('');
-                                            updateResume({ projects: newProjects });
+                                            updateResume({ projects: newProjects }, { immediate: true });
                                           }}
                                           className="px-3 py-1 text-sm text-primary hover:bg-primary/10 rounded-lg transition-colors font-semibold"
                                         >
@@ -2110,7 +2140,7 @@ export default function ResultPage() {
                                           type="button"
                                           onClick={() => {
                                             const newProjects = resume.projects.filter((_, i) => i !== idx);
-                                            updateResume({ projects: newProjects });
+                                            updateResume({ projects: newProjects }, { immediate: true });
                                           }}
                                           className="flex-shrink-0 px-3 py-1 text-sm text-red-500 hover:bg-red-50 rounded-lg transition-colors font-semibold"
                                         >
@@ -2125,7 +2155,7 @@ export default function ResultPage() {
                                     <button
                                       onClick={() => {
                                         const newProjects = [...resume.projects, { title: '', tech_stack: '', duration: '', link: '', link_href: '', bullets: [''] }];
-                                        updateResume({ projects: newProjects });
+                                        updateResume({ projects: newProjects }, { immediate: true });
                                       }}
                                       className="px-4 py-2 bg-primary/10 text-primary font-bold rounded-xl hover:bg-primary/20 transition-colors"
                                       type="button"
@@ -2347,7 +2377,7 @@ export default function ResultPage() {
                                             type="button"
                                             onClick={() => {
                                               const updated = (resume.technical_skills.custom_categories || []).filter((_, i) => i !== catIdx);
-                                              updateResume({ technical_skills: { ...resume.technical_skills, custom_categories: updated } });
+                                              updateResume({ technical_skills: { ...resume.technical_skills, custom_categories: updated } }, { immediate: true });
                                             }}
                                             className="text-xs text-red-400 hover:text-red-600 font-semibold px-2 py-1 rounded-lg hover:bg-red-50 transition-colors flex-shrink-0"
                                           >
@@ -2379,7 +2409,7 @@ export default function ResultPage() {
                                       type="button"
                                       onClick={() => {
                                         const updated = [...(resume.technical_skills.custom_categories || []), { label: '', skills: [] }];
-                                        updateResume({ technical_skills: { ...resume.technical_skills, custom_categories: updated } });
+                                        updateResume({ technical_skills: { ...resume.technical_skills, custom_categories: updated } }, { immediate: true });
                                       }}
                                       className="mt-2 flex items-center gap-2 px-4 py-2 rounded-xl border-2 border-dashed border-primary/30 text-primary/70 hover:border-primary hover:text-primary hover:bg-primary/5 text-sm font-semibold transition-all duration-200 w-full justify-center"
                                     >
