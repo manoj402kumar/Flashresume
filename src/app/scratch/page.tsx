@@ -671,7 +671,7 @@ export default function ScratchPage() {
             </div>
           </div>
 
-          <div className="flex items-center gap-2 sm:gap-4">
+          <div className="flex items-center gap-1.5 sm:gap-4 min-w-0">
             <button
               onClick={handleStartOver}
               className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-xl text-sm font-semibold text-white/60 bg-white/6 hover:bg-white/10 border border-white/10 transition-colors"
@@ -690,7 +690,7 @@ export default function ScratchPage() {
                 }
               }}
               disabled={downloadingPDF || checkingAccess}
-              className={`flex items-center gap-2 px-4 py-1.5 sm:px-5 sm:py-2 rounded-xl text-sm font-bold text-white transition-all ${downloadingPDF || checkingAccess
+              className={`flex-shrink-0 flex items-center gap-2 px-4 py-1.5 sm:px-5 sm:py-2 rounded-xl text-sm font-bold text-white transition-all ${downloadingPDF || checkingAccess
                 ? "bg-white/10 cursor-not-allowed"
                 : hasPaidAccess
                   ? "bg-primary hover:bg-primary/90 border border-[#12f8d7] shadow-[0_0_10px_rgba(18,248,215,0.4)] hover:shadow-[0_0_15px_rgba(18,248,215,0.6)]"
@@ -709,7 +709,7 @@ export default function ScratchPage() {
             </button>
 
             {/* Account Details Dropdown */}
-            <div className="relative" ref={accountDropdownRef}>
+            <div className="relative flex-shrink-0" ref={accountDropdownRef}>
               <button
                 onClick={() => setShowAccountDropdown(!showAccountDropdown)}
                 className="w-10 h-10 rounded-xl bg-white/6 hover:bg-white/12 border border-white/10 transition-colors flex items-center justify-center relative shadow-sm"
