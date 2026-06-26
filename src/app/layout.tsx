@@ -6,33 +6,22 @@ import PresenceTracker from "@/components/PresenceTracker";
 export const metadata: Metadata = {
   metadataBase: new URL("https://flashresume.in"),
   title: {
-    default: "Flashresume - India's No.1 ATS Resume Builder",
+    default: "AI Resume Optimizer & ATS Checker | Tailor to Job Description",
     template: "%s | Flashresume",
   },
   description:
-    "Rebuild your resume in 60 seconds. Flashresume is India's most advanced ATS resume builder. Upload your CV, job description and beat the Applicant Tracking System instantly.",
+    "Tailor your resume to any job description instantly. Our advanced AI matches ATS keywords, lets you edit PDF resumes, and build from scratch. Get hired faster with Flashresume.",
   keywords: [
-    "ATS resume builder",
-    "AI resume builder",
-    "resume builder India",
-    "free resume maker",
     "AI resume optimizer",
-    "software engineer resume",
-    "Overleaf resume template ai builder",
-    "TCS ninja resume format",
-    "best resume formats 2026",
-    "edit pdf resume online free",
-    "modify pdf resume text",
-    "resume pdf to editable format",
-    "single column ATS resume template",
-    "resume maker for campus placements",
-    "Taleo Greenhouse resume formatter",
-    "bypass Workday ATS filters",
-    "Free resume builder",
-    "Resume maker online",
-    "CV builder free",
-    "Best resume builder for freshers India",
-    "Resume format for job application",
+    "tailor resume to job description",
+    "ATS keyword matcher",
+    "optimize resume for ATS",
+    "edit PDF resume text",
+    "modify PDF resume online",
+    "AI resume builder",
+    "resume templates for freshers",
+    "ATS resume checker",
+    "job description resume match"
   ],
   authors: [{ name: "Flashresume" }],
   creator: "Flashresume",
@@ -40,23 +29,23 @@ export const metadata: Metadata = {
     type: "website",
     locale: "en_IN",
     url: "https://flashresume.in",
-    title: "Flashresume - India's No.1 ATS Resume Builder",
+    title: "AI Resume Optimizer & ATS Checker | Flashresume",
     description:
-      "Rebuild your resume in 60 seconds. Beat the ATS instantly.",
+      "Tailor your resume to any job description instantly. Our AI matches ATS keywords and helps you get hired faster.",
     siteName: "Flashresume",
     images: [
       {
         url: "/og-image.png", // We will add an OG image later
         width: 1200,
         height: 630,
-        alt: "Flashresume Open Challenge",
+        alt: "Flashresume AI Resume Optimizer",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Flashresume - India's No.1 ATS Resume Builder",
-    description: "Rebuild your resume in 60 seconds.",
+    title: "AI Resume Optimizer & ATS Checker | Flashresume",
+    description: "Tailor your resume to any job description instantly with our AI keyword optimizer.",
     images: ["/og-image.png"],
   },
   alternates: {
@@ -132,7 +121,7 @@ export default function RootLayout({
               "price": "0",
               "priceCurrency": "INR"
             },
-            "description": "India's No.1 ATS Resume Builder. Optimize and rebuild your resume for Applicant Tracking Systems in 60 seconds.",
+            "description": "Tailor your resume to any job description instantly. Our advanced AI matches ATS keywords and optimizes your PDF resume in 60 seconds.",
             "url": "https://flashresume.in",
             "applicationSubCategory": "Resume Builder",
             "featureList": [

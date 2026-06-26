@@ -715,14 +715,17 @@ export default function App() {
                 Flashresume - India's No.1 Resume Builder.<span className="hidden sm:inline text-amber-700/80 font-medium"> It's an open challenge.</span>
               </span>
             </motion.div>
-            <h1 className="font-headline text-5xl sm:text-6xl md:text-7xl font-extrabold tracking-tight text-on-background leading-[1.08] mb-5">
-              Your resume,{" "}
-              <br className="md:hidden" />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#006859] to-[#12f8d7] italic">rebuilt</span>{" "}
-              in{" "}
-              <span className="relative inline-block">
-                <span className="relative z-10">60 seconds.</span>
-                <span className="absolute inset-x-0 bottom-1 h-3 bg-[#006859]/12 rounded-md -z-0 skew-x-1"></span>
+            <h1 className="font-headline text-5xl sm:text-6xl md:text-7xl font-extrabold tracking-tight text-on-background leading-[1.08] mb-5 flex flex-col items-center gap-2 sm:gap-4">
+              <span className="text-lg sm:text-xl md:text-2xl font-bold text-[#006859] tracking-widest uppercase opacity-90">AI Resume Optimizer.</span>
+              <span>
+                Your resume,{" "}
+                <br className="md:hidden" />
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#006859] to-[#12f8d7] italic">rebuilt</span>{" "}
+                in{" "}
+                <span className="relative inline-block">
+                  <span className="relative z-10">60 seconds.</span>
+                  <span className="absolute inset-x-0 bottom-1 h-3 bg-[#006859]/12 rounded-md -z-0 skew-x-1"></span>
+                </span>
               </span>
             </h1>
             <p className="text-lg md:text-xl text-on-surface-variant leading-relaxed font-medium max-w-xl mx-auto">
