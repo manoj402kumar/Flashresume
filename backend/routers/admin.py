@@ -80,7 +80,7 @@ async def get_admin_stats():
         # High-risk users: consecutive generations > 5 without a download — potential freeloader/scraper
         high_risk_query = supabase.table("users").select("id", count="exact").gt("fraud_tracker_counter", 5)
 
-        payments_res, downloads, users_res, visitors_res, failed_res, peak_res, high_risk_res = await asyncio.gather(
+        results = await asyncio.gather(
             _sb(payments_query),
             _sb(downloads_query),
             _sb(users_query),
@@ -88,44 +88,54 @@ async def get_admin_stats():
             _sb(failed_query),
             _sb(supabase.table("system_metrics").select("value").eq("id", "peak_concurrent_users")),
             _sb(high_risk_query),
+            return_exceptions=True,
         )
+        payments_res, downloads, users_res, visitors_res, failed_res, peak_res, high_risk_res = results
 
-        if payments_res.data:
+        if not isinstance(payments_res, Exception) and payments_res.data:
             stats["total_revenue"] = sum(p["amount"] for p in payments_res.data) // 100
 
-        if hasattr(downloads, 'count') and downloads.count is not None:
-            stats["total_downloads"] = downloads.count
-        else:
-            stats["total_downloads"] = len(downloads.data) if downloads.data else 0
+        if not isinstance(downloads, Exception):
+            if hasattr(downloads, 'count') and downloads.count is not None:
+                stats["total_downloads"] = downloads.count
+            else:
+                stats["total_downloads"] = len(downloads.data) if downloads.data else 0
 
         # Paid Subscribers = unique users who paid at least once (regardless of current credits)
-        active_user_ids = set(p["user_id"] for p in (payments_res.data or []) if p.get("user_id"))
-        stats["active_subs"] = len(active_user_ids)
+        if not isinstance(payments_res, Exception):
+            active_user_ids = set(p["user_id"] for p in (payments_res.data or []) if p.get("user_id"))
+            stats["active_subs"] = len(active_user_ids)
 
-        if hasattr(users_res, 'count') and users_res.count is not None:
-            stats["total_logins"] = users_res.count
-        else:
-            stats["total_logins"] = len(users_res.data) if users_res.data else 0
+        if not isinstance(users_res, Exception):
+            if hasattr(users_res, 'count') and users_res.count is not None:
+                stats["total_logins"] = users_res.count
+            else:
+                stats["total_logins"] = len(users_res.data) if users_res.data else 0
 
-        if hasattr(visitors_res, 'count') and visitors_res.count is not None:
-            stats["total_visitors"] = visitors_res.count
-        else:
-            stats["total_visitors"] = len(visitors_res.data) if visitors_res.data else 0
+        if not isinstance(visitors_res, Exception):
+            if hasattr(visitors_res, 'count') and visitors_res.count is not None:
+                stats["total_visitors"] = visitors_res.count
+            else:
+                stats["total_visitors"] = len(visitors_res.data) if visitors_res.data else 0
 
-        if hasattr(failed_res, 'count') and failed_res.count is not None:
-            stats["failed_payments"] = failed_res.count
-        else:
-            stats["failed_payments"] = len(failed_res.data) if failed_res.data else 0
+        if not isinstance(failed_res, Exception):
+            if hasattr(failed_res, 'count') and failed_res.count is not None:
+                stats["failed_payments"] = failed_res.count
+            else:
+                stats["failed_payments"] = len(failed_res.data) if failed_res.data else 0
 
-        if peak_res.data and len(peak_res.data) > 0:
+        if not isinstance(peak_res, Exception) and peak_res.data and len(peak_res.data) > 0:
             val = peak_res.data[0].get("value", {})
             stats["peak_concurrent_users"] = val.get("count", 0)
             stats["peak_timestamp"] = val.get("timestamp")
+        elif isinstance(peak_res, Exception):
+            print(f"[Admin Stats] Peak concurrent query failed (non-fatal): {peak_res}")
 
-        if hasattr(high_risk_res, 'count') and high_risk_res.count is not None:
-            stats["high_risk_users"] = high_risk_res.count
-        else:
-            stats["high_risk_users"] = len(high_risk_res.data) if high_risk_res.data else 0
+        if not isinstance(high_risk_res, Exception):
+            if hasattr(high_risk_res, 'count') and high_risk_res.count is not None:
+                stats["high_risk_users"] = high_risk_res.count
+            else:
+                stats["high_risk_users"] = len(high_risk_res.data) if high_risk_res.data else 0
 
         return stats
     except Exception as e:
