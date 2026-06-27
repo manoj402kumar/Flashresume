@@ -529,11 +529,11 @@ export default function ResultPage() {
 
       const isNoJd = localStorage.getItem("no_jd_mode") === "true";
       setNoJdMode(isNoJd);
-      // JD optimization mode → default to "AI Analysis" panel
-      if (!isNoJd) {
-        setEditMode(false);
-        setShowChanges(true);
-      }
+      // JD optimization mode → default to "Edit Form" panel
+      // if (!isNoJd) {
+      //   setEditMode(false);
+      //   setShowChanges(true);
+      // }
 
       if (!parsed.section_order || parsed.section_order.length === 0) {
         parsed.section_order = ["summary", "education", "experience", "projects", "skills", "certifications"];
