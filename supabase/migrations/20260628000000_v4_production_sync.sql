@@ -26,10 +26,10 @@ CREATE POLICY "Users can view their own credit buckets" ON public.credit_buckets
 CREATE TABLE IF NOT EXISTS public.llm_usage (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID REFERENCES public.users(id) ON DELETE CASCADE,
-  model_name TEXT NOT NULL,
-  tokens_used INTEGER DEFAULT 0,
-  latency_ms INTEGER DEFAULT 0,
-  is_fallback BOOLEAN DEFAULT FALSE,
+  provider TEXT NOT NULL,
+  model TEXT NOT NULL,
+  success BOOLEAN DEFAULT TRUE,
+  speed_secs FLOAT DEFAULT 0.0,
   created_at TIMESTAMPTZ DEFAULT now()
 );
 

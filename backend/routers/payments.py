@@ -7,6 +7,7 @@ import os
 import random
 import httpx
 from dotenv import load_dotenv
+import json
 import supabase_client as sc
 from supabase_client import sb
 from datetime import datetime, timedelta, timezone
@@ -43,7 +44,7 @@ async def create_order(request: Request, body: OrderRequest, authorization: str 
         raise HTTPException(status_code=400, detail="Invalid plan type")
     
     # Ensure user exists in public.users to prevent foreign key constraint violations
-    if supabase and body.email:
+    if sc.supabase and body.email:
         try:
             # Check if user exists
             user_check = await sb(lambda: sc.supabase.table("users").select("id").eq("id", body.user_id).execute())
@@ -103,7 +104,7 @@ async def verify_payment(body: VerifyRequest, authorization: str = Header(None))
     
     try:
         token = authorization.split(" ")[1]
-        user_res = await asyncio.to_thread(supabase.auth.get_user, token)
+        user_res = await asyncio.to_thread(sc.supabase.auth.get_user, token)
         if not user_res or not user_res.user:
             raise HTTPException(status_code=401, detail="Invalid token")
         auth_user_id = user_res.user.id
@@ -257,7 +258,7 @@ async def deduct_credit(body: DeductRequest, authorization: str = Header(None)):
     
     try:
         token = authorization.split(" ")[1]
-        user_res = await asyncio.to_thread(supabase.auth.get_user, token)
+        user_res = await asyncio.to_thread(sc.supabase.auth.get_user, token)
         if not user_res or not user_res.user:
             raise HTTPException(status_code=401, detail="Invalid token")
         if user_res.user.id != body.user_id:
@@ -427,7 +428,6 @@ async def razorpay_webhook(request: Request):
         # Verify the signature
         client.utility.verify_webhook_signature(body.decode("utf-8"), signature, WEBHOOK_SECRET)
         
-        import json
         payload = json.loads(body)
         event = payload.get("event")
         
@@ -526,7 +526,7 @@ async def razorpay_webhook(request: Request):
             order_id = payment_entity.get('order_id')
             payment_id = payment_entity.get('id')
             
-            if not order_id or not supabase:
+            if not order_id or not sc.supabase:
                 return {"status": "ignored"}
                 
             await sb(
