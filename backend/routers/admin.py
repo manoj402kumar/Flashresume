@@ -34,7 +34,20 @@ SERVER_START_TIME = time.time()
 from datetime import datetime, timedelta, timezone
 
 IST_OFFSET = timedelta(hours=5, minutes=30)
+PROD_START_DATE = datetime(2026, 5, 28, tzinfo=timezone.utc)
+PROD_START_ISO = PROD_START_ISO
 
+_cached_dev_ids: list[str] | None = None
+
+async def get_dev_user_ids() -> list[str]:
+    global _cached_dev_ids
+    if _cached_dev_ids is None:
+        if sc.supabase:
+            res = await _sb(sc.supabase.table("users").select("id").in_("email", DEV_EMAILS))
+            _cached_dev_ids = [u["id"] for u in (res.data or [])]
+        else:
+            _cached_dev_ids = []
+    return _cached_dev_ids
 
 @router.get("/admin/stats", dependencies=[Depends(require_admin)])
 async def get_admin_stats():
@@ -59,23 +72,22 @@ async def get_admin_stats():
     try:
         # Run all 5 DB queries in parallel — non-blocking
         # Fetch dev user IDs once so we can exclude them from all metrics
-        dev_users_res = await _sb(sc.supabase.table("users").select("id").in_("email", DEV_EMAILS))
-        dev_user_ids = [u["id"] for u in (dev_users_res.data or [])]
+        dev_user_ids = await get_dev_user_ids()
 
-        payments_query = sc.supabase.table("payments").select("amount, user_id, plan_type").eq("status", "success").gte("created_at", "2026-05-28T00:00:00Z")
+        payments_query = sc.supabase.table("payments").select("amount, user_id, plan_type").eq("status", "success").gte("created_at", PROD_START_ISO)
         if dev_user_ids:
             dev_ids_str = ",".join(dev_user_ids)
             payments_query = payments_query.or_(f"user_id.is.null,user_id.not.in.({dev_ids_str})")
 
-        users_query = sc.supabase.table("users").select("id", count="exact").gte("created_at", "2026-05-28T00:00:00Z")
+        users_query = sc.supabase.table("users").select("id", count="exact").gte("created_at", PROD_START_ISO)
 
-        downloads_query = sc.supabase.table("resume_downloads").select("id", count="exact").gte("downloaded_at", "2026-05-28T00:00:00Z")
+        downloads_query = sc.supabase.table("resume_downloads").select("id", count="exact").gte("downloaded_at", PROD_START_ISO)
 
         # Total Visitors KPI: Count ALL traffic (all pages, anonymous + logged-in users).
         # We keep all anonymous and logged-in rows.
-        visitors_query = sc.supabase.table("page_visits").select("id", count="exact").gte("visited_at", "2026-05-28T00:00:00Z")
+        visitors_query = sc.supabase.table("page_visits").select("id", count="exact").gte("visited_at", PROD_START_ISO)
 
-        failed_query = sc.supabase.table("payments").select("id", count="exact").eq("status", "failed").gte("created_at", "2026-05-28T00:00:00Z")
+        failed_query = sc.supabase.table("payments").select("id", count="exact").eq("status", "failed").gte("created_at", PROD_START_ISO)
 
         # High-risk users: consecutive generations > 5 without a download — potential freeloader/scraper
         high_risk_query = sc.supabase.table("users").select("id", count="exact").gt("fraud_tracker_counter", 5)
@@ -158,7 +170,6 @@ async def get_analytics_revenue(
     dt_start = None
     dt_end = now
     
-    PROD_START_DATE = datetime(2026, 5, 28, tzinfo=timezone.utc)
     
     if time_filter == "today":
         ist_now = now + IST_OFFSET
@@ -181,8 +192,7 @@ async def get_analytics_revenue(
             
     try:
         # Exclude dev/test accounts
-        dev_users_res = await _sb(sc.supabase.table("users").select("id").in_("email", DEV_EMAILS))
-        dev_user_ids = [u["id"] for u in (dev_users_res.data or [])]
+        dev_user_ids = await get_dev_user_ids()
 
         # Fetch Payments — time-filtered, for revenue totals, trend, and breakdown.
         payments_query = sc.supabase.table("payments").select("amount, plan_type, created_at, user_id").eq("status", "success")
@@ -316,8 +326,7 @@ def build_trend_data(records, dt_start, dt_end, time_filter, value_key=None, tra
             trend.append({"label": label, "start": start_d, "end": end_d, "value": 0})
     else:
         months = 12
-        PROD_START_DATE = datetime(2026, 5, 28, tzinfo=timezone.utc)
-        if time_filter == "custom" and dt_start:
+            if time_filter == "custom" and dt_start:
             months = (dt_end.year - dt_start.year) * 12 + dt_end.month - dt_start.month + 1
         elif time_filter == "all":
             actual_start = max(dt_start or PROD_START_DATE, PROD_START_DATE)
@@ -373,7 +382,6 @@ async def get_analytics_downloads(
     dt_start = None
     dt_end = now
     
-    PROD_START_DATE = datetime(2026, 5, 28, tzinfo=timezone.utc)
     
     if time_filter == "today":
         ist_now = now + IST_OFFSET
@@ -396,8 +404,7 @@ async def get_analytics_downloads(
 
     try:
         # Exclude dev/test accounts
-        dev_users_res = await _sb(sc.supabase.table("users").select("id").in_("email", DEV_EMAILS))
-        dev_user_ids = [u["id"] for u in (dev_users_res.data or [])]
+        dev_user_ids = await get_dev_user_ids()
 
         # Fetch downloads with LIMIT 10000
         dl_query = sc.supabase.table("resume_downloads").select("user_id, session_id, downloaded_at, device_type").limit(10000).order("downloaded_at", desc=True)
@@ -522,16 +529,15 @@ async def get_funnel_stats():
         # Exclude dev/test accounts from payments only.
         # Page visits are tracked anonymously (user_id=NULL), so NOT IN filter
         # would silently drop all anonymous rows — do NOT apply it to page_visits.
-        dev_users_res = await _sb(sc.supabase.table("users").select("id").in_("email", DEV_EMAILS))
-        dev_user_ids = [u["id"] for u in (dev_users_res.data or [])]
+        dev_user_ids = await get_dev_user_ids()
 
         # 1 & 2. Visits: Only count people who are not signed up/logged in (user_id is null).
         # This gives pure new user metrics and automatically excludes dev users.
-        landing_q  = sc.supabase.table("page_visits").select("id", count="exact").eq("page_type", "landing").is_("user_id", "null").gte("visited_at", "2026-05-28T00:00:00Z")
-        result_q   = sc.supabase.table("page_visits").select("id", count="exact").eq("page_type", "result").is_("user_id", "null").gte("visited_at", "2026-05-28T00:00:00Z")
+        landing_q  = sc.supabase.table("page_visits").select("id", count="exact").eq("page_type", "landing").is_("user_id", "null").gte("visited_at", PROD_START_ISO)
+        result_q   = sc.supabase.table("page_visits").select("id", count="exact").eq("page_type", "result").is_("user_id", "null").gte("visited_at", PROD_START_ISO)
         
         # 3. Purchases: Fetch user_ids instead of count, to calculate unique paid users
-        purchase_q = sc.supabase.table("payments").select("user_id").eq("status", "success").gte("created_at", "2026-05-28T00:00:00Z")
+        purchase_q = sc.supabase.table("payments").select("user_id").eq("status", "success").gte("created_at", PROD_START_ISO)
 
         # Exclude dev accounts from purchases
         if dev_user_ids:

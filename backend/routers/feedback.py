@@ -67,7 +67,7 @@ async def get_feedback():
 class IncrementDownloadRequest(BaseModel):
     session_id: str
     user_id: str | None = None
-    device_type: str = "unknown"
+    device_type: str = "desktop"
 
 @router.post("/resume/increment-download")
 async def increment_download(body: IncrementDownloadRequest):
