@@ -5,7 +5,7 @@ from fastapi import APIRouter, HTTPException, Request, Header
 from fastapi.responses import JSONResponse
 from models.request_models import GenerateRequest
 from services.resume_generator import generate_resume
-from supabase_client import supabase
+import supabase_client as sc
 from rate_limiter import limiter
 
 router = APIRouter()
@@ -38,7 +38,7 @@ async def generate_resume_endpoint(request: Request, payload: GenerateRequest, a
     if authorization and authorization.startswith("Bearer ") and supabase:
         token = authorization.split(" ", 1)[1]
         try:
-            user_resp = await asyncio.to_thread(lambda: supabase.auth.get_user(token))
+            user_resp = await asyncio.to_thread(lambda: sc.supabase.auth.get_user(token))
             user_id = user_resp.user.id if user_resp and user_resp.user else None
         except Exception:
             pass  # Never block generation for auth decode failures
@@ -80,10 +80,10 @@ async def generate_resume_endpoint(request: Request, payload: GenerateRequest, a
 
     # Step 4: Save to resume_sessions table (non-blocking — frees event loop during DB round-trip)
     # Also saves user_id for session ownership tracking now that we decode the JWT above.
-    if supabase:
+    if sc.supabase:
         try:
             res = await asyncio.to_thread(
-                lambda: supabase.table("resume_sessions").insert({
+                lambda: sc.supabase.table("resume_sessions").insert({
                     "resume_text": payload.resume_text,
                     "generated_output": generated,
                     **({"user_id": user_id} if user_id else {}),
@@ -99,7 +99,7 @@ async def generate_resume_endpoint(request: Request, payload: GenerateRequest, a
     if supabase and user_id:
         try:
             asyncio.create_task(asyncio.to_thread(
-                lambda: supabase.rpc("increment_fraud_counter", {"p_user_id": user_id}).execute()
+                lambda: sc.supabase.rpc("increment_fraud_counter", {"p_user_id": user_id}).execute()
             ))
         except Exception:
             pass  # Never block generation for tracking failures

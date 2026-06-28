@@ -7,7 +7,7 @@ import time
 import asyncio
 import hmac
 from dotenv import load_dotenv
-from supabase_client import supabase
+import supabase_client as sc
 
 # Helper: run a synchronous supabase query on a thread pool so it
 # never blocks the async event loop.
@@ -53,7 +53,7 @@ async def get_admin_stats():
         "high_risk_users": 0,
     }
     
-    if not supabase:
+    if not sc.supabase:
         return stats
         
     try:
@@ -150,7 +150,7 @@ async def get_analytics_revenue(
     start_date: Optional[str] = None,
     end_date: Optional[str] = None
 ):
-    if not supabase:
+    if not sc.supabase:
         return {}
 
     now = datetime.now(timezone.utc)
@@ -366,7 +366,7 @@ async def get_analytics_downloads(
     start_date: Optional[str] = None,
     end_date: Optional[str] = None
 ):
-    if not supabase:
+    if not sc.supabase:
         return {}
         
     now = datetime.now(timezone.utc)
@@ -498,7 +498,7 @@ class TrackVisitRequest(BaseModel):
 
 def _do_track_visit(body: TrackVisitRequest):
     """Sync insert — runs in background thread, never blocks the event loop."""
-    if supabase:
+    if sc.supabase:
         try:
             supabase.table("page_visits").insert({
                 "page_type": body.page_type,
@@ -516,7 +516,7 @@ async def track_visit(body: TrackVisitRequest, background_tasks: BackgroundTasks
 
 @router.get("/admin/funnel-stats", dependencies=[Depends(require_admin)])
 async def get_funnel_stats():
-    if not supabase:
+    if not sc.supabase:
         return {"landing": 0, "result": 0, "purchases": 0}
     try:
         # Exclude dev/test accounts from payments only.
@@ -567,7 +567,7 @@ class ApplyReferralRequest(BaseModel):
 
 @router.post("/user/apply-referral")
 async def apply_referral(body: ApplyReferralRequest, authorization: str = Header(None)):
-    if not supabase:
+    if not sc.supabase:
         return {"status": "error", "message": "Supabase not configured"}
     
     if not authorization or not authorization.startswith("Bearer "):

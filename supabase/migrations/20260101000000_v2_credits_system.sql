@@ -85,5 +85,3 @@ $$;
 -- Phase 6: Enable Realtime on users table (Required for CreditBadge live updates)
 ALTER PUBLICATION supabase_realtime ADD TABLE public.users;
 
--- Phase 6: Enable Realtime on users table (Required for CreditBadge live updates)
-ALTER PUBLICATION supabase_realtime ADD TABLE public.users;

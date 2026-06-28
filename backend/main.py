@@ -11,7 +11,7 @@ from pydantic import BaseModel
 load_dotenv()
 
 from routers import parse, analyze, generate, payments, admin, sessions, feedback
-from supabase_client import supabase
+import supabase_client as sc
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from rate_limiter import limiter
@@ -77,12 +77,12 @@ async def load_peak_on_startup():
     pings all see peak_record["count"] == -1 and potentially overwrite Supabase
     with a lower current count before the real peak is loaded.
     """
-    if not supabase:
+    if not sc.supabase:
         peak_record["count"] = 0
         return
     try:
         res = await asyncio.to_thread(
-            lambda: supabase.table("system_metrics")
+            lambda: sc.supabase.table("system_metrics")
                 .select("value")
                 .eq("id", "peak_concurrent_users")
                 .execute()
@@ -102,7 +102,7 @@ class PingRequest(BaseModel):
 
 @app.post("/api/presence/ping")
 async def ping_presence(data: PingRequest):
-    if not supabase:
+    if not sc.supabase:
         return {"status": "error"}
         
     now = datetime.now(timezone.utc)
@@ -122,7 +122,7 @@ async def ping_presence(data: PingRequest):
         async with _peak_load_lock:
             if peak_record["count"] == -1:  # Re-check inside lock
                 try:
-                    res = await asyncio.to_thread(lambda: supabase.table("system_metrics").select("value").eq("id", "peak_concurrent_users").execute())
+                    res = await asyncio.to_thread(lambda: sc.supabase.table("system_metrics").select("value").eq("id", "peak_concurrent_users").execute())
                     if hasattr(res, 'data') and res.data and len(res.data) > 0:
                         peak_record["count"] = res.data[0]["value"].get("count", 0)
                         peak_record["timestamp"] = res.data[0]["value"].get("timestamp")
@@ -137,7 +137,7 @@ async def ping_presence(data: PingRequest):
         try:
             # Upsert new peak — store task reference to prevent GC before completion
             task = asyncio.create_task(asyncio.to_thread(
-                lambda: supabase.table("system_metrics").upsert({
+                lambda: sc.supabase.table("system_metrics").upsert({
                     "id": "peak_concurrent_users",
                     "value": {"count": current_count, "timestamp": now.isoformat()}
                 }).execute()
@@ -161,9 +161,9 @@ def health(request: Request):
     This is a sync def, so FastAPI runs it in a thread pool — never blocks the event loop.
     """
     db_status = "inactive"
-    if supabase:
+    if sc.supabase:
         try:
-            supabase.table("resume_sessions").select("id").limit(1).execute()
+            sc.supabase.table("resume_sessions").select("id").limit(1).execute()
             db_status = "active"
         except Exception as e:
             db_status = f"error: {str(e)}"
@@ -175,12 +175,12 @@ async def get_queue_status(request: Request):
     """Active sessions count — polled every 5s by the Admin Dashboard.
     Uses asyncio.to_thread so the Supabase query never blocks the event loop.
     """
-    if not supabase:
+    if not sc.supabase:
         return {"processing": 0}
     try:
         five_mins_ago = (datetime.now(timezone.utc) - timedelta(minutes=5)).isoformat()
         res = await asyncio.to_thread(
-            lambda: supabase.table("resume_sessions")
+            lambda: sc.supabase.table("resume_sessions")
                 .select("id", count="exact")
                 .gte("created_at", five_mins_ago)
                 .execute()

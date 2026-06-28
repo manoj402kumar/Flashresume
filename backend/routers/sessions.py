@@ -1,18 +1,18 @@
 import os
 import asyncio
 from fastapi import APIRouter, HTTPException
-from supabase_client import supabase
+import supabase_client as sc
 
 router = APIRouter()
 
 @router.get("/sessions/{session_id}")
 async def get_session(session_id: str):
-    if not supabase:
+    if not sc.supabase:
         raise HTTPException(status_code=500, detail="Database not configured")
         
     try:
         res = await asyncio.to_thread(
-            lambda: supabase.table("resume_sessions").select("*").eq("id", session_id).execute()
+            lambda: sc.supabase.table("resume_sessions").select("*").eq("id", session_id).execute()
         )
         if not res.data:
             raise HTTPException(status_code=404, detail="Session not found")

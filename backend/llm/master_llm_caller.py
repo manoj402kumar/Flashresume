@@ -4,7 +4,7 @@ from .deepseek_direct import call_single_deepseek_r1, call_single_deepseek_r2
 from .mistral_fallback import call_single_mistral_r1, call_single_mistral_r2, call_single_mistral_r3
 from .nvidia_fallback import call_single_nvidia_r1, call_single_nvidia_r2
 from .cloudflare_fallback import call_single_cloudflare_r1, call_single_cloudflare_r2
-from supabase_client import supabase
+import supabase_client as sc
 
 _LLM_SEMAPHORE = asyncio.Semaphore(5)
 
@@ -20,11 +20,11 @@ async def _trip_circuit(model_id: str, error_type: str):
     print(f"[{model_id}] Circuit tripped ({error_type}). Cooling down for {cooldown}s.")
     _circuit_tripped[model_id] = time.time() + cooldown
     
-    if supabase:
+    if sc.supabase:
         try:
             await asyncio.wait_for(
                 asyncio.to_thread(
-                    lambda: supabase.rpc("trip_circuit_breaker", {
+                    lambda: sc.supabase.rpc("trip_circuit_breaker", {
                         "p_circuit_key": model_id,
                         "p_cooldown_seconds": cooldown
                     }).execute()
@@ -181,10 +181,10 @@ async def call_llm_balanced(prompt: str, is_r1: bool, preferred_model: str = "",
         
         # 1. Fetch DB tripped keys
         db_tripped_keys = set()
-        if supabase:
+        if sc.supabase:
             try:
                 res = await asyncio.wait_for(
-                    asyncio.to_thread(lambda: supabase.rpc("get_tripped_circuits").execute()),
+                    asyncio.to_thread(lambda: sc.supabase.rpc("get_tripped_circuits").execute()),
                     timeout=0.8
                 )
                 if res.data:
@@ -260,7 +260,7 @@ def _finalize(result: dict, provider: str, model_id: str, r_type: str) -> dict:
         async def _log_usage():
             try:
                 await asyncio.to_thread(
-                    lambda: supabase.table("llm_usage").insert({
+                    lambda: sc.supabase.table("llm_usage").insert({
                         "request_type": r_type,
                         "provider": provider,
                         "model": model_id,

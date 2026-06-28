@@ -7,7 +7,8 @@ import os
 import random
 import httpx
 from dotenv import load_dotenv
-from supabase_client import supabase, sb
+import supabase_client as sc
+from supabase_client import sb
 from datetime import datetime, timedelta, timezone
 
 load_dotenv(override=True)
@@ -45,10 +46,10 @@ async def create_order(request: Request, body: OrderRequest, authorization: str 
     if supabase and body.email:
         try:
             # Check if user exists
-            user_check = await sb(lambda: supabase.table("users").select("id").eq("id", body.user_id).execute())
+            user_check = await sb(lambda: sc.supabase.table("users").select("id").eq("id", body.user_id).execute())
             if not user_check.data:
                 # Insert missing user record
-                await sb(lambda: supabase.table("users").insert({
+                await sb(lambda: sc.supabase.table("users").insert({
                     "id": body.user_id,
                     "email": body.email
                 }).execute())
@@ -68,8 +69,8 @@ async def create_order(request: Request, body: OrderRequest, authorization: str 
         razorpay_order_id = order["id"]
         
         # Insert pending payment into Supabase
-        if supabase:
-            await sb(lambda: supabase.table("payments").insert({
+        if sc.supabase:
+            await sb(lambda: sc.supabase.table("payments").insert({
                 "user_id": body.user_id,
                 "razorpay_order_id": razorpay_order_id,
                 "amount": amount_in_paise,
@@ -117,10 +118,10 @@ async def verify_payment(body: VerifyRequest, authorization: str = Header(None))
             'razorpay_signature': body.razorpay_signature
         })
         
-        if supabase:
+        if sc.supabase:
             # 1. Update payment status to success idempotently
             update_res = await sb(
-                lambda: supabase.table("payments").update({
+                lambda: sc.supabase.table("payments").update({
                     "status": "success",
                     "razorpay_payment_id": body.razorpay_payment_id,
                     "razorpay_signature": body.razorpay_signature,
@@ -155,7 +156,7 @@ async def verify_payment(body: VerifyRequest, authorization: str = Header(None))
             # UNIQUE index on (payment_id, user_id) is the true safety net.
             try:
                 existing_bucket = await sb(
-                    lambda: supabase.table("credit_buckets")
+                    lambda: sc.supabase.table("credit_buckets")
                     .select("id")
                     .eq("payment_id", body.razorpay_payment_id)
                     .eq("user_id", actual_user_id)
@@ -169,7 +170,7 @@ async def verify_payment(body: VerifyRequest, authorization: str = Header(None))
                 # Fall through — DB constraint will protect us
 
             # Atomically add credits using the new bucket system
-            bucket_res = await sb(lambda: supabase.rpc("add_credit_bucket", {
+            bucket_res = await sb(lambda: sc.supabase.rpc("add_credit_bucket", {
                 "p_user_id": actual_user_id,
                 "p_amount": credits_to_add,
                 "p_plan_type": actual_plan_type,
@@ -188,7 +189,7 @@ async def verify_payment(body: VerifyRequest, authorization: str = Header(None))
                 expires_at = (datetime.utcnow() + timedelta(days=90)).isoformat()
             elif actual_plan_type == "pay_per_use":
                 expires_at = (datetime.utcnow() + timedelta(days=10)).isoformat()
-            await sb(lambda: supabase.table("subscriptions").update({"is_active": False}).eq("user_id", actual_user_id).execute())
+            await sb(lambda: sc.supabase.table("subscriptions").update({"is_active": False}).eq("user_id", actual_user_id).execute())
             
             sub_data = {
                 "user_id": actual_user_id,
@@ -201,14 +202,14 @@ async def verify_payment(body: VerifyRequest, authorization: str = Header(None))
             if actual_plan_type == "student":
                 sub_data["student_claimed"] = True
                 
-            await sb(lambda: supabase.table("subscriptions").insert(sub_data).execute())
+            await sb(lambda: sc.supabase.table("subscriptions").insert(sub_data).execute())
 
             # 3. Award Referral Bonus if the buyer was referred
             try:
-                ref_check = await sb(lambda: supabase.table("users").select("referred_by").eq("id", actual_user_id).execute())
+                ref_check = await sb(lambda: sc.supabase.table("users").select("referred_by").eq("id", actual_user_id).execute())
                 referrer_id = ref_check.data[0].get("referred_by") if ref_check.data else None
                 if referrer_id:
-                    await sb(lambda: supabase.rpc("add_credit_bucket", {
+                    await sb(lambda: sc.supabase.rpc("add_credit_bucket", {
                         "p_user_id": referrer_id,
                         "p_plan_type": "referral",
                         "p_amount": 20,
@@ -222,7 +223,7 @@ async def verify_payment(body: VerifyRequest, authorization: str = Header(None))
 
             # 4. Link session_id to the user (only if session_id is still anonymous)
             if body.session_id:
-                await sb(lambda: supabase.table("resume_sessions").update({
+                await sb(lambda: sc.supabase.table("resume_sessions").update({
                     "user_id": actual_user_id,
                     "payment_id": body.razorpay_payment_id
                 }).eq("id", body.session_id).is_("user_id", None).execute())
@@ -230,8 +231,8 @@ async def verify_payment(body: VerifyRequest, authorization: str = Header(None))
         return {"status": "ok"}
     except razorpay.errors.SignatureVerificationError:
         print("Razorpay Verification Error: Signature Verification Failed")
-        if supabase:
-            await sb(lambda: supabase.table("payments").update({
+        if sc.supabase:
+            await sb(lambda: sc.supabase.table("payments").update({
                 "status": "failed",
                 "razorpay_payment_id": body.razorpay_payment_id
             }).eq("razorpay_order_id", body.razorpay_order_id).execute())
@@ -248,7 +249,7 @@ class DeductRequest(BaseModel):
 
 @router.post("/payments/deduct-credit")
 async def deduct_credit(body: DeductRequest, authorization: str = Header(None)):
-    if not supabase:
+    if not sc.supabase:
         raise HTTPException(status_code=500, detail="Database not configured")
         
     if not authorization or not authorization.startswith("Bearer "):
@@ -265,7 +266,7 @@ async def deduct_credit(body: DeductRequest, authorization: str = Header(None)):
         raise HTTPException(status_code=401, detail="Invalid token")
         
     try:
-        result = await sb(lambda: supabase.rpc("deduct_credits_v2", {
+        result = await sb(lambda: sc.supabase.rpc("deduct_credits_v2", {
             "p_user_id": body.user_id,
             "p_amount": 10
         }).execute())
@@ -274,7 +275,7 @@ async def deduct_credit(body: DeductRequest, authorization: str = Header(None)):
             # Robustly link the session to the user in Python
             if body.session_id:
                 try:
-                    await sb(lambda: supabase.table("resume_sessions").update({
+                    await sb(lambda: sc.supabase.table("resume_sessions").update({
                         "user_id": body.user_id
                     }).eq("id", body.session_id).execute())
                 except Exception as ex:
@@ -303,7 +304,7 @@ class SendOtpRequest(BaseModel):
 @router.post("/payments/send-otp")
 @limiter.limit("3/minute")
 async def send_otp(request: Request, body: SendOtpRequest):
-    if not supabase:
+    if not sc.supabase:
         raise HTTPException(status_code=500, detail="Database not configured")
     if not BREVO_API_KEY:
         raise HTTPException(status_code=500, detail="Email service not configured")
@@ -314,7 +315,7 @@ async def send_otp(request: Request, body: SendOtpRequest):
 
     # Upsert OTP — reset failed_attempts so previously locked users can retry
     try:
-        await sb(lambda: supabase.table("otp_verifications").upsert({
+        await sb(lambda: sc.supabase.table("otp_verifications").upsert({
             "email": email,
             "otp": otp_code,
             "expires_at": expires_at,
@@ -374,12 +375,12 @@ class VerifyOtpRequest(BaseModel):
 @router.post("/payments/verify-otp")
 @limiter.limit("5/minute")
 async def verify_otp(request: Request, body: VerifyOtpRequest):
-    if not supabase:
+    if not sc.supabase:
         raise HTTPException(status_code=500, detail="Database not configured")
     
     email = body.email.strip().lower()
     
-    record_res = await sb(lambda: supabase.table("otp_verifications") \
+    record_res = await sb(lambda: sc.supabase.table("otp_verifications") \
         .select("otp, expires_at, failed_attempts") \
         .eq("email", email).single().execute())
 
@@ -396,13 +397,13 @@ async def verify_otp(request: Request, body: VerifyOtpRequest):
 
     if not hmac.compare_digest(str(record["otp"]).strip(), str(body.otp).strip()):
         # Increment failed counter
-        await sb(lambda: supabase.table("otp_verifications") \
+        await sb(lambda: sc.supabase.table("otp_verifications") \
             .update({"failed_attempts": record.get("failed_attempts", 0) + 1}) \
             .eq("email", email).execute())
         raise HTTPException(400, "Invalid OTP")
 
     # Success — clean up
-    await sb(lambda: supabase.table("otp_verifications").delete().eq("email", email).execute())
+    await sb(lambda: sc.supabase.table("otp_verifications").delete().eq("email", email).execute())
     return {"status": "ok", "verified": True}
 
 @router.post("/payments/webhook")
@@ -426,7 +427,8 @@ async def razorpay_webhook(request: Request):
         # Verify the signature
         client.utility.verify_webhook_signature(body.decode("utf-8"), signature, WEBHOOK_SECRET)
         
-        payload = await request.json()
+        import json
+        payload = json.loads(body)
         event = payload.get("event")
         
         if event == "order.paid" or event == "payment.captured":
@@ -434,28 +436,12 @@ async def razorpay_webhook(request: Request):
             order_id = payment_entity.get('order_id')
             payment_id = payment_entity.get('id')
             
-            if not order_id or not supabase:
+            if not order_id or not sc.supabase:
                 return {"status": "ignored"}
                 
-            # Find the pending payment
-            pending_res = await sb(
-                lambda: supabase.table("payments").select("*")
-                .eq("razorpay_order_id", order_id)
-                .in_("status", ["pending", "failed"])
-                .execute()
-            )
-            
-            if not pending_res.data:
-                # Already processed or not found
-                return {"status": "already_processed"}
-                
-            payment_record = pending_res.data[0]
-            user_id = payment_record["user_id"]
-            plan_type = payment_record["plan_type"]
-            
             # Update to success
             update_res = await sb(
-                lambda: supabase.table("payments").update({
+                lambda: sc.supabase.table("payments").update({
                     "status": "success",
                     "razorpay_payment_id": payment_id,
                     "razorpay_signature": "webhook_verified",
@@ -467,6 +453,10 @@ async def razorpay_webhook(request: Request):
             )
             
             if update_res.data:
+                payment_record = update_res.data[0]
+                user_id = payment_record["user_id"]
+                plan_type = payment_record["plan_type"]
+                
                 # Add Credits
                 PLAN_CREDITS = {
                     "pay_per_use": 20,
@@ -482,7 +472,7 @@ async def razorpay_webhook(request: Request):
                 # UNIQUE index on (payment_id, user_id) is the true safety net.
                 try:
                     existing_bucket = await sb(
-                        lambda: supabase.table("credit_buckets")
+                        lambda: sc.supabase.table("credit_buckets")
                         .select("id")
                         .eq("payment_id", payment_id)
                         .eq("user_id", user_id)
@@ -495,7 +485,7 @@ async def razorpay_webhook(request: Request):
                     print(f"[WEBHOOK][IDEMPOTENCY CHECK FAILED] {idem_err} — falling through to insert")
                     # Fall through — DB constraint will protect us
 
-                bucket_res = await sb(lambda: supabase.rpc("add_credit_bucket", {
+                bucket_res = await sb(lambda: sc.supabase.rpc("add_credit_bucket", {
                     "p_user_id": user_id,
                     "p_amount": credits_to_add,
                     "p_plan_type": plan_type,
@@ -516,7 +506,7 @@ async def razorpay_webhook(request: Request):
                 elif plan_type == "pay_per_use":
                     expires_at = (datetime.utcnow() + timedelta(days=10)).isoformat()
                     
-                await sb(lambda: supabase.table("subscriptions").update({"is_active": False}).eq("user_id", user_id).execute())
+                await sb(lambda: sc.supabase.table("subscriptions").update({"is_active": False}).eq("user_id", user_id).execute())
                 
                 sub_data = {
                     "user_id": user_id,
@@ -529,7 +519,7 @@ async def razorpay_webhook(request: Request):
                 if plan_type == "student":
                     sub_data["student_claimed"] = True
                     
-                await sb(lambda: supabase.table("subscriptions").insert(sub_data).execute())
+                await sb(lambda: sc.supabase.table("subscriptions").insert(sub_data).execute())
                 
         elif event == "payment.failed":
             payment_entity = payload.get('payload', {}).get('payment', {}).get('entity', {})
@@ -540,7 +530,7 @@ async def razorpay_webhook(request: Request):
                 return {"status": "ignored"}
                 
             await sb(
-                lambda: supabase.table("payments").update({
+                lambda: sc.supabase.table("payments").update({
                     "status": "failed",
                     "razorpay_payment_id": payment_id
                 })
