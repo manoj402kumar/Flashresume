@@ -826,8 +826,6 @@ export default function ScratchPage() {
               style={{
                 width: "100%",
                 maxWidth: selectedTemplate === "templateLetter" ? "calc((85vh - 6rem) * 0.707)" : "calc((85vh - 6rem) * 0.774)",
-                aspectRatio: selectedTemplate === "templateLetter" ? "8.5 / 11" : "210 / 297",
-                minHeight: "400px"
               }}
             >
               <MobilePDFPreview key={`mobile-${selectedTemplate}`} refreshKey={JSON.stringify({ resume, showHighlights, matchedKeywords, missingKeywords })}>
