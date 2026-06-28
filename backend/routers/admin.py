@@ -35,7 +35,7 @@ from datetime import datetime, timedelta, timezone
 
 IST_OFFSET = timedelta(hours=5, minutes=30)
 PROD_START_DATE = datetime(2026, 5, 28, tzinfo=timezone.utc)
-PROD_START_ISO = PROD_START_ISO
+PROD_START_ISO = "2026-05-28T00:00:00Z"
 
 _cached_dev_ids: list[str] | None = None
 
@@ -326,7 +326,7 @@ def build_trend_data(records, dt_start, dt_end, time_filter, value_key=None, tra
             trend.append({"label": label, "start": start_d, "end": end_d, "value": 0})
     else:
         months = 12
-            if time_filter == "custom" and dt_start:
+        if time_filter == "custom" and dt_start:
             months = (dt_end.year - dt_start.year) * 12 + dt_end.month - dt_start.month + 1
         elif time_filter == "all":
             actual_start = max(dt_start or PROD_START_DATE, PROD_START_DATE)
