@@ -273,14 +273,30 @@ export default function ResumePDFTemplateA4({ resume, showHighlights = false, ma
             <Link src={`mailto:${resume.heading.email}`} style={styles.link}>
               {resume.heading.email}
             </Link>
-            {" • "}
-            <Link src={resume.heading.linkedin_url_href || getValidUrl(resume.heading.linkedin_url, "linkedin.com/in/username")} style={styles.link}>
-              {cleanDisplayUrl(resume.heading.linkedin_url, "linkedin")}
-            </Link>
-            {" • "}
-            <Link src={getValidUrl(resume.heading.github_url, "github.com/username")} style={styles.link}>
-              {cleanDisplayUrl(resume.heading.github_url, "github.com/username")}
-            </Link>
+            {!resume.heading.linkedin_hidden && (
+              <>
+                {" • "}
+                <Link src={resume.heading.linkedin_url_href || getValidUrl(resume.heading.linkedin_url, "linkedin.com/in/username")} style={styles.link}>
+                  {cleanDisplayUrl(resume.heading.linkedin_url, "linkedin")}
+                </Link>
+              </>
+            )}
+            {!resume.heading.github_hidden && (
+              <>
+                {" • "}
+                <Link src={getValidUrl(resume.heading.github_url, "github.com/username")} style={styles.link}>
+                  {cleanDisplayUrl(resume.heading.github_url, "github.com/username")}
+                </Link>
+              </>
+            )}
+            {(resume.heading.custom_links || []).map((cl, i) => cl.label && cl.url ? (
+              <>
+                {" • "}
+                <Link key={i} src={cl.url.startsWith("http") ? cl.url : `https://${cl.url}`} style={styles.link}>
+                  {cl.label}
+                </Link>
+              </>
+            ) : null)}
           </Text>
         </View>
 

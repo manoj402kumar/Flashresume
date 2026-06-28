@@ -152,8 +152,11 @@ export interface TemplateV1 {
     email: string;
     linkedin_url: string;
     linkedin_url_href?: string;
+    linkedin_hidden?: boolean;
     github_url?: string;
     github_url_href?: string;
+    github_hidden?: boolean;
+    custom_links?: Array<{ label: string; url: string }>;
   };
   summary?: string;
   education: Array<{
