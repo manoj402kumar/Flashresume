@@ -67,6 +67,35 @@ app.include_router(feedback.router, prefix="/api")
 ACTIVE_SESSIONS = {}
 peak_record = {"count": -1, "timestamp": None}
 _peak_upsert_tasks: set = set()  # Hold references to prevent GC
+_peak_load_lock = asyncio.Lock()  # Prevents race condition during lazy-load
+
+
+@app.on_event("startup")
+async def load_peak_on_startup():
+    """Eagerly load the persisted peak from Supabase at server boot.
+    This eliminates the lazy-load race condition where multiple simultaneous
+    pings all see peak_record["count"] == -1 and potentially overwrite Supabase
+    with a lower current count before the real peak is loaded.
+    """
+    if not supabase:
+        peak_record["count"] = 0
+        return
+    try:
+        res = await asyncio.to_thread(
+            lambda: supabase.table("system_metrics")
+                .select("value")
+                .eq("id", "peak_concurrent_users")
+                .execute()
+        )
+        if hasattr(res, 'data') and res.data and len(res.data) > 0:
+            peak_record["count"] = res.data[0]["value"].get("count", 0)
+            peak_record["timestamp"] = res.data[0]["value"].get("timestamp")
+        else:
+            peak_record["count"] = 0
+        print(f"[Startup] Peak concurrent loaded: {peak_record['count']} (at {peak_record['timestamp']})")
+    except Exception as e:
+        print(f"[Startup] Failed to load peak concurrent (non-fatal): {e}")
+        peak_record["count"] = 0
 
 class PingRequest(BaseModel):
     user_id: str
@@ -86,17 +115,21 @@ async def ping_presence(data: PingRequest):
         
     current_count = len(ACTIVE_SESSIONS)
     
-    # Lazy load peak on first ping
+    # Fallback lazy-load in case startup event didn't complete (e.g. Supabase was slow).
+    # Double-checked lock prevents multiple simultaneous pings from all racing to load
+    # and potentially overwriting Supabase with a stale/lower count.
     if peak_record["count"] == -1:
-        try:
-            res = await asyncio.to_thread(lambda: supabase.table("system_metrics").select("value").eq("id", "peak_concurrent_users").execute())
-            if hasattr(res, 'data') and res.data and len(res.data) > 0:
-                peak_record["count"] = res.data[0]["value"].get("count", 0)
-                peak_record["timestamp"] = res.data[0]["value"].get("timestamp")
-            else:
-                peak_record["count"] = 0
-        except Exception:
-            peak_record["count"] = 0  # Safe fallback — never leave at -1
+        async with _peak_load_lock:
+            if peak_record["count"] == -1:  # Re-check inside lock
+                try:
+                    res = await asyncio.to_thread(lambda: supabase.table("system_metrics").select("value").eq("id", "peak_concurrent_users").execute())
+                    if hasattr(res, 'data') and res.data and len(res.data) > 0:
+                        peak_record["count"] = res.data[0]["value"].get("count", 0)
+                        peak_record["timestamp"] = res.data[0]["value"].get("timestamp")
+                    else:
+                        peak_record["count"] = 0
+                except Exception:
+                    peak_record["count"] = 0  # Safe fallback — never leave at -1
             
     if current_count > peak_record["count"]:
         peak_record["count"] = current_count
