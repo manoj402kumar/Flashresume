@@ -1053,8 +1053,8 @@ export default function ResultPage() {
                   disabled={!canUndo}
                   title="Undo (Ctrl+Z)"
                   className={`flex items-center justify-center w-9 h-9 rounded-xl border transition-all duration-200 ${canUndo
-                    ? 'bg-[#0f1117]/90 text-white/70 border-[#006859]/30 hover:bg-white/10 hover:text-white active:scale-95'
-                    : 'bg-transparent text-white/20 border-white/5 cursor-not-allowed'
+                    ? 'bg-white/10 text-white border-white/20 hover:bg-white/20 hover:text-white active:scale-95'
+                    : 'bg-white/5 text-white/30 border-white/10 cursor-not-allowed'
                     }`}
                 >
                   <Undo2 className="w-4 h-4" />
@@ -1065,8 +1065,8 @@ export default function ResultPage() {
                   disabled={!canRedo}
                   title="Redo (Ctrl+Y)"
                   className={`flex items-center justify-center w-9 h-9 rounded-xl border transition-all duration-200 ${canRedo
-                    ? 'bg-[#0f1117]/90 text-white/70 border-[#006859]/30 hover:bg-white/10 hover:text-white active:scale-95'
-                    : 'bg-transparent text-white/20 border-white/5 cursor-not-allowed'
+                    ? 'bg-white/10 text-white border-white/20 hover:bg-white/20 hover:text-white active:scale-95'
+                    : 'bg-white/5 text-white/30 border-white/10 cursor-not-allowed'
                     }`}
                 >
                   <Redo2 className="w-4 h-4" />
@@ -1186,8 +1186,8 @@ export default function ResultPage() {
                     disabled={!canUndo}
                     title="Undo (Ctrl+Z)"
                     className={`flex items-center justify-center w-8 h-8 rounded-xl border transition-all duration-200 ${canUndo
-                      ? 'bg-[#0f1117]/90 text-white/70 border-[#006859]/30 hover:bg-white/10 hover:text-white active:scale-95'
-                      : 'bg-transparent text-white/20 border-white/5 cursor-not-allowed'
+                      ? 'bg-white/10 text-white border-white/20 hover:bg-white/20 hover:text-white active:scale-95'
+                      : 'bg-white/5 text-white/30 border-white/10 cursor-not-allowed'
                       }`}
                   >
                     <Undo2 className="w-3.5 h-3.5" />
@@ -1198,8 +1198,8 @@ export default function ResultPage() {
                     disabled={!canRedo}
                     title="Redo (Ctrl+Y)"
                     className={`flex items-center justify-center w-8 h-8 rounded-xl border transition-all duration-200 ${canRedo
-                      ? 'bg-[#0f1117]/90 text-white/70 border-[#006859]/30 hover:bg-white/10 hover:text-white active:scale-95'
-                      : 'bg-transparent text-white/20 border-white/5 cursor-not-allowed'
+                      ? 'bg-white/10 text-white border-white/20 hover:bg-white/20 hover:text-white active:scale-95'
+                      : 'bg-white/5 text-white/30 border-white/10 cursor-not-allowed'
                       }`}
                   >
                     <Redo2 className="w-3.5 h-3.5" />

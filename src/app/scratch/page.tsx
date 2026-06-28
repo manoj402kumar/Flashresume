@@ -806,11 +806,11 @@ export default function ScratchPage() {
             {editMode ? (
               <div className="flex items-center gap-1">
                 <button type="button" onClick={handleUndo} disabled={!canUndo} title="Undo (Ctrl+Z)"
-                  className={`flex items-center justify-center w-9 h-9 rounded-xl border transition-all duration-200 ${canUndo ? 'bg-[#0f1117]/90 text-white/70 border-[#006859]/30 hover:bg-white/10 hover:text-white active:scale-95' : 'bg-transparent text-white/20 border-white/5 cursor-not-allowed'}`}>
+                  className={`flex items-center justify-center w-9 h-9 rounded-xl border transition-all duration-200 ${canUndo ? 'bg-white/10 text-white border-white/20 hover:bg-white/20 hover:text-white active:scale-95' : 'bg-white/5 text-white/30 border-white/10 cursor-not-allowed'}`}>
                   <Undo2 className="w-4 h-4" />
                 </button>
                 <button type="button" onClick={handleRedo} disabled={!canRedo} title="Redo (Ctrl+Y)"
-                  className={`flex items-center justify-center w-9 h-9 rounded-xl border transition-all duration-200 ${canRedo ? 'bg-[#0f1117]/90 text-white/70 border-[#006859]/30 hover:bg-white/10 hover:text-white active:scale-95' : 'bg-transparent text-white/20 border-white/5 cursor-not-allowed'}`}>
+                  className={`flex items-center justify-center w-9 h-9 rounded-xl border transition-all duration-200 ${canRedo ? 'bg-white/10 text-white border-white/20 hover:bg-white/20 hover:text-white active:scale-95' : 'bg-white/5 text-white/30 border-white/10 cursor-not-allowed'}`}>
                   <Redo2 className="w-4 h-4" />
                 </button>
               </div>
@@ -867,11 +867,11 @@ export default function ScratchPage() {
               {editMode && (
                 <div className="hidden lg:flex items-center gap-1 ml-auto flex-shrink-0">
                   <button type="button" onClick={handleUndo} disabled={!canUndo} title="Undo (Ctrl+Z)"
-                    className={`flex items-center justify-center w-8 h-8 rounded-xl border transition-all duration-200 ${canUndo ? 'bg-[#0f1117]/90 text-white/70 border-[#006859]/30 hover:bg-white/10 hover:text-white active:scale-95' : 'bg-transparent text-white/20 border-white/5 cursor-not-allowed'}`}>
+                    className={`flex items-center justify-center w-8 h-8 rounded-xl border transition-all duration-200 ${canUndo ? 'bg-white/10 text-white border-white/20 hover:bg-white/20 hover:text-white active:scale-95' : 'bg-white/5 text-white/30 border-white/10 cursor-not-allowed'}`}>
                     <Undo2 className="w-3.5 h-3.5" />
                   </button>
                   <button type="button" onClick={handleRedo} disabled={!canRedo} title="Redo (Ctrl+Y)"
-                    className={`flex items-center justify-center w-8 h-8 rounded-xl border transition-all duration-200 ${canRedo ? 'bg-[#0f1117]/90 text-white/70 border-[#006859]/30 hover:bg-white/10 hover:text-white active:scale-95' : 'bg-transparent text-white/20 border-white/5 cursor-not-allowed'}`}>
+                    className={`flex items-center justify-center w-8 h-8 rounded-xl border transition-all duration-200 ${canRedo ? 'bg-white/10 text-white border-white/20 hover:bg-white/20 hover:text-white active:scale-95' : 'bg-white/5 text-white/30 border-white/10 cursor-not-allowed'}`}>
                     <Redo2 className="w-3.5 h-3.5" />
                   </button>
                 </div>
