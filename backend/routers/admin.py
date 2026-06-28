@@ -59,26 +59,26 @@ async def get_admin_stats():
     try:
         # Run all 5 DB queries in parallel — non-blocking
         # Fetch dev user IDs once so we can exclude them from all metrics
-        dev_users_res = await _sb(supabase.table("users").select("id").in_("email", DEV_EMAILS))
+        dev_users_res = await _sb(sc.supabase.table("users").select("id").in_("email", DEV_EMAILS))
         dev_user_ids = [u["id"] for u in (dev_users_res.data or [])]
 
-        payments_query = supabase.table("payments").select("amount, user_id, plan_type").eq("status", "success").gte("created_at", "2026-05-28T00:00:00Z")
+        payments_query = sc.supabase.table("payments").select("amount, user_id, plan_type").eq("status", "success").gte("created_at", "2026-05-28T00:00:00Z")
         if dev_user_ids:
             dev_ids_str = ",".join(dev_user_ids)
             payments_query = payments_query.or_(f"user_id.is.null,user_id.not.in.({dev_ids_str})")
 
-        users_query = supabase.table("users").select("id", count="exact").gte("created_at", "2026-05-28T00:00:00Z")
+        users_query = sc.supabase.table("users").select("id", count="exact").gte("created_at", "2026-05-28T00:00:00Z")
 
-        downloads_query = supabase.table("resume_downloads").select("id", count="exact").gte("downloaded_at", "2026-05-28T00:00:00Z")
+        downloads_query = sc.supabase.table("resume_downloads").select("id", count="exact").gte("downloaded_at", "2026-05-28T00:00:00Z")
 
         # Total Visitors KPI: Count ALL traffic (all pages, anonymous + logged-in users).
         # We keep all anonymous and logged-in rows.
-        visitors_query = supabase.table("page_visits").select("id", count="exact").gte("visited_at", "2026-05-28T00:00:00Z")
+        visitors_query = sc.supabase.table("page_visits").select("id", count="exact").gte("visited_at", "2026-05-28T00:00:00Z")
 
-        failed_query = supabase.table("payments").select("id", count="exact").eq("status", "failed").gte("created_at", "2026-05-28T00:00:00Z")
+        failed_query = sc.supabase.table("payments").select("id", count="exact").eq("status", "failed").gte("created_at", "2026-05-28T00:00:00Z")
 
         # High-risk users: consecutive generations > 5 without a download — potential freeloader/scraper
-        high_risk_query = supabase.table("users").select("id", count="exact").gt("fraud_tracker_counter", 5)
+        high_risk_query = sc.supabase.table("users").select("id", count="exact").gt("fraud_tracker_counter", 5)
 
         results = await asyncio.gather(
             _sb(payments_query),
@@ -86,7 +86,7 @@ async def get_admin_stats():
             _sb(users_query),
             _sb(visitors_query),
             _sb(failed_query),
-            _sb(supabase.table("system_metrics").select("value").eq("id", "peak_concurrent_users")),
+            _sb(sc.supabase.table("system_metrics").select("value").eq("id", "peak_concurrent_users")),
             _sb(high_risk_query),
             return_exceptions=True,
         )
@@ -181,11 +181,11 @@ async def get_analytics_revenue(
             
     try:
         # Exclude dev/test accounts
-        dev_users_res = await _sb(supabase.table("users").select("id").in_("email", DEV_EMAILS))
+        dev_users_res = await _sb(sc.supabase.table("users").select("id").in_("email", DEV_EMAILS))
         dev_user_ids = [u["id"] for u in (dev_users_res.data or [])]
 
         # Fetch Payments — time-filtered, for revenue totals, trend, and breakdown.
-        payments_query = supabase.table("payments").select("amount, plan_type, created_at, user_id").eq("status", "success")
+        payments_query = sc.supabase.table("payments").select("amount, plan_type, created_at, user_id").eq("status", "success")
         if dt_start:
             payments_query = payments_query.gte("created_at", dt_start.isoformat())
         if dt_end:
@@ -201,7 +201,7 @@ async def get_analytics_revenue(
         # status IN ('active', 'queued', 'fallback') AND remaining_credits > 0
         # Runs in PARALLEL with payments query — zero added latency.
         active_users_query = (
-            supabase.table("credit_buckets")
+            sc.supabase.table("credit_buckets")
             .select("user_id")
             .in_("status", ["active", "queued", "fallback"])
             .gt("remaining_credits", 0)
@@ -396,11 +396,11 @@ async def get_analytics_downloads(
 
     try:
         # Exclude dev/test accounts
-        dev_users_res = await _sb(supabase.table("users").select("id").in_("email", DEV_EMAILS))
+        dev_users_res = await _sb(sc.supabase.table("users").select("id").in_("email", DEV_EMAILS))
         dev_user_ids = [u["id"] for u in (dev_users_res.data or [])]
 
         # Fetch downloads with LIMIT 10000
-        dl_query = supabase.table("resume_downloads").select("user_id, session_id, downloaded_at, device_type").limit(10000).order("downloaded_at", desc=True)
+        dl_query = sc.supabase.table("resume_downloads").select("user_id, session_id, downloaded_at, device_type").limit(10000).order("downloaded_at", desc=True)
         if dt_start: dl_query = dl_query.gte("downloaded_at", dt_start.isoformat())
         if dt_end: dl_query = dl_query.lte("downloaded_at", dt_end.isoformat())
         
@@ -415,7 +415,7 @@ async def get_analytics_downloads(
         user_plans = {}
         if user_ids:
             pmt_res = await _sb(
-                supabase.table("payments")
+                sc.supabase.table("payments")
                 .select("user_id, plan_type")
                 .in_("user_id", user_ids)
                 .eq("status", "success")
@@ -446,7 +446,7 @@ async def get_analytics_downloads(
             chunk_size = 200
             for i in range(0, len(session_ids), chunk_size):
                 chunk = session_ids[i:i+chunk_size]
-                s_res = await _sb(supabase.table("resume_sessions").select("id, generated_output").in_("id", chunk))
+                s_res = await _sb(sc.supabase.table("resume_sessions").select("id, generated_output").in_("id", chunk))
                 for s in s_res.data or []:
                     output = s.get("generated_output") or {}
                     cat = output.get("_category")
@@ -500,7 +500,7 @@ def _do_track_visit(body: TrackVisitRequest):
     """Sync insert — runs in background thread, never blocks the event loop."""
     if sc.supabase:
         try:
-            supabase.table("page_visits").insert({
+            sc.supabase.table("page_visits").insert({
                 "page_type": body.page_type,
                 "session_id": body.session_id,
                 "user_id": body.user_id
@@ -522,16 +522,16 @@ async def get_funnel_stats():
         # Exclude dev/test accounts from payments only.
         # Page visits are tracked anonymously (user_id=NULL), so NOT IN filter
         # would silently drop all anonymous rows — do NOT apply it to page_visits.
-        dev_users_res = await _sb(supabase.table("users").select("id").in_("email", DEV_EMAILS))
+        dev_users_res = await _sb(sc.supabase.table("users").select("id").in_("email", DEV_EMAILS))
         dev_user_ids = [u["id"] for u in (dev_users_res.data or [])]
 
         # 1 & 2. Visits: Only count people who are not signed up/logged in (user_id is null).
         # This gives pure new user metrics and automatically excludes dev users.
-        landing_q  = supabase.table("page_visits").select("id", count="exact").eq("page_type", "landing").is_("user_id", "null").gte("visited_at", "2026-05-28T00:00:00Z")
-        result_q   = supabase.table("page_visits").select("id", count="exact").eq("page_type", "result").is_("user_id", "null").gte("visited_at", "2026-05-28T00:00:00Z")
+        landing_q  = sc.supabase.table("page_visits").select("id", count="exact").eq("page_type", "landing").is_("user_id", "null").gte("visited_at", "2026-05-28T00:00:00Z")
+        result_q   = sc.supabase.table("page_visits").select("id", count="exact").eq("page_type", "result").is_("user_id", "null").gte("visited_at", "2026-05-28T00:00:00Z")
         
         # 3. Purchases: Fetch user_ids instead of count, to calculate unique paid users
-        purchase_q = supabase.table("payments").select("user_id").eq("status", "success").gte("created_at", "2026-05-28T00:00:00Z")
+        purchase_q = sc.supabase.table("payments").select("user_id").eq("status", "success").gte("created_at", "2026-05-28T00:00:00Z")
 
         # Exclude dev accounts from purchases
         if dev_user_ids:
@@ -575,7 +575,7 @@ async def apply_referral(body: ApplyReferralRequest, authorization: str = Header
     
     try:
         token = authorization.split(" ")[1]
-        user_res = await asyncio.to_thread(supabase.auth.get_user, token)
+        user_res = await asyncio.to_thread(sc.supabase.auth.get_user, token)
         if not user_res or not user_res.user:
             raise HTTPException(status_code=401, detail="Invalid token")
         auth_user_id = user_res.user.id
@@ -584,7 +584,7 @@ async def apply_referral(body: ApplyReferralRequest, authorization: str = Header
     
     try:
         # Find referrer user by code
-        ref_res = await _sb(supabase.table("users").select("id").eq("referral_code", body.referral_code))
+        ref_res = await _sb(sc.supabase.table("users").select("id").eq("referral_code", body.referral_code))
         if not ref_res.data:
             return {"status": "error", "message": "Invalid referral code"}
             
@@ -593,9 +593,9 @@ async def apply_referral(body: ApplyReferralRequest, authorization: str = Header
         if referrer_id == auth_user_id:
             return {"status": "error", "message": "Cannot refer yourself"}
             
-        user_res = await _sb(supabase.table("users").select("referred_by").eq("id", auth_user_id))
+        user_res = await _sb(sc.supabase.table("users").select("referred_by").eq("id", auth_user_id))
         if user_res.data and user_res.data[0].get("referred_by") is None:
-            await _sb(supabase.table("users").update({"referred_by": referrer_id}).eq("id", auth_user_id))
+            await _sb(sc.supabase.table("users").update({"referred_by": referrer_id}).eq("id", auth_user_id))
             return {"status": "ok"}
             
         return {"status": "error", "message": "Referral already applied"}

@@ -500,11 +500,11 @@ async def razorpay_webhook(request: Request):
                 # Setup Subscription
                 expires_at = None
                 if plan_type == "regular":
-                    expires_at = (datetime.utcnow() + timedelta(days=60)).isoformat()
+                    expires_at = (datetime.now(timezone.utc) + timedelta(days=60)).isoformat()
                 elif plan_type == "student":
-                    expires_at = (datetime.utcnow() + timedelta(days=90)).isoformat()
+                    expires_at = (datetime.now(timezone.utc) + timedelta(days=90)).isoformat()
                 elif plan_type == "pay_per_use":
-                    expires_at = (datetime.utcnow() + timedelta(days=10)).isoformat()
+                    expires_at = (datetime.now(timezone.utc) + timedelta(days=10)).isoformat()
                     
                 await sb(lambda: sc.supabase.table("subscriptions").update({"is_active": False}).eq("user_id", user_id).execute())
                 

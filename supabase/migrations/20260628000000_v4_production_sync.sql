@@ -63,10 +63,9 @@ ALTER TABLE public.rr_counters ENABLE ROW LEVEL SECURITY;
 
 -- 5. Create system_metrics table
 CREATE TABLE IF NOT EXISTS public.system_metrics (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  metric_name TEXT NOT NULL,
-  metric_value NUMERIC NOT NULL,
-  timestamp TIMESTAMPTZ DEFAULT now()
+  id TEXT PRIMARY KEY,
+  value JSONB NOT NULL,
+  updated_at TIMESTAMPTZ DEFAULT now()
 );
 
 -- RLS: Service role only

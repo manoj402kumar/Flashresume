@@ -34,7 +34,7 @@ async def submit_feedback(body: FeedbackRequest):
         
     # Prevent duplicate feedback for the same session
     # Prevent duplicate feedback for the same session (or scratch mode)
-    query = supabase.table("feedback").select("id").eq("user_id", body.user_id)
+    query = sc.supabase.table("feedback").select("id").eq("user_id", body.user_id)
     if body.session_id:
         query = query.eq("session_id", body.session_id)
     else:
