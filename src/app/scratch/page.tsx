@@ -1087,16 +1087,11 @@ export default function ScratchPage() {
                     whileHover={{ y: -4 }}
                     className="soothing-light-theme text-on-background bg-surface-container-lowest rounded-[2rem] p-8 shadow-xl hover:shadow-2xl transition-all duration-300 border border-primary/5"
                   >
-                    <div
-                      className="flex items-center justify-between mb-6"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-2xl bg-primary-container/20 flex items-center justify-center">
-                          <FileText className="w-6 h-6 text-primary" />
-                        </div>
-                        <h3 className="font-headline text-2xl font-bold text-on-background">Contact Information</h3>
+                    <div className="flex items-center gap-3 mb-6">
+                      <div className="w-12 h-12 rounded-2xl bg-primary-container/20 flex items-center justify-center">
+                        <FileText className="w-6 h-6 text-primary" />
                       </div>
-
+                      <h3 className="font-headline text-2xl font-bold text-on-background">Contact Information</h3>
                     </div>
 
                     <div>
@@ -1123,38 +1118,135 @@ export default function ScratchPage() {
                                 className="w-full rounded-xl px-4 py-3 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm"
                                 placeholder="Email"
                               />
-                              {/* LinkedIn: display text + actual URL */}
-                              <p className="text-xs text-on-surface-variant font-semibold uppercase tracking-wide">LinkedIn</p>
-                              <input
-                                type="text"
-                                value={cleanDisplayUrl(resume.heading.linkedin_url, "linkedin")}
-                                onChange={(e) => updateResume({ heading: { ...resume.heading, linkedin_url: e.target.value } })}
-                                className="w-full rounded-xl px-4 py-3 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm"
-                                placeholder="linkedin"
-                              />
-                              <input
-                                type="url"
-                                value={resume.heading.linkedin_url_href || "https://linkedin.com/in/username"}
-                                onChange={(e) => updateResume({ heading: { ...resume.heading, linkedin_url_href: e.target.value } })}
-                                className="w-full rounded-xl px-4 py-3 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm text-on-surface-variant"
-                                placeholder="https://linkedin.com/in/username"
-                              />
-                              {/* GitHub: display text + actual URL */}
-                              <p className="text-xs text-on-surface-variant font-semibold uppercase tracking-wide">GitHub</p>
-                              <input
-                                type="text"
-                                value={cleanDisplayUrl(resume.heading.github_url, "github.com/username")}
-                                onChange={(e) => updateResume({ heading: { ...resume.heading, github_url: e.target.value } })}
-                                className="w-full rounded-xl px-4 py-3 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm"
-                                placeholder="github.com/username"
-                              />
-                              <input
-                                type="url"
-                                value={resume.heading.github_url_href || "https://github.com/username"}
-                                onChange={(e) => updateResume({ heading: { ...resume.heading, github_url_href: e.target.value } })}
-                                className="w-full rounded-xl px-4 py-3 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm text-on-surface-variant"
-                                placeholder="https://github.com/username"
-                              />
+
+                              {/* ── LinkedIn (removable) ── */}
+                              {!resume.heading.linkedin_hidden ? (
+                                <div className="rounded-xl border border-on-surface-variant/20 bg-surface-container-lowest/50 p-3 space-y-2">
+                                  <div className="flex items-center justify-between">
+                                    <p className="text-xs text-on-surface-variant font-semibold uppercase tracking-wide">LinkedIn</p>
+                                    <button
+                                      type="button"
+                                      onClick={() => updateResume({ heading: { ...resume.heading, linkedin_hidden: true, linkedin_url: '', linkedin_url_href: '' } }, { immediate: true })}
+                                      className="flex items-center gap-1 text-xs text-red-500 hover:text-red-600 hover:bg-red-50 px-2 py-1 rounded-lg transition-colors font-semibold"
+                                    >
+                                      <Trash2 className="w-3 h-3" /> Remove
+                                    </button>
+                                  </div>
+                                  <input
+                                    type="text"
+                                    value={cleanDisplayUrl(resume.heading.linkedin_url, "linkedin")}
+                                    onChange={(e) => updateResume({ heading: { ...resume.heading, linkedin_url: e.target.value } })}
+                                    className="w-full rounded-lg px-3 py-2 border border-on-surface-variant/15 bg-transparent focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all text-sm"
+                                    placeholder="Display text (e.g. linkedin)"
+                                  />
+                                  <input
+                                    type="url"
+                                    value={resume.heading.linkedin_url_href || "https://linkedin.com/in/username"}
+                                    onChange={(e) => updateResume({ heading: { ...resume.heading, linkedin_url_href: e.target.value } })}
+                                    className="w-full rounded-lg px-3 py-2 border border-on-surface-variant/15 bg-transparent focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all text-sm text-on-surface-variant"
+                                    placeholder="https://linkedin.com/in/username"
+                                  />
+                                </div>
+                              ) : (
+                                <button
+                                  type="button"
+                                  onClick={() => updateResume({ heading: { ...resume.heading, linkedin_hidden: false, linkedin_url: 'linkedin', linkedin_url_href: 'https://linkedin.com/in/username' } }, { immediate: true })}
+                                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-dashed border-on-surface-variant/30 text-sm text-on-surface-variant hover:border-primary hover:text-primary hover:bg-primary/5 transition-all font-semibold"
+                                >
+                                  <PlusCircle className="w-4 h-4" /> Add LinkedIn
+                                </button>
+                              )}
+
+                              {/* ── GitHub (removable) ── */}
+                              {!resume.heading.github_hidden ? (
+                                <div className="rounded-xl border border-on-surface-variant/20 bg-surface-container-lowest/50 p-3 space-y-2">
+                                  <div className="flex items-center justify-between">
+                                    <p className="text-xs text-on-surface-variant font-semibold uppercase tracking-wide">GitHub</p>
+                                    <button
+                                      type="button"
+                                      onClick={() => updateResume({ heading: { ...resume.heading, github_hidden: true, github_url: '', github_url_href: '' } }, { immediate: true })}
+                                      className="flex items-center gap-1 text-xs text-red-500 hover:text-red-600 hover:bg-red-50 px-2 py-1 rounded-lg transition-colors font-semibold"
+                                    >
+                                      <Trash2 className="w-3 h-3" /> Remove
+                                    </button>
+                                  </div>
+                                  <input
+                                    type="text"
+                                    value={cleanDisplayUrl(resume.heading.github_url, "github.com/username")}
+                                    onChange={(e) => updateResume({ heading: { ...resume.heading, github_url: e.target.value } })}
+                                    className="w-full rounded-lg px-3 py-2 border border-on-surface-variant/15 bg-transparent focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all text-sm"
+                                    placeholder="Display text (e.g. github.com/you)"
+                                  />
+                                  <input
+                                    type="url"
+                                    value={resume.heading.github_url_href || "https://github.com/username"}
+                                    onChange={(e) => updateResume({ heading: { ...resume.heading, github_url_href: e.target.value } })}
+                                    className="w-full rounded-lg px-3 py-2 border border-on-surface-variant/15 bg-transparent focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all text-sm text-on-surface-variant"
+                                    placeholder="https://github.com/username"
+                                  />
+                                </div>
+                              ) : (
+                                <button
+                                  type="button"
+                                  onClick={() => updateResume({ heading: { ...resume.heading, github_hidden: false, github_url: 'github.com/username', github_url_href: 'https://github.com/username' } }, { immediate: true })}
+                                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-dashed border-on-surface-variant/30 text-sm text-on-surface-variant hover:border-primary hover:text-primary hover:bg-primary/5 transition-all font-semibold"
+                                >
+                                  <PlusCircle className="w-4 h-4" /> Add GitHub
+                                </button>
+                              )}
+
+                              {/* ── Custom Links ── */}
+                              {(resume.heading.custom_links || []).map((link, cidx) => (
+                                <div key={cidx} className="rounded-xl border border-on-surface-variant/20 bg-surface-container-lowest/50 p-3 space-y-2">
+                                  <div className="flex items-center justify-between">
+                                    <p className="text-xs text-on-surface-variant font-semibold uppercase tracking-wide">Custom Link</p>
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        const newLinks = (resume.heading.custom_links || []).filter((_, i) => i !== cidx);
+                                        updateResume({ heading: { ...resume.heading, custom_links: newLinks } }, { immediate: true });
+                                      }}
+                                      className="flex items-center gap-1 text-xs text-red-500 hover:text-red-600 hover:bg-red-50 px-2 py-1 rounded-lg transition-colors font-semibold"
+                                    >
+                                      <Trash2 className="w-3 h-3" /> Remove
+                                    </button>
+                                  </div>
+                                  <input
+                                    type="text"
+                                    value={link.label}
+                                    onChange={(e) => {
+                                      const newLinks = [...(resume.heading.custom_links || [])];
+                                      newLinks[cidx] = { ...newLinks[cidx], label: e.target.value };
+                                      updateResume({ heading: { ...resume.heading, custom_links: newLinks } });
+                                    }}
+                                    className="w-full rounded-lg px-3 py-2 border border-on-surface-variant/15 bg-transparent focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all text-sm"
+                                    placeholder="Display text (e.g. Portfolio, LeetCode)"
+                                  />
+                                  <input
+                                    type="url"
+                                    value={link.url}
+                                    onChange={(e) => {
+                                      const newLinks = [...(resume.heading.custom_links || [])];
+                                      newLinks[cidx] = { ...newLinks[cidx], url: e.target.value };
+                                      updateResume({ heading: { ...resume.heading, custom_links: newLinks } });
+                                    }}
+                                    className="w-full rounded-lg px-3 py-2 border border-on-surface-variant/15 bg-transparent focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all text-sm text-on-surface-variant"
+                                    placeholder="https://yoursite.com"
+                                  />
+                                </div>
+                              ))}
+
+                              {/* ── Add Custom Link button ── */}
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const newLinks = [...(resume.heading.custom_links || []), { label: '', url: '' }];
+                                  updateResume({ heading: { ...resume.heading, custom_links: newLinks } }, { immediate: true });
+                                }}
+                                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-dashed border-on-surface-variant/30 text-sm text-on-surface-variant hover:border-primary hover:text-primary hover:bg-primary/5 transition-all font-semibold"
+                              >
+                                <PlusCircle className="w-4 h-4" /> Add Custom Link
+                              </button>
                             </div>
                           ) : (
                             <>
