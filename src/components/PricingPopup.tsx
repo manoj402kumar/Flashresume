@@ -384,13 +384,48 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
             if (!verifyRes.ok) throw new Error("Payment verification failed on the server.");
             onSuccess();
           } catch (err: any) {
+            fetch(`${apiUrl}/api/payments/update-status`, {
+              method: "PATCH",
+              headers: {
+                "Content-Type": "application/json",
+                ...(token ? { Authorization: `Bearer ${token}` } : {})
+              },
+              body: JSON.stringify({
+                razorpay_order_id: response.razorpay_order_id,
+                status: "failed",
+                failure_source: "client_verification_catch",
+                failure_reason: err.message
+              })
+            }).catch(e => console.error("Failed to update status", e));
+            
             setError(err.message || "Payment verification failed.");
             setStep("plan");
             setLoading(false);
           }
         },
         modal: {
-          ondismiss: () => { setStep("plan"); setLoading(false); },
+          ondismiss: () => { 
+            // Try to notify the backend that the user abandoned the modal
+            // token is from the outer scope, orderData is from the outer scope
+            const authToken = typeof window !== 'undefined' ? localStorage.getItem('sb-fmsqgqqixgtsymkoylyj-auth-token') : null;
+            const parsedToken = authToken ? JSON.parse(authToken)?.access_token : null;
+            
+            fetch(`${apiUrl}/api/payments/update-status`, {
+              method: "PATCH",
+              headers: {
+                "Content-Type": "application/json",
+                ...(parsedToken ? { Authorization: `Bearer ${parsedToken}` } : {})
+              },
+              body: JSON.stringify({
+                razorpay_order_id: orderData.razorpay_order_id,
+                status: "abandoned",
+                failure_source: "user_closed_modal"
+              })
+            }).catch(e => console.error("Failed to update status", e));
+
+            setStep("plan"); 
+            setLoading(false); 
+          },
         },
       };
 

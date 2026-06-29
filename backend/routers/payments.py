@@ -192,14 +192,73 @@ async def verify_payment(body: VerifyRequest, authorization: str = Header(None))
         if sc.supabase:
             await sb(lambda: sc.supabase.table("payments").update({
                 "status": "failed",
-                "razorpay_payment_id": body.razorpay_payment_id
+                "razorpay_payment_id": body.razorpay_payment_id,
+                "failure_source": "signature_verification",
+                "failed_at": datetime.now(timezone.utc).isoformat()
             }).eq("razorpay_order_id", body.razorpay_order_id).execute())
         raise HTTPException(status_code=400, detail="Payment verification failed")
     except HTTPException:
         raise
     except Exception as e:
         print(f"Unexpected Verification Error: {str(e)}")
+        if sc.supabase and hasattr(body, 'razorpay_order_id'):
+            await sb(lambda: sc.supabase.table("payments").update({
+                "status": "failed",
+                "failure_source": "verify_exception",
+                "failure_reason": str(e),
+                "failed_at": datetime.now(timezone.utc).isoformat()
+            }).eq("razorpay_order_id", body.razorpay_order_id).execute())
         raise HTTPException(status_code=500, detail="Internal server error")
+
+class UpdateStatusRequest(BaseModel):
+    razorpay_order_id: str
+    status: str
+    failure_source: str | None = None
+    failure_reason: str | None = None
+
+@router.patch("/payments/update-status")
+async def update_payment_status(body: UpdateStatusRequest, authorization: str = Header(None)):
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Missing or invalid Authorization header")
+    try:
+        token = authorization.split(" ")[1]
+        user_res = await asyncio.to_thread(sc.supabase.auth.get_user, token)
+        if not user_res or not user_res.user:
+            raise HTTPException(status_code=401, detail="Invalid token")
+        auth_user_id = user_res.user.id
+    except Exception:
+        raise HTTPException(status_code=401, detail="Invalid token")
+
+    if not sc.supabase:
+        return {"status": "ignored"}
+
+    # Ownership check
+    payment_res = await sb(
+        lambda: sc.supabase.table("payments").select("user_id")
+        .eq("razorpay_order_id", body.razorpay_order_id)
+        .execute()
+    )
+    if not payment_res.data:
+        raise HTTPException(status_code=404, detail="Order not found")
+    if payment_res.data[0]["user_id"] != auth_user_id:
+        raise HTTPException(status_code=403, detail="Not authorized")
+
+    update_data = {
+        "status": body.status
+    }
+    if body.status in ("failed", "abandoned"):
+        update_data["failed_at"] = datetime.now(timezone.utc).isoformat()
+        if body.failure_source:
+            update_data["failure_source"] = body.failure_source
+        if body.failure_reason:
+            update_data["failure_reason"] = body.failure_reason
+
+    await sb(
+        lambda: sc.supabase.table("payments").update(update_data)
+        .eq("razorpay_order_id", body.razorpay_order_id)
+        .execute()
+    )
+    return {"status": "ok"}
 
 class DeductRequest(BaseModel):
     user_id: str
@@ -453,6 +512,8 @@ async def razorpay_webhook(request: Request):
             payment_entity = payload.get('payload', {}).get('payment', {}).get('entity', {})
             order_id = payment_entity.get('order_id')
             payment_id = payment_entity.get('id')
+            error_code = payment_entity.get('error_code')
+            error_description = payment_entity.get('error_description')
             
             if not order_id or not sc.supabase:
                 return {"status": "ignored"}
@@ -460,10 +521,13 @@ async def razorpay_webhook(request: Request):
             await sb(
                 lambda: sc.supabase.table("payments").update({
                     "status": "failed",
-                    "razorpay_payment_id": payment_id
+                    "razorpay_payment_id": payment_id,
+                    "failure_code": error_code,
+                    "failure_reason": error_description,
+                    "failure_source": "webhook",
+                    "failed_at": datetime.now(timezone.utc).isoformat()
                 })
                 .eq("razorpay_order_id", order_id)
-                .eq("status", "pending")
                 .execute()
             )
             
