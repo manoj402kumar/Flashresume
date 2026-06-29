@@ -1,8 +1,16 @@
 -- v7: Add idempotency guard to add_credit_bucket RPC
 -- Prevents duplicate credit grants if Razorpay fires duplicate webhooks
 
--- Step 1: Clean up support_override duplicates before adding constraint
--- (keep only the most recently created row per duplicate payment_id)
+-- Step 1a: Null out the referral-bonus duplicate (it's a legitimate row, not a fraud duplicate)
+UPDATE public.credit_buckets
+SET payment_id = NULL
+WHERE plan_type = 'referral'
+  AND payment_id IN (
+    SELECT payment_id FROM public.credit_buckets
+    GROUP BY payment_id HAVING COUNT(*) > 1
+  );
+
+-- Step 1b: Dedup remaining true duplicates (support_override — keep newest)
 DELETE FROM public.credit_buckets
 WHERE id NOT IN (
   SELECT DISTINCT ON (payment_id) id
@@ -15,12 +23,7 @@ WHERE id NOT IN (
 ALTER TABLE public.credit_buckets
 ADD CONSTRAINT credit_buckets_payment_id_unique UNIQUE (payment_id);
 
--- Step 3: Replace function — KEEP uuid return type and enum cast
--- TODO for USER: Please run `SELECT pg_get_functiondef('public.add_credit_bucket'::regproc);` 
--- in your Supabase SQL editor to get the exact live function body, and paste it here, 
--- inserting the idempotency block right after the BEGIN statement as shown below:
-
-/*
+-- Step 3: Replace function with idempotency guard (RETURNS uuid preserved)
 CREATE OR REPLACE FUNCTION public.add_credit_bucket(
   p_user_id UUID,
   p_plan_type TEXT,
@@ -29,20 +32,55 @@ CREATE OR REPLACE FUNCTION public.add_credit_bucket(
   p_payment_id TEXT DEFAULT NULL
 ) RETURNS uuid AS $$
 DECLARE
-  v_status bucket_status_enum;
-  v_has_active BOOLEAN;
-  v_bucket_id UUID;
+    v_status bucket_status_enum;
+    v_has_active BOOLEAN;
+    v_bucket_id UUID;
 BEGIN
-  -- IDEMPOTENCY GUARD
-  IF p_payment_id IS NOT NULL THEN
-    SELECT id INTO v_bucket_id FROM credit_buckets WHERE payment_id = p_payment_id;
-    IF FOUND THEN
-      RETURN v_bucket_id;  -- silent no-op, return existing bucket id
+    -- IDEMPOTENCY GUARD: if this payment_id already exists, return its id silently
+    IF p_payment_id IS NOT NULL THEN
+        SELECT id INTO v_bucket_id FROM credit_buckets WHERE payment_id = p_payment_id;
+        IF FOUND THEN
+            RETURN v_bucket_id;
+        END IF;
     END IF;
-  END IF;
 
-  -- ... PASTE THE REST OF THE EXISTING LIVE FUNCTION BODY HERE ...
-  -- MAKE SURE to keep p_plan_type::plan_type_enum and RETURNING id INTO v_bucket_id
+    IF p_plan_type = 'referral' THEN
+        v_status := 'fallback';
+    ELSE
+        SELECT EXISTS (
+            SELECT 1 FROM credit_buckets
+            WHERE user_id = p_user_id
+            AND status IN ('active', 'queued')
+            AND plan_type != 'referral'
+        ) INTO v_has_active;
+
+        IF v_has_active THEN
+            v_status := 'queued';
+        ELSE
+            v_status := 'active';
+        END IF;
+    END IF;
+
+    INSERT INTO credit_buckets (
+        user_id, plan_type, status, original_credits, remaining_credits,
+        validity_duration_days,
+        activated_at,
+        expires_at,
+        payment_id
+    ) VALUES (
+        p_user_id,
+        p_plan_type::plan_type_enum,
+        v_status,
+        p_amount,
+        p_amount,
+        p_validity_days,
+        CASE WHEN v_status = 'active' THEN now() ELSE NULL END,
+        CASE WHEN v_status = 'active' AND p_validity_days IS NOT NULL
+             THEN now() + (p_validity_days || ' days')::interval
+             ELSE NULL END,
+        p_payment_id
+    ) RETURNING id INTO v_bucket_id;
+
+    RETURN v_bucket_id;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
-*/
