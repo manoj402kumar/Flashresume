@@ -158,7 +158,6 @@ async def verify_payment(body: VerifyRequest, authorization: str = Header(None))
                     lambda: sc.supabase.table("credit_buckets")
                     .select("id")
                     .eq("payment_id", body.razorpay_payment_id)
-                    .eq("user_id", actual_user_id)
                     .execute()
                 )
                 if existing_bucket.data:
@@ -183,11 +182,11 @@ async def verify_payment(body: VerifyRequest, authorization: str = Header(None))
 
             expires_at = None
             if actual_plan_type == "regular":
-                expires_at = (datetime.utcnow() + timedelta(days=60)).isoformat()
+                expires_at = (datetime.now(timezone.utc) + timedelta(days=60)).isoformat()
             elif actual_plan_type == "student":
-                expires_at = (datetime.utcnow() + timedelta(days=90)).isoformat()
+                expires_at = (datetime.now(timezone.utc) + timedelta(days=90)).isoformat()
             elif actual_plan_type == "pay_per_use":
-                expires_at = (datetime.utcnow() + timedelta(days=10)).isoformat()
+                expires_at = (datetime.now(timezone.utc) + timedelta(days=10)).isoformat()
             await sb(lambda: sc.supabase.table("subscriptions").update({"is_active": False}).eq("user_id", actual_user_id).execute())
             
             sub_data = {
@@ -481,7 +480,6 @@ async def razorpay_webhook(request: Request):
                         lambda: sc.supabase.table("credit_buckets")
                         .select("id")
                         .eq("payment_id", payment_id)
-                        .eq("user_id", user_id)
                         .execute()
                     )
                     if existing_bucket.data:
