@@ -22,6 +22,7 @@ BEGIN
             SELECT 1 FROM public.subscriptions
             WHERE user_id = p_user_id
               AND is_active = TRUE
+              AND (expires_at IS NULL OR expires_at > now())
         ) INTO v_has_credits;
     END IF;
 
@@ -79,5 +80,5 @@ WHERE COALESCE(fraud_tracker_counter, 0) > 0
     )
     
     -- Condition C: User currently has an active legacy subscription
-    OR EXISTS (SELECT 1 FROM public.subscriptions s WHERE s.user_id = u.id AND s.is_active = TRUE)
+    OR EXISTS (SELECT 1 FROM public.subscriptions s WHERE s.user_id = u.id AND s.is_active = TRUE AND (s.expires_at IS NULL OR s.expires_at > now()))
   );
