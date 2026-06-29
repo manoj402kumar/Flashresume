@@ -10,6 +10,12 @@ SELECT add_credit_bucket(
 );
 
 -- Ensure their legacy subscription record reflects this as well
+-- First, deactivate any existing subscriptions for this user
+UPDATE public.subscriptions 
+SET is_active = FALSE 
+WHERE user_id = '069a6498-4ffe-42ca-8ee8-62e654a19cef';
+
+-- Then insert the new subscription record
 INSERT INTO public.subscriptions (user_id, plan_type, is_active, credits_granted, expires_at, student_claimed)
 VALUES (
     '069a6498-4ffe-42ca-8ee8-62e654a19cef',
@@ -18,11 +24,7 @@ VALUES (
     300,
     NOW() + INTERVAL '90 days',
     TRUE
-)
-ON CONFLICT (user_id) DO UPDATE 
-SET is_active = TRUE,
-    expires_at = EXCLUDED.expires_at,
-    credits_granted = EXCLUDED.credits_granted;
+);
 
 -- 2. Cleanup Expired Subscriptions
 -- Set is_active = FALSE for all subscriptions that have passed their expiration date
