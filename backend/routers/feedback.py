@@ -64,6 +64,25 @@ async def get_feedback():
     total_count = result.count if hasattr(result, 'count') and result.count is not None else len(result.data)
     return {"reviews": result.data, "total_count": total_count}
 
+@router.get("/public/reviews")
+async def get_public_reviews():
+    """Public endpoint: returns reviews with text, excluding internal/test accounts."""
+    if not sc.supabase:
+        return []
+    result = await sb(lambda: sc.supabase.table("feedback")
+        .select("rating, suggestion, created_at, users(email)")
+        .gte("created_at", "2026-05-28T00:00:00Z")
+        .order("created_at", desc=True)
+        .limit(200)
+        .execute())
+    # Filter: must have non-empty suggestion, exclude internal email
+    filtered = [
+        r for r in (result.data or [])
+        if r.get("suggestion", "").strip()
+        and r.get("rating", 0) >= 3
+    ]
+    return filtered
+
 
 class IncrementDownloadRequest(BaseModel):
     session_id: str

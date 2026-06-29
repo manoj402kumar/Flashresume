@@ -6,7 +6,7 @@ import PresenceTracker from "@/components/PresenceTracker";
 export const metadata: Metadata = {
   metadataBase: new URL("https://flashresume.in"),
   title: {
-    default: "AI Resume Optimizer & ATS Checker | Tailor to Job Description",
+    default: "Flashresume – AI Resume & ATS Optimizer for Job Descriptions",
     template: "%s | Flashresume",
   },
   description:
@@ -39,7 +39,7 @@ export const metadata: Metadata = {
     type: "website",
     locale: "en_IN",
     url: "https://flashresume.in",
-    title: "AI Resume Optimizer & ATS Checker | Flashresume",
+    title: "Flashresume – AI Resume & ATS Optimizer for Job Descriptions",
     description:
       "Tailor your resume to any job description instantly. Our AI matches ATS keywords and helps you get hired faster.",
     siteName: "Flashresume",
@@ -54,7 +54,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "AI Resume Optimizer & ATS Checker | Flashresume",
+    title: "Flashresume – AI Resume & ATS Optimizer for Job Descriptions",
     description: "Tailor your resume to any job description instantly with our AI keyword optimizer.",
     images: ["/og-image.png"],
   },

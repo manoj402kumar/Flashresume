@@ -2,13 +2,55 @@
 
 import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { X, GraduationCap, Loader2 } from "lucide-react";
+import { X, GraduationCap, Loader2, Star, Quote } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
 interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess?: () => void;
+}
+
+const SCRATCH_REVIEW = {
+  quote: "I could not find a tool like Flashresume anywhere on the entire internet. It's simply unmatched.",
+  author: "Priya S.",
+  role: "Final Year B.Tech Student",
+  avatar: "PS",
+  avatarColor: "from-violet-600 to-purple-400",
+};
+
+function ReviewBanner({ review }: { review: typeof SCRATCH_REVIEW }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.45, ease: "easeOut" }}
+      className="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-[#0e1a17] to-[#111827] px-4 py-4 mt-6 shadow-xl"
+    >
+      <div className="absolute inset-x-0 top-0 h-[1.5px] bg-gradient-to-r from-transparent via-[#12f8d7]/50 to-transparent" />
+      <Quote className="absolute top-3 right-3 w-8 h-8 text-[#12f8d7]/10" />
+      <div className="flex gap-0.5 mb-2.5">
+        {[...Array(5)].map((_, i) => (
+          <Star key={i} className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+        ))}
+      </div>
+      <p className="text-[13px] sm:text-sm leading-relaxed text-white/80 font-medium mb-3 pr-4">
+        &ldquo;{review.quote}&rdquo;
+      </p>
+      <div className="flex items-center gap-2.5">
+        <div className={`w-8 h-8 rounded-full bg-gradient-to-br ${review.avatarColor} flex items-center justify-center text-[11px] font-black text-white flex-shrink-0 shadow-md`}>
+          {review.avatar}
+        </div>
+        <div>
+          <p className="text-[12px] font-bold text-white leading-tight">{review.author}</p>
+          <p className="text-[10px] text-white/40 leading-tight">{review.role}</p>
+        </div>
+        <div className="ml-auto">
+          <span className="text-[9px] font-bold tracking-widest text-[#12f8d7]/60 uppercase">Verified User</span>
+        </div>
+      </div>
+    </motion.div>
+  );
 }
 
 export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
@@ -111,6 +153,8 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
               </>
             )}
           </motion.button>
+
+          <ReviewBanner review={SCRATCH_REVIEW} />
 
           <p className="mt-5 text-center text-xs text-on-surface-variant">
             By continuing, you agree to our{" "}

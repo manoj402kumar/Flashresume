@@ -34,10 +34,10 @@ import { supabase } from "@/lib/supabase";
 import { User } from "@supabase/supabase-js";
 import CreditBadge from "@/components/CreditBadge";
 
-import LiveDemoSection from "@/components/LiveDemoSection";
 import TemplatesCarousel from "@/components/TemplatesCarousel";
 import ModelSelector from "@/components/ModelSelector";
 import OnboardingTour from "@/components/OnboardingTour";
+import ReviewsMarquee from "@/components/ReviewsMarquee";
 
 export default function App() {
   const router = useRouter();
@@ -712,25 +712,18 @@ export default function App() {
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
               </span>
               <span>
-                Flashresume - India's No.1 Resume Builder.<span className="hidden sm:inline text-amber-700/80 font-medium"> It's an open challenge.</span>
+                Flashresume - World's best ATS resumes
               </span>
             </motion.div>
-            <h1 className="font-headline text-5xl sm:text-6xl md:text-7xl font-extrabold tracking-tight text-on-background leading-[1.08] mb-5 flex flex-col items-center gap-2 sm:gap-4">
-              <span className="text-lg sm:text-xl md:text-2xl font-bold text-[#006859] tracking-widest uppercase opacity-90">AI Resume Optimizer.</span>
+            <h1 className="font-headline text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-tight text-on-background leading-[1.1] mb-5 text-center w-full">
               <span>
-                Your resume,{" "}
-                <br className="md:hidden" />
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#006859] to-[#12f8d7] italic">rebuilt</span>{" "}
-                in{" "}
+                Interview-ready resume in{" "}
                 <span className="relative inline-block">
-                  <span className="relative z-10">60 seconds.</span>
+                  <span className="relative z-10 text-transparent bg-clip-text bg-gradient-to-r from-[#006859] to-[#12f8d7] italic">60 secs.</span>
                   <span className="absolute inset-x-0 bottom-1 h-3 bg-[#006859]/12 rounded-md -z-0 skew-x-1"></span>
                 </span>
               </span>
             </h1>
-            <p className="text-lg md:text-xl text-on-surface-variant leading-relaxed font-medium max-w-xl mx-auto">
-              Just put your resume and we take the rest.
-            </p>
           </motion.div>
 
           {/* Upload Card */}
@@ -1045,9 +1038,6 @@ export default function App() {
         </section>
 
 
-        {/* Live Demo Section */}
-        <LiveDemoSection />
-
         {/* Pricing Section */}
         {currentUser && (
           <section id="pricing" className="bg-surface py-32">
@@ -1187,7 +1177,7 @@ export default function App() {
         <section id="reviews" className="py-32">
           <div className="max-w-7xl mx-auto px-6">
             <div className="mb-20">
-              <h2 className="font-headline text-4xl md:text-5xl font-bold text-on-background mb-4">Real people. Real results.</h2>
+              <h2 className="font-headline text-4xl md:text-5xl font-bold text-on-background mb-4">Real people. Real Trust.</h2>
               <p className="text-on-surface-variant text-lg">Join 10,000+ career-starters who landed their dream roles.</p>
             </div>
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -1234,6 +1224,7 @@ export default function App() {
                 </div>
               ))}
             </div>
+            <ReviewsMarquee />
           </div>
         </section>
 
@@ -1241,15 +1232,15 @@ export default function App() {
         <section className="max-w-7xl mx-auto px-6 mb-32">
           <div className="flash-gradient rounded-[3rem] py-20 px-10 text-center text-white overflow-hidden relative">
             <div className="relative z-10">
-              <h2 className="font-headline text-4xl md:text-6xl font-bold mb-6">Let's make it happen together.</h2>
+              <h2 className="font-headline text-4xl md:text-6xl font-bold mb-6">Eliminate the drama</h2>
               <p className="text-xl mb-12 opacity-90 max-w-2xl mx-auto">
-                Stop sending basic resumes, send top 1% resume that recruiters care.
+                Save your time, efforts and stress.
               </p>
               <button
                 onClick={() => document.getElementById('upload-card')?.scrollIntoView({ behavior: 'smooth', block: 'center' })}
                 className="bg-white text-primary text-xl font-bold px-12 py-5 rounded-full hover:shadow-2xl transition-all active:scale-95"
               >
-                Try Free Now
+                Try Now
               </button>
             </div>
             {/* Abstract Accents */}

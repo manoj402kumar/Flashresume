@@ -50,10 +50,10 @@ export default function TemplatesCarousel() {
               Designed to get you hired
             </span>
             <h2 className="font-headline text-4xl md:text-5xl font-bold text-on-background leading-tight">
-              The 1% Resumes
+              Top 1% Resumes
             </h2>
             <p className="text-on-surface-variant mt-3 text-base sm:text-lg max-w-xl mx-auto">
-              Flashresume makes in seconds.
+              Flashresume makes yours in 60 seconds.
             </p>
           </motion.div>
 
@@ -204,13 +204,6 @@ export default function TemplatesCarousel() {
                   ))}
                 </div>
 
-                {/* Template badge */}
-                <div className="absolute top-3 left-3 z-20">
-                  <span className={`inline-flex items-center gap-1 text-[9px] sm:text-[10px] font-black uppercase tracking-widest px-2.5 py-0.5 rounded-full bg-gradient-to-r ${active.badgeColor} text-white shadow-sm`}>
-                    <Sparkles className="w-2 h-2" />
-                    {active.badge}
-                  </span>
-                </div>
 
                 {/* Zoom hint */}
                 <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
@@ -291,25 +284,7 @@ export default function TemplatesCarousel() {
 
           </div>
 
-          {/* CTA block — text visible on all screens, button desktop-only */}
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.45, duration: 0.5 }}
-            className="flex flex-col items-center gap-3 mt-12"
-          >
-            <p className="text-on-surface-variant text-sm text-center">
-              Your resume can look like this in{" "}
-              <span className="text-primary font-bold">60 seconds</span>
-            </p>
-            <button
-              onClick={() => document.getElementById("upload-card")?.scrollIntoView({ behavior: "smooth", block: "center" })}
-              className="hidden md:block flash-gradient text-white font-bold px-14 py-5 rounded-full hover:opacity-90 hover:-translate-y-0.5 transition-all active:scale-95 shadow-xl shadow-primary/25 text-lg tracking-wide"
-            >
-              Get Started →
-            </button>
-          </motion.div>
+
 
         </div>
       </section>

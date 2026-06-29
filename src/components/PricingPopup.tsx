@@ -63,7 +63,7 @@ const PLANS = [
 
 // ── Review Banner ─────────────────────────────────────────────────────────────
 const PLAN_REVIEW = {
-  quote: "Before Flashresume: 4-5 job applications/day → rejection mails. After Flashresume: 20-30 job applications/day → shortlisting mails.",
+  quote: "Thanks flashresume since I able to apply to any job under a minute. No stress, no drama.",
   author: "Rahul M.",
   role: "Software Engineer",
   avatar: "RM",
@@ -118,6 +118,112 @@ function ReviewBanner({ review }: { review: typeof PLAN_REVIEW }) {
         </div>
       </div>
     </motion.div>
+  );
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
+// ── Mini Scrolling Reviews ────────────────────────────────────────────────────
+function MiniReviewsMarquee() {
+  const [items, setItems] = React.useState<{ suggestion: string; rating: number }[]>([]);
+
+  React.useEffect(() => {
+    fetch("/api/public-reviews")
+      .then((r) => r.json())
+      .then((data) => {
+        if (Array.isArray(data) && data.length > 0) setItems(data);
+      })
+      .catch(() => {});
+  }, []);
+
+  if (items.length === 0) return null;
+
+  const looped = [...items, ...items, ...items];
+  const dur = Math.max(20, items.length * 3);
+
+  return (
+    <div
+      style={{
+        marginTop: "12px",
+        background: "linear-gradient(135deg, #0e1a17, #111827)",
+        border: "1px solid rgba(255,255,255,0.08)",
+        borderRadius: "16px",
+        padding: "12px 0 10px",
+        overflow: "hidden",
+      }}
+    >
+      <p
+        style={{
+          textAlign: "center",
+          fontSize: "9px",
+          fontWeight: 700,
+          letterSpacing: "0.12em",
+          color: "rgba(255,255,255,0.35)",
+          textTransform: "uppercase",
+          marginBottom: "8px",
+          paddingLeft: "12px",
+          paddingRight: "12px",
+        }}
+      >
+        Trusted by 1000s of aspirants
+      </p>
+
+      <div style={{ position: "relative", overflow: "hidden" }} aria-hidden="true">
+        {/* fade edges */}
+        <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: "28px", zIndex: 10, background: "linear-gradient(to right, #0e1a17, transparent)", pointerEvents: "none" }} />
+        <div style={{ position: "absolute", right: 0, top: 0, bottom: 0, width: "28px", zIndex: 10, background: "linear-gradient(to left, #111827, transparent)", pointerEvents: "none" }} />
+
+        <div
+          style={{
+            display: "flex",
+            gap: "8px",
+            width: "max-content",
+            animation: `mini-marquee ${dur}s linear infinite`,
+            paddingLeft: "8px",
+          }}
+        >
+          {looped.map((r, i) => (
+            <div
+              key={i}
+              style={{
+                flexShrink: 0,
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
+                background: "rgba(255,255,255,0.06)",
+                border: "1px solid rgba(255,255,255,0.1)",
+                borderRadius: "999px",
+                padding: "5px 12px",
+              }}
+            >
+              <span style={{ color: "#fbbf24", fontSize: "10px", letterSpacing: "-0.5px", flexShrink: 0 }}>
+                {"★".repeat(r.rating)}
+              </span>
+              <span
+                style={{
+                  color: "rgba(255,255,255,0.72)",
+                  fontSize: "11px",
+                  fontStyle: "italic",
+                  display: "inline-block",
+                  maxWidth: "180px",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                &ldquo;{r.suggestion}&rdquo;
+              </span>
+            </div>
+          ))}
+        </div>
+
+        <style>{`
+          @keyframes mini-marquee {
+            0%   { transform: translateX(0); }
+            100% { transform: translateX(calc(-100% / 3)); }
+          }
+        `}</style>
+      </div>
+    </div>
   );
 }
 // ─────────────────────────────────────────────────────────────────────────────
@@ -532,8 +638,9 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
                   <a href="/privacy" className="text-primary hover:underline font-medium">Privacy Policy</a>.
                 </p>
 
-                {/* Review for auth step — scratch page gets its own quote */}
+                {/* Review for auth step */}
                 <ReviewBanner review={isScratchPage ? SCRATCH_REVIEW : PLAN_REVIEW} />
+                <MiniReviewsMarquee />
               </motion.div>
             )}
 
@@ -687,6 +794,7 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
 
                 {/* Review banner — scratch page gets its own quote */}
                 <ReviewBanner review={isScratchPage ? SCRATCH_REVIEW : PLAN_REVIEW} />
+                <MiniReviewsMarquee />
               </motion.div>
             )}
 
