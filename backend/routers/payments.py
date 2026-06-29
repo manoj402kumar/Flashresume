@@ -120,24 +120,22 @@ async def verify_payment(body: VerifyRequest, authorization: str = Header(None))
         })
         
         if sc.supabase:
-            # 1. Update payment status to success idempotently
-            update_res = await sb(
-                lambda: sc.supabase.table("payments").update({
-                    "status": "success",
-                    "razorpay_payment_id": body.razorpay_payment_id,
-                    "razorpay_signature": body.razorpay_signature,
-                })
+            # 1. Fetch payment status first without updating it
+            payment_res = await sb(
+                lambda: sc.supabase.table("payments").select("*")
                 .eq("razorpay_order_id", body.razorpay_order_id)
-                .in_("status", ["pending", "failed"])
-                .select()
                 .execute()
             )
             
-            if not update_res.data:
+            if not payment_res.data:
+                raise HTTPException(status_code=404, detail="Order not found")
+                
+            payment_record = payment_res.data[0]
+            if payment_record.get("status") == "success":
                 return {"status": "already_processed", "message": "Payment already verified"}
             
-            actual_user_id = update_res.data[0]["user_id"]
-            actual_plan_type = update_res.data[0]["plan_type"]
+            actual_user_id = payment_record["user_id"]
+            actual_plan_type = payment_record["plan_type"]
 
             if auth_user_id != actual_user_id:
                 raise HTTPException(status_code=403, detail="Not authorized to verify this payment")
@@ -228,6 +226,17 @@ async def verify_payment(body: VerifyRequest, authorization: str = Header(None))
                     "user_id": actual_user_id,
                     "payment_id": body.razorpay_payment_id
                 }).eq("id", body.session_id).is_("user_id", None).execute())
+
+            # 5. Mark payment as success ONLY AFTER all credits are confirmed granted
+            await sb(
+                lambda: sc.supabase.table("payments").update({
+                    "status": "success",
+                    "razorpay_payment_id": body.razorpay_payment_id,
+                    "razorpay_signature": body.razorpay_signature,
+                })
+                .eq("razorpay_order_id", body.razorpay_order_id)
+                .execute()
+            )
 
         return {"status": "ok"}
     except razorpay.errors.SignatureVerificationError:
@@ -439,21 +448,18 @@ async def razorpay_webhook(request: Request):
             if not order_id or not sc.supabase:
                 return {"status": "ignored"}
                 
-            # Update to success
-            update_res = await sb(
-                lambda: sc.supabase.table("payments").update({
-                    "status": "success",
-                    "razorpay_payment_id": payment_id,
-                    "razorpay_signature": "webhook_verified",
-                })
+            # 1. Fetch payment status first without updating it
+            payment_res = await sb(
+                lambda: sc.supabase.table("payments").select("*")
                 .eq("razorpay_order_id", order_id)
-                .in_("status", ["pending", "failed"])
-                .select()
                 .execute()
             )
             
-            if update_res.data:
-                payment_record = update_res.data[0]
+            if payment_res.data:
+                payment_record = payment_res.data[0]
+                if payment_record.get("status") == "success":
+                    return {"status": "ignored", "message": "Payment already processed"}
+                
                 user_id = payment_record["user_id"]
                 plan_type = payment_record["plan_type"]
                 
@@ -521,6 +527,16 @@ async def razorpay_webhook(request: Request):
                     
                 await sb(lambda: sc.supabase.table("subscriptions").insert(sub_data).execute())
                 
+                # Mark payment as success ONLY AFTER all credits are confirmed granted
+                await sb(
+                    lambda: sc.supabase.table("payments").update({
+                        "status": "success",
+                        "razorpay_payment_id": payment_id,
+                        "razorpay_signature": "webhook_verified",
+                    })
+                    .eq("razorpay_order_id", order_id)
+                    .execute()
+                )
         elif event == "payment.failed":
             payment_entity = payload.get('payload', {}).get('payment', {}).get('entity', {})
             order_id = payment_entity.get('order_id')
