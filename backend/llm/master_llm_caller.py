@@ -256,7 +256,7 @@ async def call_llm_balanced(prompt: str, is_r1: bool, preferred_model: str = "",
         return {"success": False, "all_attempts": all_attempts}
 
 def _finalize(result: dict, provider: str, model_id: str, r_type: str) -> dict:
-    if supabase and result.get("speed"):
+    if sc.supabase and result.get("speed"):
         async def _log_usage():
             try:
                 await asyncio.to_thread(
