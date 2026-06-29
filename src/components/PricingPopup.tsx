@@ -647,6 +647,7 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
             {/* PLAN STEP */}
             {step === "plan" && (
               <motion.div key="plan" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-4">
+                <MiniReviewsMarquee />
                 <div className="flex flex-col md:grid md:grid-cols-3 gap-3 md:gap-4 pt-2 pb-3 px-1">
                   {PLANS.map((plan) => {
                     const isSelected = selectedPlan === plan.id;
@@ -794,7 +795,6 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
 
                 {/* Review banner — scratch page gets its own quote */}
                 <ReviewBanner review={isScratchPage ? SCRATCH_REVIEW : PLAN_REVIEW} />
-                <MiniReviewsMarquee />
               </motion.div>
             )}
 
