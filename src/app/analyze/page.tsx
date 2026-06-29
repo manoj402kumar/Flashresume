@@ -13,7 +13,8 @@ import {
   XCircle,
   Lightbulb,
   FolderGit2,
-  Code
+  Code,
+  Quote
 } from "lucide-react";
 import type { CombinedAnalysisResponse } from "@/lib/api";
 import ModelSelector from "@/components/ModelSelector";
@@ -56,7 +57,7 @@ export default function AnalyzePage() {
     console.log("[DEBUG] requires_consent:", parsedAnalysis.requires_consent);
 
     setAnalysis(parsedAnalysis);
-    
+
     const linksData = localStorage.getItem("extracted_links");
     if (linksData) {
       setExtractedLinks(JSON.parse(linksData));
@@ -313,7 +314,7 @@ export default function AnalyzePage() {
                     <AlertCircle className="w-5 h-5 text-error flex-shrink-0 mt-0.5" />
                     <p className="text-sm text-error font-medium">
                       <strong className="block mb-1">Warning: Low Relevance</strong>
-                      Without a relavant project there is no point of applying and get shortlisted. Don't worry You can always build this project later.
+                      Without a relavant project there is no point of applying and get shortlisted. Don't worry You can always build this project later using ai tools like antigravity.
                     </p>
                   </div>
                 </motion.div>
@@ -345,6 +346,16 @@ export default function AnalyzePage() {
               </div>
             );
           })()}
+
+          <div className="relative z-10 max-w-2xl text-center px-4 mb-2">
+            <div className="relative inline-block bg-black/[0.03] border border-black/10 rounded-2xl p-6 shadow-sm">
+              <Quote className="absolute top-3 left-3 w-8 h-8 text-black/10 rotate-180" />
+              <Quote className="absolute bottom-3 right-3 w-8 h-8 text-black/10" />
+              <p className="relative z-10 text-sm md:text-base text-black font-semibold leading-relaxed italic px-8">
+                "Our objective is simple - optimizing your resume wrt JD with minimal changes so that it will be easy for you to defend in the actual interview if shortlisted."
+              </p>
+            </div>
+          </div>
 
           <div className="relative z-10">
             <button

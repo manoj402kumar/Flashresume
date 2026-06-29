@@ -29,8 +29,8 @@ The "job_strategy" JSON field must be computed from RESUME_TEXT alone. Read RESU
 - The goal is to suggest roles where their original resume can easily get shortlisted.
 - Base this ONLY on skills, experience, projects, and education found in RESUME_TEXT.
 - For each role output: role name, match level ("Strong" / "Good" / "Moderate"), and exactly 2 ready-to-use Google search sentences.
-- Search sentences MUST include: role, key tech stack, experience level (fresher/junior/senior), location (Hyderabad or Bengaluru). Location is MANDATORY.
-- Optionally add platform for one query (e.g. site:linkedin.com or site:naukri.com) — not both.
+- The FIRST search query MUST be a direct LinkedIn posts search URL (e.g. "https://www.linkedin.com/search/results/content/?keywords=ROLE hiring").
+- The SECOND search query MUST be a standard Google search string including: role, key tech stack, experience level (fresher/junior/senior), location (Hyderabad or Bengaluru). Location is MANDATORY.
 - Output as array of 3-5 objects.
 - If the candidate is a fresher, new graduate, or has no prior full-time work experience (projects do NOT count as experience), suggest entry-level / intern roles.
 
@@ -148,6 +148,7 @@ RULES:
    - Always include: "Reach out to HRs, Talent Acquisition, Lead developers for referrals for more chances to get shortlisted."
    - Always include DSA tip: "Solve top interview 150 DSA problems on LeetCode focusing on Arrays, Strings, Trees, DP, and Graphs. Aim for 1700+ contest rating to clear most coding interviews."
    - Always include: "Conribute to opensource on github in x tech stack" where x is jd core tech s
+   - Always include: "Join job posting communities on whatsapp, telegram or discord"
    - If approved project was suggested → include: "Build the [project title] project using [tech stack] — this directly fills your [JD tech] gap and gives you something concrete to show recruiters."
    - Suggest 1 specific certfication relevant to the JD tech stack.
    - Address user as "you". Output as flat array of plain strings. Only give suggestions when genuinely needed.

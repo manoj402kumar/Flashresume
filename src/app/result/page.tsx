@@ -2686,13 +2686,18 @@ export default function ResultPage() {
                                 </span>
                               </div>
 
-                              {/* Google Search Query Pills */}
+                              {/* Search Query Pills */}
                               <div className="space-y-2">
                                 <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider flex items-center gap-1">
-                                  <Search className="w-3 h-3" /> Search on Google
+                                  <Search className="w-3 h-3" /> Recommended Searches
                                 </p>
                                 {item.search_queries.map((query, qIdx) => {
                                   const isLocked = credits === 0 && qIdx === 0;
+                                  
+                                  const isUrl = query.startsWith("http");
+                                  const targetUrl = isUrl ? query : `https://www.google.com/search?q=${encodeURIComponent(query)}`;
+                                  const displayLabel = isUrl && query.includes("linkedin.com") ? "Search Posts on LinkedIn" : query;
+
                                   if (isLocked) {
                                     return (
                                       <button
@@ -2702,8 +2707,8 @@ export default function ResultPage() {
                                         className="relative flex items-start gap-2 w-full text-left px-3 py-2 rounded-xl bg-white/60 border border-amber-300/30 overflow-hidden group cursor-pointer"
                                       >
                                         <Search className="w-3.5 h-3.5 text-amber-500 flex-shrink-0 mt-0.5 opacity-30" />
-                                        <span className="text-xs text-on-background leading-relaxed flex-1 font-medium blur-sm select-none pointer-events-none">
-                                          {query}
+                                        <span className="text-xs text-on-background leading-relaxed flex-1 font-medium blur-sm select-none pointer-events-none truncate">
+                                          {displayLabel}
                                         </span>
                                         <div className="absolute inset-0 flex items-center justify-center gap-1.5 bg-amber-50/80 backdrop-blur-[2px] rounded-xl">
                                           <span className="text-sm">🔒</span>
@@ -2716,13 +2721,13 @@ export default function ResultPage() {
                                   return (
                                     <a
                                       key={qIdx}
-                                      href={`https://www.google.com/search?q=${encodeURIComponent(query)}`}
+                                      href={targetUrl}
                                       target="_blank"
                                       rel="noopener noreferrer"
                                       className="flex items-start gap-2 w-full text-left px-3 py-2 rounded-xl bg-white/60 border border-amber-300/30 hover:bg-amber-50 hover:border-amber-400/50 transition-all group"
                                     >
                                       <Search className="w-3.5 h-3.5 text-amber-500 flex-shrink-0 mt-0.5 group-hover:scale-110 transition-transform" />
-                                      <span className="text-xs text-on-background leading-relaxed flex-1 font-medium">{query}</span>
+                                      <span className="text-xs text-on-background leading-relaxed flex-1 font-medium break-words">{displayLabel}</span>
                                       <ExternalLink className="w-3 h-3 text-amber-400 flex-shrink-0 mt-0.5 opacity-0 group-hover:opacity-100 transition-opacity" />
                                     </a>
                                   );
@@ -2796,7 +2801,7 @@ export default function ResultPage() {
                         <Sparkles className="w-4 h-4 text-white" />
                       </div>
                       <div>
-                        <h3 className="text-white font-bold text-base leading-tight">AI Analysis</h3>
+                        <h3 className="text-white font-bold text-base leading-tight">AI Changes</h3>
                         <p className="text-white/70 text-xs">What the AI improved in your resume</p>
                       </div>
                       <span className="ml-auto bg-white/20 text-white text-xs font-bold px-2.5 py-1 rounded-full">

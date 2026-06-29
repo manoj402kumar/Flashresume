@@ -27,13 +27,14 @@ CONDITIONAL tips (only if genuinely applicable and missing based on RESUME_TEXT)
 - If no summary: "Add a 2-line professional summary at the top of your resume — it's the first thing recruiters read and it sets the context for your entire profile."
 - if no hackahons paticipated: "Participate in hackathons where you learn to build products in least time and sometimes money as well."
 - if basic projects: "Try to build projects that solves the real problem that you are facing or other people are facing"
+- general advice: "Join job posting communities on whatsapp, telegram or discord"
 Address the user as 'you'. Output as a flat array of plain strings. Keep each suggestion under 40 words. Be direct and specific — no generic filler.
 
 AFTER GENERATING ai_suggestions: Generate "job_strategy" — analyze RESUME_TEXT to identify 3-5 job roles that best fit the candidate's actual background(skills, projects, experience level, education). For each role output:
 - the goal is to search jobs where their resume can be easily shortlisted.
 - role: clear job title with tech stack e.g. "Frontend Developer (React/Next.js)"
 - match: "Strong", "Good", or "Moderate"
-- search_queries: exactly 2 specific, ready-to-use Google search sentences the candidate can use to find this job (ALWAYS include role, key tech, experience level, location — use Hyderabad or Bengaluru as default; location is MANDATORY, and optionally platform like site:linkedin.com or site:naukri.com(don't include site for every query)).
+- search_queries: exactly 2 specific queries/links. The FIRST MUST be a direct LinkedIn posts search URL, formatted exactly like: "https://www.linkedin.com/search/results/content/?keywords=ROLE hiring". The SECOND should be a standard Google search string (ALWAYS include role, key tech, experience level, location — use Hyderabad or Bengaluru as default; location is MANDATORY).
 - if user is fresher or new graudate or no prior work experience(dont consider projects as experience) suggest entry level roles like intern.
 
 HEADING FIELD RULES:
@@ -119,8 +120,8 @@ OUTPUT FORMAT (Template v1):
       "role": "<Job Role Title e.g. Full Stack Developer (React/Node.js)>",
       "match": "<Strong | Good | Moderate>",
       "search_queries": [
-        "<Ready-to-use Google search sentence 1>",
-        "<Ready-to-use Google search sentence 2>"
+        "https://www.linkedin.com/search/results/content/?keywords=Role%20Name%20hiring",
+        "<Ready-to-use Google search sentence 2 with tech stack and location>"
       ]
     }}
   ],
