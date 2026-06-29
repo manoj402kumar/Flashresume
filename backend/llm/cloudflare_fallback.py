@@ -11,7 +11,7 @@ load_dotenv()
 #   R2 client  → CLOUDFLARE_R2_API_TOKEN + ACCOUNT_ID
 #
 # Clients are created on first use, NOT at module import time.
-# Uses AsyncOpenAI for Cloudflare Workers AI compatible endpoint.
+# Uses AsyncOpenAI for Cloudflare Workers Ai  compatible endpoint.
 # -------------------------------------------------------------------
 _client_r1 = None
 _client_r2 = None
