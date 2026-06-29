@@ -717,7 +717,7 @@ export default function App() {
             </motion.div>
             <h1 className="font-headline text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-tight text-on-background leading-[1.1] mb-5 text-center w-full">
               <span>
-                Interview-ready resume in{" "}
+                Apply-ready resume in{" "}
                 <span className="relative inline-block">
                   <span className="relative z-10 text-transparent bg-clip-text bg-gradient-to-r from-[#006859] to-[#12f8d7] italic">60 secs.</span>
                   <span className="absolute inset-x-0 bottom-1 h-3 bg-[#006859]/12 rounded-md -z-0 skew-x-1"></span>
