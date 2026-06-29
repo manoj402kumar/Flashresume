@@ -35,7 +35,7 @@ async def generate_resume_endpoint(request: Request, payload: GenerateRequest, a
     # Decode the Supabase JWT to identify the user — used for fraud tracking and session ownership.
     # This is non-blocking and fully isolated from the generation path.
     user_id: str | None = None
-    if authorization and authorization.startswith("Bearer ") and supabase:
+    if authorization and authorization.startswith("Bearer ") and sc.supabase:
         token = authorization.split(" ", 1)[1]
         try:
             user_resp = await asyncio.to_thread(lambda: sc.supabase.auth.get_user(token))
@@ -96,7 +96,7 @@ async def generate_resume_endpoint(request: Request, payload: GenerateRequest, a
 
     # Step 5: Increment fraud tracker counter — fire-and-forget, never blocks the response.
     # Counts consecutive generations without a download. Reset happens in deduct_credits_v2 on download.
-    if supabase and user_id:
+    if sc.supabase and user_id:
         try:
             asyncio.create_task(asyncio.to_thread(
                 lambda: sc.supabase.rpc("increment_fraud_counter", {"p_user_id": user_id}).execute()

@@ -1,0 +1,36 @@
+-- 1. Fix Orphaned User (Manual Grant)
+-- This user paid for a student plan but encountered a partial failure in the backend
+-- before their credit bucket was created.
+SELECT add_credit_bucket(
+    '069a6498-4ffe-42ca-8ee8-62e654a19cef'::uuid,  -- user_id
+    'student',     -- plan_type
+    300,           -- p_amount
+    90,            -- validity_days
+    'pay_T2cd8zYH13izkp'  -- payment_id (idempotency key)
+);
+
+-- Ensure their legacy subscription record reflects this as well
+INSERT INTO public.subscriptions (user_id, plan_type, is_active, credits_granted, expires_at, student_claimed)
+VALUES (
+    '069a6498-4ffe-42ca-8ee8-62e654a19cef',
+    'student', 
+    TRUE, 
+    300,
+    NOW() + INTERVAL '90 days',
+    TRUE
+)
+ON CONFLICT (user_id) DO UPDATE 
+SET is_active = TRUE,
+    expires_at = EXCLUDED.expires_at,
+    credits_granted = EXCLUDED.credits_granted;
+
+-- 2. Cleanup Expired Subscriptions
+-- Set is_active = FALSE for all subscriptions that have passed their expiration date
+UPDATE public.subscriptions
+SET is_active = FALSE
+WHERE is_active = TRUE
+  AND expires_at IS NOT NULL
+  AND expires_at < NOW();
+
+-- NOTE: To prevent this from drifting again in the future, consider using pg_cron 
+-- or ensuring that any logic checking `is_active` also checks `expires_at > NOW()`.
