@@ -231,6 +231,9 @@ async def update_payment_status(body: UpdateStatusRequest, authorization: str = 
 
     if not sc.supabase:
         return {"status": "ignored"}
+        
+    if body.status not in {"abandoned", "failed"}:
+        raise HTTPException(status_code=400, detail="Invalid status value")
 
     # Ownership check
     payment_res = await sb(

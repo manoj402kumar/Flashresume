@@ -406,22 +406,23 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
         modal: {
           ondismiss: () => { 
             // Try to notify the backend that the user abandoned the modal
-            // token is from the outer scope, orderData is from the outer scope
-            const authToken = typeof window !== 'undefined' ? localStorage.getItem('sb-fmsqgqqixgtsymkoylyj-auth-token') : null;
-            const parsedToken = authToken ? JSON.parse(authToken)?.access_token : null;
-            
-            fetch(`${apiUrl}/api/payments/update-status`, {
-              method: "PATCH",
-              headers: {
-                "Content-Type": "application/json",
-                ...(parsedToken ? { Authorization: `Bearer ${parsedToken}` } : {})
-              },
-              body: JSON.stringify({
-                razorpay_order_id: orderData.razorpay_order_id,
-                status: "abandoned",
-                failure_source: "user_closed_modal"
-              })
-            }).catch(e => console.error("Failed to update status", e));
+            if (orderData?.razorpay_order_id) {
+              supabase.auth.getSession().then(({ data: { session } }) => {
+                const currentToken = session?.access_token;
+                fetch(`${apiUrl}/api/payments/update-status`, {
+                  method: "PATCH",
+                  headers: {
+                    "Content-Type": "application/json",
+                    ...(currentToken ? { Authorization: `Bearer ${currentToken}` } : {})
+                  },
+                  body: JSON.stringify({
+                    razorpay_order_id: orderData.razorpay_order_id,
+                    status: "abandoned",
+                    failure_source: "user_closed_modal"
+                  })
+                }).catch(e => console.error("Failed to update status", e));
+              });
+            }
 
             setStep("plan"); 
             setLoading(false); 
