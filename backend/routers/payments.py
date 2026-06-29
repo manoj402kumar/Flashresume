@@ -120,7 +120,7 @@ async def verify_payment(body: VerifyRequest, authorization: str = Header(None))
         })
         
         if sc.supabase:
-            # 1. Fetch payment status first without updating it
+            # 1. Fetch payment record to verify ownership and get plan details
             payment_res = await sb(
                 lambda: sc.supabase.table("payments").select("*")
                 .eq("razorpay_order_id", body.razorpay_order_id)
@@ -130,77 +130,37 @@ async def verify_payment(body: VerifyRequest, authorization: str = Header(None))
             if not payment_res.data:
                 raise HTTPException(status_code=404, detail="Order not found")
                 
-            payment_record = payment_res.data[0]
-            if payment_record.get("status") == "success":
-                return {"status": "already_processed", "message": "Payment already verified"}
-            
-            actual_user_id = payment_record["user_id"]
-            actual_plan_type = payment_record["plan_type"]
+            actual_user_id = payment_res.data[0]["user_id"]
+            actual_plan_type = payment_res.data[0]["plan_type"]
 
             if auth_user_id != actual_user_id:
                 raise HTTPException(status_code=403, detail="Not authorized to verify this payment")
             
-            # 2. Add Credits and Subscription Record
+            # 2. Process the successful payment in a single Postgres transaction
             PLAN_CREDITS = {
                 "pay_per_use": 20,
                 "regular": 300,
                 "student": 300,
             }
             credits_to_add = PLAN_CREDITS.get(actual_plan_type, 0)
-            
             validity_days = 60 if actual_plan_type == "regular" else 90 if actual_plan_type == "student" else 10
-
-            # Idempotency guard: skip if credits already granted for this payment_id.
-            # Wrapped in try/except so a DB timeout falls through to the insert — the Postgres
-            # UNIQUE index on (payment_id, user_id) is the true safety net.
-            try:
-                existing_bucket = await sb(
-                    lambda: sc.supabase.table("credit_buckets")
-                    .select("id")
-                    .eq("payment_id", body.razorpay_payment_id)
-                    .execute()
-                )
-                if existing_bucket.data:
-                    print(f"[VERIFY][IDEMPOTENCY] Credits already granted for payment {body.razorpay_payment_id}, skipping.")
-                    return {"status": "already_processed", "message": "Credits already granted"}
-            except Exception as idem_err:
-                print(f"[VERIFY][IDEMPOTENCY CHECK FAILED] {idem_err} — falling through to insert")
-                # Fall through — DB constraint will protect us
-
-            # Atomically add credits using the new bucket system
-            bucket_res = await sb(lambda: sc.supabase.rpc("add_credit_bucket", {
-                "p_user_id": actual_user_id,
-                "p_amount": credits_to_add,
-                "p_plan_type": actual_plan_type,
-                "p_validity_days": validity_days,
-                "p_payment_id": body.razorpay_payment_id
-            }).execute())
-
-            if hasattr(bucket_res, 'error') and bucket_res.error:
-                print(f"CRITICAL: add_credit_bucket RPC failed: {bucket_res.error}")
-                raise HTTPException(status_code=500, detail="Credit bucket creation failed")
-
-            expires_at = None
-            if actual_plan_type == "regular":
-                expires_at = (datetime.now(timezone.utc) + timedelta(days=60)).isoformat()
-            elif actual_plan_type == "student":
-                expires_at = (datetime.now(timezone.utc) + timedelta(days=90)).isoformat()
-            elif actual_plan_type == "pay_per_use":
-                expires_at = (datetime.now(timezone.utc) + timedelta(days=10)).isoformat()
-            await sb(lambda: sc.supabase.table("subscriptions").update({"is_active": False}).eq("user_id", actual_user_id).execute())
             
-            sub_data = {
-                "user_id": actual_user_id,
-                "plan_type": actual_plan_type,
-                "is_active": True,
-                "credits_granted": credits_to_add
-            }
-            if expires_at:
-                sub_data["expires_at"] = expires_at
-            if actual_plan_type == "student":
-                sub_data["student_claimed"] = True
+            rpc_res = await sb(lambda: sc.supabase.rpc("process_successful_payment", {
+                "p_order_id": body.razorpay_order_id,
+                "p_payment_id": body.razorpay_payment_id,
+                "p_signature": body.razorpay_signature,
+                "p_user_id": actual_user_id,
+                "p_plan_type": actual_plan_type,
+                "p_credits_to_add": credits_to_add,
+                "p_validity_days": validity_days
+            }).execute())
+            
+            if hasattr(rpc_res, 'error') and rpc_res.error:
+                print(f"CRITICAL: process_successful_payment RPC failed: {rpc_res.error}")
+                raise HTTPException(status_code=500, detail="Payment processing failed")
                 
-            await sb(lambda: sc.supabase.table("subscriptions").insert(sub_data).execute())
+            if isinstance(rpc_res.data, dict) and rpc_res.data.get("status") == "already_processed":
+                return {"status": "already_processed", "message": "Payment already verified"}
 
             # 3. Award Referral Bonus if the buyer was referred
             try:
@@ -225,17 +185,6 @@ async def verify_payment(body: VerifyRequest, authorization: str = Header(None))
                     "user_id": actual_user_id,
                     "payment_id": body.razorpay_payment_id
                 }).eq("id", body.session_id).is_("user_id", None).execute())
-
-            # 5. Mark payment as success ONLY AFTER all credits are confirmed granted
-            await sb(
-                lambda: sc.supabase.table("payments").update({
-                    "status": "success",
-                    "razorpay_payment_id": body.razorpay_payment_id,
-                    "razorpay_signature": body.razorpay_signature,
-                })
-                .eq("razorpay_order_id", body.razorpay_order_id)
-                .execute()
-            )
 
         return {"status": "ok"}
     except razorpay.errors.SignatureVerificationError:
@@ -447,111 +396,59 @@ async def razorpay_webhook(request: Request):
             if not order_id or not sc.supabase:
                 return {"status": "ignored"}
                 
-            # 1. Fetch payment status first without updating it
+            # Find the payment record regardless of status to handle retries properly
             payment_res = await sb(
                 lambda: sc.supabase.table("payments").select("*")
                 .eq("razorpay_order_id", order_id)
                 .execute()
             )
             
-            if payment_res.data:
-                payment_record = payment_res.data[0]
-                if payment_record.get("status") == "success":
-                    return {"status": "ignored", "message": "Payment already processed"}
+            if not payment_res.data:
+                # Not found
+                return {"status": "ignored"}
                 
-                user_id = payment_record["user_id"]
-                plan_type = payment_record["plan_type"]
-                
-                # Add Credits
-                PLAN_CREDITS = {
-                    "pay_per_use": 20,
-                    "regular": 300,
-                    "student": 300,
-                }
-                credits_to_add = PLAN_CREDITS.get(plan_type, 0)
-                
-                validity_days = 60 if plan_type == "regular" else 90 if plan_type == "student" else 10
+            payment_record = payment_res.data[0]
+            user_id = payment_record["user_id"]
+            plan_type = payment_record["plan_type"]
+            
+            PLAN_CREDITS = {
+                "pay_per_use": 20,
+                "regular": 300,
+                "student": 300,
+            }
+            credits_to_add = PLAN_CREDITS.get(plan_type, 0)
+            validity_days = 60 if plan_type == "regular" else 90 if plan_type == "student" else 10
 
-                # Idempotency guard: skip if credits already granted for this payment_id.
-                # Wrapped in try/except so a DB timeout falls through to the insert — the Postgres
-                # UNIQUE index on (payment_id, user_id) is the true safety net.
-                try:
-                    existing_bucket = await sb(
-                        lambda: sc.supabase.table("credit_buckets")
-                        .select("id")
-                        .eq("payment_id", payment_id)
-                        .execute()
-                    )
-                    if existing_bucket.data:
-                        print(f"[WEBHOOK][IDEMPOTENCY] Credits already granted for payment {payment_id}, skipping.")
-                        return {"status": "already_processed", "message": "Credits already granted"}
-                except Exception as idem_err:
-                    print(f"[WEBHOOK][IDEMPOTENCY CHECK FAILED] {idem_err} — falling through to insert")
-                    # Fall through — DB constraint will protect us
+            rpc_res = await sb(lambda: sc.supabase.rpc("process_successful_payment", {
+                "p_order_id": order_id,
+                "p_payment_id": payment_id,
+                "p_signature": "webhook_verified",
+                "p_user_id": user_id,
+                "p_plan_type": plan_type,
+                "p_credits_to_add": credits_to_add,
+                "p_validity_days": validity_days
+            }).execute())
 
-                bucket_res = await sb(lambda: sc.supabase.rpc("add_credit_bucket", {
-                    "p_user_id": user_id,
-                    "p_amount": credits_to_add,
-                    "p_plan_type": plan_type,
-                    "p_validity_days": validity_days,
-                    "p_payment_id": payment_id
-                }).execute())
+            if hasattr(rpc_res, 'error') and rpc_res.error:
+                print(f"CRITICAL: webhook process_successful_payment RPC failed: {rpc_res.error}")
+                raise Exception(f"Payment processing failed: {rpc_res.error}")
 
-                if hasattr(bucket_res, 'error') and bucket_res.error:
-                    print(f"CRITICAL: webhook add_credit_bucket RPC failed: {bucket_res.error}")
-                    raise Exception(f"Credit bucket creation failed: {bucket_res.error}")
-                
-                # Setup Subscription
-                expires_at = None
-                if plan_type == "regular":
-                    expires_at = (datetime.now(timezone.utc) + timedelta(days=60)).isoformat()
-                elif plan_type == "student":
-                    expires_at = (datetime.now(timezone.utc) + timedelta(days=90)).isoformat()
-                elif plan_type == "pay_per_use":
-                    expires_at = (datetime.now(timezone.utc) + timedelta(days=10)).isoformat()
-                    
-                await sb(lambda: sc.supabase.table("subscriptions").update({"is_active": False}).eq("user_id", user_id).execute())
-                
-                sub_data = {
-                    "user_id": user_id,
-                    "plan_type": plan_type,
-                    "is_active": True,
-                    "credits_granted": credits_to_add
-                }
-                if expires_at:
-                    sub_data["expires_at"] = expires_at
-                if plan_type == "student":
-                    sub_data["student_claimed"] = True
-                    
-                await sb(lambda: sc.supabase.table("subscriptions").insert(sub_data).execute())
-                
-                # Award Referral Bonus if the buyer was referred
-                try:
-                    ref_check = await sb(lambda: sc.supabase.table("users").select("referred_by").eq("id", user_id).execute())
-                    referrer_id = ref_check.data[0].get("referred_by") if ref_check.data else None
-                    if referrer_id:
-                        await sb(lambda: sc.supabase.rpc("add_credit_bucket", {
-                            "p_user_id": referrer_id,
-                            "p_plan_type": "referral",
-                            "p_amount": 20,
-                            "p_validity_days": None,
-                            "p_payment_id": f"ref_{payment_id}"
-                        }).execute())
-                        print(f"Referral bonus awarded: referrer={referrer_id}, buyer={user_id}")
-                except Exception as ref_err:
-                    # Never block payment success for referral errors
-                    print(f"Referral bonus error (non-critical): {ref_err}")
-                
-                # Mark payment as success ONLY AFTER all credits are confirmed granted
-                await sb(
-                    lambda: sc.supabase.table("payments").update({
-                        "status": "success",
-                        "razorpay_payment_id": payment_id,
-                        "razorpay_signature": "webhook_verified",
-                    })
-                    .eq("razorpay_order_id", order_id)
-                    .execute()
-                )
+            # Award Referral Bonus if the buyer was referred
+            try:
+                ref_check = await sb(lambda: sc.supabase.table("users").select("referred_by").eq("id", user_id).execute())
+                referrer_id = ref_check.data[0].get("referred_by") if ref_check.data else None
+                if referrer_id:
+                    await sb(lambda: sc.supabase.rpc("add_credit_bucket", {
+                        "p_user_id": referrer_id,
+                        "p_plan_type": "referral",
+                        "p_amount": 20,
+                        "p_validity_days": None,
+                        "p_payment_id": f"ref_{payment_id}"
+                    }).execute())
+                    print(f"Referral bonus awarded: referrer={referrer_id}, buyer={user_id}")
+            except Exception as ref_err:
+                # Never block payment success for referral errors
+                print(f"Referral bonus error (non-critical): {ref_err}")
         elif event == "payment.failed":
             payment_entity = payload.get('payload', {}).get('payment', {}).get('entity', {})
             order_id = payment_entity.get('order_id')
