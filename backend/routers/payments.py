@@ -150,7 +150,7 @@ async def verify_payment(body: VerifyRequest, authorization: str = Header(None))
             
             validity_days = 60 if actual_plan_type == "regular" else 90 if actual_plan_type == "student" else 10
 
-            # Idempotency guard: skip if credits already granted for this (payment_id, user_id) pair.
+            # Idempotency guard: skip if credits already granted for this payment_id.
             # Wrapped in try/except so a DB timeout falls through to the insert — the Postgres
             # UNIQUE index on (payment_id, user_id) is the true safety net.
             try:
@@ -472,7 +472,7 @@ async def razorpay_webhook(request: Request):
                 
                 validity_days = 60 if plan_type == "regular" else 90 if plan_type == "student" else 10
 
-                # Idempotency guard: skip if credits already granted for this (payment_id, user_id) pair.
+                # Idempotency guard: skip if credits already granted for this payment_id.
                 # Wrapped in try/except so a DB timeout falls through to the insert — the Postgres
                 # UNIQUE index on (payment_id, user_id) is the true safety net.
                 try:
@@ -524,6 +524,23 @@ async def razorpay_webhook(request: Request):
                     sub_data["student_claimed"] = True
                     
                 await sb(lambda: sc.supabase.table("subscriptions").insert(sub_data).execute())
+                
+                # Award Referral Bonus if the buyer was referred
+                try:
+                    ref_check = await sb(lambda: sc.supabase.table("users").select("referred_by").eq("id", user_id).execute())
+                    referrer_id = ref_check.data[0].get("referred_by") if ref_check.data else None
+                    if referrer_id:
+                        await sb(lambda: sc.supabase.rpc("add_credit_bucket", {
+                            "p_user_id": referrer_id,
+                            "p_plan_type": "referral",
+                            "p_amount": 20,
+                            "p_validity_days": None,
+                            "p_payment_id": payment_id
+                        }).execute())
+                        print(f"Referral bonus awarded: referrer={referrer_id}, buyer={user_id}")
+                except Exception as ref_err:
+                    # Never block payment success for referral errors
+                    print(f"Referral bonus error (non-critical): {ref_err}")
                 
                 # Mark payment as success ONLY AFTER all credits are confirmed granted
                 await sb(
