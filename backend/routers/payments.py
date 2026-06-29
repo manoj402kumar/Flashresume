@@ -212,7 +212,7 @@ async def verify_payment(body: VerifyRequest, authorization: str = Header(None))
                         "p_plan_type": "referral",
                         "p_amount": 20,
                         "p_validity_days": None,
-                        "p_payment_id": body.razorpay_payment_id
+                        "p_payment_id": f"ref_{body.razorpay_payment_id}"
                     }).execute())
                     print(f"Referral bonus awarded: referrer={referrer_id}, buyer={actual_user_id}")
             except Exception as ref_err:
@@ -535,7 +535,7 @@ async def razorpay_webhook(request: Request):
                             "p_plan_type": "referral",
                             "p_amount": 20,
                             "p_validity_days": None,
-                            "p_payment_id": payment_id
+                            "p_payment_id": f"ref_{payment_id}"
                         }).execute())
                         print(f"Referral bonus awarded: referrer={referrer_id}, buyer={user_id}")
                 except Exception as ref_err:
