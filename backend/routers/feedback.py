@@ -60,8 +60,9 @@ async def submit_feedback(body: FeedbackRequest):
 async def get_feedback():
     if not sc.supabase:
         return []
-    result = await sb(lambda: sc.supabase.table("feedback").select("*, users(email)").gte("created_at", "2026-05-28T00:00:00Z").order("created_at", desc=True).limit(100).execute())
-    return result.data
+    result = await sb(lambda: sc.supabase.table("feedback").select("*, users(email)", count="exact").gte("created_at", "2026-05-28T00:00:00Z").order("created_at", desc=True).limit(100).execute())
+    total_count = result.count if hasattr(result, 'count') and result.count is not None else len(result.data)
+    return {"reviews": result.data, "total_count": total_count}
 
 
 class IncrementDownloadRequest(BaseModel):

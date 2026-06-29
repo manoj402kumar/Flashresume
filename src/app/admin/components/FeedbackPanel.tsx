@@ -14,15 +14,22 @@ interface Feedback {
 
 export default function FeedbackPanel({ totalDownloads = 0 }: { totalDownloads?: number }) {
   const [feedbacks, setFeedbacks] = useState<Feedback[]>([]);
+  const [totalCount, setTotalCount] = useState<number>(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchFeedback = async () => {
       try {
-        const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
         const res = await fetch(`/api/admin-proxy/feedback`);
         const data = await res.json();
-        setFeedbacks(Array.isArray(data) ? data : []);
+        // Handle both old (array) and new ({reviews, total_count}) response shapes
+        if (Array.isArray(data)) {
+          setFeedbacks(data);
+          setTotalCount(data.length);
+        } else {
+          setFeedbacks(Array.isArray(data.reviews) ? data.reviews : []);
+          setTotalCount(data.total_count ?? data.reviews?.length ?? 0);
+        }
       } catch (e) {
         console.error(e);
       } finally {
@@ -30,7 +37,7 @@ export default function FeedbackPanel({ totalDownloads = 0 }: { totalDownloads?:
       }
     };
     fetchFeedback();
-  }, []);
+  }, [])
 
   const avgRating = feedbacks.length > 0 ? (feedbacks.reduce((sum, f) => sum + f.rating, 0) / feedbacks.length).toFixed(1) : "—";
   const fiveStars = feedbacks.length > 0 ? Math.round((feedbacks.filter(f => f.rating === 5).length / feedbacks.length) * 100) + "%" : "—";
@@ -84,7 +91,7 @@ export default function FeedbackPanel({ totalDownloads = 0 }: { totalDownloads?:
               <div className="text-[10px] text-[#595c5d]/60 font-medium mt-0.5">Avg Rating</div>
             </div>
             <div className="bg-[#eff1f2] rounded-xl p-3 text-center">
-              <div className="text-lg font-bold text-[#2c2f30] font-headline">{feedbacks.length}</div>
+              <div className="text-lg font-bold text-[#2c2f30] font-headline">{totalCount}</div>
               <div className="text-[10px] text-[#595c5d]/60 font-medium mt-0.5">Total Reviews</div>
             </div>
             <div className="bg-[#eff1f2] rounded-xl p-3 text-center">
