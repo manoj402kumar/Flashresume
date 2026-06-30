@@ -764,7 +764,7 @@ export default function App() {
                           activeCls: "bg-surface-container-lowest text-[#006859] shadow-sm border border-surface-container-highest",
                           radioBorder: "border-[#006859]",
                           radioDot: "bg-[#006859]",
-                          label: "Self Edit",
+                          label: "Edit Resume",
                         },
                         {
                           id: "first_resume" as const,
