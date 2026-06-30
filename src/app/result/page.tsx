@@ -49,6 +49,7 @@ import {
 } from "@/lib/highlighting";
 import ResumePDFTemplateLetter from "@/components/ResumePDFTemplateLetter";
 import FeedbackModal from "@/components/FeedbackModal";
+import ReferralModal from "@/components/ReferralModal";
 import ResumePDFTemplateA4 from "@/components/ResumePDFTemplateA4";
 import dynamic from "next/dynamic";
 import PricingPopup from "@/components/PricingPopup";
@@ -251,6 +252,8 @@ export default function ResultPage() {
 
   const [showMobilePreview, setShowMobilePreview] = useState(true);
   const [showFeedback, setShowFeedback] = useState(false);
+  const [showReferral, setShowReferral] = useState(false);
+  const [referralCode, setReferralCode] = useState<string | null>(null);
   const [sessionGuid, setSessionGuid] = useState<string>("");
   const [currentUserId, setCurrentUserId] = useState<string>("");
   const [activeModelName, setActiveModelName] = useState<string>("Auto");
@@ -622,6 +625,9 @@ export default function ResultPage() {
     setUserEmail(session.user.email || "");
     setCurrentUserId(session.user.id);
 
+    const { data: uData } = await supabase.from("users").select("referral_code").eq("id", session.user.id).single();
+    if (uData?.referral_code) setReferralCode(uData.referral_code);
+
     const { data: bucketData } = await supabase
       .from("credit_buckets")
       .select("*")
@@ -763,6 +769,7 @@ export default function ResultPage() {
 
       // 2. Determine if we should show feedback (pre-compute BEFORE iOS tab suspension)
       let shouldShowFeedback = false;
+      let shouldShowReferral = false;
       const activeUserId = session?.user?.id || currentUserId;
       if (activeUserId) {
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
@@ -780,8 +787,15 @@ export default function ResultPage() {
           if (res.ok) {
             const data = await res.json();
             const isFirstEverDownload = data.user_total_downloads === 1;
-            const isGlobalMilestone = data.total_platform_downloads > 0 && data.total_platform_downloads % 5 === 0;
-            if (isFirstEverDownload || isGlobalMilestone) {
+            const isSecondEverDownload = data.user_total_downloads === 2;
+            const isGlobalReferralMilestone = data.total_platform_downloads > 0 && data.total_platform_downloads % 3 === 0;
+            const isGlobalFeedbackMilestone = data.total_platform_downloads > 0 && data.total_platform_downloads % 5 === 0;
+            
+            if (isFirstEverDownload) {
+              shouldShowFeedback = true;
+            } else if (isSecondEverDownload || isGlobalReferralMilestone) {
+              shouldShowReferral = true;
+            } else if (isGlobalFeedbackMilestone) {
               shouldShowFeedback = true;
             }
           }
@@ -801,6 +815,8 @@ export default function ResultPage() {
       // 4. Now register the timeout BEFORE the OS fully freezes the thread
       if (shouldShowFeedback) {
         setTimeout(() => setShowFeedback(true), 5000);
+      } else if (shouldShowReferral && referralCode) {
+        setTimeout(() => setShowReferral(true), 5000);
       }
     } catch (error) {
       console.error("PDF generation failed:", error);
@@ -2988,6 +3004,13 @@ export default function ResultPage() {
           userId={currentUserId}
           sessionId={sessionGuid}
           onClose={() => setShowFeedback(false)}
+        />
+      )}
+
+      {showReferral && referralCode && (
+        <ReferralModal
+          referralCode={referralCode}
+          onClose={() => setShowReferral(false)}
         />
       )}
       {/* The 5-Second Teaser Auth Wall */}
