@@ -937,7 +937,7 @@ export default function ScratchPage() {
           )}
 
           {/* Scrollable Panel Content */}
-          <div className="flex-1 overflow-y-auto overscroll-y-contain p-4 sm:p-6 lg:px-8 lg:py-6 pb-24 hide-scrollbar bg-[#0f1117]">
+          <div className="flex-1 lg:overflow-y-auto lg:overscroll-y-contain p-4 sm:p-6 lg:px-8 lg:py-6 pb-24 hide-scrollbar bg-[#0f1117]">
 
             {/* ── Inspiration Banner ── */}
             <motion.div
