@@ -27,8 +27,6 @@ export default function ReferralModal({ referralCode, onClose }: Props) {
         document.execCommand("copy");
         document.body.removeChild(textArea);
       }
-      setCopied(true);
-      setTimeout(() => setCopied(false), 3000);
     } catch (e) {
       // Ignore copy errors
     }
@@ -41,13 +39,17 @@ export default function ReferralModal({ referralCode, onClose }: Props) {
           text: "I used Flashresume to rebuild my resume in 60 seconds! Must try.",
           url: url,
         });
-        return;
       } catch (err: any) {
         if (err.name !== "AbortError") {
           console.error("Error sharing:", err);
         }
       }
+      return; // exit before setCopied
     }
+
+    // fallback: no native share, so we did copy — now show feedback
+    setCopied(true);
+    setTimeout(() => setCopied(false), 3000);
   };
 
   return (
