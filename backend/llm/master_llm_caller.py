@@ -302,15 +302,10 @@ async def call_llm_balanced(prompt: str, is_r1: bool, preferred_model: str = "",
             key_label = "Key 3" if is_key3 else ("Key 2" if is_key2 else "Key 1")
             chain.append((provider, base_model_id, key_label))
         else:
-            if is_r1:
-                # R1 (Analyze): DeepSeek → Pool 1 → Pool 2
-                chain.append(("deepseek", "deepseek-v4-flash", "Key 1"))
-                chain.append(("POOL", 1, None))
-                chain.append(("POOL", 2, None))
-            else:
-                # R2 (Generate) & Self-Edit: Pool 1 → Pool 2 (No DeepSeek)
-                chain.append(("POOL", 1, None))
-                chain.append(("POOL", 2, None))
+            # Universal chain: R1, R2, and Self-Edit all start at DeepSeek
+            chain.append(("deepseek", "deepseek-v4-flash", "Key 1"))
+            chain.append(("POOL", 1, None))
+            chain.append(("POOL", 2, None))
 
         # Execute Chain
         for item in chain:
