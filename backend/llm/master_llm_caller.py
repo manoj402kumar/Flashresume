@@ -40,6 +40,7 @@ async def _trip_circuit(model_id: str, error_type: str):
         try:
             await asyncio.wait_for(
                 asyncio.to_thread(lambda: sc.supabase.table("llm_usage").insert({
+                    "request_type": "circuit_trip",
                     "provider": provider,
                     "model": model_id,
                     "success": False,
@@ -153,6 +154,9 @@ _CALLERS = {
     ("mistral",    "Key 1"): call_single_mistral_r1,
     ("mistral",    "Key 2"): call_single_mistral_r2,
     ("mistral",    "Key 3"): call_single_mistral_r3,
+    ("ministral",  "Key 1"): call_single_mistral_r1,
+    ("ministral",  "Key 2"): call_single_mistral_r2,
+    ("ministral",  "Key 3"): call_single_mistral_r3,
     ("nvidia",     "Key 1"): call_single_nvidia_r1,
     ("nvidia",     "Key 2"): call_single_nvidia_r2,
     ("cloudflare", "Key 1"): call_single_cloudflare_r1,
@@ -343,6 +347,7 @@ async def call_llm_balanced(prompt: str, is_r1: bool, preferred_model: str = "",
             try:
                 await asyncio.to_thread(
                     lambda: sc.supabase.table("llm_usage").insert({
+                        "request_type": "all_failed",
                         "provider": "all_failed",
                         "model": "all_failed",
                         "success": False,

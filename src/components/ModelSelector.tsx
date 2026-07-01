@@ -31,13 +31,11 @@ export const MODELS = {
     { id: "mistral-medium-2508|key1", name: "Mistral Medium 2508 (Mistral) - Key 1" },
     { id: "mistral-medium-2508|key2", name: "Mistral Medium 2508 (Mistral) - Key 2" },
     { id: "mistral-medium-2508|key3", name: "Mistral Medium 2508 (Mistral) - Key 3" },
-    { id: "mistralai/mistral-nemotron|key1", name: "Mistral Nemotron (NVIDIA) - Key 1" },
-    { id: "mistralai/mistral-nemotron|key2", name: "Mistral Nemotron (NVIDIA) - Key 2" },
-
-    // -- Pool 2 (Secondary Fallbacks) --
     { id: "mistral-large-latest|key1", name: "Mistral Large (Mistral) - Key 1" },
     { id: "mistral-large-latest|key2", name: "Mistral Large (Mistral) - Key 2" },
     { id: "mistral-large-latest|key3", name: "Mistral Large (Mistral) - Key 3" },
+
+    // -- Pool 2 (Secondary Fallbacks) --
     { id: "ministral-14b-latest|key1", name: "Ministral 14B (Mistral) - Key 1" },
     { id: "ministral-14b-latest|key2", name: "Ministral 14B (Mistral) - Key 2" },
     { id: "ministral-14b-latest|key3", name: "Ministral 14B (Mistral) - Key 3" },
@@ -52,7 +50,9 @@ export const MODELS = {
     { id: "mistralai/ministral-14b-instruct-2512|key1", name: "Ministral 14B 2512 (NVIDIA) - Key 1" },
     { id: "mistralai/ministral-14b-instruct-2512|key2", name: "Ministral 14B 2512 (NVIDIA) - Key 2" },
     { id: "@cf/mistralai/mistral-small-3.1-24b-instruct|key1", name: "Mistral Small 24B (Cloudflare) - Key 1" },
-    { id: "@cf/mistralai/mistral-small-3.1-24b-instruct|key2", name: "Mistral Small 24B (Cloudflare) - Key 2" }
+    { id: "@cf/mistralai/mistral-small-3.1-24b-instruct|key2", name: "Mistral Small 24B (Cloudflare) - Key 2" },
+    { id: "mistralai/mistral-nemotron|key1", name: "Mistral Nemotron (NVIDIA) - Key 1" },
+    { id: "mistralai/mistral-nemotron|key2", name: "Mistral Nemotron (NVIDIA) - Key 2" }
   ]
 };
 
