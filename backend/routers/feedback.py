@@ -39,7 +39,7 @@ async def submit_feedback(body: FeedbackRequest):
         query = query.eq("session_id", body.session_id)
     else:
         # Prevent multiple scratch mode feedbacks per user if desired, or allow them?
-        # The frontend asks once on first download, or 5th global download.
+        # The frontend asks once on first download, or 8th global download.
         # We can just check for null session_id
         query = query.is_("session_id", "null")
         

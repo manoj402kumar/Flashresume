@@ -606,7 +606,7 @@ export default function ScratchPage() {
             const isFirstEverDownload = data.user_total_downloads === 1;
             const isSecondEverDownload = data.user_total_downloads === 2;
             const isGlobalReferralMilestone = data.total_platform_downloads > 0 && data.total_platform_downloads % 3 === 0;
-            const isGlobalFeedbackMilestone = data.total_platform_downloads > 0 && data.total_platform_downloads % 5 === 0;
+            const isGlobalFeedbackMilestone = data.total_platform_downloads > 0 && data.total_platform_downloads % 8 === 0;
             
             if (isFirstEverDownload) {
               shouldShowFeedback = true;
