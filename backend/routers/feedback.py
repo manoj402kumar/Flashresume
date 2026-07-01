@@ -62,13 +62,8 @@ async def get_feedback():
         return []
     result = await sb(lambda: sc.supabase.table("feedback").select("*, users(email)", count="exact").gte("created_at", "2026-05-28T00:00:00Z").order("created_at", desc=True).limit(100).execute())
     
-    filtered_data = [
-        r for r in (result.data or [])
-        if len(r.get("suggestion", "").strip().split()) > 1
-    ]
-    
-    total_count = result.count if hasattr(result, 'count') and result.count is not None else len(result.data)
-    return {"reviews": filtered_data, "total_count": total_count}
+    total_count = result.count if hasattr(result, 'count') and result.count is not None else len(result.data or [])
+    return {"reviews": result.data, "total_count": total_count}
 
 @router.get("/public/reviews")
 async def get_public_reviews():
