@@ -964,7 +964,75 @@ export default function App() {
           </motion.div>
         </section>
 
+        {/* ── Inspirational Quote Section ──────────────────────────────── */}
+        <section className="py-24 overflow-hidden relative">
+          {/* Ambient background glow */}
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-0 flex items-center justify-center"
+          >
+            <div className="w-[600px] h-[200px] rounded-full bg-black opacity-5 blur-[120px]" />
+          </div>
 
+          <div className="max-w-4xl mx-auto px-6 relative z-10">
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-80px" }}
+              transition={{ duration: 0.8, ease: "easeOut" }}
+              className="flex flex-col items-center text-center"
+            >
+              {/* Decorative top line */}
+              <motion.div
+                initial={{ scaleX: 0 }}
+                whileInView={{ scaleX: 1 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.7, delay: 0.2, ease: "easeOut" }}
+                className="w-16 h-[2px] bg-gradient-to-r from-transparent via-black to-transparent mb-8 origin-center"
+              />
+
+              {/* Opening quotation mark */}
+              <span
+                aria-hidden="true"
+                className="text-7xl font-serif leading-none text-black opacity-15 select-none mb-2"
+                style={{ fontFamily: "Georgia, serif", lineHeight: 1 }}
+              >
+                &ldquo;
+              </span>
+
+              {/* The Quote */}
+              <motion.h2
+                initial={{ opacity: 0, y: 16 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.7, delay: 0.3 }}
+                className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight leading-tight text-black"
+              >
+                Stop not till the goal is reached.
+              </motion.h2>
+
+              {/* Attribution */}
+              <motion.p
+                initial={{ opacity: 0 }}
+                whileInView={{ opacity: 1 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6, delay: 0.55 }}
+                className="mt-6 text-sm sm:text-base font-medium tracking-widest uppercase text-black/50"
+              >
+                — Swami Vivekananda
+              </motion.p>
+
+              {/* Decorative bottom line */}
+              <motion.div
+                initial={{ scaleX: 0 }}
+                whileInView={{ scaleX: 1 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.7, delay: 0.65, ease: "easeOut" }}
+                className="w-16 h-[2px] bg-gradient-to-r from-transparent via-black to-transparent mt-8 origin-center"
+              />
+            </motion.div>
+          </div>
+        </section>
 
         {/* ── Templates Section ──────────────────────────────────────── */}
         <TemplatesCarousel />
