@@ -28,11 +28,11 @@ The "job_strategy" JSON field must be computed from RESUME_TEXT alone. Read RESU
 - Determine 3-5 job roles that best match the candidate's actual background.
 - The goal is to suggest roles where their original resume can easily get shortlisted.
 - Base this ONLY on skills, experience, projects, and education found in RESUME_TEXT.
-- For each role output: role name, match level ("Strong" / "Good" / "Moderate"), and exactly 2 ready-to-use Google search sentences.
-- The FIRST search query MUST be a direct LinkedIn posts search URL (e.g. "https://www.linkedin.com/search/results/content/?keywords=ROLE hiring").
-- The SECOND search query MUST be a standard Google search string including: role, key tech stack, experience level (fresher/junior/senior), location (Hyderabad or Bengaluru). Location is MANDATORY.
+- For each role output: role name, match level ("Strong" / "Good" / "Moderate"), and exactly 2 ready-to-use search queries.
+- The FIRST search query MUST be a direct LinkedIn posts search URL. It MUST include BOTH the role AND the candidate's experience level derived from their resume (e.g. "intern", "fresher", "1 year experience", "2 years experience", "junior", "senior"). Format example: "https://www.linkedin.com/search/results/content/?keywords=React+Developer+intern+hiring" or "https://www.linkedin.com/search/results/content/?keywords=Java+Developer+2+years+experience+hiring". Use URL-encoded spaces (%20 or +). The experience level keyword in the URL MUST reflect the actual level from RESUME_TEXT — do NOT use a generic keyword.
+- The SECOND search query MUST be a standard Google search string including: role, key tech stack, experience level (intern/fresher/junior/senior derived from RESUME_TEXT), location (Hyderabad or Bengaluru). Location is MANDATORY.
 - Output as array of 3-5 objects.
-- If the candidate is a fresher, new graduate, or has no prior full-time work experience (projects do NOT count as experience), suggest entry-level / intern roles.
+- If the candidate is a fresher, new graduate, or has no prior full-time work experience (projects do NOT count as experience), suggest entry-level / intern roles and use "intern" or "fresher" as the experience keyword in the LinkedIn URL.
 
 KEYWORD DEFINITIONS:
 - Tech Stack Keywords: Languages (Java, Python, C++), Frameworks (Angular, Spring Boot, Django, Express.js, Node.js), Libraries (React, NumPy, Pandas), Databases (MongoDB, PostgreSQL), Cloud (AWS, Azure), Dev Tools (Docker, Kubernetes).

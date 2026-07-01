@@ -34,8 +34,9 @@ AFTER GENERATING ai_suggestions: Generate "job_strategy" — analyze RESUME_TEXT
 - the goal is to search jobs where their resume can be easily shortlisted.
 - role: clear job title with tech stack e.g. "Frontend Developer (React/Next.js)"
 - match: "Strong", "Good", or "Moderate"
-- search_queries: exactly 2 specific queries/links. The FIRST MUST be a direct LinkedIn posts search URL, formatted exactly like: "https://www.linkedin.com/search/results/content/?keywords=ROLE hiring". The SECOND should be a standard Google search string (ALWAYS include role, key tech, experience level, location — use Hyderabad or Bengaluru as default; location is MANDATORY).
-- if user is fresher or new graudate or no prior work experience(dont consider projects as experience) suggest entry level roles like intern.
+- The FIRST MUST be a direct LinkedIn posts search URL. It MUST include BOTH the role AND the candidate's experience level derived from their resume (e.g. "intern", "fresher", "1 year experience", "2 years experience", "junior", "senior"). Format example: "https://www.linkedin.com/search/results/content/?keywords=React+Developer+intern+hiring" or "https://www.linkedin.com/search/results/content/?keywords=Java+Developer+2+years+experience+hiring". Use URL-encoded spaces (+). The experience level keyword MUST reflect the actual level inferred from RESUME_TEXT — do NOT use a generic keyword.
+- The SECOND should be a standard Google search string (ALWAYS include role, key tech, experience level derived from RESUME_TEXT, location — use Hyderabad or Bengaluru as default; location is MANDATORY).
+- if user is fresher or new graduate or no prior work experience (dont consider projects, internships as experience) suggest entry level roles like intern and use "intern" or "fresher" as the experience keyword in the LinkedIn URL and google search queries.
 
 HEADING FIELD RULES:
 - linkedin_url: Display text as "Linkedin"
@@ -120,7 +121,7 @@ OUTPUT FORMAT (Template v1):
       "role": "<Job Role Title e.g. Full Stack Developer (React/Node.js)>",
       "match": "<Strong | Good | Moderate>",
       "search_queries": [
-        "https://www.linkedin.com/search/results/content/?keywords=Role%20Name%20hiring",
+        "https://www.linkedin.com/search/results/content/?keywords=Full+Stack+Developer+2+years+experience+hiring",
         "<Ready-to-use Google search sentence 2 with tech stack and location>"
       ]
     }}
