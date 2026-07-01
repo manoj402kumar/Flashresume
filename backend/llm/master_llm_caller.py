@@ -1,5 +1,6 @@
 import asyncio
 import time
+import re
 from .deepseek_direct import call_single_deepseek_r1, call_single_deepseek_r2
 from .mistral_fallback import call_single_mistral_r1, call_single_mistral_r2, call_single_mistral_r3
 from .nvidia_fallback import call_single_nvidia_r1, call_single_nvidia_r2
@@ -24,6 +25,12 @@ def _get_402_cooldown_secs() -> int:
     return max(300, min(cooldown, 86400))
 
 async def _trip_circuit(model_id: str, error_type: str):
+    if error_type == "config":
+        # Missing env var — skip locally, never pollute global DB
+        _circuit_tripped[model_id] = float('inf')
+        print(f"[{model_id}] Config error — skipping locally (no DB write)")
+        return
+
     if error_type == "429":
         cooldown = _COOLDOWN_SECS_429
     elif error_type == "402":
@@ -77,14 +84,16 @@ def _is_tripped(model_id: str, db_tripped_keys: set = None) -> bool:
 
 def _get_rate_limit_type(attempts):
     for att in attempts:
-        err = str(att.get("status", ""))
-        if any(x in err for x in ["402", "Payment Required"]):
+        status = str(att.get("status", ""))
+        # Use word boundaries — avoids "4290", "context 401 token", etc.
+        if re.search(r'\b402\b', status) or "Payment Required" in status:
             return "402"
-        if any(x in err for x in ["429", "rate_limit", "RESOURCE_EXHAUSTED"]):
+        if re.search(r'\b429\b', status) or re.search(r'\brate.?limit\b', status, re.I) or "RESOURCE_EXHAUSTED" in status:
             return "429"
-        if any(x in err for x in ["not configured", "API key not", "missing_api_key"]):
-            return "402"
-        if any(x in err for x in ["401", "Unauthorized", "invalid_api_key", "403", "Forbidden"]):
+        if any(x in status for x in ["not configured", "API key not", "missing_api_key"]):
+            return "config"
+        if re.search(r'\b401\b', status) or re.search(r'\b403\b', status) or \
+           any(x in status for x in ["Unauthorized", "invalid_api_key", "Forbidden"]):
             return "401"
     return None
 # ─────────────────────────────────────────────────────────────────────────────
@@ -282,9 +291,10 @@ async def call_llm_balanced(prompt: str, is_r1: bool, preferred_model: str = "",
 
         # Build Chain
         chain = []
+        is_explicit_preferred = bool(preferred_model and preferred_model != "auto")
 
         # 1. Explicit Preferred Model Override
-        if preferred_model and preferred_model != "auto":
+        if is_explicit_preferred:
             provider = _get_provider_for_model(preferred_model)
             base_model_id = preferred_model.split("|")[0]
             is_key3 = "|key3" in preferred_model
@@ -315,7 +325,10 @@ async def call_llm_balanced(prompt: str, is_r1: bool, preferred_model: str = "",
 
             for provider, model_id, key_label in models:
                 circuit_key = f"{provider}_{model_id}_{key_label}"
-                if _is_tripped(circuit_key, db_tripped_keys):
+                
+                if is_explicit_preferred and _is_tripped(circuit_key, db_tripped_keys):
+                    print(f"[{circuit_key}] Circuit tripped but bypassing — explicit user selection")
+                elif not is_explicit_preferred and _is_tripped(circuit_key, db_tripped_keys):
                     all_attempts.append({"model": f"{model_id} - {key_label}", "status": "circuit_breaker_active"})
                     continue
 
