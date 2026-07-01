@@ -467,12 +467,12 @@ export default function App() {
         {currentUser && (
           <button
             onClick={handleShare}
-            className="md:hidden w-full flex items-center justify-center gap-2 text-white text-xs font-bold py-2 px-4 tracking-wide hover:opacity-90 active:opacity-80 transition-opacity"
+            className="md:hidden w-full flex items-center justify-center gap-2.5 text-white text-sm font-bold py-3.5 px-4 tracking-wide hover:opacity-90 active:opacity-80 transition-opacity"
             style={{ backgroundColor: "#006859" }}
           >
-            <span className="relative flex h-2 w-2 flex-shrink-0">
+            <span className="relative flex h-2.5 w-2.5 flex-shrink-0">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-60" />
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-white" />
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-white" />
             </span>
             🎁 Refer &amp; get 20 credits —&nbsp;<span className="underline underline-offset-2">tap here</span>
           </button>
