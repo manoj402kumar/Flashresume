@@ -95,7 +95,7 @@ def _get_rate_limit_type(attempts):
 # POOLS are 3-tuples: (provider, model_id, key_label)
 # The caller is resolved via _CALLERS[(provider, key_label)]:
 #   "Key 1" → r1 caller (Account 1 API key)
-#   "Key 2" → r2 caller (Account 2 API key)
+#   "Key 2"→ r2 caller (Account 2 API key)
 #
 # This is the only correct way to route — it matches the API account to the
 # pool slot regardless of whether the request is R1 (analyze) or R2 (generate).
