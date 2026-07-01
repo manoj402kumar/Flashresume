@@ -12,13 +12,43 @@ _R1_MAX_TOKENS = 8000
 _R2_MAX_TOKENS = 8000
 
 _COOLDOWN_SECS_429 = 120
-_COOLDOWN_SECS_402 = 86400
 _circuit_tripped = {}
 
+def _get_402_cooldown_secs() -> int:
+    import datetime
+    now = datetime.datetime.now(datetime.timezone.utc)
+    tomorrow = (now + datetime.timedelta(days=1)).replace(
+        hour=0, minute=5, second=0, microsecond=0
+    )
+    cooldown = int((tomorrow - now).total_seconds())
+    return max(300, min(cooldown, 86400))
+
 async def _trip_circuit(model_id: str, error_type: str):
-    cooldown = _COOLDOWN_SECS_429 if error_type == "429" else _COOLDOWN_SECS_402
+    if error_type == "429":
+        cooldown = _COOLDOWN_SECS_429
+    elif error_type == "402":
+        cooldown = _get_402_cooldown_secs()
+    elif error_type == "401":
+        cooldown = 86400
+    else:
+        cooldown = 300
     print(f"[{model_id}] Circuit tripped ({error_type}). Cooling down for {cooldown}s.")
     _circuit_tripped[model_id] = time.time() + cooldown
+
+    if sc.supabase:
+        provider = model_id.split("_")[0]
+        try:
+            await asyncio.wait_for(
+                asyncio.to_thread(lambda: sc.supabase.table("llm_usage").insert({
+                    "provider": provider,
+                    "model": model_id,
+                    "success": False,
+                    "speed_secs": 0
+                }).execute()),
+                timeout=0.8
+            )
+        except Exception:
+            pass
     
     if sc.supabase:
         try:
@@ -53,6 +83,8 @@ def _get_rate_limit_type(attempts):
             return "429"
         if any(x in err for x in ["not configured", "API key not", "missing_api_key"]):
             return "402"
+        if any(x in err for x in ["401", "Unauthorized", "invalid_api_key", "403", "Forbidden"]):
+            return "401"
     return None
 # ─────────────────────────────────────────────────────────────────────────────
 # IMPORTANT: In caller function names, r1/r2 = API ACCOUNT NUMBER, not request type.
@@ -84,17 +116,15 @@ POOL_1 = [
     ("mistral", "mistral-medium-2508",                      "Key 1"),
     ("mistral", "mistral-medium-2508",                      "Key 2"),
     ("mistral", "mistral-medium-2508",                      "Key 3"),
-    ("nvidia",  "mistralai/mistral-nemotron",               "Key 1"),
-    ("nvidia",  "mistralai/mistral-nemotron",               "Key 2"),
+    ("mistral", "mistral-large-latest",                     "Key 1"),
+    ("mistral", "mistral-large-latest",                     "Key 2"),
+    ("mistral", "mistral-large-latest",                     "Key 3"),
 ]
 
 POOL_2 = [
-    ("mistral",    "mistral-large-latest",                         "Key 1"),
-    ("mistral",    "mistral-large-latest",                         "Key 2"),
-    ("mistral",    "mistral-large-latest",                         "Key 3"),
-    ("mistral",    "ministral-14b-latest",                         "Key 1"),
-    ("mistral",    "ministral-14b-latest",                         "Key 2"),
-    ("mistral",    "ministral-14b-latest",                         "Key 3"),
+    ("ministral",  "ministral-14b-latest",                         "Key 1"),
+    ("ministral",  "ministral-14b-latest",                         "Key 2"),
+    ("ministral",  "ministral-14b-latest",                         "Key 3"),
     ("mistral",    "mistral-small-latest",                         "Key 1"),
     ("mistral",    "mistral-small-latest",                         "Key 2"),
     ("mistral",    "mistral-small-latest",                         "Key 3"),
@@ -107,6 +137,8 @@ POOL_2 = [
     ("nvidia",     "mistralai/ministral-14b-instruct-2512",        "Key 2"),
     ("cloudflare", "@cf/mistralai/mistral-small-3.1-24b-instruct", "Key 1"),
     ("cloudflare", "@cf/mistralai/mistral-small-3.1-24b-instruct", "Key 2"),
+    ("nvidia",     "mistralai/mistral-nemotron",                   "Key 1"),
+    ("nvidia",     "mistralai/mistral-nemotron",                   "Key 2"),
 ]
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -132,15 +164,52 @@ def _get_start_idx(pool_size: int, offset: int = 0) -> int:
     minute_bucket = int(time.time() // 60)
     return (minute_bucket + offset) % pool_size
 
-_pool1_idx = _get_start_idx(len(POOL_1), offset=0)
-_pool2_idx = _get_start_idx(len(POOL_2), offset=7)
+_pool1_idx = None
+_pool2_idx = None
+_rr_initialized = False
+_rr_init_lock = asyncio.Lock()
 _rr_lock = asyncio.Lock()
+
+async def _ensure_rr_initialized():
+    global _pool1_idx, _pool2_idx, _rr_initialized
+    if _rr_initialized:
+        return
+    async with _rr_init_lock:
+        if _rr_initialized:
+            return
+        p1_fallback = _get_start_idx(len(POOL_1), offset=0)
+        p2_fallback = _get_start_idx(len(POOL_2), offset=7)
+        if sc.supabase:
+            try:
+                res = await asyncio.wait_for(
+                    asyncio.to_thread(lambda: sc.supabase.table("rr_counters")
+                        .select("name,counter")
+                        .in_("name", ["pool_1_global", "pool_2_global"])
+                        .execute()),
+                    timeout=1.5
+                )
+                if res.data:
+                    for row in res.data:
+                        if row["name"] == "pool_1_global":
+                            _pool1_idx = int(row["counter"]) % len(POOL_1)
+                        elif row["name"] == "pool_2_global":
+                            _pool2_idx = int(row["counter"]) % len(POOL_2)
+                    print(f"[RR] Resumed from DB — pool1={_pool1_idx}, pool2={_pool2_idx}")
+            except Exception as e:
+                print(f"[RR] DB load failed, using clock seed: {e}")
+        
+        if _pool1_idx is None:
+            _pool1_idx = p1_fallback
+        if _pool2_idx is None:
+            _pool2_idx = p2_fallback
+        _rr_initialized = True
 
 async def _get_next_rr_index(pool_type: int) -> int:
     """
     Reads current RR index from local memory.
     """
     global _pool1_idx, _pool2_idx
+    await _ensure_rr_initialized()
     async with _rr_lock:
         return _pool1_idx if pool_type == 1 else _pool2_idx
 
@@ -156,6 +225,21 @@ async def _advance_rr_index(pool_type: int, pool_size: int, winner_idx: int):
             _pool1_idx = next_idx
         else:
             _pool2_idx = next_idx
+
+    if sc.supabase:
+        counter_name = "pool_1_global" if pool_type == 1 else "pool_2_global"
+        async def _persist():
+            try:
+                await asyncio.wait_for(
+                    asyncio.to_thread(lambda: sc.supabase.table("rr_counters")
+                        .update({"counter": next_idx})
+                        .eq("name", counter_name)
+                        .execute()),
+                    timeout=0.8
+                )
+            except Exception:
+                pass
+        asyncio.create_task(_persist())
 
 async def _get_pool_models(pool_type: int) -> list:
     pool = POOL_1 if pool_type == 1 else POOL_2
@@ -253,7 +337,23 @@ async def call_llm_balanced(prompt: str, is_r1: bool, preferred_model: str = "",
                     att["model"] = f"{model_id} - {key_label}"
                 all_attempts.extend(result.get("attempts", []))
 
-        return {"success": False, "all_attempts": all_attempts}
+    
+    if sc.supabase:
+        async def _log_failure():
+            try:
+                await asyncio.to_thread(
+                    lambda: sc.supabase.table("llm_usage").insert({
+                        "provider": "all_failed",
+                        "model": "all_failed",
+                        "success": False,
+                        "speed_secs": 0
+                    }).execute()
+                )
+            except Exception:
+                pass
+        asyncio.create_task(_log_failure())
+    
+    return {"success": False, "all_attempts": all_attempts}
 
 def _finalize(result: dict, provider: str, model_id: str, r_type: str) -> dict:
     if sc.supabase and result.get("speed"):
