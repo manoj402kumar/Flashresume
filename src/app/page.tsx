@@ -1201,14 +1201,19 @@ export default function App() {
                   {hoveredPlan === "student" && <CheckCircle2 className="w-4 h-4 text-[#006859]" />}
                 </div>
 
-                <div className={`absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full text-xs font-black uppercase tracking-widest whitespace-nowrap shadow-md transition-colors ${hoveredPlan === "student" ? "bg-white text-orange-500 shadow-orange-500/10" : "bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-orange-500/30"}`}>
+                <div className={`absolute -top-4 left-1/2 -translate-x-1/2 overflow-hidden flex items-center gap-1.5 text-[10px] font-black px-3 py-0.5 rounded-full shadow-lg whitespace-nowrap tracking-wider border z-20 bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-orange-500/40 border-orange-400/50`}>
                   STUDENT OFFER
+                  <span className="relative bg-white/25 text-white rounded-full px-1.5 py-0 text-[9px] font-black tracking-wide border border-white/30">50% OFF</span>
                 </div>
                 <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-4 transition-colors ${hoveredPlan === "student" ? "bg-white/20 text-white" : "bg-amber-50 text-amber-500"}`}>
-                  <Verified className={`w-5 h-5 ${hoveredPlan === "student" ? "text-white opacity-90" : "text-amber-500"}`} />
+                  <GraduationCap className={`w-5 h-5 ${hoveredPlan === "student" ? "text-white opacity-90" : "text-amber-500"}`} />
                 </div>
                 <h3 className="font-headline text-2xl font-bold mb-1">Student Plan</h3>
                 <p className={`text-sm mb-4 transition-colors ${hoveredPlan === "student" ? "text-white/90" : "text-on-surface-variant"}`}>300 Credits (30 Resumes)</p>
+                <div className="flex items-center gap-1.5 mb-0.5">
+                  <p className={`text-sm line-through leading-none ${hoveredPlan === "student" ? "text-white/55" : "text-on-surface-variant opacity-60"}`}>₹199</p>
+                  <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-md leading-none tracking-wide ${hoveredPlan === "student" ? "bg-white/25 text-white border border-white/30" : "bg-orange-500/15 text-orange-600 border border-orange-400/40"}`}>50% OFF</span>
+                </div>
                 <div className="text-4xl font-black mb-1">₹99</div>
                 <p className={`text-sm mb-8 transition-colors ${hoveredPlan === "student" ? "text-white/90" : "text-on-surface-variant"}`}>/3 months</p>
                 <ul className="space-y-3 mb-10 text-left flex-grow">
@@ -1224,8 +1229,15 @@ export default function App() {
                     <CheckCircle2 className={`w-4 h-4 flex-shrink-0 transition-colors ${hoveredPlan === "student" ? "text-white" : "text-primary"}`} />
                     All Premium Features
                   </li>
-                  <li className={`flex items-center gap-3 font-bold text-sm transition-colors ${hoveredPlan === "student" ? "text-white" : "text-amber-600"}`}>
-                    ✓ Verified Student
+                  <li className="flex justify-center">
+                    <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black tracking-wide border shadow-sm whitespace-nowrap ${
+                      hoveredPlan === "student"
+                        ? "bg-gradient-to-r from-orange-500 to-amber-500 border-orange-400 text-white shadow-lg shadow-orange-500/20"
+                        : "bg-orange-500/10 border-orange-400/40 text-orange-600"
+                    }`}>
+                      <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse flex-shrink-0" />
+                      Grab before {new Date(Date.now() + 86400000).toLocaleDateString("en-GB", { day: "2-digit", month: "2-digit", year: "numeric" }).replace(/\//g, "/")}
+                    </div>
                   </li>
                 </ul>
                 <button
