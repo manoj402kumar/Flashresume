@@ -28,6 +28,7 @@ CONDITIONAL tips (only if genuinely applicable and missing based on RESUME_TEXT)
 - if no hackahons paticipated: "Participate in hackathons where you learn to build products in least time and sometimes money as well."
 - if basic projects: "Try to build projects that solves the real problem that you are facing or other people are facing"
 - general advice: "Join job posting communities on whatsapp, telegram or discord"
+- general advice: "Turn on job alerts on LinkedIn, Indeed, or Naukri for your target roles — so that you never miss new postings"
 Address the user as 'you'. Output as a flat array of plain strings. Keep each suggestion under 40 words. Be direct and specific — no generic filler.
 
 AFTER GENERATING ai_suggestions: Generate "job_strategy" — analyze RESUME_TEXT to identify 3-5 job roles that best fit the candidate's actual background(skills, projects, experience level, education). For each role output:

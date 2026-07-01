@@ -32,7 +32,7 @@ The "job_strategy" JSON field must be computed from RESUME_TEXT alone. Read RESU
 - The FIRST search query MUST be a direct LinkedIn posts search URL. It MUST include BOTH the role AND the candidate's experience level derived from their resume (e.g. "intern", "fresher", "1 year experience", "2 years experience", "junior", "senior"). Format example: "https://www.linkedin.com/search/results/content/?keywords=React+Developer+intern+hiring" or "https://www.linkedin.com/search/results/content/?keywords=Java+Developer+2+years+experience+hiring". Use URL-encoded spaces (%20 or +). The experience level keyword in the URL MUST reflect the actual level from RESUME_TEXT — do NOT use a generic keyword.
 - The SECOND search query MUST be a standard Google search string including: role, key tech stack, experience level (intern/fresher/junior/senior derived from RESUME_TEXT), location (Hyderabad or Bengaluru). Location is MANDATORY.
 - Output as array of 3-5 objects.
-- If the candidate is a fresher, new graduate, or has no prior full-time work experience (projects do NOT count as experience), suggest entry-level / intern roles and use "intern" or "fresher" as the experience keyword in the LinkedIn URL.
+- If the candidate is a fresher, new graduate, or has no prior full-time work experience (projects and internships do NOT count as experience), suggest entry-level / intern roles and use "intern" or "fresher" as the experience keyword in the LinkedIn URL and google search query.
 
 KEYWORD DEFINITIONS:
 - Tech Stack Keywords: Languages (Java, Python, C++), Frameworks (Angular, Spring Boot, Django, Express.js, Node.js), Libraries (React, NumPy, Pandas), Databases (MongoDB, PostgreSQL), Cloud (AWS, Azure), Dev Tools (Docker, Kubernetes).
@@ -149,6 +149,7 @@ RULES:
    - Always include DSA tip: "Solve top interview 150 DSA problems on LeetCode focusing on Arrays, Strings, Trees, DP, and Graphs. Aim for 1700+ contest rating to clear most coding interviews."
    - Always include: "Conribute to opensource on github in x tech stack" where x is jd core tech s
    - Always include: "Join job posting communities on whatsapp, telegram or discord"
+   - Always include: "Turn on job alerts on LinkedIn, Indeed, or Naukri for your target roles — so that you never miss new postings."
    - If approved project was suggested → include: "Build the [project title] project using [tech stack] — this directly fills your [JD tech] gap and gives you something concrete to show recruiters."
    - Suggest 1 specific certfication relevant to the JD tech stack.
    - Address user as "you". Output as flat array of plain strings. Only give suggestions when genuinely needed.
