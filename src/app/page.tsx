@@ -463,7 +463,22 @@ export default function App() {
       <OnboardingTour />
       {/* TopNavBar */}
       <nav className="fixed top-0 w-full z-50 glass-header border-b border-surface-container-low">
+        {/* Mobile-only referral announcement bar — logged-in users only */}
+        {currentUser && (
+          <button
+            onClick={handleShare}
+            className="md:hidden w-full flex items-center justify-center gap-2 text-white text-xs font-bold py-2 px-4 tracking-wide hover:opacity-90 active:opacity-80 transition-opacity"
+            style={{ backgroundColor: "#006859" }}
+          >
+            <span className="relative flex h-2 w-2 flex-shrink-0">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-60" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-white" />
+            </span>
+            🎁 Refer &amp; get 20 credits —&nbsp;<span className="underline underline-offset-2">tap here</span>
+          </button>
+        )}
         <div className="flex justify-between items-center max-w-7xl mx-auto px-4 sm:px-6 py-3 sm:py-4 w-full">
+
           <div className="flex items-center gap-2 shrink-0">
             {/* Hexagon logo mark */}
             <div className="relative flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9">

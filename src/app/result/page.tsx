@@ -1013,6 +1013,20 @@ export default function ResultPage() {
                             👤 View Full Profile →
                           </button>
 
+                          {/* Invite Friends */}
+                          {referralCode && (
+                            <button
+                              onClick={() => {
+                                setShowAccountDropdown(false);
+                                setShowReferral(true);
+                              }}
+                              className="w-full py-2.5 text-white text-sm font-bold rounded-xl transition-all flex items-center justify-center gap-2 hover:opacity-90 active:scale-95"
+                              style={{ backgroundColor: "#006859" }}
+                            >
+                              🎁 Invite Friends (+20 Credits)
+                            </button>
+                          )}
+
                           <button
                             onClick={() => {
                               setShowAccountDropdown(false);
