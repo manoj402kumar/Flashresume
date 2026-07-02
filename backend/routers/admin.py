@@ -234,8 +234,8 @@ async def get_analytics_revenue(
         ))
 
         # Breakdown: count purchases and revenue per plan from payments
-        plan_counts = {"regular": 0, "student": 0, "pay_per_use": 0}
-        plan_mrr = {"regular": 0, "student": 0, "pay_per_use": 0}
+        plan_counts = {"regular": 0, "student": 0, "pay_per_use": 0, "bulk_offer": 0}
+        plan_mrr = {"regular": 0, "student": 0, "pay_per_use": 0, "bulk_offer": 0}
 
         # Calculate total transactions per plan and Total MRR/Revenue
         for p in payments:
@@ -263,6 +263,10 @@ async def get_analytics_revenue(
             {
                 "name": "One-Time", "price": 29, "users": plan_counts.get("pay_per_use", 0), "mrr": plan_mrr.get("pay_per_use", 0),
                 "color": "bg-blue-50", "textColor": "text-blue-700", "barColor": "bg-blue-400"
+            },
+            {
+                "name": "Bulk Offer", "price": 999, "users": plan_counts.get("bulk_offer", 0), "mrr": plan_mrr.get("bulk_offer", 0),
+                "color": "bg-purple-50", "textColor": "text-purple-700", "barColor": "bg-gradient-to-r from-purple-600 to-violet-500"
             }
         ]
         
@@ -272,6 +276,8 @@ async def get_analytics_revenue(
             breakdown = [b for b in breakdown if b["name"] == "Standard"]
         elif plan_filter == "pay_per_use":
             breakdown = [b for b in breakdown if b["name"] == "One-Time"]
+        elif plan_filter == "bulk_offer":
+            breakdown = [b for b in breakdown if b["name"] == "Bulk Offer"]
             
         trend = build_trend_data(payments, dt_start, dt_end, time_filter, "amount", lambda x: x // 100)
 
@@ -439,7 +445,7 @@ async def get_analytics_downloads(
             
         unique_users = len(set(d.get("user_id") for d in downloads if d.get("user_id")))
         
-        plan_counts = {"regular": 0, "student": 0, "pay_per_use": 0, "free": 0}
+        plan_counts = {"regular": 0, "student": 0, "pay_per_use": 0, "bulk_offer": 0, "free": 0}
         for d in downloads:
             uid = d.get("user_id")
             ptype = user_plans.get(uid, "free") if uid else "free"

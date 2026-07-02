@@ -42,6 +42,7 @@ const PLAN_FILTERS = [
   { id: "pay_per_use", label: "₹29 One-Time" },
   { id: "student", label: "₹99 Student" },
   { id: "regular", label: "₹199 Standard" },
+  { id: "bulk_offer", label: "₹999 Bulk Offer" },
 ];
 
 export default function RevenuePanel() {
