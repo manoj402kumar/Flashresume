@@ -44,8 +44,8 @@ export default function FeedbackPanel({ totalDownloads = 0 }: { totalDownloads?:
   const avgRating = feedbacks.length > 0 ? (feedbacks.reduce((sum, f) => sum + f.rating, 0) / feedbacks.length).toFixed(1) : "—";
   const fiveStars = feedbacks.length > 0 ? Math.round((feedbacks.filter(f => f.rating === 5).length / feedbacks.length) * 100) + "%" : "—";
 
-  const remainder = totalDownloads % 5;
-  const nextFeedbackIn = remainder === 0 ? 0 : 5 - remainder;
+  const remainder = totalDownloads % 8;
+  const nextFeedbackIn = remainder === 0 ? 0 : 8 - remainder;
 
   return (
     <div className="bg-white rounded-[1.5rem] p-6 border border-[#eff1f2] shadow-sm">
