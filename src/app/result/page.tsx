@@ -473,8 +473,13 @@ export default function ResultPage() {
       if (localData) {
         try {
           parsed = JSON.parse(localData);
+          // If URL requests a specific session, and it doesn't match our local edits, force fetch from API.
+          if (sessionId && parsed.session_id !== sessionId) {
+            parsed = null;
+          }
         } catch (e) {
           // Corrupt data — fall through to API
+          parsed = null;
         }
       }
 
