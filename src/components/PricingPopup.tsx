@@ -796,6 +796,7 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
                       {/* Shine sweep */}
                       <span className="badge-shine-inner pointer-events-none absolute inset-0 w-1/3 bg-gradient-to-r from-transparent via-white/40 to-transparent" />
                       BULK OFFER
+                      <span className="relative bg-white/25 text-white rounded-full px-1.5 py-0 text-[9px] font-black tracking-wide border border-white/30">50% OFF</span>
                     </div>
 
                     {/* Mobile: icon + name left, price block right */}
@@ -810,6 +811,11 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
 
                       {/* Price block */}
                       <div className="flex flex-col items-end md:items-center md:mb-1 flex-shrink-0 mt-3 md:mt-0">
+                        {/* Strikethrough + badge row */}
+                        <div className="flex items-center gap-1.5 mb-0.5">
+                          <p className={`text-[11px] line-through leading-none ${selectedPlan === "bulk_offer" ? "text-white/55" : "text-on-surface-variant opacity-60"}`}>₹1999</p>
+                          <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-md leading-none tracking-wide ${selectedPlan === "bulk_offer" ? "bg-white/25 text-white border border-white/30" : "bg-purple-500/15 text-purple-600 border border-purple-400/40"}`}>50% OFF</span>
+                        </div>
                         {/* Big price */}
                         <p className={`font-black text-2xl md:text-3xl leading-none ${selectedPlan === "bulk_offer" ? "text-white" : "text-on-background"}`}>₹999</p>
                         <p className={`text-[10px] md:text-[11px] font-medium mt-0.5 ${selectedPlan === "bulk_offer" ? "text-white/80" : "text-on-surface-variant"}`}>/1 Year</p>

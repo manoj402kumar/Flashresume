@@ -1129,7 +1129,7 @@ export default function App() {
               <h2 className="font-headline text-4xl md:text-5xl font-bold text-on-background mb-4">Invest in yourself</h2>
               <p className="text-on-surface-variant text-lg">Premium features, student-friendly pricing.</p>
             </div>
-            <div className="flex flex-col md:grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-[1200px] mx-auto overflow-x-auto md:overflow-visible pb-12 snap-x snap-mandatory">
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 md:gap-6 max-w-[1200px] mx-auto overflow-x-auto md:overflow-visible pb-12 snap-x snap-mandatory">
               {/* One-Time */}
               <div
                 onMouseEnter={() => setHoveredPlan("pay_per_use")}
@@ -1277,6 +1277,7 @@ export default function App() {
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2 overflow-hidden flex items-center gap-1.5 text-[10px] font-black px-3 py-1 rounded-full shadow-lg whitespace-nowrap tracking-wider border z-30 bg-gradient-to-r from-purple-600 to-violet-500 text-white shadow-purple-500/40 border-purple-400/50">
                   <span className="badge-shine-inner pointer-events-none absolute inset-0 w-1/3 bg-gradient-to-r from-transparent via-white/40 to-transparent" />
                   BULK OFFER
+                  <span className="relative bg-white/25 text-white rounded-full px-1.5 py-0 text-[9px] font-black tracking-wide border border-white/30">50% OFF</span>
                 </div>
 
                 <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-4 transition-colors ${hoveredPlan === "bulk_offer" ? "bg-white/20 text-white" : "bg-purple-50 text-purple-600"}`}>
@@ -1285,7 +1286,12 @@ export default function App() {
                 <h3 className="font-headline text-2xl font-bold mb-1">Bulk Offer</h3>
                 <p className={`text-sm mb-4 transition-colors ${hoveredPlan === "bulk_offer" ? "text-white/90" : "text-on-surface-variant"}`}>4000 Credits (400 Resumes)</p>
 
-                <div className="mb-1 flex items-center gap-2">
+                <div className="mb-1 flex flex-col gap-1 items-start">
+                  {/* Strikethrough + badge row */}
+                  <div className="flex items-center gap-1.5">
+                    <p className={`text-[11px] line-through leading-none ${hoveredPlan === "bulk_offer" ? "text-white/55" : "text-on-surface-variant opacity-60"}`}>₹1999</p>
+                    <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-md leading-none tracking-wide ${hoveredPlan === "bulk_offer" ? "bg-white/25 text-white border border-white/30" : "bg-purple-500/15 text-purple-600 border border-purple-400/40"}`}>50% OFF</span>
+                  </div>
                   <p className={`font-black text-4xl leading-none ${hoveredPlan === "bulk_offer" ? "text-white" : "text-on-background"}`}>₹999</p>
                 </div>
 
