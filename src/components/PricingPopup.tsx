@@ -649,14 +649,14 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
             {step === "plan" && (
               <motion.div key="plan" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-4">
                 <MiniReviewsMarquee />
-                <div className="flex flex-col md:grid md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 pt-2 pb-3 px-1">
+                <div className="flex flex-row overflow-x-auto snap-x snap-mandatory gap-3 pb-3 px-1 md:grid md:grid-cols-2 lg:grid-cols-4 md:overflow-x-visible md:snap-none md:gap-4 md:pt-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                   {PLANS.map((plan) => {
                     const isSelected = selectedPlan === plan.id;
                     return (
                       <React.Fragment key={plan.id}>
                         {/* Card */}
                         <div onClick={() => setSelectedPlan(plan.id)}
-                          className={`relative w-full md:w-auto flex flex-col p-4 md:p-5 rounded-2xl md:rounded-3xl border-2 cursor-pointer transition-all duration-300 ${isSelected ? "border-transparent bg-gradient-to-b from-[#006859] to-[#12f8d7] shadow-xl md:scale-105 text-white" : plan.borderClass + " bg-surface-container-lowest text-on-background hover:border-primary/40 hover:shadow-md"}`}>
+                          className={`relative w-[82vw] flex-shrink-0 snap-center md:w-auto flex flex-col p-4 md:p-5 rounded-2xl md:rounded-3xl border-2 cursor-pointer transition-all duration-300 ${isSelected ? "border-transparent bg-gradient-to-b from-[#006859] to-[#12f8d7] shadow-xl md:scale-105 text-white" : plan.borderClass + " bg-surface-container-lowest text-on-background hover:border-primary/40 hover:shadow-md"}`}>
 
                           {/* Selection indicator top-right */}
                           <div className={`absolute top-3 right-3 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-200 ${isSelected ? "border-white bg-white scale-110" : "border-on-surface-variant/30"}`}>
@@ -705,7 +705,7 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
 
                   {/* Student card */}
                   <div onClick={() => setSelectedPlan("student")}
-                    className={`relative w-full md:w-auto flex flex-col p-4 md:p-5 rounded-2xl md:rounded-3xl border-2 cursor-pointer transition-all duration-300 ${selectedPlan === "student" ? "border-transparent bg-gradient-to-b from-[#006859] to-[#12f8d7] shadow-xl md:scale-105 text-white" : "border-tertiary/50 bg-gradient-to-br from-tertiary-container/20 to-surface-container-lowest hover:border-tertiary hover:shadow-md"}`}>
+                    className={`relative w-[82vw] flex-shrink-0 snap-center md:w-auto flex flex-col p-4 md:p-5 rounded-2xl md:rounded-3xl border-2 cursor-pointer transition-all duration-300 ${selectedPlan === "student" ? "border-transparent bg-gradient-to-b from-[#006859] to-[#12f8d7] shadow-xl md:scale-105 text-white" : "border-tertiary/50 bg-gradient-to-br from-tertiary-container/20 to-surface-container-lowest hover:border-tertiary hover:shadow-md"}`}>
 
 
                     {/* Selection indicator top-right */}
@@ -785,7 +785,7 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
 
                   {/* Bulk Offer card */}
                   <div onClick={() => setSelectedPlan("bulk_offer")}
-                    className={`relative w-full md:w-auto flex flex-col p-4 md:p-5 rounded-2xl md:rounded-3xl border-2 cursor-pointer transition-all duration-300 ${selectedPlan === "bulk_offer" ? "border-transparent bg-gradient-to-b from-[#006859] to-[#12f8d7] shadow-xl md:scale-105 text-white" : "border-purple-500/40 bg-gradient-to-br from-purple-500/10 to-surface-container-lowest hover:border-purple-400 hover:shadow-md"}`}>
+                    className={`relative w-[82vw] flex-shrink-0 snap-center md:w-auto flex flex-col p-4 md:p-5 rounded-2xl md:rounded-3xl border-2 cursor-pointer transition-all duration-300 ${selectedPlan === "bulk_offer" ? "border-transparent bg-gradient-to-b from-[#006859] to-[#12f8d7] shadow-xl md:scale-105 text-white" : "border-purple-500/40 bg-gradient-to-br from-purple-500/10 to-surface-container-lowest hover:border-purple-400 hover:shadow-md"}`}>
 
                     {/* Selection indicator top-right */}
                     <div className={`absolute top-3 right-3 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-200 z-10 ${selectedPlan === "bulk_offer" ? "border-white bg-white scale-110" : "border-purple-500/30"}`}>
