@@ -67,7 +67,7 @@ BEGIN
     IF p_plan_type = 'regular' THEN
         v_expires_at := now() + interval '60 days';
     ELSIF p_plan_type = 'student' THEN
-        v_expires_at := now() + interval '90 days';
+        v_expires_at := now() + interval '60 days';
     ELSIF p_plan_type = 'pay_per_use' THEN
         v_expires_at := now() + interval '10 days';
     END IF;

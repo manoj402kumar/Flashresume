@@ -145,7 +145,7 @@ async def verify_payment(body: VerifyRequest, authorization: str = Header(None))
                 "bulk_offer": 4000,
             }
             credits_to_add = PLAN_CREDITS.get(actual_plan_type, 0)
-            validity_days = 365 if actual_plan_type == "bulk_offer" else 60 if actual_plan_type == "regular" else 90 if actual_plan_type == "student" else 10
+            validity_days = 365 if actual_plan_type == "bulk_offer" else 60 if actual_plan_type == "regular" else 60 if actual_plan_type == "student" else 10
             
             rpc_res = await sb(lambda: sc.supabase.rpc("process_successful_payment", {
                 "p_order_id": body.razorpay_order_id,
@@ -482,7 +482,7 @@ async def razorpay_webhook(request: Request):
                 "bulk_offer": 4000,
             }
             credits_to_add = PLAN_CREDITS.get(plan_type, 0)
-            validity_days = 365 if plan_type == "bulk_offer" else 60 if plan_type == "regular" else 90 if plan_type == "student" else 10
+            validity_days = 365 if plan_type == "bulk_offer" else 60 if plan_type == "regular" else 60 if plan_type == "student" else 10
 
             rpc_res = await sb(lambda: sc.supabase.rpc("process_successful_payment", {
                 "p_order_id": order_id,

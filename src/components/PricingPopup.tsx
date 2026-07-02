@@ -739,7 +739,7 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
                         </div>
                         {/* Big price */}
                         <p className={`font-black text-2xl md:text-3xl leading-none ${selectedPlan === "student" ? "text-white" : "text-tertiary"}`}>₹99</p>
-                        <p className={`text-[10px] md:text-[11px] font-medium mt-0.5 ${selectedPlan === "student" ? "text-white/80" : "text-on-surface-variant"}`}>/3 months</p>
+                        <p className={`text-[10px] md:text-[11px] font-medium mt-0.5 ${selectedPlan === "student" ? "text-white/80" : "text-on-surface-variant"}`}>/2 months</p>
                       </div>
                     </div>
 
@@ -751,7 +751,7 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
                         </li>
                         <li className="flex items-start gap-2">
                           <CheckCircle2 className={`w-4 h-4 flex-shrink-0 mt-0.5 ${selectedPlan === "student" ? "text-white" : "text-tertiary"}`} />
-                          <span className={`text-left font-medium text-[12px] ${selectedPlan === "student" ? "text-white" : "text-on-background"}`}>Valid for 3 Months</span>
+                          <span className={`text-left font-medium text-[12px] ${selectedPlan === "student" ? "text-white" : "text-on-background"}`}>Valid for 2 Months</span>
                         </li>
                         <li className="flex items-start gap-2">
                           <CheckCircle2 className={`w-4 h-4 flex-shrink-0 mt-0.5 ${selectedPlan === "student" ? "text-white" : "text-tertiary"}`} />

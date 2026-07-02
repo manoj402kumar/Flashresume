@@ -14,7 +14,7 @@ WHERE payment_id = 'pay_T2ao9XZ0oiegMm'
   AND expires_at < NOW();
 
 -- Fix 2: y.manoj - activate stranded student bucket
--- VERIFIED: status=queued, validity=90 days, no active bucket exists
+-- VERIFIED: status=queued, validity=60 days, no active bucket exists
 UPDATE credit_buckets
 SET status    = 'active',
     activated_at = NOW(),

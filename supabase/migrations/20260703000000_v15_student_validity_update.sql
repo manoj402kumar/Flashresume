@@ -1,10 +1,6 @@
--- Migration: v14_bulk_offer_sync
--- Purpose: Sync the live DB changes for the bulk_offer plan to local repository.
+-- Migration: v15_student_validity_update
+-- Purpose: Update student plan validity from 90 days to 60 days.
 
--- 1. Add bulk_offer to plan_type_enum
-ALTER TYPE plan_type_enum ADD VALUE IF NOT EXISTS 'bulk_offer';
-
--- 2. Update process_successful_payment to handle bulk_offer expiry
 CREATE OR REPLACE FUNCTION public.process_successful_payment(
     p_order_id TEXT,
     p_payment_id TEXT,
@@ -48,7 +44,7 @@ BEGIN
         p_payment_id
     ) INTO v_bucket_id;
 
-    -- ✅ ALL 4 PLANS COVERED
+    -- ALL 4 PLANS COVERED
     IF p_plan_type = 'regular' THEN
         v_expires_at := now() + interval '60 days';
     ELSIF p_plan_type = 'student' THEN

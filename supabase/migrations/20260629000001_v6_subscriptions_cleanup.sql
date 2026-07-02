@@ -7,7 +7,7 @@ BEGIN
         '069a6498-4ffe-42ca-8ee8-62e654a19cef'::uuid,  -- user_id
         'student',     -- plan_type
         300,           -- p_amount
-        90,            -- validity_days
+        60,            -- validity_days
         'pay_T2cd8zYH13izkp'  -- payment_id (idempotency key)
     );
 
@@ -24,7 +24,7 @@ BEGIN
         'student', 
         TRUE, 
         300,
-        NOW() + INTERVAL '90 days',
+        NOW() + INTERVAL '60 days',
         TRUE
     );
 EXCEPTION WHEN others THEN
