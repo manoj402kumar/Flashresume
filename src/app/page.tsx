@@ -53,7 +53,7 @@ export default function App() {
   const [showParsedText, setShowParsedText] = useState(false);
   const [parsing, setParsing] = useState(false);
   const [showDownloadGate, setShowDownloadGate] = useState(false);
-  const [selectedPricingPlan, setSelectedPricingPlan] = useState<"pay_per_use" | "regular" | "student" | null>(null);
+  const [selectedPricingPlan, setSelectedPricingPlan] = useState<"pay_per_use" | "regular" | "student" | "bulk_offer" | null>(null);
   const [hoveredPlan, setHoveredPlan] = useState<string>("regular");
   const [showLoginOnly, setShowLoginOnly] = useState(false);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
