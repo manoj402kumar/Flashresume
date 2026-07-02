@@ -11,16 +11,22 @@ export default function FunnelChart() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch(`/api/admin-proxy/funnel-stats`)
-      .then(res => res.json())
-      .then(data => {
-        setStats(data.landing !== undefined ? data : { landing: 0, result: 0, purchases: 0 });
-        setLoading(false);
-      })
-      .catch(e => {
-        console.error("Funnel stats fetch failed", e);
-        setLoading(false);
-      });
+    const fetchFunnelStats = () => {
+      fetch(`/api/admin-proxy/funnel-stats`)
+        .then(res => res.json())
+        .then(data => {
+          setStats(data.landing !== undefined ? data : { landing: 0, result: 0, purchases: 0 });
+          setLoading(false);
+        })
+        .catch(e => {
+          console.error("Funnel stats fetch failed", e);
+          setLoading(false);
+        });
+    };
+    
+    fetchFunnelStats();
+    const id = setInterval(fetchFunnelStats, 15000);
+    return () => clearInterval(id);
   }, []);
 
   const STAGES = [

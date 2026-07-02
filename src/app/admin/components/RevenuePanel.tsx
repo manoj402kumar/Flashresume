@@ -73,10 +73,15 @@ export default function RevenuePanel() {
       url += `&start_date=${startDate}T00:00:00Z&end_date=${endDate}T23:59:59Z`;
     }
 
-    fetch(url)
-      .then((res) => res.json())
-      .then((d) => setData(d))
-      .catch((e) => console.error("Failed to fetch revenue", e));
+    const fetchRevenue = () =>
+      fetch(url)
+        .then((res) => res.json())
+        .then((d) => setData(d))
+        .catch((e) => console.error("Failed to fetch revenue", e));
+
+    fetchRevenue();
+    const id = setInterval(fetchRevenue, 15000);
+    return () => clearInterval(id);
   }, [timeFilter, planFilter, startDate, endDate]);
 
   const plans = data?.breakdown || [];

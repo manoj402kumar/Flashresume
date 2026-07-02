@@ -65,10 +65,15 @@ export default function DownloadChart() {
       url += `&start_date=${startDate}T00:00:00Z&end_date=${endDate}T23:59:59Z`;
     }
 
-    fetch(url)
-      .then((res) => res.json())
-      .then((d) => setData(d))
-      .catch((e) => console.error("Failed to fetch download analytics", e));
+    const fetchDownloads = () =>
+      fetch(url)
+        .then((res) => res.json())
+        .then((d) => setData(d))
+        .catch((e) => console.error("Failed to fetch download analytics", e));
+
+    fetchDownloads();
+    const id = setInterval(fetchDownloads, 15000);
+    return () => clearInterval(id);
   }, [timeFilter, startDate, endDate]);
 
   const trend = data?.trend || [];

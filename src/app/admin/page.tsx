@@ -192,6 +192,8 @@ export default function AdminPage() {
       } catch { /* offline */ }
     };
     fetchStats();
+    const id = setInterval(fetchStats, 15000);
+    return () => clearInterval(id);
   }, []);
 
   // Intersection observer for active section highlight
