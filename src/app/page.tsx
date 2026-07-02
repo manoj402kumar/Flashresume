@@ -649,7 +649,8 @@ export default function App() {
                               <button
                                 onClick={() => {
                                   setShowAccountDropdown(false);
-                                  document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' });
+                                  setSelectedPricingPlan(null);
+                                  setShowDownloadGate(true);
                                 }}
                                 className="w-full py-2.5 bg-surface-container-low hover:bg-surface-container-high text-on-background text-sm font-bold rounded-xl transition-colors"
                               >
@@ -1129,7 +1130,9 @@ export default function App() {
               <h2 className="font-headline text-4xl md:text-5xl font-bold text-on-background mb-4">Invest in yourself</h2>
               <p className="text-on-surface-variant text-lg">Premium features, student-friendly pricing.</p>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 md:gap-6 max-w-[1200px] mx-auto overflow-x-auto md:overflow-visible pb-12 snap-x snap-mandatory">
+            {/* Mobile: outer div scrolls, inner div provides pt-6 so badges have room */}
+            <div className="overflow-x-auto pb-12 sm:overflow-visible">
+            <div className="flex flex-nowrap sm:grid sm:grid-cols-2 xl:grid-cols-4 gap-4 md:gap-6 max-w-[1200px] mx-auto px-4 sm:px-6 pt-6 sm:pt-0">
               {/* One-Time */}
               <div
                 onMouseEnter={() => setHoveredPlan("pay_per_use")}
@@ -1168,7 +1171,7 @@ export default function App() {
               {/* Most Popular — BEST VALUE */}
               <div
                 onMouseEnter={() => setHoveredPlan("regular")}
-                className={`flex-shrink-0 w-[280px] md:w-auto snap-center p-8 md:p-10 rounded-[2rem] flex flex-col relative border-2 transition-all duration-300 ${hoveredPlan === "regular" ? "border-transparent bg-gradient-to-b from-[#006859] to-[#12f8d7] shadow-2xl shadow-primary/30 md:scale-105 z-10 text-white" : "bg-surface-container-lowest border-primary shadow-lg shadow-primary/5 text-on-background"}`}
+                className={`flex-shrink-0 w-[280px] sm:w-auto snap-center p-8 md:p-10 rounded-[2rem] flex flex-col relative border-2 transition-all duration-300 ${hoveredPlan === "regular" ? "border-transparent bg-gradient-to-b from-[#006859] to-[#12f8d7] shadow-2xl shadow-primary/30 md:scale-105 z-10 text-white" : "bg-surface-container-lowest border-primary shadow-lg shadow-primary/5 text-on-background"}`}
               >
                 {/* Selection Indicator */}
                 <div className={`absolute top-4 right-4 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-200 z-20 ${hoveredPlan === "regular" ? 'border-white bg-white scale-110' : 'border-primary/30'}`}>
@@ -1181,7 +1184,7 @@ export default function App() {
                 <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-4 transition-colors ${hoveredPlan === "regular" ? "bg-white/20" : "bg-primary/10"}`}>
                   <Star className={`w-5 h-5 transition-colors ${hoveredPlan === "regular" ? "text-white fill-white/80" : "text-primary fill-primary/30"}`} />
                 </div>
-                <h3 className="font-headline text-2xl font-bold mb-1">Most Popular</h3>
+                <h3 className="font-headline text-2xl font-bold mb-1">Standard Plan</h3>
                 <p className={`text-sm mb-4 transition-colors ${hoveredPlan === "regular" ? "text-white/90" : "text-on-surface-variant"}`}>300 Credits (30 Resumes)</p>
                 <div className="text-4xl font-black mb-1">₹199</div>
                 <p className={`text-sm mb-8 transition-colors ${hoveredPlan === "regular" ? "text-white/90" : "text-on-surface-variant"}`}>/2 Months</p>
@@ -1210,7 +1213,7 @@ export default function App() {
               {/* Student Plan — STUDENT OFFER */}
               <div
                 onMouseEnter={() => setHoveredPlan("student")}
-                className={`flex-shrink-0 w-[280px] md:w-auto snap-center p-8 md:p-10 rounded-[2rem] flex flex-col relative border-2 transition-all duration-300 ${hoveredPlan === "student" ? "border-transparent bg-gradient-to-b from-[#006859] to-[#12f8d7] shadow-2xl md:scale-105 z-10 text-white" : "bg-surface-container-low border-amber-400/60 text-on-background"}`}
+                className={`flex-shrink-0 w-[280px] sm:w-auto snap-center p-8 md:p-10 rounded-[2rem] flex flex-col relative border-2 transition-all duration-300 ${hoveredPlan === "student" ? "border-transparent bg-gradient-to-b from-[#006859] to-[#12f8d7] shadow-2xl md:scale-105 z-10 text-white" : "bg-surface-container-low border-amber-400/60 text-on-background"}`}
               >
                 {/* Selection Indicator */}
                 <div className={`absolute top-4 right-4 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-200 z-20 ${hoveredPlan === "student" ? 'border-white bg-white scale-110' : 'border-amber-400/30'}`}>
@@ -1246,11 +1249,10 @@ export default function App() {
                     All Premium Features
                   </li>
                   <li className="flex justify-center">
-                    <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black tracking-wide border shadow-sm whitespace-nowrap ${
-                      hoveredPlan === "student"
+                    <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black tracking-wide border shadow-sm whitespace-nowrap ${hoveredPlan === "student"
                         ? "bg-gradient-to-r from-orange-500 to-amber-500 border-orange-400 text-white shadow-lg shadow-orange-500/20"
                         : "bg-orange-500/10 border-orange-400/40 text-orange-600"
-                    }`}>
+                      }`}>
                       <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse flex-shrink-0" />
                       Grab before {new Date(Date.now() + 86400000).toLocaleDateString("en-GB", { day: "2-digit", month: "2-digit", year: "numeric" }).replace(/\//g, "/")}
                     </div>
@@ -1267,21 +1269,21 @@ export default function App() {
               {/* Bulk Offer Plan — BULK OFFER */}
               <div
                 onMouseEnter={() => setHoveredPlan("bulk_offer")}
-                className={`flex-shrink-0 w-[280px] md:w-auto snap-center p-8 md:p-10 rounded-[2rem] flex flex-col relative border-2 transition-all duration-300 ${hoveredPlan === "bulk_offer" ? "border-transparent bg-gradient-to-b from-[#006859] to-[#12f8d7] shadow-2xl md:scale-105 z-10 text-white" : "bg-surface-container-low border-purple-400/60 text-on-background"}`}
+                className={`flex-shrink-0 w-[280px] sm:w-auto snap-center p-8 md:p-10 rounded-[2rem] flex flex-col relative border-2 transition-all duration-300 ${hoveredPlan === "bulk_offer" ? "border-transparent bg-gradient-to-b from-[#006859] to-[#12f8d7] shadow-2xl md:scale-105 z-10 text-white" : "bg-surface-container-low border-amber-400/60 text-on-background"}`}
               >
                 {/* Selection indicator top-right */}
-                <div className={`absolute top-4 right-4 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-200 z-20 ${hoveredPlan === "bulk_offer" ? 'border-white bg-white scale-110' : 'border-purple-400/30'}`}>
-                  {hoveredPlan === "bulk_offer" && <CheckCircle2 className="w-4 h-4 text-[#7c3aed]" />}
+                <div className={`absolute top-4 right-4 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-200 z-20 ${hoveredPlan === "bulk_offer" ? 'border-white bg-white scale-110' : 'border-amber-400/30'}`}>
+                  {hoveredPlan === "bulk_offer" && <CheckCircle2 className="w-4 h-4 text-[#006859]" />}
                 </div>
 
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 overflow-hidden flex items-center gap-1.5 text-[10px] font-black px-3 py-1 rounded-full shadow-lg whitespace-nowrap tracking-wider border z-30 bg-gradient-to-r from-purple-600 to-violet-500 text-white shadow-purple-500/40 border-purple-400/50">
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 overflow-hidden flex items-center gap-1.5 text-[10px] font-black px-3 py-1 rounded-full shadow-lg whitespace-nowrap tracking-wider border z-30 bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-orange-500/40 border-orange-400/50">
                   <span className="badge-shine-inner pointer-events-none absolute inset-0 w-1/3 bg-gradient-to-r from-transparent via-white/40 to-transparent" />
                   BULK OFFER
                   <span className="relative bg-white/25 text-white rounded-full px-1.5 py-0 text-[9px] font-black tracking-wide border border-white/30">50% OFF</span>
                 </div>
 
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-4 transition-colors ${hoveredPlan === "bulk_offer" ? "bg-white/20 text-white" : "bg-purple-50 text-purple-600"}`}>
-                  <Package className={`w-5 h-5 ${hoveredPlan === "bulk_offer" ? "text-white opacity-90" : "text-purple-600"}`} />
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-4 transition-colors ${hoveredPlan === "bulk_offer" ? "bg-white/20 text-white" : "bg-amber-50 text-amber-500"}`}>
+                  <Package className={`w-5 h-5 ${hoveredPlan === "bulk_offer" ? "text-white opacity-90" : "text-amber-500"}`} />
                 </div>
                 <h3 className="font-headline text-2xl font-bold mb-1">Bulk Offer</h3>
                 <p className={`text-sm mb-4 transition-colors ${hoveredPlan === "bulk_offer" ? "text-white/90" : "text-on-surface-variant"}`}>4000 Credits (400 Resumes)</p>
@@ -1290,7 +1292,7 @@ export default function App() {
                   {/* Strikethrough + badge row */}
                   <div className="flex items-center gap-1.5">
                     <p className={`text-[11px] line-through leading-none ${hoveredPlan === "bulk_offer" ? "text-white/55" : "text-on-surface-variant opacity-60"}`}>₹1999</p>
-                    <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-md leading-none tracking-wide ${hoveredPlan === "bulk_offer" ? "bg-white/25 text-white border border-white/30" : "bg-purple-500/15 text-purple-600 border border-purple-400/40"}`}>50% OFF</span>
+                    <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-md leading-none tracking-wide ${hoveredPlan === "bulk_offer" ? "bg-white/25 text-white border border-white/30" : "bg-orange-500/15 text-orange-600 border border-orange-400/40"}`}>50% OFF</span>
                   </div>
                   <p className={`font-black text-4xl leading-none ${hoveredPlan === "bulk_offer" ? "text-white" : "text-on-background"}`}>₹999</p>
                 </div>
@@ -1317,11 +1319,10 @@ export default function App() {
                 </ul>
 
                 <div className="flex justify-center mb-4">
-                  <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black tracking-wide border shadow-sm whitespace-nowrap ${
-                    hoveredPlan === "bulk_offer"
-                      ? "bg-gradient-to-r from-purple-600 to-violet-500 border-purple-400 text-white shadow-lg shadow-purple-500/20"
-                      : "bg-purple-500/10 border-purple-400/40 text-purple-600"
-                  }`}>
+                  <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black tracking-wide border shadow-sm whitespace-nowrap ${hoveredPlan === "bulk_offer"
+                      ? "bg-gradient-to-r from-orange-500 to-amber-500 border-orange-400 text-white shadow-lg shadow-orange-500/20"
+                      : "bg-orange-500/10 border-orange-400/40 text-orange-600"
+                    }`}>
                     <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse flex-shrink-0" />
                     Limited Slots Only
                   </div>
@@ -1329,12 +1330,13 @@ export default function App() {
 
                 <button
                   onClick={() => { setSelectedPricingPlan("bulk_offer"); setShowDownloadGate(true); }}
-                  className={`w-full py-4 rounded-xl font-bold transition-all ${hoveredPlan === "bulk_offer" ? "bg-white text-purple-600 shadow-lg shadow-black/5 hover:bg-white/90" : "border-2 border-purple-400 bg-purple-50 text-purple-700 hover:bg-purple-100"}`}
+                  className={`w-full py-4 rounded-xl font-bold transition-all ${hoveredPlan === "bulk_offer" ? "bg-white text-[#006859] shadow-lg shadow-black/5 hover:bg-white/90" : "border-2 border-amber-400 bg-amber-50 text-amber-700 hover:bg-amber-100"}`}
                 >
                   Grab Bulk Offer
                 </button>
               </div>
 
+            </div>
             </div>
           </section>
         )}
