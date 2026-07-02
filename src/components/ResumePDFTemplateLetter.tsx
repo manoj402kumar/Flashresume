@@ -358,8 +358,8 @@ export default function ResumePDFTemplateLetter({ resume, showHighlights = false
                   {resume.projects.map((proj, idx) => (
                     <View key={idx} style={styles.itemBlock} wrap={false}>
                       {/* LaTeX: \small{\textbf{#1} | \emph{#2}} & #3 */}
-                      <View style={styles.row}>
-                        <Text style={styles.textSmall}>
+                      <View style={{ ...styles.row, alignItems: "flex-start" }}>
+                        <Text style={{ ...styles.textSmall, flex: 1, paddingRight: 10 }}>
                           <Text style={styles.textBold}>{proj.title}</Text>
                           {proj.tech_stack ? (
                             <Text>

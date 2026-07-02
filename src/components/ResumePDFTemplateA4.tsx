@@ -384,7 +384,7 @@ export default function ResumePDFTemplateA4({ resume, showHighlights = false, ma
                   {resume.projects.map((proj, idx) => (
                     <View key={idx} style={styles.experienceItem} wrap={false}>
                       <View style={styles.titleRow}>
-                        <View style={{ flexDirection: "row" }}>
+                        <View style={{ flexDirection: "row", flex: 1, paddingRight: 10 }}>
                           <Text style={styles.jobTitle}>
                             {proj.title}
                             {proj.tech_stack ? (
