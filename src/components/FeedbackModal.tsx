@@ -107,7 +107,7 @@ export default function FeedbackModal({ userId, sessionId, onClose, onSubmitSucc
                 if (error) setError("");
               }}
               placeholder={
-                rating <= 2
+                rating > 0 && rating <= 2
                   ? "Please tell us what went wrong (required)"
                   : "Any suggestions or thoughts? We'd love to hear."
               }
