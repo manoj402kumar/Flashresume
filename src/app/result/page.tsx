@@ -3025,6 +3025,12 @@ export default function ResultPage() {
           userId={currentUserId}
           sessionId={sessionGuid}
           onClose={() => setShowFeedback(false)}
+          onSubmitSuccess={(rating) => {
+            setShowFeedback(false);
+            if (rating >= 4 && referralCode) {
+              setShowReferral(true);
+            }
+          }}
         />
       )}
 

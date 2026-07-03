@@ -6,9 +6,10 @@ interface Props {
   userId: string;
   sessionId: string;
   onClose: () => void;
+  onSubmitSuccess?: (rating: number) => void;
 }
 
-export default function FeedbackModal({ userId, sessionId, onClose }: Props) {
+export default function FeedbackModal({ userId, sessionId, onClose, onSubmitSuccess }: Props) {
   const [rating, setRating]         = useState(0);
   const [hovered, setHovered]       = useState(0);
   const [suggestion, setSuggestion] = useState("");
@@ -22,6 +23,11 @@ export default function FeedbackModal({ userId, sessionId, onClose }: Props) {
     // Inline validation — show message instead of silently blocking
     if (rating === 0) {
       setError("Please give a rating before submitting.");
+      return;
+    }
+    
+    if (rating <= 2 && suggestion.trim() === "") {
+      setError("Please tell us what went wrong so we can improve.");
       return;
     }
     setLoading(true);
@@ -38,14 +44,14 @@ export default function FeedbackModal({ userId, sessionId, onClose }: Props) {
         // If already submitted for this session, treat as success gracefully
         if (res.status === 409) {
           setSubmitted(true);
-          setTimeout(onClose, 2000);
+          setTimeout(() => { onSubmitSuccess?.(rating); onClose(); }, 2000);
           return;
         }
         throw new Error(errData.detail || "Failed to submit feedback. Please try again.");
       }
       
       setSubmitted(true);
-      setTimeout(onClose, 2000); // auto-close after thank you
+      setTimeout(() => { onSubmitSuccess?.(rating); onClose(); }, 2000); // auto-close after thank you
     } catch (e: any) {
       console.error(e);
       setError(e.message || "Something went wrong. Please try again.");
@@ -96,14 +102,30 @@ export default function FeedbackModal({ userId, sessionId, onClose }: Props) {
             {/* Suggestion */}
             <textarea
               value={suggestion}
-              onChange={(e) => setSuggestion(e.target.value)}
-              placeholder="Any suggestions or thoughts? We'd love to hear."
+              onChange={(e) => {
+                setSuggestion(e.target.value);
+                if (error) setError("");
+              }}
+              placeholder={
+                rating <= 2
+                  ? "Please tell us what went wrong (required)"
+                  : "Any suggestions or thoughts? We'd love to hear."
+              }
               rows={3}
-              className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm
-                         text-gray-700 resize-none focus:outline-none focus:ring-2
-                         focus:ring-primary/50 mb-5 bg-gray-50"
+              className={`w-full border rounded-xl px-4 py-3 text-sm text-gray-700 resize-none 
+                         focus:outline-none focus:ring-2 mb-1 bg-gray-50 transition-colors
+                         ${rating > 0 && rating <= 2
+                           ? "border-red-300 focus:ring-red-300/50"
+                           : "border-gray-200 focus:ring-primary/50"
+                         }`}
             />
-
+            
+            {rating > 0 && rating <= 2 && (
+              <p className="text-xs text-red-500 mb-4 font-medium text-left px-1">
+                ⚠️ Required
+              </p>
+            )}
+            
             {/* Submit — always visible, validates rating on click */}
             <button
               onClick={handleSubmit}
