@@ -263,10 +263,6 @@ async def get_analytics_revenue(
             {
                 "name": "One-Time", "price": 29, "users": plan_counts.get("pay_per_use", 0), "mrr": plan_mrr.get("pay_per_use", 0),
                 "color": "bg-blue-50", "textColor": "text-blue-700", "barColor": "bg-blue-400"
-            },
-            {
-                "name": "Bulk Offer", "price": 999, "users": plan_counts.get("bulk_offer", 0), "mrr": plan_mrr.get("bulk_offer", 0),
-                "color": "bg-purple-50", "textColor": "text-purple-700", "barColor": "bg-gradient-to-r from-purple-600 to-violet-500"
             }
         ]
         
@@ -276,8 +272,6 @@ async def get_analytics_revenue(
             breakdown = [b for b in breakdown if b["name"] == "Standard"]
         elif plan_filter == "pay_per_use":
             breakdown = [b for b in breakdown if b["name"] == "One-Time"]
-        elif plan_filter == "bulk_offer":
-            breakdown = [b for b in breakdown if b["name"] == "Bulk Offer"]
             
         trend = build_trend_data(payments, dt_start, dt_end, time_filter, "amount", lambda x: x // 100)
 

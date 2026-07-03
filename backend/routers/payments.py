@@ -37,8 +37,7 @@ async def create_order(request: Request, body: OrderRequest, authorization: str 
     PRICES = {
         "pay_per_use": 2900,
         "regular": 19900,
-        "student": 9900,
-        "bulk_offer": 99900
+        "student": 9900
     }
     amount_in_paise = PRICES.get(body.plan_type)
     if not amount_in_paise:

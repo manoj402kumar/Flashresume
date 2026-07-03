@@ -442,9 +442,8 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
 
     const planDetails =
       planToBuy === "student" ? { amount: 99, plan_type: "student" } :
-        planToBuy === "bulk_offer" ? { amount: 999, plan_type: "bulk_offer" } :
-          planToBuy === "regular" ? { amount: 199, plan_type: "regular" } :
-            { amount: 29, plan_type: "pay_per_use" };
+        planToBuy === "regular" ? { amount: 199, plan_type: "regular" } :
+          { amount: 29, plan_type: "pay_per_use" };
 
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -783,88 +782,7 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
                     </div>
                   </div>
 
-                  {/* Bulk Offer card */}
-                  <div onClick={() => setSelectedPlan("bulk_offer")}
-                    className={`relative w-full md:w-auto flex flex-col p-4 md:p-5 rounded-2xl md:rounded-3xl border-2 cursor-pointer transition-all duration-300 ${selectedPlan === "bulk_offer" ? "border-transparent bg-gradient-to-b from-[#006859] to-[#12f8d7] shadow-xl md:scale-105 text-white" : "border-tertiary/50 bg-gradient-to-br from-tertiary-container/20 to-surface-container-lowest hover:border-tertiary hover:shadow-md"}`}>
 
-                    {/* Selection indicator top-right */}
-                    <div className={`absolute top-3 right-3 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-200 z-10 ${selectedPlan === "bulk_offer" ? "border-white bg-white scale-110" : "border-on-surface-variant/30"}`}>
-                      {selectedPlan === "bulk_offer" && <CheckCircle2 className="w-4 h-4 text-[#006859]" />}
-                    </div>
-
-                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 overflow-hidden flex items-center gap-1.5 text-[10px] font-black px-3 py-0.5 rounded-full shadow-lg whitespace-nowrap tracking-wider border z-20 bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-orange-500/40 border-orange-400/50">
-                      {/* Shine sweep */}
-                      <span className="badge-shine-inner pointer-events-none absolute inset-0 w-1/3 bg-gradient-to-r from-transparent via-white/40 to-transparent" />
-                      BULK OFFER
-                      <span className="relative bg-white/25 text-white rounded-full px-1.5 py-0 text-[9px] font-black tracking-wide border border-white/30">50% OFF</span>
-                    </div>
-
-                    {/* Mobile: icon + name left, price block right */}
-                    <div className="flex flex-row md:flex-col items-center md:text-center gap-3 md:gap-0 mb-3 md:mb-4 pr-10 md:pr-4">
-                      <div className={`w-10 h-10 rounded-xl flex-shrink-0 flex items-center justify-center md:mb-2 transition-colors ${selectedPlan === "bulk_offer" ? "bg-white/20 text-white" : "bg-tertiary/20"}`}>
-                        <Package className={`w-5 h-5 ${selectedPlan === "bulk_offer" ? "text-white opacity-90" : "text-tertiary"}`} />
-                      </div>
-                      <div className="flex-1 text-left md:text-center">
-                        <h4 className="font-bold text-base mb-0 md:mb-0.5">Bulk Offer</h4>
-                        <p className={`text-[11px] md:mb-2 ${selectedPlan === "bulk_offer" ? "text-white/90" : "text-on-surface-variant"}`}>4000 Credits (400 Resumes)</p>
-                      </div>
-
-                      {/* Price block */}
-                      <div className="flex flex-col items-end md:items-center md:mb-1 flex-shrink-0 mt-3 md:mt-0">
-                        {/* Strikethrough + badge row */}
-                        <div className="flex items-center gap-1.5 mb-0.5">
-                          <p className={`text-[11px] line-through leading-none ${selectedPlan === "bulk_offer" ? "text-white/55" : "text-on-surface-variant opacity-60"}`}>₹1999</p>
-                          <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-md leading-none tracking-wide ${selectedPlan === "bulk_offer" ? "bg-white/25 text-white border border-white/30" : "bg-orange-500/15 text-orange-600 border border-orange-400/40"}`}>50% OFF</span>
-                        </div>
-                        {/* Big price */}
-                        <p className={`font-black text-2xl md:text-3xl leading-none ${selectedPlan === "bulk_offer" ? "text-white" : "text-on-background"}`}>₹999</p>
-                        <p className={`text-[10px] md:text-[11px] font-medium mt-0.5 ${selectedPlan === "bulk_offer" ? "text-white/80" : "text-on-surface-variant"}`}>/1 Year</p>
-                      </div>
-                    </div>
-
-                    <div className={`flex-1 flex flex-col justify-start w-full pt-3 border-t ${selectedPlan === "bulk_offer" ? "border-white/20" : "border-surface-container-high"}`}>
-                      <ul className="space-y-2 text-sm mb-3">
-                        <li className="flex items-start gap-2">
-                          <CheckCircle2 className={`w-4 h-4 flex-shrink-0 mt-0.5 ${selectedPlan === "bulk_offer" ? "text-white" : "text-tertiary"}`} />
-                          <span className={`text-left font-medium text-[12px] ${selectedPlan === "bulk_offer" ? "text-white" : "text-on-background"}`}>Popular pick</span>
-                        </li>
-                        <li className="flex items-start gap-2">
-                          <CheckCircle2 className={`w-4 h-4 flex-shrink-0 mt-0.5 ${selectedPlan === "bulk_offer" ? "text-white" : "text-tertiary"}`} />
-                          <span className={`text-left font-medium text-[12px] ${selectedPlan === "bulk_offer" ? "text-white" : "text-on-background"}`}>4000 Credits</span>
-                        </li>
-                        <li className="flex items-start gap-2">
-                          <CheckCircle2 className={`w-4 h-4 flex-shrink-0 mt-0.5 ${selectedPlan === "bulk_offer" ? "text-white" : "text-tertiary"}`} />
-                          <span className={`text-left font-medium text-[12px] ${selectedPlan === "bulk_offer" ? "text-white" : "text-on-background"}`}>Valid for 1 Year</span>
-                        </li>
-                        <li className="flex items-start gap-2">
-                          <CheckCircle2 className={`w-4 h-4 flex-shrink-0 mt-0.5 ${selectedPlan === "bulk_offer" ? "text-white" : "text-tertiary"}`} />
-                          <span className={`text-left font-medium text-[12px] ${selectedPlan === "bulk_offer" ? "text-white" : "text-on-background"}`}>All Premium Features</span>
-                        </li>
-                      </ul>
-
-                      {/* Deadline pill */}
-                      <div className="flex justify-center mt-1 mb-2">
-                        <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black tracking-wide border shadow-sm whitespace-nowrap ${
-                          selectedPlan === "bulk_offer"
-                            ? "bg-gradient-to-r from-orange-500 to-amber-500 border-orange-400 text-white shadow-lg shadow-orange-500/20"
-                            : "bg-orange-500/10 border-orange-400/40 text-orange-600"
-                        }`}>
-                          <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse flex-shrink-0" />
-                          Limited Slots Only
-                        </div>
-                      </div>
-
-                      {selectedPlan === "bulk_offer" && (
-                        <button
-                          onClick={() => handleProceedToPayment()}
-                          disabled={loading}
-                          className="md:hidden w-full mt-4 bg-white text-purple-600 font-bold py-3 rounded-xl transition-all shadow-md flex justify-center items-center gap-2 active:scale-95"
-                        >
-                          {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <>Continue <ArrowRight className="w-4 h-4" /></>}
-                        </button>
-                      )}
-                    </div>
-                  </div>
 
                 </div>
 
