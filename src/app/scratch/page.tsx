@@ -785,7 +785,7 @@ export default function ScratchPage() {
                         )}
                         <div className="pt-2 space-y-2 border-t border-surface-container-low mt-2">
                           <button
-                            onClick={() => { setShowAccountDropdown(false); setPricingTrigger("buy_more"); setShowPricingPopup(true); }}
+                            onClick={() => { setShowAccountDropdown(false); router.push('/#pricing'); }}
                             className="w-full py-2.5 bg-surface-container-low hover:bg-surface-container-high text-on-background text-sm font-bold rounded-xl transition-colors"
                           >
                             Buy More Credits

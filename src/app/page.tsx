@@ -649,8 +649,10 @@ export default function App() {
                               <button
                                 onClick={() => {
                                   setShowAccountDropdown(false);
-                                  setSelectedPricingPlan(null);
-                                  setShowDownloadGate(true);
+                                  const pricingSection = document.getElementById("pricing");
+                                  if (pricingSection) {
+                                    pricingSection.scrollIntoView({ behavior: "smooth", block: "start" });
+                                  }
                                 }}
                                 className="w-full py-2.5 bg-surface-container-low hover:bg-surface-container-high text-on-background text-sm font-bold rounded-xl transition-colors"
                               >
@@ -1493,7 +1495,10 @@ export default function App() {
       {/* Pricing Popup Modal */}
       <PricingPopup
         isOpen={showDownloadGate}
-        onClose={() => setShowDownloadGate(false)}
+        onClose={() => {
+          setShowDownloadGate(false);
+          setPurchaseSuccess(false);
+        }}
         onSuccess={() => {
           setShowDownloadGate(false);
           // Refresh credits from Supabase immediately
