@@ -53,11 +53,11 @@ const PLANS = [
     price: 199,
     priceDisplay: "₹199",
     period: "/2 Months",
-    description: "300 Credits (30 Resumes)",
+    description: "400 Credits (40 Resumes)",
     icon: <Crown className="w-5 h-5 text-amber-400" />,
     badge: null,
     borderClass: "border-primary",
-    features: ["300 Credits", "Valid for 2 Months", "All Premium Features"],
+    features: ["400 Credits", "Valid for 2 Months", "All Premium Features"],
   },
 ];
 
@@ -726,7 +726,7 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
                       </div>
                       <div className="flex-1 text-left md:text-center">
                         <h4 className="font-bold text-base mb-0 md:mb-0.5">Student Plan</h4>
-                        <p className={`text-[11px] md:mb-2 ${selectedPlan === "student" ? "text-white/90" : "text-on-surface-variant"}`}>300 Credits (30 Resumes)</p>
+                        <p className={`text-[11px] md:mb-2 ${selectedPlan === "student" ? "text-white/90" : "text-on-surface-variant"}`}>400 Credits (40 Resumes)</p>
                       </div>
 
                       {/* Price block — vertical stack on mobile, centered on desktop */}
@@ -746,7 +746,7 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
                       <ul className="space-y-2 text-sm mb-3">
                         <li className="flex items-start gap-2">
                           <CheckCircle2 className={`w-4 h-4 flex-shrink-0 mt-0.5 ${selectedPlan === "student" ? "text-white" : "text-tertiary"}`} />
-                          <span className={`text-left font-medium text-[12px] ${selectedPlan === "student" ? "text-white" : "text-on-background"}`}>300 Credits</span>
+                          <span className={`text-left font-medium text-[12px] ${selectedPlan === "student" ? "text-white" : "text-on-background"}`}>400 Credits</span>
                         </li>
                         <li className="flex items-start gap-2">
                           <CheckCircle2 className={`w-4 h-4 flex-shrink-0 mt-0.5 ${selectedPlan === "student" ? "text-white" : "text-tertiary"}`} />
