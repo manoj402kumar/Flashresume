@@ -63,7 +63,7 @@ const PLANS = [
 
 // ── Review Banner ─────────────────────────────────────────────────────────────
 const PLAN_REVIEW = {
-  quote: "Thanks flashresume since I able to apply to any job under a minute. No stress, no drama.",
+  quote: "Before flashresume: 2-3 applications /day->rejection mails. After flashresume: 10-12 applications /day->shortlisting mails.",
   author: "Rahul M.",
   role: "Software Engineer",
   avatar: "RM",
