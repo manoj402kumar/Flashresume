@@ -91,8 +91,8 @@ export default function FeedbackModal({ userId, sessionId, onClose, onSubmitSucc
                   className="p-1 transition-transform hover:scale-110 focus:outline-none"
                 >
                   <Star className={`w-8 h-8 transition-colors ${s <= (hovered || rating)
-                      ? "fill-yellow-400 text-yellow-400"
-                      : "text-gray-200"
+                    ? "fill-yellow-400 text-yellow-400"
+                    : "text-gray-200"
                     }`} />
                 </button>
               ))}
