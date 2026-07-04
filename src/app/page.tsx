@@ -53,6 +53,7 @@ export default function App() {
   const [showParsedText, setShowParsedText] = useState(false);
   const [parsing, setParsing] = useState(false);
   const [showDownloadGate, setShowDownloadGate] = useState(false);
+  const [showBuyMoreCredits, setShowBuyMoreCredits] = useState(false);
   const [selectedPricingPlan, setSelectedPricingPlan] = useState<"pay_per_use" | "regular" | "student" | null>(null);
   const [hoveredPlan, setHoveredPlan] = useState<string>("regular");
   const [showLoginOnly, setShowLoginOnly] = useState(false);
@@ -466,17 +467,35 @@ export default function App() {
       <nav className="fixed top-0 w-full z-50 glass-header border-b border-surface-container-low">
         {/* Mobile-only referral announcement bar — logged-in users only */}
         {currentUser && (
-          <button
-            onClick={handleShare}
-            className="md:hidden w-full flex items-center justify-center gap-2.5 text-white text-sm font-bold py-3.5 px-4 tracking-wide hover:opacity-90 active:opacity-80 transition-opacity"
-            style={{ backgroundColor: "#006859" }}
-          >
-            <span className="relative flex h-2.5 w-2.5 flex-shrink-0">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-60" />
-              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-white" />
-            </span>
-            🎁 Refer &amp; get 20 credits —&nbsp;<span className="underline underline-offset-2">tap here</span>
-          </button>
+          <>
+            <style>{`
+              @keyframes referral-shine {
+                0%   { transform: translateX(-100%) skewX(-20deg); }
+                100% { transform: translateX(300%) skewX(-20deg); }
+              }
+              .referral-shine-sweep {
+                animation: referral-shine 2.2s ease-in-out infinite;
+                animation-delay: 1s;
+              }
+            `}</style>
+            <button
+              onClick={handleShare}
+              className="md:hidden w-full relative overflow-hidden flex items-center justify-center gap-2.5 text-white text-sm font-bold py-3.5 px-4 tracking-wide active:opacity-80 transition-opacity"
+              style={{ background: "linear-gradient(90deg, #006859 0%, #008570 50%, #006859 100%)" }}
+            >
+              {/* Shimmer sweep */}
+              <span
+                className="referral-shine-sweep pointer-events-none absolute inset-0 w-1/3 bg-gradient-to-r from-transparent via-white/25 to-transparent"
+                aria-hidden="true"
+              />
+              {/* Pulsing dot */}
+              <span className="relative flex h-2.5 w-2.5 flex-shrink-0">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-60" />
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-white" />
+              </span>
+              🎁 Refer &amp; get 20 credits —&nbsp;<span className="underline underline-offset-2">tap here</span>
+            </button>
+          </>
         )}
         <div className="flex justify-between items-center max-w-7xl mx-auto px-4 sm:px-6 py-3 sm:py-4 w-full">
 
@@ -522,8 +541,10 @@ export default function App() {
                 <div className="hidden sm:flex items-center mr-1">
                   <button
                     onClick={handleShare}
-                    className="flex items-center gap-1 bg-[#006859] text-white hover:bg-[#005145] pl-3 pr-2 py-1.5 rounded-xl text-sm font-bold transition-all shadow-sm active:scale-95"
+                    className="relative overflow-hidden flex items-center gap-1 bg-[#006859] text-white pl-3 pr-2 py-1.5 rounded-xl text-sm font-bold transition-all shadow-sm active:scale-95"
                   >
+                    {/* Shimmer sweep */}
+                    <span className="referral-shine-sweep pointer-events-none absolute inset-0 w-1/3 bg-gradient-to-r from-transparent via-white/20 to-transparent" aria-hidden="true" />
                     🎁 <span className="hidden md:inline">{copied ? "Copied!" : "Invite & Earn"}</span>
                     <div
                       role="button"
@@ -618,8 +639,10 @@ export default function App() {
                             <div className="pt-2 space-y-2 border-t border-surface-container-low mt-2">
                               <button
                                 onClick={handleShare}
-                                className="w-full py-2.5 bg-[#006859] text-white hover:bg-[#005145] text-sm font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 shadow-sm active:scale-95"
+                                className="relative overflow-hidden w-full py-2.5 bg-[#006859] text-white text-sm font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 shadow-sm active:scale-95"
                               >
+                                {/* Shimmer sweep */}
+                                <span className="referral-shine-sweep pointer-events-none absolute inset-0 w-1/3 bg-gradient-to-r from-transparent via-white/20 to-transparent" aria-hidden="true" />
                                 🎁 {copied ? "Link Copied!" : "Invite Friends (+20 Credits)"}
                                 <div
                                   className="relative group/tooltip inline-flex items-center"
@@ -649,7 +672,7 @@ export default function App() {
                               <button
                                 onClick={() => {
                                   setShowAccountDropdown(false);
-                                  setShowDownloadGate(true);
+                                  setShowBuyMoreCredits(true);
                                 }}
                                 className="w-full py-2.5 bg-surface-container-low hover:bg-surface-container-high text-on-background text-sm font-bold rounded-xl transition-colors"
                               >
@@ -1442,6 +1465,24 @@ export default function App() {
         }}
         initialPlan={selectedPricingPlan}
         directPay={!!selectedPricingPlan}
+        prefetchedUser={currentUser}
+        prefetchedCredits={credits}
+      />
+      {/* Buy More Credits popup — always shows plan selection regardless of current credits */}
+      <PricingPopup
+        isOpen={showBuyMoreCredits}
+        onClose={() => setShowBuyMoreCredits(false)}
+        onSuccess={() => {
+          setShowBuyMoreCredits(false);
+          // Refresh credits from Supabase immediately
+          if (currentUser) {
+            supabase.from("users").select("credits_balance").eq("id", currentUser.id).single()
+              .then(({ data }) => { if (data) setCredits(data.credits_balance); });
+          }
+          setPurchaseSuccess(true);
+          setTimeout(() => setPurchaseSuccess(false), 5000);
+        }}
+        forcePlanSelect={true}
         prefetchedUser={currentUser}
         prefetchedCredits={credits}
       />

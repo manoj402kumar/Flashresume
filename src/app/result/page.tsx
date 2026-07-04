@@ -1020,16 +1020,30 @@ export default function ResultPage() {
 
                           {/* Invite Friends */}
                           {referralCode && (
-                            <button
-                              onClick={() => {
-                                setShowAccountDropdown(false);
-                                setShowReferral(true);
-                              }}
-                              className="w-full py-2.5 text-white text-sm font-bold rounded-xl transition-all flex items-center justify-center gap-2 hover:opacity-90 active:scale-95"
-                              style={{ backgroundColor: "#006859" }}
-                            >
-                              🎁 Invite Friends (+20 Credits)
-                            </button>
+                            <>
+                              <style>{`
+                                @keyframes referral-shine {
+                                  0%   { transform: translateX(-100%) skewX(-20deg); }
+                                  100% { transform: translateX(300%) skewX(-20deg); }
+                                }
+                                .referral-shine-sweep {
+                                  animation: referral-shine 2.2s ease-in-out infinite;
+                                  animation-delay: 1s;
+                                }
+                              `}</style>
+                              <button
+                                onClick={() => {
+                                  setShowAccountDropdown(false);
+                                  setShowReferral(true);
+                                }}
+                                className="relative overflow-hidden w-full py-2.5 text-white text-sm font-bold rounded-xl transition-all flex items-center justify-center gap-2 hover:opacity-90 active:scale-95"
+                                style={{ backgroundColor: "#006859" }}
+                              >
+                                {/* Shimmer sweep */}
+                                <span className="referral-shine-sweep pointer-events-none absolute inset-0 w-1/3 bg-gradient-to-r from-transparent via-white/20 to-transparent" aria-hidden="true" />
+                                🎁 Invite Friends (+20 Credits)
+                              </button>
+                            </>
                           )}
 
                           <button
