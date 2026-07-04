@@ -649,10 +649,7 @@ export default function App() {
                               <button
                                 onClick={() => {
                                   setShowAccountDropdown(false);
-                                  const pricingSection = document.getElementById("pricing");
-                                  if (pricingSection) {
-                                    pricingSection.scrollIntoView({ behavior: "smooth", block: "start" });
-                                  }
+                                  setShowDownloadGate(true);
                                 }}
                                 className="w-full py-2.5 bg-surface-container-low hover:bg-surface-container-high text-on-background text-sm font-bold rounded-xl transition-colors"
                               >
@@ -1134,7 +1131,7 @@ export default function App() {
             </div>
             {/* Mobile: outer div scrolls, inner div provides pt-6 so badges have room */}
             <div className="overflow-x-auto pb-12 sm:overflow-visible">
-            <div className="flex flex-nowrap sm:grid sm:grid-cols-2 xl:grid-cols-4 gap-4 md:gap-6 max-w-[1200px] mx-auto px-4 sm:px-6 pt-6 sm:pt-0">
+            <div className="flex flex-nowrap sm:grid sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 max-w-[1050px] mx-auto px-4 sm:px-6 pt-6 sm:pt-0">
               {/* One-Time */}
               <div
                 onMouseEnter={() => setHoveredPlan("pay_per_use")}

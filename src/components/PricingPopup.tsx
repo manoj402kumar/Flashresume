@@ -648,7 +648,7 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
             {step === "plan" && (
               <motion.div key="plan" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-4">
                 <MiniReviewsMarquee />
-                <div className="flex flex-col md:grid md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 pt-2 pb-3 px-1">
+                <div className="flex flex-col md:grid md:grid-cols-2 lg:grid-cols-[repeat(3,240px)] lg:justify-center gap-3 md:gap-4 pt-2 pb-3 px-1">
                   {PLANS.map((plan) => {
                     const isSelected = selectedPlan === plan.id;
                     return (

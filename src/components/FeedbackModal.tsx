@@ -10,12 +10,12 @@ interface Props {
 }
 
 export default function FeedbackModal({ userId, sessionId, onClose, onSubmitSuccess }: Props) {
-  const [rating, setRating]         = useState(0);
-  const [hovered, setHovered]       = useState(0);
+  const [rating, setRating] = useState(0);
+  const [hovered, setHovered] = useState(0);
   const [suggestion, setSuggestion] = useState("");
-  const [submitted, setSubmitted]   = useState(false);
-  const [loading, setLoading]       = useState(false);
-  const [error, setError]           = useState("");
+  const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -25,7 +25,7 @@ export default function FeedbackModal({ userId, sessionId, onClose, onSubmitSucc
       setError("Please give a rating before submitting.");
       return;
     }
-    
+
     if (rating <= 2 && suggestion.trim() === "") {
       setError("Please tell us what went wrong so we can improve.");
       return;
@@ -38,7 +38,7 @@ export default function FeedbackModal({ userId, sessionId, onClose, onSubmitSucc
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ user_id: userId, session_id: sessionId, rating, suggestion }),
       });
-      
+
       if (!res.ok) {
         const errData = await res.json().catch(() => ({}));
         // If already submitted for this session, treat as success gracefully
@@ -49,7 +49,7 @@ export default function FeedbackModal({ userId, sessionId, onClose, onSubmitSucc
         }
         throw new Error(errData.detail || "Failed to submit feedback. Please try again.");
       }
-      
+
       setSubmitted(true);
       setTimeout(() => { onSubmitSuccess?.(rating); onClose(); }, 2000); // auto-close after thank you
     } catch (e: any) {
@@ -90,11 +90,10 @@ export default function FeedbackModal({ userId, sessionId, onClose, onSubmitSucc
                   onClick={() => { setRating(s); setError(""); }}
                   className="p-1 transition-transform hover:scale-110 focus:outline-none"
                 >
-                  <Star className={`w-8 h-8 transition-colors ${
-                    s <= (hovered || rating)
+                  <Star className={`w-8 h-8 transition-colors ${s <= (hovered || rating)
                       ? "fill-yellow-400 text-yellow-400"
                       : "text-gray-200"
-                  }`} />
+                    }`} />
                 </button>
               ))}
             </div>
@@ -109,23 +108,23 @@ export default function FeedbackModal({ userId, sessionId, onClose, onSubmitSucc
               placeholder={
                 rating > 0 && rating <= 2
                   ? "Please tell us what went wrong (required)"
-                  : "Any suggestions or thoughts? We'd love to hear."
+                  : "Please share what impressed you?."
               }
               rows={3}
               className={`w-full border rounded-xl px-4 py-3 text-sm text-gray-700 resize-none 
                          focus:outline-none focus:ring-2 mb-1 bg-gray-50 transition-colors
                          ${rating > 0 && rating <= 2
-                           ? "border-red-300 focus:ring-red-300/50"
-                           : "border-gray-200 focus:ring-primary/50"
-                         }`}
+                  ? "border-red-300 focus:ring-red-300/50"
+                  : "border-gray-200 focus:ring-primary/50"
+                }`}
             />
-            
+
             {rating > 0 && rating <= 2 && (
               <p className="text-xs text-red-500 mb-4 font-medium text-left px-1">
                 ⚠️ Required
               </p>
             )}
-            
+
             {/* Submit — always visible, validates rating on click */}
             <button
               onClick={handleSubmit}
