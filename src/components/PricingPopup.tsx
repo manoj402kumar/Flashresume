@@ -132,7 +132,7 @@ function MiniReviewsMarquee() {
       .then((data) => {
         if (Array.isArray(data) && data.length > 0) setItems(data);
       })
-      .catch(() => {});
+      .catch(() => { });
   }, []);
 
   if (items.length === 0) return null;
@@ -301,7 +301,7 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
     if (session?.user) {
       const sessionUser = session.user;
       setUser(sessionUser);
-      
+
       const { data: userData } = await supabase.from("users").select("is_student, student_verified_at").eq("id", sessionUser.id).single();
       if (userData?.is_student && userData?.student_verified_at) {
         setIsAlreadyVerified(true);
@@ -503,14 +503,14 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
                 failure_reason: err.message
               })
             }).catch(e => console.error("Failed to update status", e));
-            
+
             setError(err.message || "Payment verification failed.");
             setStep("plan");
             setLoading(false);
           }
         },
         modal: {
-          ondismiss: () => { 
+          ondismiss: () => {
             // Try to notify the backend that the user abandoned the modal
             if (orderData?.razorpay_order_id) {
               supabase.auth.getSession().then(({ data: { session } }) => {
@@ -530,8 +530,8 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
               });
             }
 
-            setStep("plan"); 
-            setLoading(false); 
+            setStep("plan");
+            setLoading(false);
           },
         },
       };
@@ -572,7 +572,7 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
 
   return (
     <>
-    <style>{`
+      <style>{`
       @keyframes badge-shine {
         0%   { transform: translateX(-120%) skewX(-20deg); }
         100% { transform: translateX(220%) skewX(-20deg); }
@@ -581,353 +581,352 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
         animation: badge-shine 2.5s ease-in-out infinite;
       }
     `}</style>
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.95 }}
-        className={`bg-surface rounded-3xl w-full ${step === "plan" ? "max-w-5xl" : "max-w-md"} shadow-2xl overflow-hidden relative border border-surface-container-high max-h-[95vh] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]`}
-      >
-        {!disableClose && (
-          <button onClick={onClose} className="absolute top-4 right-4 p-2 bg-surface-container-low hover:bg-surface-container-high rounded-full transition-colors z-10">
-            <X className="w-5 h-5 text-on-surface-variant" />
-          </button>
-        )}
-        {/* Header */}
-        <div className="px-6 pt-16 pb-2 border-b border-surface-container-low text-center">
-          <h2 className="text-2xl font-headline font-bold text-on-background">
-            {step === "initializing" ? "Loading..." : step === "auth" ? "Sign In to Continue" : step === "processing" ? "Processing..." : step === "student_verify" ? "Student Verification" : "Invest in Yourself"}
-          </h2>
-          <p className="text-sm text-on-surface-variant mt-1 max-w-lg mx-auto">
-            {step === "initializing" ? "Please wait a moment." : step === "auth" ? "Use your Google account to access downloads." : step === "processing" ? "Securely setting up Razorpay..." : step === "student_verify" ? "Verify to unlock the ₹99 plan." : "Returns >>> Investment(paying for servers)"}
-          </p>
-        </div>
+      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.95 }}
+          className={`bg-surface rounded-3xl w-full ${step === "plan" ? "max-w-5xl" : "max-w-md"} shadow-2xl overflow-hidden relative border border-surface-container-high max-h-[95vh] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]`}
+        >
+          {!disableClose && (
+            <button onClick={onClose} className="absolute top-4 right-4 p-2 bg-surface-container-low hover:bg-surface-container-high rounded-full transition-colors z-10">
+              <X className="w-5 h-5 text-on-surface-variant" />
+            </button>
+          )}
+          {/* Header */}
+          <div className="px-6 pt-16 pb-2 border-b border-surface-container-low text-center">
+            <h2 className="text-2xl font-headline font-bold text-on-background">
+              {step === "initializing" ? "Loading..." : step === "auth" ? "Sign In to Continue" : step === "processing" ? "Processing..." : step === "student_verify" ? "Student Verification" : "Invest in Yourself"}
+            </h2>
+            <p className="text-sm text-on-surface-variant mt-1 max-w-lg mx-auto">
+              {step === "initializing" ? "Please wait a moment." : step === "auth" ? "Use your Google account to access downloads." : step === "processing" ? "Securely setting up Razorpay..." : step === "student_verify" ? "Verify to unlock the ₹99 plan." : "Returns >>> Investment(paying for servers)"}
+            </p>
+          </div>
 
-        <div className="p-6">
-          <AnimatePresence mode="wait">
+          <div className="p-6">
+            <AnimatePresence mode="wait">
 
-            {/* INITIALIZING STEP */}
-            {step === "initializing" && (
-              <motion.div key="initializing" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="py-12 flex flex-col items-center justify-center">
-                <Loader2 className="w-8 h-8 animate-spin text-primary mb-4" />
-              </motion.div>
-            )}
+              {/* INITIALIZING STEP */}
+              {step === "initializing" && (
+                <motion.div key="initializing" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="py-12 flex flex-col items-center justify-center">
+                  <Loader2 className="w-8 h-8 animate-spin text-primary mb-4" />
+                </motion.div>
+              )}
 
-            {/* AUTH STEP — Google only */}
-            {step === "auth" && (
-              <motion.div key="auth" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-4">
-                {error && <p className="text-xs text-error bg-error/10 px-3 py-2 rounded-lg text-center">{error}</p>}
+              {/* AUTH STEP — Google only */}
+              {step === "auth" && (
+                <motion.div key="auth" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-4">
+                  {error && <p className="text-xs text-error bg-error/10 px-3 py-2 rounded-lg text-center">{error}</p>}
 
-                <button
-                  id="pricing-google-signin-btn"
-                  onClick={handleGoogleLogin}
-                  disabled={loading}
-                  className="w-full bg-surface-container-lowest border-2 border-primary/40 hover:border-primary text-on-background font-bold py-4 rounded-xl hover:bg-surface-container-low transition-all flex justify-center items-center gap-3 shadow-sm"
-                >
-                  {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : (
-                    <>
-                      <GoogleIcon />
-                      Continue with Google
-                    </>
-                  )}
-                </button>
+                  <button
+                    id="pricing-google-signin-btn"
+                    onClick={handleGoogleLogin}
+                    disabled={loading}
+                    className="w-full bg-surface-container-lowest border-2 border-primary/40 hover:border-primary text-on-background font-bold py-4 rounded-xl hover:bg-surface-container-low transition-all flex justify-center items-center gap-3 shadow-sm"
+                  >
+                    {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : (
+                      <>
+                        <GoogleIcon />
+                        Continue with Google
+                      </>
+                    )}
+                  </button>
 
-                <p className="text-center text-xs text-on-surface-variant">
-                  By continuing, you agree to our{" "}
-                  <a href="/terms" className="text-primary hover:underline font-medium">Terms</a>{" "}and{" "}
-                  <a href="/privacy" className="text-primary hover:underline font-medium">Privacy Policy</a>.
-                </p>
+                  <p className="text-center text-xs text-on-surface-variant">
+                    By continuing, you agree to our{" "}
+                    <a href="/terms" className="text-primary hover:underline font-medium">Terms</a>{" "}and{" "}
+                    <a href="/privacy" className="text-primary hover:underline font-medium">Privacy Policy</a>.
+                  </p>
 
-                {/* Review for auth step */}
-                <ReviewBanner review={isScratchPage ? SCRATCH_REVIEW : PLAN_REVIEW} />
-                <MiniReviewsMarquee />
-              </motion.div>
-            )}
+                  {/* Review for auth step */}
+                  <ReviewBanner review={isScratchPage ? SCRATCH_REVIEW : PLAN_REVIEW} />
+                  <MiniReviewsMarquee />
+                </motion.div>
+              )}
 
-            {/* PLAN STEP */}
-            {step === "plan" && (
-              <motion.div key="plan" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-4">
-                <MiniReviewsMarquee />
-                <div className="flex flex-col md:grid md:grid-cols-2 lg:grid-cols-[repeat(3,240px)] lg:justify-center gap-3 md:gap-4 pt-2 pb-3 px-1">
-                  {PLANS.map((plan) => {
-                    const isSelected = selectedPlan === plan.id;
-                    return (
-                      <React.Fragment key={plan.id}>
-                        {/* Card */}
-                        <div onClick={() => setSelectedPlan(plan.id)}
-                          className={`relative w-full md:w-auto flex flex-col p-4 md:p-5 rounded-2xl md:rounded-3xl border-2 cursor-pointer transition-all duration-300 ${isSelected ? "border-transparent bg-gradient-to-b from-[#006859] to-[#12f8d7] shadow-xl md:scale-105 text-white" : plan.borderClass + " bg-surface-container-lowest text-on-background hover:border-primary/40 hover:shadow-md"}`}>
+              {/* PLAN STEP */}
+              {step === "plan" && (
+                <motion.div key="plan" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-4">
+                  <MiniReviewsMarquee />
+                  <div className="flex flex-col md:grid md:grid-cols-2 lg:grid-cols-[repeat(3,240px)] lg:justify-center gap-3 md:gap-4 pt-2 pb-3 px-1">
+                    {PLANS.map((plan) => {
+                      const isSelected = selectedPlan === plan.id;
+                      return (
+                        <React.Fragment key={plan.id}>
+                          {/* Card */}
+                          <div onClick={() => setSelectedPlan(plan.id)}
+                            className={`relative w-full md:w-auto flex flex-col p-4 md:p-5 rounded-2xl md:rounded-3xl border-2 cursor-pointer transition-all duration-300 ${isSelected ? "border-transparent bg-gradient-to-b from-[#006859] to-[#12f8d7] shadow-xl md:scale-105 text-white" : plan.borderClass + " bg-surface-container-lowest text-on-background hover:border-primary/40 hover:shadow-md"}`}>
 
-                          {/* Selection indicator top-right */}
-                          <div className={`absolute top-3 right-3 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-200 ${isSelected ? "border-white bg-white scale-110" : "border-on-surface-variant/30"}`}>
-                            {isSelected && <CheckCircle2 className="w-4 h-4 text-[#006859]" />}
-                          </div>
-
-                          {plan.badge && <div className={`absolute -top-3 left-1/2 -translate-x-1/2 text-[9px] font-black px-2 py-0.5 rounded-full whitespace-nowrap shadow-sm tracking-wider ${isSelected ? "bg-white text-[#006859]" : "bg-primary text-white"}`}>{plan.badge}</div>}
-
-                          <div className="flex flex-row md:flex-col items-center md:text-center gap-3 md:gap-0 mb-3 md:mb-4 pr-10 md:pr-4">
-                            <div className={`w-10 h-10 rounded-xl flex-shrink-0 flex items-center justify-center md:mb-2 transition-colors ${isSelected ? "bg-white/20" : "bg-surface-container-low"}`}>
-                              {isSelected ? <div className="text-white opacity-90">{plan.icon}</div> : plan.icon}
+                            {/* Selection indicator top-right */}
+                            <div className={`absolute top-3 right-3 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-200 ${isSelected ? "border-white bg-white scale-110" : "border-on-surface-variant/30"}`}>
+                              {isSelected && <CheckCircle2 className="w-4 h-4 text-[#006859]" />}
                             </div>
-                            <div className="flex-1 text-left md:text-center">
-                              <h4 className="font-bold text-base mb-0 md:mb-0.5">{plan.name}</h4>
-                              <p className={`text-[11px] md:mb-2 ${isSelected ? "text-white/90" : "text-on-surface-variant"}`}>{plan.description}</p>
-                            </div>
-                            <div className="flex flex-col text-right md:text-center md:mb-1">
-                              <p className="font-black text-xl md:text-3xl">{plan.priceDisplay}</p>
-                              <p className={`text-[10px] md:text-[11px] font-medium mt-0.5 ${isSelected ? "text-white/90" : "text-on-surface-variant"}`}>{plan.period}</p>
-                            </div>
-                          </div>
 
-                          <div className={`flex-1 flex flex-col justify-start w-full pt-3 border-t ${isSelected ? "border-white/20" : "border-surface-container-high"}`}>
-                            <ul className="space-y-2 text-sm">
-                              {plan.features.map((feat, idx) => (
-                                <li key={idx} className="flex items-start gap-2">
-                                  <CheckCircle2 className={`w-4 h-4 flex-shrink-0 mt-0.5 ${isSelected ? "text-white" : "text-primary"}`} />
-                                  <span className={`text-left font-medium text-[12px] ${isSelected ? "text-white" : "text-on-background"}`}>{feat}</span>
-                                </li>
-                              ))}
-                            </ul>
-                            {isSelected && (
-                              <button
-                                onClick={() => handleProceedToPayment()}
-                                disabled={loading}
-                                className="md:hidden w-full mt-4 bg-white text-[#006859] font-bold py-3 rounded-xl transition-all shadow-md flex justify-center items-center gap-2 active:scale-95"
-                              >
-                                {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <>Continue <ArrowRight className="w-4 h-4" /></>}
-                              </button>
-                            )}
+                            {plan.badge && <div className={`absolute -top-3 left-1/2 -translate-x-1/2 text-[9px] font-black px-2 py-0.5 rounded-full whitespace-nowrap shadow-sm tracking-wider ${isSelected ? "bg-white text-[#006859]" : "bg-primary text-white"}`}>{plan.badge}</div>}
+
+                            <div className="flex flex-row md:flex-col items-center md:text-center gap-3 md:gap-0 mb-3 md:mb-4 pr-10 md:pr-4">
+                              <div className={`w-10 h-10 rounded-xl flex-shrink-0 flex items-center justify-center md:mb-2 transition-colors ${isSelected ? "bg-white/20" : "bg-surface-container-low"}`}>
+                                {isSelected ? <div className="text-white opacity-90">{plan.icon}</div> : plan.icon}
+                              </div>
+                              <div className="flex-1 text-left md:text-center">
+                                <h4 className="font-bold text-base mb-0 md:mb-0.5">{plan.name}</h4>
+                                <p className={`text-[11px] md:mb-2 ${isSelected ? "text-white/90" : "text-on-surface-variant"}`}>{plan.description}</p>
+                              </div>
+                              <div className="flex flex-col text-right md:text-center md:mb-1">
+                                <p className="font-black text-xl md:text-3xl">{plan.priceDisplay}</p>
+                                <p className={`text-[10px] md:text-[11px] font-medium mt-0.5 ${isSelected ? "text-white/90" : "text-on-surface-variant"}`}>{plan.period}</p>
+                              </div>
+                            </div>
+
+                            <div className={`flex-1 flex flex-col justify-start w-full pt-3 border-t ${isSelected ? "border-white/20" : "border-surface-container-high"}`}>
+                              <ul className="space-y-2 text-sm">
+                                {plan.features.map((feat, idx) => (
+                                  <li key={idx} className="flex items-start gap-2">
+                                    <CheckCircle2 className={`w-4 h-4 flex-shrink-0 mt-0.5 ${isSelected ? "text-white" : "text-primary"}`} />
+                                    <span className={`text-left font-medium text-[12px] ${isSelected ? "text-white" : "text-on-background"}`}>{feat}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                              {isSelected && (
+                                <button
+                                  onClick={() => handleProceedToPayment()}
+                                  disabled={loading}
+                                  className="md:hidden w-full mt-4 bg-white text-[#006859] font-bold py-3 rounded-xl transition-all shadow-md flex justify-center items-center gap-2 active:scale-95"
+                                >
+                                  {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <>Continue <ArrowRight className="w-4 h-4" /></>}
+                                </button>
+                              )}
+                            </div>
                           </div>
+                        </React.Fragment>
+                      );
+                    })}
+
+                    {/* Student card */}
+                    <div onClick={() => setSelectedPlan("student")}
+                      className={`relative w-full md:w-auto flex flex-col p-4 md:p-5 rounded-2xl md:rounded-3xl border-2 cursor-pointer transition-all duration-300 ${selectedPlan === "student" ? "border-transparent bg-gradient-to-b from-[#006859] to-[#12f8d7] shadow-xl md:scale-105 text-white" : "border-tertiary/50 bg-gradient-to-br from-tertiary-container/20 to-surface-container-lowest hover:border-tertiary hover:shadow-md"}`}>
+
+
+                      {/* Selection indicator top-right */}
+                      <div className={`absolute top-3 right-3 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-200 z-10 ${selectedPlan === "student" ? "border-white bg-white scale-110" : "border-on-surface-variant/30"}`}>
+                        {selectedPlan === "student" && <CheckCircle2 className="w-4 h-4 text-[#006859]" />}
+                      </div>
+
+                      <div className="absolute -top-3 left-1/2 -translate-x-1/2 overflow-hidden flex items-center gap-1.5 text-[10px] font-black px-3 py-0.5 rounded-full shadow-lg whitespace-nowrap tracking-wider border z-20 bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-orange-500/40 border-orange-400/50">
+                        {/* Shine sweep */}
+                        <span className="badge-shine-inner pointer-events-none absolute inset-0 w-1/3 bg-gradient-to-r from-transparent via-white/40 to-transparent" />
+                        STUDENT OFFER
+                        <span className="relative bg-white/25 text-white rounded-full px-1.5 py-0 text-[9px] font-black tracking-wide border border-white/30">50% OFF</span>
+                      </div>
+
+                      {/* Mobile: icon + name left, price block right — stacked cleanly */}
+                      <div className="flex flex-row md:flex-col items-center md:text-center gap-3 md:gap-0 mb-3 md:mb-4 pr-10 md:pr-4">
+                        <div className={`w-10 h-10 rounded-xl flex-shrink-0 flex items-center justify-center md:mb-2 transition-colors ${selectedPlan === "student" ? "bg-white/20 text-white" : "bg-tertiary/20"}`}>
+                          <GraduationCap className={`w-5 h-5 ${selectedPlan === "student" ? "text-white opacity-90" : "text-tertiary"}`} />
                         </div>
-                      </React.Fragment>
-                    );
-                  })}
-
-                  {/* Student card */}
-                  <div onClick={() => setSelectedPlan("student")}
-                    className={`relative w-full md:w-auto flex flex-col p-4 md:p-5 rounded-2xl md:rounded-3xl border-2 cursor-pointer transition-all duration-300 ${selectedPlan === "student" ? "border-transparent bg-gradient-to-b from-[#006859] to-[#12f8d7] shadow-xl md:scale-105 text-white" : "border-tertiary/50 bg-gradient-to-br from-tertiary-container/20 to-surface-container-lowest hover:border-tertiary hover:shadow-md"}`}>
-
-
-                    {/* Selection indicator top-right */}
-                    <div className={`absolute top-3 right-3 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-200 z-10 ${selectedPlan === "student" ? "border-white bg-white scale-110" : "border-on-surface-variant/30"}`}>
-                      {selectedPlan === "student" && <CheckCircle2 className="w-4 h-4 text-[#006859]" />}
-                    </div>
-
-                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 overflow-hidden flex items-center gap-1.5 text-[10px] font-black px-3 py-0.5 rounded-full shadow-lg whitespace-nowrap tracking-wider border z-20 bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-orange-500/40 border-orange-400/50">
-                      {/* Shine sweep */}
-                      <span className="badge-shine-inner pointer-events-none absolute inset-0 w-1/3 bg-gradient-to-r from-transparent via-white/40 to-transparent" />
-                      STUDENT OFFER
-                      <span className="relative bg-white/25 text-white rounded-full px-1.5 py-0 text-[9px] font-black tracking-wide border border-white/30">50% OFF</span>
-                    </div>
-
-                    {/* Mobile: icon + name left, price block right — stacked cleanly */}
-                    <div className="flex flex-row md:flex-col items-center md:text-center gap-3 md:gap-0 mb-3 md:mb-4 pr-10 md:pr-4">
-                      <div className={`w-10 h-10 rounded-xl flex-shrink-0 flex items-center justify-center md:mb-2 transition-colors ${selectedPlan === "student" ? "bg-white/20 text-white" : "bg-tertiary/20"}`}>
-                        <GraduationCap className={`w-5 h-5 ${selectedPlan === "student" ? "text-white opacity-90" : "text-tertiary"}`} />
-                      </div>
-                      <div className="flex-1 text-left md:text-center">
-                        <h4 className="font-bold text-base mb-0 md:mb-0.5">Student Plan</h4>
-                        <p className={`text-[11px] md:mb-2 ${selectedPlan === "student" ? "text-white/90" : "text-on-surface-variant"}`}>400 Credits (40 Resumes)</p>
-                      </div>
-
-                      {/* Price block — vertical stack on mobile, centered on desktop */}
-                      <div className="flex flex-col items-end md:items-center md:mb-1 flex-shrink-0">
-                        {/* Strikethrough + badge row */}
-                        <div className="flex items-center gap-1.5 mb-0.5">
-                          <p className={`text-[11px] line-through leading-none ${selectedPlan === "student" ? "text-white/55" : "text-on-surface-variant opacity-60"}`}>₹199</p>
-                          <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-md leading-none tracking-wide ${selectedPlan === "student" ? "bg-white/25 text-white border border-white/30" : "bg-orange-500/15 text-orange-600 border border-orange-400/40"}`}>50% OFF</span>
+                        <div className="flex-1 text-left md:text-center">
+                          <h4 className="font-bold text-base mb-0 md:mb-0.5">Student Plan</h4>
+                          <p className={`text-[11px] md:mb-2 ${selectedPlan === "student" ? "text-white/90" : "text-on-surface-variant"}`}>400 Credits (40 Resumes)</p>
                         </div>
-                        {/* Big price */}
-                        <p className={`font-black text-2xl md:text-3xl leading-none ${selectedPlan === "student" ? "text-white" : "text-tertiary"}`}>₹99</p>
-                        <p className={`text-[10px] md:text-[11px] font-medium mt-0.5 ${selectedPlan === "student" ? "text-white/80" : "text-on-surface-variant"}`}>/2 months</p>
-                      </div>
-                    </div>
 
-                    <div className={`flex-1 flex flex-col justify-start w-full pt-3 border-t ${selectedPlan === "student" ? "border-white/20" : "border-surface-container-high"}`}>
-                      <ul className="space-y-2 text-sm mb-3">
-                        <li className="flex items-start gap-2">
-                          <CheckCircle2 className={`w-4 h-4 flex-shrink-0 mt-0.5 ${selectedPlan === "student" ? "text-white" : "text-tertiary"}`} />
-                          <span className={`text-left font-medium text-[12px] ${selectedPlan === "student" ? "text-white" : "text-on-background"}`}>400 Credits</span>
-                        </li>
-                        <li className="flex items-start gap-2">
-                          <CheckCircle2 className={`w-4 h-4 flex-shrink-0 mt-0.5 ${selectedPlan === "student" ? "text-white" : "text-tertiary"}`} />
-                          <span className={`text-left font-medium text-[12px] ${selectedPlan === "student" ? "text-white" : "text-on-background"}`}>Valid for 2 Months</span>
-                        </li>
-                        <li className="flex items-start gap-2">
-                          <CheckCircle2 className={`w-4 h-4 flex-shrink-0 mt-0.5 ${selectedPlan === "student" ? "text-white" : "text-tertiary"}`} />
-                          <span className={`text-left font-medium text-[12px] ${selectedPlan === "student" ? "text-white" : "text-on-background"}`}>All Premium Features</span>
-                        </li>
-                      </ul>
-
-                      {/* Deadline pill — centered below features, mirrors top badge style */}
-                      <div className="flex justify-center mt-1 mb-2">
-                        <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black tracking-wide border shadow-sm whitespace-nowrap ${
-                          selectedPlan === "student"
-                            ? "bg-gradient-to-r from-orange-500 to-amber-500 border-orange-400 text-white shadow-lg shadow-orange-500/20"
-                            : "bg-orange-500/10 border-orange-400/40 text-orange-600"
-                        }`}>
-                          <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse flex-shrink-0" />
-                          Grab before {getTomorrowDate()}
+                        {/* Price block — vertical stack on mobile, centered on desktop */}
+                        <div className="flex flex-col items-end md:items-center md:mb-1 flex-shrink-0">
+                          {/* Strikethrough + badge row */}
+                          <div className="flex items-center gap-1.5 mb-0.5">
+                            <p className={`text-[11px] line-through leading-none ${selectedPlan === "student" ? "text-white/55" : "text-on-surface-variant opacity-60"}`}>₹199</p>
+                            <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-md leading-none tracking-wide ${selectedPlan === "student" ? "bg-white/25 text-white border border-white/30" : "bg-orange-500/15 text-orange-600 border border-orange-400/40"}`}>50% OFF</span>
+                          </div>
+                          {/* Big price */}
+                          <p className={`font-black text-2xl md:text-3xl leading-none ${selectedPlan === "student" ? "text-white" : "text-tertiary"}`}>₹99</p>
+                          <p className={`text-[10px] md:text-[11px] font-medium mt-0.5 ${selectedPlan === "student" ? "text-white/80" : "text-on-surface-variant"}`}>/2 months</p>
                         </div>
                       </div>
 
-                      {selectedPlan === "student" && (
-                        <button
-                          onClick={() => handleProceedToPayment()}
-                          disabled={loading}
-                          className="md:hidden w-full mt-4 bg-white text-[#006859] font-bold py-3 rounded-xl transition-all shadow-md flex justify-center items-center gap-2 active:scale-95"
-                        >
-                          {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <>Continue <ArrowRight className="w-4 h-4" /></>}
-                        </button>
+                      <div className={`flex-1 flex flex-col justify-start w-full pt-3 border-t ${selectedPlan === "student" ? "border-white/20" : "border-surface-container-high"}`}>
+                        <ul className="space-y-2 text-sm mb-3">
+                          <li className="flex items-start gap-2">
+                            <CheckCircle2 className={`w-4 h-4 flex-shrink-0 mt-0.5 ${selectedPlan === "student" ? "text-white" : "text-tertiary"}`} />
+                            <span className={`text-left font-medium text-[12px] ${selectedPlan === "student" ? "text-white" : "text-on-background"}`}>400 Credits</span>
+                          </li>
+                          <li className="flex items-start gap-2">
+                            <CheckCircle2 className={`w-4 h-4 flex-shrink-0 mt-0.5 ${selectedPlan === "student" ? "text-white" : "text-tertiary"}`} />
+                            <span className={`text-left font-medium text-[12px] ${selectedPlan === "student" ? "text-white" : "text-on-background"}`}>Valid for 2 Months</span>
+                          </li>
+                          <li className="flex items-start gap-2">
+                            <CheckCircle2 className={`w-4 h-4 flex-shrink-0 mt-0.5 ${selectedPlan === "student" ? "text-white" : "text-tertiary"}`} />
+                            <span className={`text-left font-medium text-[12px] ${selectedPlan === "student" ? "text-white" : "text-on-background"}`}>All Premium Features</span>
+                          </li>
+                        </ul>
+
+                        {/* Deadline pill — centered below features, mirrors top badge style */}
+                        <div className="flex justify-center mt-1 mb-2">
+                          <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black tracking-wide border shadow-sm whitespace-nowrap ${selectedPlan === "student"
+                              ? "bg-gradient-to-r from-orange-500 to-amber-500 border-orange-400 text-white shadow-lg shadow-orange-500/20"
+                              : "bg-orange-500/10 border-orange-400/40 text-orange-600"
+                            }`}>
+                            <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse flex-shrink-0" />
+                            Grab before {getTomorrowDate()}
+                          </div>
+                        </div>
+
+                        {selectedPlan === "student" && (
+                          <button
+                            onClick={() => handleProceedToPayment()}
+                            disabled={loading}
+                            className="md:hidden w-full mt-4 bg-white text-[#006859] font-bold py-3 rounded-xl transition-all shadow-md flex justify-center items-center gap-2 active:scale-95"
+                          >
+                            {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <>Claim <ArrowRight className="w-4 h-4" /></>}
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+
+
+                  </div>
+
+                  {error && <p className="text-xs font-semibold text-error text-center mt-3 bg-error/10 py-2 rounded-lg">{error}</p>}
+
+                  {/* Desktop-only Pay & Continue button */}
+                  <div className="hidden md:flex justify-center mt-5">
+                    <button onClick={() => handleProceedToPayment()} disabled={loading}
+                      className="w-full max-w-sm bg-primary text-white font-bold py-3.5 rounded-2xl hover:opacity-90 transition-opacity flex justify-center items-center gap-2 shadow-lg shadow-primary/20">
+                      {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <>Pay & Continue <ArrowRight className="w-4 h-4" /></>}
+                    </button>
+                  </div>
+
+                  {/* Review banner — scratch page gets its own quote */}
+                  <ReviewBanner review={isScratchPage ? SCRATCH_REVIEW : PLAN_REVIEW} />
+                </motion.div>
+              )}
+
+              {/* STUDENT VERIFY STEP */}
+              {step === "student_verify" && (
+                <motion.div key="student_verify" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-5">
+
+                  {/* Method toggle with OR divider */}
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setStudentMethod("details")}
+                      className={`flex-1 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all flex items-center justify-center gap-1.5 border-2 ${studentMethod === "details" ? "border-orange-400 bg-orange-50 text-orange-600" : "border-surface-container-high bg-surface-container-low text-on-surface-variant hover:border-orange-300"}`}
+                    >
+                      <Building className="w-4 h-4 shrink-0" /> College Details
+                    </button>
+                    <span className="text-xs font-black text-on-surface-variant/50 shrink-0">OR</span>
+                    <button
+                      onClick={() => setStudentMethod("email")}
+                      className={`flex-1 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all flex items-center justify-center gap-1.5 border-2 ${studentMethod === "email" ? "border-orange-400 bg-orange-50 text-orange-600" : "border-surface-container-high bg-surface-container-low text-on-surface-variant hover:border-orange-300"}`}
+                    >
+                      <Mail className="w-4 h-4 shrink-0" /> College Email
+                    </button>
+                  </div>
+
+                  {studentMethod === "email" ? (
+                    <div className="space-y-4">
+                      <input
+                        type="email"
+                        placeholder="Enter your college email"
+                        value={studentEmail}
+                        onChange={e => { setStudentEmail(e.target.value); setOtpSent(false); setOtpValue(""); setError(null); }}
+                        disabled={otpSent}
+                        className="w-full px-4 py-3 bg-surface-container-low border border-surface-container-high rounded-xl outline-none text-sm focus:ring-2 focus:ring-orange-400 disabled:opacity-50 transition-all"
+                      />
+                      {otpSent && (
+                        <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} className="space-y-3">
+                          <p className="text-xs text-on-surface-variant text-center">
+                            Enter the 6-digit code sent to <strong className="text-on-background">{studentEmail}</strong>
+                          </p>
+                          {/* Professional 6-box OTP input */}
+                          <div className="flex justify-center gap-2">
+                            {[0, 1, 2, 3, 4, 5].map((index) => (
+                              <input
+                                key={index}
+                                id={`student-otp-${index}`}
+                                type="text"
+                                inputMode="numeric"
+                                pattern="[0-9]*"
+                                maxLength={6}
+                                autoComplete="one-time-code"
+                                value={otpValue[index] || ""}
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  if (val.length > 1) {
+                                    const digits = val.replace(/\D/g, "").slice(0, 6);
+                                    setOtpValue(digits);
+                                    setError(null);
+                                    document.getElementById(`student-otp-${Math.min(digits.length, 5)}`)?.focus();
+                                    return;
+                                  }
+                                  if (val && !/^\d$/.test(val)) return;
+                                  const newVal = otpValue.substring(0, index) + val + otpValue.substring(index + 1);
+                                  setOtpValue(newVal);
+                                  setError(null);
+                                  if (val && index < 5) document.getElementById(`student-otp-${index + 1}`)?.focus();
+                                }}
+                                onKeyDown={(e) => {
+                                  if (e.key === "Backspace" && !otpValue[index] && index > 0) {
+                                    document.getElementById(`student-otp-${index - 1}`)?.focus();
+                                  }
+                                }}
+                                onPaste={(e) => {
+                                  e.preventDefault();
+                                  const pasted = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 6);
+                                  setOtpValue(pasted);
+                                  if (pasted.length > 0) document.getElementById(`student-otp-${Math.min(pasted.length, 5)}`)?.focus();
+                                }}
+                                className={`w-11 h-12 text-center text-lg font-black rounded-xl border-2 outline-none transition-all duration-200
+                                ${otpValue[index]
+                                    ? "border-orange-400 bg-orange-50 text-orange-600 scale-105 shadow-sm shadow-orange-200"
+                                    : "border-surface-container-high bg-surface-container-low text-on-background focus:border-orange-400 focus:bg-orange-50/50"
+                                  }`}
+                              />
+                            ))}
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => { setOtpSent(false); setOtpValue(""); }}
+                            className="text-xs text-on-surface-variant hover:text-orange-500 underline w-full text-center transition-colors"
+                          >Change email / Resend</button>
+                        </motion.div>
                       )}
                     </div>
+                  ) : (
+                    <div className="space-y-3">
+                      <input type="text" placeholder="College Name" value={collegeName} onChange={e => setCollegeName(e.target.value)}
+                        className="w-full px-4 py-3 bg-surface-container-low border border-surface-container-high rounded-xl outline-none text-sm focus:ring-2 focus:ring-orange-400 transition-all" />
+                      <input type="text" placeholder="Enrolled Roll Number" value={rollNumber} onChange={e => setRollNumber(e.target.value)}
+                        className="w-full px-4 py-3 bg-surface-container-low border border-surface-container-high rounded-xl outline-none text-sm focus:ring-2 focus:ring-orange-400 transition-all" />
+                    </div>
+                  )}
+
+                  {error && <p className="text-xs text-error text-center bg-error/10 py-2 rounded-lg">{error}</p>}
+
+                  <div className="flex flex-col-reverse sm:flex-row gap-2">
+                    <button onClick={() => { setStep("plan"); setError(null); setOtpSent(false); setOtpValue(""); }} className="sm:flex-1 py-3 font-bold text-on-surface-variant hover:bg-surface-container-low rounded-xl transition-colors text-center">Back</button>
+                    <button
+                      onClick={studentMethod === "email" ? (otpSent ? verifyOtp : sendOtp) : verifyStudent}
+                      disabled={loading || (studentMethod === "email" && otpSent && otpValue.length !== 6)}
+                      className="flex-1 bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-md shadow-orange-500/30 font-bold py-3 px-4 rounded-xl hover:opacity-90 transition-opacity flex justify-center items-center text-sm sm:text-base leading-tight"
+                    >
+                      {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : studentMethod === "email" ? (otpSent ? "Claim Student Offer →" : "Send OTP") : "Claim Student Offer →"}
+                    </button>
                   </div>
+                </motion.div>
+              )}
 
 
-
+              {/* PROCESSING STEP */}
+              {step === "processing" && (
+                <div className="flex flex-col items-center justify-center py-12 gap-4">
+                  <Loader2 className="w-10 h-10 text-primary animate-spin" />
+                  <p className="text-on-surface-variant text-sm font-bold">Setting up secure payment...</p>
                 </div>
+              )}
 
-                {error && <p className="text-xs font-semibold text-error text-center mt-3 bg-error/10 py-2 rounded-lg">{error}</p>}
-
-                {/* Desktop-only Pay & Continue button */}
-                <div className="hidden md:flex justify-center mt-5">
-                  <button onClick={() => handleProceedToPayment()} disabled={loading}
-                    className="w-full max-w-sm bg-primary text-white font-bold py-3.5 rounded-2xl hover:opacity-90 transition-opacity flex justify-center items-center gap-2 shadow-lg shadow-primary/20">
-                    {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <>Pay & Continue <ArrowRight className="w-4 h-4" /></>}
-                  </button>
-                </div>
-
-                {/* Review banner — scratch page gets its own quote */}
-                <ReviewBanner review={isScratchPage ? SCRATCH_REVIEW : PLAN_REVIEW} />
-              </motion.div>
-            )}
-
-            {/* STUDENT VERIFY STEP */}
-            {step === "student_verify" && (
-              <motion.div key="student_verify" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-5">
-
-                {/* Method toggle with OR divider */}
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => setStudentMethod("details")}
-                    className={`flex-1 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all flex items-center justify-center gap-1.5 border-2 ${studentMethod === "details" ? "border-orange-400 bg-orange-50 text-orange-600" : "border-surface-container-high bg-surface-container-low text-on-surface-variant hover:border-orange-300"}`}
-                  >
-                    <Building className="w-4 h-4 shrink-0" /> College Details
-                  </button>
-                  <span className="text-xs font-black text-on-surface-variant/50 shrink-0">OR</span>
-                  <button
-                    onClick={() => setStudentMethod("email")}
-                    className={`flex-1 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all flex items-center justify-center gap-1.5 border-2 ${studentMethod === "email" ? "border-orange-400 bg-orange-50 text-orange-600" : "border-surface-container-high bg-surface-container-low text-on-surface-variant hover:border-orange-300"}`}
-                  >
-                    <Mail className="w-4 h-4 shrink-0" /> College Email
-                  </button>
-                </div>
-
-                {studentMethod === "email" ? (
-                  <div className="space-y-4">
-                    <input
-                      type="email"
-                      placeholder="Enter your college email"
-                      value={studentEmail}
-                      onChange={e => { setStudentEmail(e.target.value); setOtpSent(false); setOtpValue(""); setError(null); }}
-                      disabled={otpSent}
-                      className="w-full px-4 py-3 bg-surface-container-low border border-surface-container-high rounded-xl outline-none text-sm focus:ring-2 focus:ring-orange-400 disabled:opacity-50 transition-all"
-                    />
-                    {otpSent && (
-                      <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} className="space-y-3">
-                        <p className="text-xs text-on-surface-variant text-center">
-                          Enter the 6-digit code sent to <strong className="text-on-background">{studentEmail}</strong>
-                        </p>
-                        {/* Professional 6-box OTP input */}
-                        <div className="flex justify-center gap-2">
-                          {[0, 1, 2, 3, 4, 5].map((index) => (
-                            <input
-                              key={index}
-                              id={`student-otp-${index}`}
-                              type="text"
-                              inputMode="numeric"
-                              pattern="[0-9]*"
-                              maxLength={6}
-                              autoComplete="one-time-code"
-                              value={otpValue[index] || ""}
-                              onChange={(e) => {
-                                const val = e.target.value;
-                                if (val.length > 1) {
-                                  const digits = val.replace(/\D/g, "").slice(0, 6);
-                                  setOtpValue(digits);
-                                  setError(null);
-                                  document.getElementById(`student-otp-${Math.min(digits.length, 5)}`)?.focus();
-                                  return;
-                                }
-                                if (val && !/^\d$/.test(val)) return;
-                                const newVal = otpValue.substring(0, index) + val + otpValue.substring(index + 1);
-                                setOtpValue(newVal);
-                                setError(null);
-                                if (val && index < 5) document.getElementById(`student-otp-${index + 1}`)?.focus();
-                              }}
-                              onKeyDown={(e) => {
-                                if (e.key === "Backspace" && !otpValue[index] && index > 0) {
-                                  document.getElementById(`student-otp-${index - 1}`)?.focus();
-                                }
-                              }}
-                              onPaste={(e) => {
-                                e.preventDefault();
-                                const pasted = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 6);
-                                setOtpValue(pasted);
-                                if (pasted.length > 0) document.getElementById(`student-otp-${Math.min(pasted.length, 5)}`)?.focus();
-                              }}
-                              className={`w-11 h-12 text-center text-lg font-black rounded-xl border-2 outline-none transition-all duration-200
-                                ${otpValue[index]
-                                  ? "border-orange-400 bg-orange-50 text-orange-600 scale-105 shadow-sm shadow-orange-200"
-                                  : "border-surface-container-high bg-surface-container-low text-on-background focus:border-orange-400 focus:bg-orange-50/50"
-                                }`}
-                            />
-                          ))}
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => { setOtpSent(false); setOtpValue(""); }}
-                          className="text-xs text-on-surface-variant hover:text-orange-500 underline w-full text-center transition-colors"
-                        >Change email / Resend</button>
-                      </motion.div>
-                    )}
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    <input type="text" placeholder="College Name" value={collegeName} onChange={e => setCollegeName(e.target.value)}
-                      className="w-full px-4 py-3 bg-surface-container-low border border-surface-container-high rounded-xl outline-none text-sm focus:ring-2 focus:ring-orange-400 transition-all" />
-                    <input type="text" placeholder="Enrolled Roll Number" value={rollNumber} onChange={e => setRollNumber(e.target.value)}
-                      className="w-full px-4 py-3 bg-surface-container-low border border-surface-container-high rounded-xl outline-none text-sm focus:ring-2 focus:ring-orange-400 transition-all" />
-                  </div>
-                )}
-
-                {error && <p className="text-xs text-error text-center bg-error/10 py-2 rounded-lg">{error}</p>}
-
-                <div className="flex flex-col-reverse sm:flex-row gap-2">
-                  <button onClick={() => { setStep("plan"); setError(null); setOtpSent(false); setOtpValue(""); }} className="sm:flex-1 py-3 font-bold text-on-surface-variant hover:bg-surface-container-low rounded-xl transition-colors text-center">Back</button>
-                  <button
-                    onClick={studentMethod === "email" ? (otpSent ? verifyOtp : sendOtp) : verifyStudent}
-                    disabled={loading || (studentMethod === "email" && otpSent && otpValue.length !== 6)}
-                    className="flex-1 bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-md shadow-orange-500/30 font-bold py-3 px-4 rounded-xl hover:opacity-90 transition-opacity flex justify-center items-center text-sm sm:text-base leading-tight"
-                  >
-                    {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : studentMethod === "email" ? (otpSent ? "Claim Student Offer →" : "Send OTP") : "Claim Student Offer →"}
-                  </button>
-                </div>
-              </motion.div>
-            )}
-
-
-            {/* PROCESSING STEP */}
-            {step === "processing" && (
-              <div className="flex flex-col items-center justify-center py-12 gap-4">
-                <Loader2 className="w-10 h-10 text-primary animate-spin" />
-                <p className="text-on-surface-variant text-sm font-bold">Setting up secure payment...</p>
-              </div>
-            )}
-
-          </AnimatePresence>
-        </div>
-      </motion.div >
-    </div >
+            </AnimatePresence>
+          </div>
+        </motion.div >
+      </div >
     </>
   );
 }
