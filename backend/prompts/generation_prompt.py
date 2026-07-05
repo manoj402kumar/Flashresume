@@ -125,8 +125,7 @@ REMOVE frameworks from a completely different ecosystem:
 Log every removal in "changes". Max 5.
 
 DATABASES: JD databases first → append resume databases → max 5.
-CLOUD SERVICES: JD cloud first → append resume cloud → max 5.
-DEVELOPER TOOLS: JD tools first → append resume dev tools → max 5.
+CLOUD & DEV TOOLS (combined field "cloud_and_dev_tools"): JD cloud services first → JD developer tools next → append resume cloud → append resume dev tools → trim to max 5 most JD-relevant.
 MISCELLANEOUS (broad concepts — REST APIs, Agile, Microservices, System Design): JD concepts first → append resume misc → max 5 total. At most 1-2 from MISSING KEYWORDS. NEVER languages, frameworks, or databases here.
 
 Step 6: Certifications & Achievements
