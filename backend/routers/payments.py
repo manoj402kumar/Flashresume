@@ -15,7 +15,7 @@ from datetime import datetime, timedelta, timezone
 load_dotenv(override=True)
 
 if not os.getenv("RAZORPAY_WEBHOOK_SECRET"):
-    print("CRITICAL WARNING: RAZORPAY_WEBHOOK_SECRET not set in environment. Webhooks will fail.")
+    raise RuntimeError("RAZORPAY_WEBHOOK_SECRET is not set. Refusing to start.")
 
 router = APIRouter()
 from rate_limiter import limiter
@@ -541,4 +541,101 @@ async def razorpay_webhook(request: Request):
         raise HTTPException(status_code=400, detail="Invalid webhook signature")
     except Exception as e:
         print(f"Webhook error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/payments/reconcile")
+async def reconcile_payments(authorization: str = Header(None)):
+    CRON_SECRET = os.getenv("CRON_SECRET")
+    if not CRON_SECRET:
+        raise HTTPException(status_code=500, detail="CRON_SECRET not configured")
+        
+    if not authorization or authorization != f"Bearer {CRON_SECRET}":
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
+    if not sc.supabase:
+        raise HTTPException(status_code=500, detail="Database not configured")
+
+    try:
+        # Fetch up to 50 pending payments older than 30 minutes
+        cutoff_time = (datetime.now(timezone.utc) - timedelta(minutes=30)).isoformat()
+        pending_res = await sb(
+            lambda: sc.supabase.table("payments").select("*")
+            .eq("status", "pending")
+            .lt("created_at", cutoff_time)
+            .limit(50)
+            .execute()
+        )
+        
+        pending_payments = pending_res.data
+        if not pending_payments:
+            return {"status": "ok", "processed": 0, "remaining": 0, "message": "No pending payments found"}
+            
+        # We need a total count for "remaining"
+        count_res = await sb(
+            lambda: sc.supabase.table("payments").select("id", count="exact")
+            .eq("status", "pending")
+            .lt("created_at", cutoff_time)
+            .execute()
+        )
+        total_pending = count_res.count if hasattr(count_res, 'count') and count_res.count is not None else len(pending_payments)
+
+        processed_count = 0
+        
+        for payment in pending_payments:
+            order_id = payment["razorpay_order_id"]
+            user_id = payment["user_id"]
+            plan_type = payment["plan_type"]
+            
+            try:
+                # 1. Fetch order from Razorpay
+                order = await asyncio.to_thread(lambda: client.order.fetch(order_id))
+                
+                if order.get("status") == "paid":
+                    # 2. Fetch payments for this order to get the payment_id
+                    order_payments = await asyncio.to_thread(lambda: client.order.payments(order_id))
+                    
+                    if order_payments and order_payments.get("items") and len(order_payments["items"]) > 0:
+                        # Find captured payment if multiple exist
+                        payment_item = next((p for p in order_payments["items"] if p.get("status") == "captured"), order_payments["items"][0])
+                        payment_id = payment_item.get("id")
+                        
+                        if payment_id:
+                            # 3. Process the payment
+                            PLAN_CREDITS = {
+                                "pay_per_use": 20,
+                                "regular": 400,
+                                "student": 400,
+                                "bulk_offer": 4000,
+                            }
+                            credits_to_add = PLAN_CREDITS.get(plan_type, 0)
+                            validity_days = 365 if plan_type == "bulk_offer" else 60 if plan_type == "regular" else 60 if plan_type == "student" else 10
+
+                            await sb(lambda: sc.supabase.rpc("process_successful_payment", {
+                                "p_order_id": order_id,
+                                "p_payment_id": payment_id,
+                                "p_signature": "reconciled_by_cron",
+                                "p_user_id": user_id,
+                                "p_plan_type": plan_type,
+                                "p_credits_to_add": credits_to_add,
+                                "p_validity_days": validity_days
+                            }).execute())
+                            
+                            processed_count += 1
+                else:
+                    # If order is created or attempted but not paid after 30 mins, mark it as abandoned/failed?
+                    # For safety, we just leave it or mark as abandoned if explicitly desired. Let's not mutate to avoid overriding late webhooks.
+                    pass
+            except Exception as e:
+                print(f"Reconciliation error for order {order_id}: {e}")
+                
+        remaining = max(0, total_pending - len(pending_payments))
+        return {
+            "status": "ok", 
+            "processed": processed_count, 
+            "total_fetched": len(pending_payments),
+            "remaining": remaining
+        }
+
+    except Exception as e:
+        print(f"Reconciliation loop error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
