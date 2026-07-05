@@ -63,7 +63,7 @@ const PLANS = [
 
 // ── Review Banner ─────────────────────────────────────────────────────────────
 const PLAN_REVIEW = {
-  quote: "Before flashresume: 2-3 applications /day->rejection mails. After flashresume: 10-12 applications /day->shortlisting mails.",
+  quote: "Before flashresume: 2-3 applications /week->rejection mails. After flashresume: 10-15 applications /week->shortlisting mails.",
   author: "Rahul M.",
   role: "Software Engineer",
   avatar: "RM",
@@ -638,8 +638,8 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
                     <a href="/privacy" className="text-primary hover:underline font-medium">Privacy Policy</a>.
                   </p>
 
-                  {/* Review for auth step */}
-                  <ReviewBanner review={isScratchPage ? SCRATCH_REVIEW : PLAN_REVIEW} />
+                  {/* Review for auth step — always show student review on signup */}
+                  <ReviewBanner review={SCRATCH_REVIEW} />
                   <MiniReviewsMarquee />
                 </motion.div>
               )}
@@ -761,8 +761,8 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
                         {/* Deadline pill — centered below features, mirrors top badge style */}
                         <div className="flex justify-center mt-1 mb-2">
                           <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black tracking-wide border shadow-sm whitespace-nowrap ${selectedPlan === "student"
-                              ? "bg-gradient-to-r from-orange-500 to-amber-500 border-orange-400 text-white shadow-lg shadow-orange-500/20"
-                              : "bg-orange-500/10 border-orange-400/40 text-orange-600"
+                            ? "bg-gradient-to-r from-orange-500 to-amber-500 border-orange-400 text-white shadow-lg shadow-orange-500/20"
+                            : "bg-orange-500/10 border-orange-400/40 text-orange-600"
                             }`}>
                             <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse flex-shrink-0" />
                             Grab before {getTomorrowDate()}

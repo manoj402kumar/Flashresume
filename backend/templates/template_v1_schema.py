@@ -37,8 +37,7 @@ class TechnicalSkills(BaseModel):
     languages: list[str]
     frameworks_and_libraries: list[str]
     databases: list[str]
-    cloud_services: list[str]
-    developer_tools: list[str]
+    cloud_and_dev_tools: list[str]
     miscellaneous: list[str] = []
 
 class JobStrategyItem(BaseModel):

@@ -145,6 +145,7 @@ RULES:
 3. "changes" field: list EVERY modification — "Enhanced [section] bullet X: [old] → [new]", "Injected 'keyword' into Project X bullet Y", "Added X to developer_tools", "Removed Django — not relevant to Java/Spring Boot JD", etc.
 4. "ai_suggestions" field: 5-8 honest, personalized, actionable career tips based on THIS candidate's gaps and JD requirements.
    - Be specific — mention actual JD tech stack and their specific gaps, not generic advice.
+   - FIRST tip (always, no exceptions): "For campus placements, just focus on DSA, OOPs, SQL, and 2 strong projects. That's it."
    - Always include: "Reach out to HRs, Talent Acquisition, Lead developers for referrals for more chances to get shortlisted."
    - Always include DSA tip: "Solve top interview 150 DSA problems on LeetCode focusing on Arrays, Strings, Trees, DP, and Graphs. Aim for 1700+ contest rating to clear most coding interviews."
    - Always include: "Conribute to opensource on github in x tech stack" where x is jd core tech s
@@ -226,8 +227,7 @@ OUTPUT FORMAT:
     "languages": ["Skill 1", "Skill 2", "...(STRICT MAX 5)"],
     "frameworks_and_libraries": ["Skill 1", "Skill 2", "...(STRICT MAX 5)"],
     "databases": ["Skill 1", "Skill 2", "...(STRICT MAX 5)"],
-    "cloud_services": ["Skill 1", "Skill 2", "...(STRICT MAX 5)"],
-    "developer_tools": ["Skill 1", "Skill 2", "...(STRICT MAX 5)"],
+    "cloud_and_dev_tools": ["Skill 1", "Skill 2", "...(STRICT MAX 5 — combine cloud + dev tools, pick most JD-relevant)"],
     "miscellaneous": ["Skill 1", "Skill 2", "...(STRICT MAX 5)"]
   }},
   "certifications_and_achievements": [
@@ -244,7 +244,7 @@ OUTPUT FORMAT:
   "changes": [
     "Rewrote Summary: [old] → [new]",
     "Enhanced Project bullet 1: 'Built app' → 'Developed scalable food delivery platform using React and Node.js serving 500+ users'",
-    "Added Docker to developer_tools",
+    "Added Docker to cloud_and_dev_tools",
     "Removed non-relevant skill: Basic Excel"
   ],
   "ats_score_before": {ats_score_before},

@@ -337,8 +337,7 @@ export default function ScratchPage() {
         languages: ["Python", "JavaScript"],
         frameworks_and_libraries: ["React", "Node.js"],
         databases: ["MongoDB"],
-        cloud_services: [],
-        developer_tools: ["Git", "VS Code"],
+        cloud_and_dev_tools: ["Git", "VS Code"],
         miscellaneous: [],
       },
       section_order: ["summary", "education", "experience", "projects", "skills", "certifications"],
@@ -2045,58 +2044,41 @@ export default function ScratchPage() {
                                           />
                                         </div>
                                       )}
-                                      {(editMode || resume.technical_skills.cloud_services.length > 0) && (
-                                        <div>
-                                          <p className="font-semibold text-on-background mb-2">Cloud Services:</p>
-                                          <EditableSkillTags
-                                            skills={resume.technical_skills.cloud_services}
-                                            onChange={(newSkills) =>
-                                              updateResume({
-                                                technical_skills: {
-                                                  ...resume.technical_skills,
-                                                  cloud_services: newSkills,
-                                                },
-                                              })
-                                            }
-                                            editMode={editMode}
-                                            colorClass="bg-primary/10 text-primary"
-                                            highlightedSkills={resume.changes
-                                              .filter((c) => c.toLowerCase().includes("cloud"))
-                                              .map((c) => {
-                                                const match = c.match(/Added (.+?) to/i);
-                                                return match ? match[1].toLowerCase() : "";
-                                              })
-                                              .filter(Boolean)}
-                                            showHighlights={showHighlights}
-                                          />
-                                        </div>
-                                      )}
-                                      {(editMode || resume.technical_skills.developer_tools.length > 0) && (
-                                        <div>
-                                          <p className="font-semibold text-on-background mb-2">Developer Tools:</p>
-                                          <EditableSkillTags
-                                            skills={resume.technical_skills.developer_tools}
-                                            onChange={(newSkills) =>
-                                              updateResume({
-                                                technical_skills: {
-                                                  ...resume.technical_skills,
-                                                  developer_tools: newSkills,
-                                                },
-                                              })
-                                            }
-                                            editMode={editMode}
-                                            colorClass="bg-surface-container-high text-on-surface-variant"
-                                            highlightedSkills={resume.changes
-                                              .filter((c) => c.toLowerCase().includes("developer_tools") || c.toLowerCase().includes("tools"))
-                                              .map((c) => {
-                                                const match = c.match(/Added (.+?) to/i);
-                                                return match ? match[1].toLowerCase() : "";
-                                              })
-                                              .filter(Boolean)}
-                                            showHighlights={showHighlights}
-                                          />
-                                        </div>
-                                      )}
+                                      {(() => {
+                                        const cloudDevSkills =
+                                          resume.technical_skills.cloud_and_dev_tools?.length > 0
+                                            ? resume.technical_skills.cloud_and_dev_tools
+                                            : [
+                                                ...(resume.technical_skills.cloud_services ?? []),
+                                                ...(resume.technical_skills.developer_tools ?? []),
+                                              ];
+                                        return (editMode || cloudDevSkills.length > 0) ? (
+                                          <div>
+                                            <p className="font-semibold text-on-background mb-2">Cloud &amp; Dev Tools:</p>
+                                            <EditableSkillTags
+                                              skills={cloudDevSkills}
+                                              onChange={(newSkills) =>
+                                                updateResume({
+                                                  technical_skills: {
+                                                    ...resume.technical_skills,
+                                                    cloud_and_dev_tools: newSkills,
+                                                  },
+                                                })
+                                              }
+                                              editMode={editMode}
+                                              colorClass="bg-primary/10 text-primary"
+                                              highlightedSkills={resume.changes
+                                                .filter((c) => c.toLowerCase().includes("cloud") || c.toLowerCase().includes("tools"))
+                                                .map((c) => {
+                                                  const match = c.match(/Added (.+?) to/i);
+                                                  return match ? match[1].toLowerCase() : "";
+                                                })
+                                                .filter(Boolean)}
+                                              showHighlights={showHighlights}
+                                            />
+                                          </div>
+                                        ) : null;
+                                      })()}
                                       {(editMode || (resume.technical_skills.miscellaneous && resume.technical_skills.miscellaneous.length > 0)) && (
                                         <div>
                                           <p className="font-semibold text-on-background mb-2">Miscellaneous:</p>

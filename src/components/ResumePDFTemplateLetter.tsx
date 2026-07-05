@@ -449,30 +449,27 @@ export default function ResumePDFTemplateLetter({ resume, showHighlights = false
                         />
                       </View>
                     )}
-                    {(resume.technical_skills?.cloud_services?.length ?? 0) > 0 && (
-                      <View style={styles.skillCategoryRow}>
-                        <Text style={styles.skillLabel}>Cloud Services</Text>
-                        <HighlightedText
-                          text={`: ${resume.technical_skills.cloud_services.join(", ")}`}
-                          matched={matchedKeywords}
-                          missing={missingKeywords}
-                          showHighlights={showHighlights}
-                          style={styles.skillList}
-                        />
-                      </View>
-                    )}
-                    {(resume.technical_skills?.developer_tools?.length ?? 0) > 0 && (
-                      <View style={styles.skillCategoryRow}>
-                        <Text style={styles.skillLabel}>Developer Tools</Text>
-                        <HighlightedText
-                          text={`: ${resume.technical_skills.developer_tools.join(", ")}`}
-                          matched={matchedKeywords}
-                          missing={missingKeywords}
-                          showHighlights={showHighlights}
-                          style={styles.skillList}
-                        />
-                      </View>
-                    )}
+                    {(() => {
+                      const cloudDevSkills =
+                        (resume.technical_skills.cloud_and_dev_tools?.length ?? 0) > 0
+                          ? resume.technical_skills.cloud_and_dev_tools!
+                          : [
+                              ...(resume.technical_skills.cloud_services ?? []),
+                              ...(resume.technical_skills.developer_tools ?? []),
+                            ];
+                      return cloudDevSkills.length > 0 ? (
+                        <View style={styles.skillCategoryRow}>
+                          <Text style={styles.skillLabel}>Cloud &amp; Dev Tools</Text>
+                          <HighlightedText
+                            text={`: ${cloudDevSkills.join(", ")}`}
+                            matched={matchedKeywords}
+                            missing={missingKeywords}
+                            showHighlights={showHighlights}
+                            style={styles.skillList}
+                          />
+                        </View>
+                      ) : null;
+                    })()}
                     {resume.technical_skills?.miscellaneous && resume.technical_skills.miscellaneous.length > 0 && (
                       <View style={styles.skillCategoryRow}>
                         <Text style={styles.skillLabel}>Miscellaneous</Text>

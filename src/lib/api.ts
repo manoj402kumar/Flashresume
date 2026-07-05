@@ -188,8 +188,9 @@ export interface TemplateV1 {
     languages: string[];
     frameworks_and_libraries: string[];
     databases: string[];
-    cloud_services: string[];
-    developer_tools: string[];
+    cloud_and_dev_tools: string[];
+    cloud_services?: string[];    // legacy — kept for backward compat with old cached resumes
+    developer_tools?: string[];   // legacy — kept for backward compat with old cached resumes
     miscellaneous: string[];
     custom_categories?: Array<{
       label: string;

@@ -2381,58 +2381,41 @@ export default function ResultPage() {
                                       />
                                     </div>
                                   )}
-                                  {(editMode || resume.technical_skills.cloud_services.length > 0) && (
-                                    <div>
-                                      <p className="font-semibold text-on-background mb-2">Cloud Services:</p>
-                                      <EditableSkillTags
-                                        skills={resume.technical_skills.cloud_services}
-                                        onChange={(newSkills) =>
-                                          updateResume({
-                                            technical_skills: {
-                                              ...resume.technical_skills,
-                                              cloud_services: newSkills,
-                                            },
-                                          })
-                                        }
-                                        editMode={editMode}
-                                        colorClass="bg-primary/10 text-primary"
-                                        highlightedSkills={resume.changes
-                                          .filter((c) => c.toLowerCase().includes("cloud"))
-                                          .map((c) => {
-                                            const match = c.match(/Added (.+?) to/i);
-                                            return match ? match[1].toLowerCase() : "";
-                                          })
-                                          .filter(Boolean)}
-                                        showHighlights={showHighlights}
-                                      />
-                                    </div>
-                                  )}
-                                  {(editMode || resume.technical_skills.developer_tools.length > 0) && (
-                                    <div>
-                                      <p className="font-semibold text-on-background mb-2">Developer Tools:</p>
-                                      <EditableSkillTags
-                                        skills={resume.technical_skills.developer_tools}
-                                        onChange={(newSkills) =>
-                                          updateResume({
-                                            technical_skills: {
-                                              ...resume.technical_skills,
-                                              developer_tools: newSkills,
-                                            },
-                                          })
-                                        }
-                                        editMode={editMode}
-                                        colorClass="bg-surface-container-high text-on-surface-variant"
-                                        highlightedSkills={resume.changes
-                                          .filter((c) => c.toLowerCase().includes("developer_tools") || c.toLowerCase().includes("tools"))
-                                          .map((c) => {
-                                            const match = c.match(/Added (.+?) to/i);
-                                            return match ? match[1].toLowerCase() : "";
-                                          })
-                                          .filter(Boolean)}
-                                        showHighlights={showHighlights}
-                                      />
-                                    </div>
-                                  )}
+                                  {(() => {
+                                    const cloudDevSkills =
+                                      resume.technical_skills.cloud_and_dev_tools?.length > 0
+                                        ? resume.technical_skills.cloud_and_dev_tools
+                                        : [
+                                            ...(resume.technical_skills.cloud_services ?? []),
+                                            ...(resume.technical_skills.developer_tools ?? []),
+                                          ];
+                                    return (editMode || cloudDevSkills.length > 0) ? (
+                                      <div>
+                                        <p className="font-semibold text-on-background mb-2">Cloud &amp; Dev Tools:</p>
+                                        <EditableSkillTags
+                                          skills={cloudDevSkills}
+                                          onChange={(newSkills) =>
+                                            updateResume({
+                                              technical_skills: {
+                                                ...resume.technical_skills,
+                                                cloud_and_dev_tools: newSkills,
+                                              },
+                                            })
+                                          }
+                                          editMode={editMode}
+                                          colorClass="bg-primary/10 text-primary"
+                                          highlightedSkills={resume.changes
+                                            .filter((c) => c.toLowerCase().includes("cloud") || c.toLowerCase().includes("tools"))
+                                            .map((c) => {
+                                              const match = c.match(/Added (.+?) to/i);
+                                              return match ? match[1].toLowerCase() : "";
+                                            })
+                                            .filter(Boolean)}
+                                          showHighlights={showHighlights}
+                                        />
+                                      </div>
+                                    ) : null;
+                                  })()}
                                   {(editMode || (resume.technical_skills.miscellaneous && resume.technical_skills.miscellaneous.length > 0)) && (
                                     <div>
                                       <p className="font-semibold text-on-background mb-2">Miscellaneous:</p>
@@ -2813,6 +2796,14 @@ export default function ResultPage() {
                         {resume.ai_suggestions.map((tip, idx) => {
                           const total = resume.ai_suggestions!.length;
                           const isLocked = credits === 0 && idx >= total - 3;
+
+                          // For the first tip (campus placement), blur only the actionable keywords for 0-credit users
+                          const isCampusTip = idx === 0 && credits === 0;
+                          const splitKey = "focus on ";
+                          const splitIdx = isCampusTip ? tip.toLowerCase().indexOf(splitKey) : -1;
+                          const tipPrefix = splitIdx !== -1 ? tip.slice(0, splitIdx + splitKey.length) : tip;
+                          const tipBlurred = splitIdx !== -1 ? tip.slice(splitIdx + splitKey.length) : null;
+
                           return (
                             <motion.div
                               key={idx}
@@ -2828,7 +2819,27 @@ export default function ResultPage() {
                               <div className="w-5 h-5 rounded-full bg-gradient-to-br from-[#006859] to-[#12f8d7] flex items-center justify-center text-white text-[10px] font-black flex-shrink-0 mt-0.5">
                                 {idx + 1}
                               </div>
-                              <p className={`text-sm text-on-background leading-relaxed flex-1 ${isLocked ? "blur-sm select-none pointer-events-none" : ""}`}>{tip}</p>
+                              {tipBlurred ? (
+                                <p className="text-sm text-on-background leading-relaxed flex-1">
+                                  {tipPrefix}
+                                  <span className="relative inline-block">
+                                    <span
+                                      style={{ filter: "blur(3px)" }}
+                                      className="select-none"
+                                    >{tipBlurred}</span>
+                                    <span
+                                      onClick={() => { setPricingTrigger("download"); setShowPricingPopup(true); }}
+                                      className="absolute inset-0 flex items-center justify-center cursor-pointer"
+                                    >
+                                      <span className="inline-flex items-center gap-1 bg-[#006859] text-white text-[10px] font-black px-2 py-0.5 rounded-full whitespace-nowrap shadow-md">
+                                        🔒 Unlock golden formula
+                                      </span>
+                                    </span>
+                                  </span>
+                                </p>
+                              ) : (
+                                <p className={`text-sm text-on-background leading-relaxed flex-1 ${isLocked ? "blur-sm select-none pointer-events-none" : ""}`}>{tip}</p>
+                              )}
                               {isLocked && (
                                 <div className="absolute inset-0 flex items-center justify-center gap-1.5 bg-[#e8faf7]/80 backdrop-blur-[2px] rounded-xl">
                                   <span className="text-sm">🔒</span>
