@@ -25,9 +25,9 @@ CREATE TABLE IF NOT EXISTS public.payment_recovery_queue (
     created_at  TIMESTAMPTZ DEFAULT now()
 );
 
--- RLS: admin-only reads
+-- RLS: service_role only
 ALTER TABLE public.payment_recovery_queue ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Enable read access for service role" ON public.payment_recovery_queue FOR SELECT USING (true);
+CREATE POLICY "service_role_only" ON public.payment_recovery_queue FOR ALL USING (auth.role() = 'service_role');
 
 
 -- ==============================================================================
@@ -97,6 +97,7 @@ BEGIN
       WHEN 'pay_per_use' THEN v_safe_plan_type := 'pay_per_use'::plan_type_enum;
       WHEN 'bulk_offer' THEN v_safe_plan_type := 'bulk_offer'::plan_type_enum;
       WHEN 'referral' THEN v_safe_plan_type := 'referral'::plan_type_enum;
+      WHEN 'manual' THEN v_safe_plan_type := 'manual'::plan_type_enum;
       ELSE
           RAISE EXCEPTION 'Unknown plan_type: %', p_plan_type;
     END CASE;
@@ -171,6 +172,8 @@ BEGIN
         -- Check if credits were already granted (idempotency fallback)
         IF EXISTS (SELECT 1 FROM credit_buckets WHERE payment_id = p_payment_id) THEN
             RETURN jsonb_build_object('status', 'already_processed', 'message', 'Credits already granted');
+        ELSE
+            RETURN jsonb_build_object('status', 'not_found', 'message', 'Order not found in payments table');
         END IF;
     END IF;
 
