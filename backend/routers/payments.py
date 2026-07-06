@@ -610,14 +610,14 @@ async def reconcile_payments(authorization: str = Header(None)):
                             credits_to_add = PLAN_CREDITS.get(plan_type, 0)
                             validity_days = 365 if plan_type == "bulk_offer" else 60 if plan_type == "regular" else 60 if plan_type == "student" else 10
 
-                            await sb(lambda: sc.supabase.rpc("process_successful_payment", {
-                                "p_order_id": order_id,
-                                "p_payment_id": payment_id,
+                            await sb(lambda oid=order_id, pid=payment_id, uid=user_id, pt=plan_type, c=credits_to_add, v=validity_days: sc.supabase.rpc("process_successful_payment", {
+                                "p_order_id": oid,
+                                "p_payment_id": pid,
                                 "p_signature": "reconciled_by_cron",
-                                "p_user_id": user_id,
-                                "p_plan_type": plan_type,
-                                "p_credits_to_add": credits_to_add,
-                                "p_validity_days": validity_days
+                                "p_user_id": uid,
+                                "p_plan_type": pt,
+                                "p_credits_to_add": c,
+                                "p_validity_days": v
                             }).execute())
                             
                             processed_count += 1
