@@ -18,13 +18,13 @@ else:
 
 async def sb(query_lambda):
     """Wraps any synchronous Supabase query in asyncio.to_thread with auto-reconnect."""
+    global supabase
     try:
         return await asyncio.to_thread(query_lambda)
     except (httpx.ReadError, httpx.WriteError, httpx.ConnectError,
             httpcore.ReadError, httpcore.WriteError, httpcore.ConnectError,
             ConnectionResetError, BrokenPipeError) as e:
         print(f"[Supabase] Connection dropped ({type(e).__name__}: {e}). Reconnecting...")
-        global supabase
         supabase = create_client(_url, _key)
         try:
             return await asyncio.to_thread(query_lambda)
@@ -34,7 +34,6 @@ async def sb(query_lambda):
     except Exception as e:
         if "ConnectionTerminated" in str(e) or "error_code:9" in str(e):
             print("[Supabase] HTTP/2 stream error. Reconnecting...")
-            global supabase
             supabase = create_client(_url, _key)
             return await asyncio.to_thread(query_lambda)
         raise
