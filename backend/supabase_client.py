@@ -19,7 +19,7 @@ async def sb(query_lambda):
     try:
         return await asyncio.to_thread(query_lambda)
     except Exception as e:
-        if "ConnectionTerminated" in str(e) or "error_code:9" in str(e):
+        if "ConnectionTerminated" in str(e) or "error_code:9" in str(e) or "Broken pipe" in str(e) or "WriteError" in str(e):
             print("[Supabase] HTTP/2 Connection dropped. Reconnecting...")
             global supabase
             supabase = create_client(_url, _key)

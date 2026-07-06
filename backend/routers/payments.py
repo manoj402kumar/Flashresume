@@ -627,7 +627,13 @@ async def reconcile_payments(authorization: str = Header(None)):
                         "status": "abandoned"
                     }).eq("razorpay_order_id", order_id).execute())
             except Exception as e:
+                error_msg = str(e).lower()
                 print(f"Reconciliation error for order {order_id}: {e}")
+                if "does not exist" in error_msg or "not found" in error_msg:
+                    # Mark ghost/deleted Razorpay orders as abandoned to stop infinite retry loop
+                    await sb(lambda oid=order_id: sc.supabase.table("payments").update({
+                        "status": "abandoned"
+                    }).eq("razorpay_order_id", oid).execute())
                 
         remaining = max(0, total_pending - len(pending_payments))
         return {
