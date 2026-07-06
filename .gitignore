@@ -54,3 +54,5 @@ test_latex.py
 
 # VS Code settings
 .vscode/
+supabase/.temp/
+*.sql
