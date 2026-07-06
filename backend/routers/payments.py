@@ -622,9 +622,10 @@ async def reconcile_payments(authorization: str = Header(None)):
                             
                             processed_count += 1
                 else:
-                    # If order is created or attempted but not paid after 30 mins, mark it as abandoned/failed?
-                    # For safety, we just leave it or mark as abandoned if explicitly desired. Let's not mutate to avoid overriding late webhooks.
-                    pass
+                    # If order is created or attempted but not paid after 30 mins, mark it as abandoned
+                    await sb(lambda: sc.supabase.table("payments").update({
+                        "status": "abandoned"
+                    }).eq("razorpay_order_id", order_id).execute())
             except Exception as e:
                 print(f"Reconciliation error for order {order_id}: {e}")
                 
