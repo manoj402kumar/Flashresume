@@ -69,6 +69,8 @@ WHERE id IN (SELECT id FROM ranked WHERE rn = 1);
 -- ==============================================================================
 -- 4. HARDEN add_credit_bucket WITH SAFE ENUM CAST
 -- ==============================================================================
+DROP FUNCTION IF EXISTS public.add_credit_bucket(UUID, TEXT, INTEGER, INTEGER, TEXT);
+
 CREATE OR REPLACE FUNCTION public.add_credit_bucket(
   p_user_id UUID,
   p_plan_type TEXT,
@@ -148,6 +150,9 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 -- ==============================================================================
 -- 5. REWRITE process_successful_payment WITH NESTED EXCEPTION
 -- ==============================================================================
+DROP FUNCTION IF EXISTS public.process_successful_payment(TEXT, TEXT, TEXT, UUID, TEXT, INTEGER, INTEGER);
+DROP FUNCTION IF EXISTS public.process_successful_payment(TEXT, TEXT, TEXT, UUID, TEXT, INT, INT);
+
 CREATE OR REPLACE FUNCTION public.process_successful_payment(
     p_order_id TEXT,
     p_payment_id TEXT,
