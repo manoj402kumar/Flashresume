@@ -588,11 +588,11 @@ async def reconcile_payments(authorization: str = Header(None)):
             
             try:
                 # 1. Fetch order from Razorpay
-                order = await asyncio.to_thread(lambda: client.order.fetch(order_id))
+                order = await asyncio.to_thread(lambda oid=order_id: client.order.fetch(oid))
                 
                 if order.get("status") == "paid":
                     # 2. Fetch payments for this order to get the payment_id
-                    order_payments = await asyncio.to_thread(lambda: client.order.payments(order_id))
+                    order_payments = await asyncio.to_thread(lambda oid=order_id: client.order.payments(oid))
                     
                     if order_payments and order_payments.get("items") and len(order_payments["items"]) > 0:
                         # Find captured payment if multiple exist
