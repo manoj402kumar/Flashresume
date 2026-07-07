@@ -97,12 +97,14 @@ async def generate_resume_endpoint(request: Request, payload: GenerateRequest, a
     # Step 5: Increment fraud tracker counter — fire-and-forget, never blocks the response.
     # Counts consecutive generations without a download. Reset happens in deduct_credits_v2 on download.
     if sc.supabase and user_id:
-        try:
-            asyncio.create_task(asyncio.to_thread(
-                lambda: sc.supabase.rpc("increment_fraud_counter", {"p_user_id": user_id}).execute()
-            ))
-        except Exception:
-            pass  # Never block generation for tracking failures
+        async def safe_increment():
+            try:
+                await sc.sb(lambda: sc.supabase.rpc("increment_fraud_counter", {"p_user_id": user_id}).execute())
+            except Exception as e:
+                print(f"[Generate] Background fraud counter failed: {e}")
+                pass
+        
+        asyncio.create_task(safe_increment())
 
     # Return Template v1 JSON directly (no wrapper)
     return JSONResponse(content=generated)
