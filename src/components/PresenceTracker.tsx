@@ -66,8 +66,8 @@ export default function PresenceTracker() {
     // Ping immediately on mount/page change
     pingBackend();
 
-    // Then ping every 30 seconds
-    const pingInterval = setInterval(pingBackend, 30000);
+    // Then ping every 5 minutes (drastically reduces backend egress)
+    const pingInterval = setInterval(pingBackend, 300000);
 
     return () => clearInterval(pingInterval);
   }, [pathname]);
