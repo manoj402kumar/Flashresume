@@ -75,14 +75,19 @@ export default function AccountSection({ onTopUpClick }: AccountSectionProps) {
     }
 
     loadAccountData();
+  }, []);
 
-    // Listen for realtime credit updates
+  useEffect(() => {
+    if (!user) return;
+
+    // Listen for realtime credit updates scoped only to this user
     const subscription = supabase
-      .channel('public:users')
+      .channel(`account_credits_${user.id}`)
       .on('postgres_changes', {
         event: 'UPDATE',
         schema: 'public',
-        table: 'users'
+        table: 'users',
+        filter: `id=eq.${user.id}`
       }, (payload) => {
         setCredits(payload.new.credits_balance);
         if (payload.new.referral_code) setReferralCode(payload.new.referral_code);
@@ -92,7 +97,7 @@ export default function AccountSection({ onTopUpClick }: AccountSectionProps) {
     return () => {
       supabase.removeChannel(subscription);
     };
-  }, []);
+  }, [user]);
 
   if (loading) {
     return (
