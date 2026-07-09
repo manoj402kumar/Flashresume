@@ -299,8 +299,21 @@ export default function ScratchPage() {
     updateResume({ section_order: arrayMove(currentOrder, idx, idx + 2) }, { immediate: true });
   };
 
-  // ── Scratch mode: load a blank template immediately ──
+  // ── Scratch mode: restore saved draft or load a blank template ──
   useEffect(() => {
+    // Try to restore a previously saved scratch draft (survives refresh & post-payment redirect)
+    try {
+      const saved = localStorage.getItem("scratch_resume_draft");
+      if (saved) {
+        const parsed = JSON.parse(saved) as TemplateV1;
+        setResume(parsed);
+        setNoJdMode(true);
+        setLoading(false);
+        return;
+      }
+    } catch (_) {}
+
+    // No saved draft → load blank template
     const blankResume: TemplateV1 = {
       template_id: "v1",
       heading: {
@@ -463,7 +476,8 @@ export default function ScratchPage() {
   const handleStartOver = () => {
     // Only clear resume workflow keys — do NOT clear auth session
     ["resume_text", "job_description", "analysis", "generated_resume",
-      "no_jd_mode", "no_ai_changes", "approved_project", "preferred_model"].forEach(
+      "no_jd_mode", "no_ai_changes", "approved_project", "preferred_model",
+      "scratch_resume_draft"].forEach(
         (key) => localStorage.removeItem(key)
       );
     router.push("/");
@@ -512,6 +526,7 @@ export default function ScratchPage() {
       setCanRedo(false);
       try {
         localStorage.setItem("generated_resume", JSON.stringify(next));
+        localStorage.setItem("scratch_resume_draft", JSON.stringify(next));
       } catch (_) {}
       return next;
     });
