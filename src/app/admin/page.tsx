@@ -13,7 +13,7 @@ import DownloadChart from "./components/DownloadChart";
 import RevenuePanel from "./components/RevenuePanel";
 import FunnelChart from "./components/FunnelChart";
 import FeedbackPanel from "./components/FeedbackPanel";
-import { supabase } from "@/lib/supabase";
+// supabase import removed — Realtime channel replaced with lightweight backend poll
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -144,26 +144,25 @@ export default function AdminPage() {
     return () => clearInterval(id);
   }, []);
 
-  // Track online users via Supabase Presence
+  // Poll backend /api/presence/count every 30s for Live Users + Peak cards.
+  // This endpoint reads only from in-memory ACTIVE_SESSIONS + peak_record — zero Supabase egress.
+  // Replaces the old Supabase Realtime channel which was generating massive egress.
   useEffect(() => {
-    const channel = supabase.channel("public:online-users");
-    channel
-      .on("presence", { event: "sync" }, () => {
-        const state = channel.presenceState();
-        // Count unique users by their anonId payload, so multiple tabs = 1 user
-        const uniqueUsers = new Set();
-        Object.values(state).forEach((presences: any) => {
-          presences.forEach((p: any) => {
-            if (p.user) uniqueUsers.add(p.user);
-          });
-        });
-        setOnlineUsers(uniqueUsers.size);
-      })
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
+    const fetchPresence = async () => {
+      try {
+        const res = await fetch(`${API_URL}/api/presence/count`);
+        const json = await res.json();
+        setOnlineUsers(json.live ?? 0);
+        setStats(prev => ({
+          ...prev,
+          peakConcurrentUsers: json.peak ?? prev.peakConcurrentUsers,
+          peakTimestamp: json.peak_timestamp ?? prev.peakTimestamp,
+        }));
+      } catch { /* ignore — backend may be cold-starting */ }
     };
+    fetchPresence();
+    const id = setInterval(fetchPresence, 30000); // every 30 seconds
+    return () => clearInterval(id);
   }, []);
 
 
@@ -191,9 +190,10 @@ export default function AdminPage() {
         });
       } catch { /* offline */ }
     };
+    // Load once on page mount — stats (revenue, downloads etc.) don't need
+    // real-time auto-refresh. Reload the page when you need fresh numbers.
+    // This eliminates 7 Supabase queries firing every 15 seconds.
     fetchStats();
-    const id = setInterval(fetchStats, 15000);
-    return () => clearInterval(id);
   }, []);
 
   // Intersection observer for active section highlight

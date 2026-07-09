@@ -453,16 +453,19 @@ async def get_analytics_downloads(
             chunk_size = 200
             for i in range(0, len(session_ids), chunk_size):
                 chunk = session_ids[i:i+chunk_size]
-                s_res = await _sb(sc.supabase.table("resume_sessions").select("id, generated_output").in_("id", chunk))
+                # Fetch only the 2 tiny fields we need from generated_output instead of the
+                # full ~50 KB resume JSON blob. PostgREST JSON operators (->> for text, -> for number)
+                # extract just those fields server-side before sending data over the wire.
+                # Before: ~50 KB × 10,000 rows = up to 500 MB egress per admin page load.
+                # After:  ~50 bytes × 10,000 rows = ~500 KB egress. (1000x reduction)
+                s_res = await _sb(sc.supabase.table("resume_sessions").select("id, generated_output->>_category, generated_output->ats_score_after").in_("id", chunk))
                 for s in s_res.data or []:
-                    output = s.get("generated_output") or {}
-                    cat = output.get("_category")
+                    cat = s.get("_category")
                     if not cat:
-                        # Legacy fallback: no _category field on old sessions.
+                        # Legacy fallback: old sessions don't have _category.
                         # ats_score_after > 0 means a JD was used → jd_optimized.
                         # ats_score_after = 0 means no JD → no_jd (First Resume).
-                        # There is no true "unknown" — every session is one of the 3 categories.
-                        score = output.get("ats_score_after", 0)
+                        score = s.get("ats_score_after") or 0
                         cat = "jd_optimized" if score > 0 else "no_jd"
                     session_categories[s["id"]] = cat
 

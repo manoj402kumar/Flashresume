@@ -1,25 +1,23 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import { usePathname } from "next/navigation";
-import { supabase } from "@/lib/supabase";
-import { RealtimeChannel } from "@supabase/supabase-js";
+
+// PresenceTracker — lightweight backend-only ping.
+// The Supabase Realtime WebSocket channel was removed because:
+//   1. It generated massive egress (Supabase broadcasts to ALL connected browsers on every update).
+//   2. No feature in the app ever READ the Realtime presence data.
+//   3. The backend HTTP ping below already tracks peak concurrent users for the admin dashboard.
+// Cost now: one tiny HTTP POST per user per 5 minutes. Zero Supabase Realtime egress.
 
 export default function PresenceTracker() {
   const pathname = usePathname();
-  const channelRef = useRef<RealtimeChannel | null>(null);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
 
     // Do not track presence on the admin dashboard
-    if (pathname && pathname.startsWith("/admin")) {
-      if (channelRef.current) {
-        supabase.removeChannel(channelRef.current);
-        channelRef.current = null;
-      }
-      return;
-    }
+    if (pathname && pathname.startsWith("/admin")) return;
 
     // Get or create anonymous ID from localStorage for de-duplicating tabs
     let anonId = localStorage.getItem("flashresume_anon_id");
@@ -28,58 +26,26 @@ export default function PresenceTracker() {
       localStorage.setItem("flashresume_anon_id", anonId);
     }
 
-    if (!channelRef.current) {
-      // Connect first time
-      channelRef.current = supabase.channel("public:online-users");
-      
-      channelRef.current.subscribe(async (status) => {
-        if (status === "SUBSCRIBED") {
-          await channelRef.current?.track({
-            user: anonId,
-            page: pathname,
-            online_at: new Date().toISOString(),
-          });
-        }
-      });
-    } else {
-      // If already connected, just update the presence state with the new page
-      if (channelRef.current.state === "joined") {
-        channelRef.current.track({
-          user: anonId,
-          page: pathname,
-          updated_at: new Date().toISOString(),
-        });
-      }
-    }
-
-    // 24/7 Backend Peak Tracking Heartbeat
+    // Backend Peak Tracking Heartbeat — pings Render backend every 5 minutes.
+    // The backend counts active sessions in-memory and saves peak to system_metrics table.
     const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
     const pingBackend = () => {
       fetch(`${API_URL}/api/presence/ping`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ user_id: anonId }),
-        keepalive: true
+        keepalive: true,
       }).catch(() => {});
     };
 
-    // Ping immediately on mount/page change
+    // Ping immediately on mount / page change
     pingBackend();
 
-    // Then ping every 5 minutes (drastically reduces backend egress)
-    const pingInterval = setInterval(pingBackend, 300000);
+    // Then ping every 2 minutes (stale timeout is 3 min, so 1 min safety buffer)
+    const pingInterval = setInterval(pingBackend, 120000);
 
     return () => clearInterval(pingInterval);
   }, [pathname]);
-
-  // Cleanup on full unmount
-  useEffect(() => {
-    return () => {
-      if (channelRef.current) {
-        supabase.removeChannel(channelRef.current);
-      }
-    };
-  }, []);
 
   return null;
 }

@@ -122,7 +122,7 @@ async def verify_payment(body: VerifyRequest, authorization: str = Header(None))
         if sc.supabase:
             # 1. Fetch payment record to verify ownership and get plan details
             payment_res = await sb(
-                lambda: sc.supabase.table("payments").select("*")
+                lambda: sc.supabase.table("payments").select("user_id, plan_type")
                 .eq("razorpay_order_id", body.razorpay_order_id)
                 .execute()
             )
@@ -461,7 +461,7 @@ async def razorpay_webhook(request: Request):
                 
             # Find the payment record regardless of status to handle retries properly
             payment_res = await sb(
-                lambda: sc.supabase.table("payments").select("*")
+                lambda: sc.supabase.table("payments").select("user_id, plan_type")
                 .eq("razorpay_order_id", order_id)
                 .execute()
             )
@@ -559,7 +559,7 @@ async def reconcile_payments(authorization: str = Header(None)):
         # Fetch up to 50 pending payments older than 30 minutes
         cutoff_time = (datetime.now(timezone.utc) - timedelta(minutes=30)).isoformat()
         pending_res = await sb(
-            lambda: sc.supabase.table("payments").select("*")
+            lambda: sc.supabase.table("payments").select("razorpay_order_id, user_id, plan_type")
             .eq("status", "pending")
             .lt("created_at", cutoff_time)
             .limit(50)

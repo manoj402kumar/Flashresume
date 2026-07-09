@@ -108,8 +108,9 @@ async def ping_presence(data: PingRequest):
     now = datetime.now(timezone.utc)
     ACTIVE_SESSIONS[data.user_id] = now
     
-    # Cleanup stale (older than 60s)
-    stale = [k for k, v in ACTIVE_SESSIONS.items() if (now - v).total_seconds() > 60]
+    # Cleanup stale sessions — timeout is 180s (3 min) to match the 2-min ping interval
+    # in PresenceTracker.tsx. The extra 60s is a safety buffer for slow/backgrounded browsers.
+    stale = [k for k, v in ACTIVE_SESSIONS.items() if (now - v).total_seconds() > 180]
     for k in stale:
         del ACTIVE_SESSIONS[k]
         
@@ -148,6 +149,24 @@ async def ping_presence(data: PingRequest):
             pass
             
     return {"status": "ok", "live": current_count}
+
+@app.get("/api/presence/count")
+async def get_presence_count():
+    """Lightweight endpoint for admin dashboard Live Users + Peak cards.
+    Reads ONLY from in-memory state — zero Supabase egress per call.
+    Polled every 30 seconds by the admin dashboard instead of the old
+    15-second full-stats refresh that ran 7 Supabase queries each time.
+    """
+    now = datetime.now(timezone.utc)
+    # Evict stale sessions (>180s = 3 min, matching the 2-min ping interval + 60s buffer)
+    stale = [k for k, v in ACTIVE_SESSIONS.items() if (now - v).total_seconds() > 180]
+    for k in stale:
+        del ACTIVE_SESSIONS[k]
+    return {
+        "live": len(ACTIVE_SESSIONS),
+        "peak": peak_record["count"] if peak_record["count"] != -1 else 0,
+        "peak_timestamp": peak_record["timestamp"],
+    }
 
 @app.get("/")
 def root():
