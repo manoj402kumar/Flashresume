@@ -87,7 +87,7 @@ async def generate_resume_endpoint(request: Request, payload: GenerateRequest, a
                     "resume_text": payload.resume_text,
                     "generated_output": generated,
                     **({"user_id": user_id} if user_id else {}),
-                }).execute()
+                }).select("id").execute()  # Only return the id — avoids 55KB echo egress on every generation
             )
             if res.data:
                 generated["session_id"] = res.data[0]["id"]
