@@ -56,3 +56,6 @@ test_latex.py
 .vscode/
 supabase/.temp/
 /*.sql
+
+# AI Agent Config
+.agents/
