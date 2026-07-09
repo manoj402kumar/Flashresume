@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Script from "next/script";
 import "./globals.css";
 import PresenceTracker from "@/components/PresenceTracker";
+import MaintenanceBanner from "@/components/MaintenanceBanner";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://flashresume.in"),
@@ -107,6 +108,8 @@ export default function RootLayout({
           />
         </noscript>
 
+        <MaintenanceBanner />
+        
         {/* Global Presence Tracker */}
         <PresenceTracker />
 
