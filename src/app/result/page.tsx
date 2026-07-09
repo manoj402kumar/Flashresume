@@ -2723,7 +2723,7 @@ export default function ResultPage() {
                               {/* Search Query Pills */}
                               <div className="space-y-2">
                                 <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider flex items-center gap-1">
-                                  <Search className="w-3 h-3" /> Recommended Searches
+                                  <Search className="w-3 h-3" /> Recommended Searches <ExternalLink className="w-2.5 h-2.5 ml-0.5 opacity-60" />
                                 </p>
                                 {item.search_queries.map((query, qIdx) => {
                                   const isLocked = credits === 0 && qIdx === 0;
