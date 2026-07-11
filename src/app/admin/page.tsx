@@ -5,7 +5,7 @@ import { motion } from "motion/react";
 import {
   LayoutDashboard, Users, IndianRupee, Download,
   Cpu, Filter, Star, Zap, ExternalLink, Menu, X,
-  Server, Clock,
+  Server, Clock, Send, Loader2, CheckCircle2, AlertCircle,
 } from "lucide-react";
 import KPICards from "./components/KPICards";
 import LLMPanel from "./components/LLMPanel";
@@ -18,12 +18,13 @@ import FeedbackPanel from "./components/FeedbackPanel";
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 const NAV_ITEMS = [
-  { id: "overview",   label: "Overview",    icon: LayoutDashboard },
-  { id: "revenue",    label: "Revenue",     icon: IndianRupee },
-  { id: "downloads",  label: "Downloads",   icon: Download },
-  { id: "llm",        label: "LLM Usage",   icon: Cpu },
-  { id: "funnel",     label: "Conversion",  icon: Filter },
-  { id: "feedback",   label: "Feedback",    icon: Star },
+  { id: "overview",   label: "Overview",       icon: LayoutDashboard },
+  { id: "revenue",    label: "Revenue",        icon: IndianRupee },
+  { id: "downloads",  label: "Downloads",      icon: Download },
+  { id: "llm",        label: "LLM Usage",      icon: Cpu },
+  { id: "funnel",     label: "Conversion",     icon: Filter },
+  { id: "feedback",   label: "Feedback",       icon: Star },
+  { id: "cold-email", label: "Cold Emails",    icon: Send },
 ];
 
 function Sidebar({
@@ -136,6 +137,12 @@ export default function AdminPage() {
   const [time, setTime] = useState("");
   const sectionRefs = useRef<Record<string, HTMLElement | null>>({});
 
+  // Cold Email Campaign state
+  const [emailStatus, setEmailStatus] = useState<"idle" | "sending" | "done" | "error">("idle");
+  const [emailResult, setEmailResult] = useState<{
+    sent_count: number; error_count: number; target_count: number; free_total: number;
+  } | null>(null);
+
   // Live clock
   useEffect(() => {
     const tick = () => setTime(new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", second: "2-digit" }));
@@ -218,6 +225,23 @@ export default function AdminPage() {
     sectionRefs.current[id] = el;
   };
 
+  const triggerColdEmail = async () => {
+    setEmailStatus("sending");
+    setEmailResult(null);
+    try {
+      const res = await fetch("/api/admin-proxy/trigger-cold-email", { method: "POST" });
+      const json = await res.json();
+      if (json.status === "ok") {
+        setEmailResult(json);
+        setEmailStatus("done");
+      } else {
+        setEmailStatus("error");
+      }
+    } catch {
+      setEmailStatus("error");
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#f5f6f7] font-sans flex">
       <Sidebar
@@ -297,6 +321,90 @@ export default function AdminPage() {
           {/* -- Feedback ------------------------------------------- */}
           <section id="feedback" ref={setRef("feedback")}>
             <FeedbackPanel totalDownloads={stats.downloads} />
+          </section>
+
+          {/* -- Cold Email Campaign --------------------------------- */}
+          <section id="cold-email" ref={setRef("cold-email")}>
+            <SectionTitle
+              title="Cold Email Campaign"
+              subtitle="Send personalised job-matching emails to free users (max 290/day via Brevo)"
+            />
+            <div className="bg-white rounded-2xl border border-[#eff1f2] p-8 max-w-xl">
+              <div className="flex items-start gap-4 mb-6">
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#006859] to-[#12f8d7] flex items-center justify-center shrink-0">
+                  <Send className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-[#2c2f30] text-base">Daily Email Trigger</h3>
+                  <p className="text-sm text-[#595c5d] mt-1">
+                    Fetches the 290 free users emailed <em>longest ago</em>, looks up each user&apos;s
+                    latest AI resume generation, extracts their perfectly matched &quot;Strong&quot; job strategy query, 
+                    generates a highly targeted LinkedIn job link with a realistic salary, and sends via Brevo using 
+                    <code className="text-xs bg-[#eff1f2] px-1 rounded">support@flashresume.in</code>.
+                  </p>
+                </div>
+              </div>
+
+              <button
+                id="cold-email-trigger-btn"
+                onClick={triggerColdEmail}
+                disabled={emailStatus === "sending"}
+                className={`w-full flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-bold text-sm transition-all ${
+                  emailStatus === "sending"
+                    ? "bg-[#eff1f2] text-[#595c5d] cursor-not-allowed"
+                    : "bg-gradient-to-r from-[#006859] to-[#0d9e84] text-white hover:shadow-lg hover:shadow-[#006859]/30 hover:scale-[1.01]"
+                }`}
+              >
+                {emailStatus === "sending" ? (
+                  <><Loader2 className="w-4 h-4 animate-spin" /> Sending batch… (this may take ~2.5 min)</>
+                ) : (
+                  <><Send className="w-4 h-4" /> Send Daily Cold Emails (290)</>
+                )}
+              </button>
+
+              {emailStatus === "done" && emailResult && (
+                <motion.div
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="mt-5 p-4 rounded-xl bg-emerald-50 border border-emerald-200"
+                >
+                  <div className="flex items-center gap-2 mb-3">
+                    <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+                    <span className="font-bold text-emerald-700 text-sm">Batch complete!</span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    {[
+                      { label: "Emails Sent",    val: emailResult.sent_count,   color: "text-emerald-700" },
+                      { label: "Failed",          val: emailResult.error_count,  color: "text-red-600" },
+                      { label: "Batch Size",      val: emailResult.target_count, color: "text-[#2c2f30]" },
+                      { label: "Free Users Total", val: emailResult.free_total,  color: "text-[#2c2f30]" },
+                    ].map(({ label, val, color }) => (
+                      <div key={label} className="bg-white rounded-lg p-3 border border-[#eff1f2]">
+                        <p className={`text-2xl font-extrabold font-mono ${color}`}>{val}</p>
+                        <p className="text-xs text-[#595c5d] mt-0.5">{label}</p>
+                      </div>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+
+              {emailStatus === "error" && (
+                <motion.div
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="mt-5 p-4 rounded-xl bg-red-50 border border-red-200 flex items-center gap-2"
+                >
+                  <AlertCircle className="w-5 h-5 text-red-500 shrink-0" />
+                  <p className="text-sm text-red-700 font-medium">Failed to trigger campaign. Check backend logs.</p>
+                </motion.div>
+              )}
+
+              <p className="mt-5 text-xs text-[#595c5d]/70">
+                ⚠️ Make sure <code className="bg-[#eff1f2] px-1 rounded">BREVO_API_KEY</code> is set in the backend
+                <code className="bg-[#eff1f2] px-1 rounded">.env</code> before sending real emails.
+                Without it the endpoint runs in mock mode (no emails sent).
+              </p>
+            </div>
           </section>
 
         </main>

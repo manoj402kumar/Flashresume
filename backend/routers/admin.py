@@ -8,6 +8,7 @@ import asyncio
 import hmac
 from dotenv import load_dotenv
 import supabase_client as sc
+import httpx
 
 # Helper: run a synchronous supabase query on a thread pool so it
 # never blocks the async event loop.
@@ -611,3 +612,344 @@ async def apply_referral(body: ApplyReferralRequest, authorization: str = Header
     except Exception as e:
         print(f"Apply Referral Error: {str(e)}")
         return {"status": "error", "message": str(e)}
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Cold Email Campaign — triggered manually from Admin Dashboard
+# ─────────────────────────────────────────────────────────────────────────────
+
+import urllib.parse
+import random
+
+# Default fallback roles when user has never generated a resume
+_FALLBACK_ROLES = [
+    "Software Engineer Fresher",
+    "Frontend Developer Intern",
+    "Backend Developer Fresher",
+    "Data Analyst Intern",
+]
+
+def _estimate_salary_range(role: str, query: str) -> str:
+    """Analyze the role and query text for experience indicators to generate a realistic salary."""
+    text = (role + " " + query).lower()
+    
+    if "senior" in text or "lead" in text or "manager" in text or "architect" in text:
+        min_lakhs = random.randint(18, 25)
+        max_lakhs = min_lakhs + random.randint(2, 5)
+    elif "5 year" in text or "6 year" in text or "7 year" in text or "8 year" in text:
+        min_lakhs = random.randint(15, 20)
+        max_lakhs = min_lakhs + random.randint(2, 5)
+    elif "3 year" in text or "4 year" in text:
+        min_lakhs = random.randint(10, 14)
+        max_lakhs = min_lakhs + random.randint(2, 5)
+    elif "1 year" in text or "2 year" in text or "junior" in text:
+        min_lakhs = random.randint(7, 10)
+        max_lakhs = min_lakhs + random.randint(2, 5)
+    else:
+        # Interns, freshers, or defaults are fixed to 6-8 LPA
+        min_lakhs = 6
+        max_lakhs = 8
+        
+    return f"₹{min_lakhs},00,000 - ₹{max_lakhs},00,000"
+
+def _generate_linkedin_jobs(role_queries: list[dict]) -> list[dict]:
+    """Generate 1 LinkedIn job search link based on Strong match query.
+    Salaries are generated dynamically based on inferred experience level.
+    """
+    # Ensure exactly 1 item by padding with fallback if needed
+    if not role_queries:
+        fallback = random.choice(_FALLBACK_ROLES)
+        role_queries.append({"role": fallback, "query": fallback + " India"})
+    role_queries = role_queries[:1]
+    
+    jobs = []
+    for item in role_queries:
+        role = item["role"]
+        raw_query = item["query"]
+        
+        # Dynamic realistic salary based on experience keywords
+        salary = _estimate_salary_range(role, raw_query)
+        
+        # LinkedIn job search URL
+        query_encoded = urllib.parse.quote(raw_query)
+        link = f"https://www.linkedin.com/jobs/search/?keywords={query_encoded}"
+        
+        jobs.append({
+            "title": role,
+            "salary": salary,
+            "link": link
+        })
+        
+    return jobs
+
+
+async def _send_email_brevo(to_email: str, display_name: str, resume_link: str, jobs: list[dict]) -> bool:
+    """Send a single cold email via Brevo's transactional API.
+    Returns True on success, False on failure.
+    In mock mode (no BREVO_API_KEY) always returns True and logs the action.
+    """
+    BREVO_API_KEY   = os.getenv("BREVO_API_KEY", "")
+    BREVO_FROM_EMAIL = os.getenv("BREVO_FROM_EMAIL", "support@flashresume.in")
+    BREVO_FROM_NAME  = os.getenv("BREVO_FROM_NAME", "Flashresume.in")
+
+    if not BREVO_API_KEY:
+        print(f"[ColdEmail][Mock] Would send to {to_email}")
+        return True
+
+    job_rows = "".join(
+        f"""
+        <tr>
+          <td style='padding:10px 0;border-bottom:1px solid #f0f0f0;vertical-align:top;'>
+            <span style='font-size:14px;color:#006859;font-weight:700;'>{i+1}.</span>
+            <strong style='font-size:14px;color:#1a1a1a;'> {j['title']}</strong><br>
+            <span style='font-size:12px;color:#555;'>
+              &#128176; {j['salary']} &nbsp;|&nbsp;
+              <a href='{j['link']}' style='color:#006859;text-decoration:none;font-weight:600;'>Apply Now &rarr;</a>
+            </span>
+          </td>
+        </tr>"""
+        for i, j in enumerate(jobs)
+    )
+
+    html = f"""
+    <!DOCTYPE html>
+    <html>
+    <body style='margin:0;padding:0;background-color:#f5f6f7;font-family:Arial,sans-serif;'>
+      <table width='100%' cellpadding='0' cellspacing='0' style='background:#f5f6f7;padding:30px 0;'>
+        <tr><td align='center'>
+          <table width='600' cellpadding='0' cellspacing='0' style='background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.07);max-width:600px;width:100%;'>
+
+            <!-- HEADER / LOGO -->
+            <tr>
+              <td style='background:linear-gradient(135deg,#006859 0%,#0d9e84 100%);padding:28px 36px;text-align:center;'>
+                <table cellpadding='0' cellspacing='0' style='margin:0 auto;'>
+                  <tr>
+                    <td style='background:rgba(255,255,255,0.18);border-radius:12px;padding:8px 14px;display:inline-block;'>
+                      <img src='https://flashresume.in/flashresumelogo.jpeg' alt='Logo' height='24' style='vertical-align:middle;margin-right:8px;border-radius:4px;'/>
+                      <span style='font-size:22px;font-weight:900;color:#ffffff;letter-spacing:-0.5px;vertical-align:middle;'>FlashResume</span>
+                    </td>
+                  </tr>
+                  <tr><td style='padding-top:6px;'>
+                    <span style='font-size:12px;color:rgba(255,255,255,0.75);letter-spacing:2px;text-transform:uppercase;'>Your Career Partner</span>
+                  </td></tr>
+                </table>
+              </td>
+            </tr>
+
+            <!-- BODY -->
+            <tr>
+              <td style='padding:32px 36px;'>
+                <p style='font-size:16px;color:#1a1a1a;margin:0 0 8px;'>Hi <strong>{display_name}</strong>,</p>
+                <p style='font-size:14px;color:#444;margin:0 0 20px;line-height:1.6;'>
+                  You forgot your shortlisting resume here &mdash;
+                  <a href='{resume_link}' style='color:#006859;font-weight:700;text-decoration:none;'>&#128196; Download Resume</a>
+                </p>
+
+                <div style='background:#f0faf8;border-left:4px solid #006859;border-radius:8px;padding:14px 18px;margin-bottom:22px;'>
+                  <p style='margin:0;font-size:13px;color:#006859;font-weight:700;'>&#127919; We researched &amp; gathered the below jobs specially for you</p>
+                  <p style='margin:4px 0 0;font-size:12px;color:#555;'>You have a <strong>90% chance of shortlisting</strong> for these roles.</p>
+                </div>
+
+                <table width='100%' cellpadding='0' cellspacing='0'>
+                  {job_rows}
+                </table>
+
+                <div style='background:#006859;border-radius:10px;text-align:center;padding:18px;margin-top:24px;'>
+                  <a href='{resume_link}' style='color:#ffffff;font-size:15px;font-weight:800;text-decoration:none;'>&#128640; Download Resume &amp; Apply Now</a>
+                </div>
+
+                <p style='font-size:14px;color:#555;margin:20px 0 0;line-height:1.6;'>
+                  Just download the above resume and apply to these jobs &mdash; it is that much easy. &#128512;
+                </p>
+              </td>
+            </tr>
+
+            <!-- FOOTER / LOGO -->
+            <tr>
+              <td style='background:#0b1e19;padding:24px 36px;text-align:center;'>
+                <table cellpadding='0' cellspacing='0' style='margin:0 auto 10px;'>
+                  <tr>
+                    <td>
+                      <img src='https://flashresume.in/flashresumelogo.jpeg'
+                           alt='FlashResume'
+                           height='32'
+                           style='display:block;height:auto;margin:0 auto 6px;border-radius:4px;'
+                           onerror="this.style.display='none'"
+                      />
+                      <!-- Fallback text logo if image blocked -->
+                      <div style='font-size:18px;font-weight:900;color:#12f8d7;letter-spacing:-0.5px;'>FlashResume</div>
+                    </td>
+                  </tr>
+                </table>
+                <p style='font-size:11px;color:rgba(255,255,255,0.4);margin:8px 0 0;'>
+                  You received this because you signed up at flashresume.in &nbsp;&middot;&nbsp;
+                  <a href='https://flashresume.in/unsubscribe?email={to_email}' style='color:rgba(255,255,255,0.4);text-decoration:underline;'>Unsubscribe</a>
+                </p>
+                <p style='font-size:11px;color:rgba(255,255,255,0.25);margin:4px 0 0;'>&#169; 2026 FlashResume.in &mdash; Made in India &#127470;&#127475;</p>
+              </td>
+            </tr>
+
+          </table>
+        </td></tr>
+      </table>
+    </body>
+    </html>
+    """
+
+    payload = {
+        "sender":      {"name": BREVO_FROM_NAME, "email": BREVO_FROM_EMAIL},
+        "to":          [{"email": to_email, "name": display_name}],
+        "subject":     "Your shortlisted jobs inside — 90% shortlisting chance!",
+        "htmlContent": html,
+    }
+    try:
+        async with httpx.AsyncClient(timeout=8.0) as client:
+            resp = await client.post(
+                "https://api.brevo.com/v3/smtp/email",
+                json=payload,
+                headers={"api-key": BREVO_API_KEY, "Content-Type": "application/json"},
+            )
+            if resp.status_code not in (200, 201):
+                print(f"[ColdEmail] Brevo rejected {to_email}: {resp.status_code} {resp.text[:200]}")
+            return resp.status_code in (200, 201)
+    except Exception as exc:
+        print(f"[ColdEmail] Brevo error for {to_email}: {exc}")
+        return False
+
+@router.post("/admin/trigger-cold-email", dependencies=[Depends(require_admin)])
+async def trigger_cold_email():
+    """Trigger the daily cold email batch.
+    - Skips paid users (anyone with a successful payment).
+    - Sends to the 290 free users who were emailed the longest ago (NULLs first).
+    - Personalises the 4 jobs using the user's last resume session job_strategy.
+    - Adds a 0.5 s delay between emails to keep Render RAM flat.
+    - Returns a summary of how many emails were attempted and sent.
+    """
+    if not sc.supabase:
+        return {"status": "error", "message": "Supabase not configured"}
+
+    try:
+        # 1. Build the set of paid user IDs (skip them)
+        paid_res  = await _sb(sc.supabase.table("payments").select("user_id").eq("status", "success"))
+        paid_ids  = {p["user_id"] for p in (paid_res.data or []) if p.get("user_id")}
+
+        # 2. Fetch all users + their campaign log (LEFT JOIN via PostgREST embed)
+        users_res = await _sb(
+            sc.supabase.table("users")
+            .select("id, email, email_campaign_logs(last_emailed_at, total_emails_sent)")
+        )
+
+        # 3. Build sorted free-user list (oldest-emailed first; never-emailed = epoch)
+        free_users: list[tuple[str, dict, int]] = []
+        for u in (users_res.data or []):
+            if u["id"] in paid_ids or not u.get("email"):
+                continue
+            raw_log = u.get("email_campaign_logs")
+            log: dict = (raw_log[0] if isinstance(raw_log, list) and raw_log
+                         else (raw_log if isinstance(raw_log, dict) else {}))
+            last_at    = log.get("last_emailed_at") or "1970-01-01T00:00:00Z"
+            total_sent = log.get("total_emails_sent") or 0
+            free_users.append((last_at, u, total_sent))
+
+        free_users.sort(key=lambda x: x[0])  # oldest first
+        target_batch = free_users[:290]
+
+        # 4. Pre-fetch job strategies from resume_sessions for all target users at once
+        target_ids = [u["id"] for _, u, _ in target_batch]
+        sessions_res = await _sb(
+            sc.supabase.table("resume_sessions")
+            .select("id, user_id, generated_output")
+            .in_("user_id", target_ids)
+            .order("created_at", desc=True)
+        )
+        # Keep only the MOST RECENT session per user
+        user_data: dict[str, dict] = {}
+        for sess in (sessions_res.data or []):
+            uid = sess.get("user_id")
+            if uid in user_data:
+                continue  # already captured the most recent
+            
+            sess_id = sess.get("id")
+            gen = sess.get("generated_output") or {}
+            strategy = gen.get("job_strategy", [])
+            
+            queries = []
+            if strategy and isinstance(strategy, list):
+                for item in strategy:
+                    if isinstance(item, dict) and str(item.get("match", "")).lower() == "strong":
+                        role = item.get("role", "")
+                        sq = item.get("search_queries", [])
+                        raw_query = ""
+                        
+                        if sq and isinstance(sq, list):
+                            # Find the non-url string query
+                            for q in sq:
+                                if not str(q).startswith("http"):
+                                    raw_query = str(q)
+                                    break
+                            
+                            # Fallback to parsing from URL
+                            if not raw_query and str(sq[0]).startswith("http"):
+                                try:
+                                    parsed = urllib.parse.urlparse(str(sq[0]))
+                                    raw_query = urllib.parse.parse_qs(parsed.query).get("keywords", [""])[0]
+                                except Exception:
+                                    pass
+                        
+                        if not raw_query:
+                            raw_query = role + " India"
+                            
+                        if role and raw_query:
+                            queries.append({"role": role, "query": raw_query})
+                            
+            if queries:
+                user_data[uid] = {"session_id": sess_id, "queries": queries}
+
+        # 5. Send emails sequentially — 0.5 s gap to protect Render RAM
+        sent_count  = 0
+        error_count = 0
+        now_utc     = datetime.now(timezone.utc)
+
+        for _, u, total_sent in target_batch:
+            uid   = u["id"]
+            email = u["email"]
+            # Friendly name = part before @ (capitalised)
+            display_name = email.split("@")[0].replace(".", " ").title()
+            
+            udata = user_data.get(uid)
+            if udata and udata.get("session_id"):
+                resume_link = f"https://flashresume.in/result?session_id={udata['session_id']}"
+            else:
+                resume_link = "https://flashresume.in/profile"
+
+            # Personalised jobs → LinkedIn search urls from Strong matches
+            role_queries = udata.get("queries") if udata else []
+            jobs  = _generate_linkedin_jobs(role_queries)
+
+            success = await _send_email_brevo(email, display_name, resume_link, jobs)
+            if success:
+                sent_count += 1
+                # Upsert campaign log
+                await _sb(
+                    sc.supabase.table("email_campaign_logs").upsert({
+                        "user_id":          uid,
+                        "last_emailed_at":  now_utc.isoformat(),
+                        "total_emails_sent": total_sent + 1,
+                    })
+                )
+            else:
+                error_count += 1
+
+            # Throttle — keeps Render instance RAM stable
+            await asyncio.sleep(0.5)
+
+        print(f"[ColdEmail] Batch done: {sent_count} sent, {error_count} failed, out of {len(target_batch)} targeted.")
+        return {
+            "status":        "ok",
+            "sent_count":    sent_count,
+            "error_count":   error_count,
+            "target_count":  len(target_batch),
+            "free_total":    len(free_users),
+        }
+    except Exception as exc:
+        print(f"[ColdEmail] Fatal error: {exc}")
+        raise HTTPException(status_code=500, detail=str(exc))
