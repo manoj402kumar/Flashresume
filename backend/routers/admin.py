@@ -809,15 +809,28 @@ async def trigger_cold_email(bg_tasks: BackgroundTasks):
             paid_res  = await _sb(sc.supabase.table("payments").select("user_id").eq("status", "success"))
             paid_ids  = {p["user_id"] for p in (paid_res.data or []) if p.get("user_id")}
 
-            # 2. Fetch all users + their campaign log (LEFT JOIN via PostgREST embed)
-            users_res = await _sb(
-                sc.supabase.table("users")
-                .select("id, email, email_campaign_logs(last_emailed_at, total_emails_sent)")
-            )
+            # 2. Fetch ALL users + their campaign log (LEFT JOIN via PostgREST embed)
+            # NOTE: Supabase REST has a default 1000-row limit, so we paginate in chunks.
+            all_users = []
+            page_size = 1000
+            offset = 0
+            while True:
+                chunk_res = await _sb(
+                    sc.supabase.table("users")
+                    .select("id, email, email_campaign_logs(last_emailed_at, total_emails_sent)")
+                    .range(offset, offset + page_size - 1)
+                )
+                chunk = chunk_res.data or []
+                all_users.extend(chunk)
+                if len(chunk) < page_size:
+                    break  # Last page reached
+                offset += page_size
+
+            print(f"[ColdEmail] Total users fetched: {len(all_users)}")
 
             # 3. Build sorted free-user list (oldest-emailed first; never-emailed = epoch)
             free_users: list[tuple[str, dict, int]] = []
-            for u in (users_res.data or []):
+            for u in all_users:
                 if u["id"] in paid_ids or not u.get("email"):
                     continue
                 raw_log = u.get("email_campaign_logs")
@@ -829,6 +842,8 @@ async def trigger_cold_email(bg_tasks: BackgroundTasks):
 
             free_users.sort(key=lambda x: x[0])  # oldest first
             target_batch = free_users[:290]
+            print(f"[ColdEmail] Free users: {len(free_users)}, Paid filtered: {len(paid_ids)}, Batch size: {len(target_batch)}")
+
 
             # 4. Pre-fetch job strategies from resume_sessions for all target users at once
             target_ids = [u["id"] for _, u, _ in target_batch]
