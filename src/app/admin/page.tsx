@@ -368,23 +368,14 @@ export default function AdminPage() {
                   animate={{ opacity: 1, y: 0 }}
                   className="mt-5 p-4 rounded-xl bg-emerald-50 border border-emerald-200"
                 >
-                  <div className="flex items-center gap-2 mb-3">
+                  <div className="flex items-center gap-2 mb-2">
                     <CheckCircle2 className="w-5 h-5 text-emerald-600" />
-                    <span className="font-bold text-emerald-700 text-sm">Batch complete!</span>
+                    <span className="font-bold text-emerald-700 text-sm">Campaign launched in background!</span>
                   </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    {[
-                      { label: "Emails Sent",    val: emailResult.sent_count,   color: "text-emerald-700" },
-                      { label: "Failed",          val: emailResult.error_count,  color: "text-red-600" },
-                      { label: "Batch Size",      val: emailResult.target_count, color: "text-[#2c2f30]" },
-                      { label: "Free Users Total", val: emailResult.free_total,  color: "text-[#2c2f30]" },
-                    ].map(({ label, val, color }) => (
-                      <div key={label} className="bg-white rounded-lg p-3 border border-[#eff1f2]">
-                        <p className={`text-2xl font-extrabold font-mono ${color}`}>{val}</p>
-                        <p className="text-xs text-[#595c5d] mt-0.5">{label}</p>
-                      </div>
-                    ))}
-                  </div>
+                  <p className="text-sm text-emerald-700">
+                    Up to <strong>{emailResult.target_count}</strong> emails are now being sent in the background.
+                    Check your <strong>Brevo dashboard</strong> or <strong>Render logs</strong> to track delivery progress.
+                  </p>
                 </motion.div>
               )}
 
