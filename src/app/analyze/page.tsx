@@ -20,6 +20,7 @@ import type { CombinedAnalysisResponse } from "@/lib/api";
 import ModelSelector from "@/components/ModelSelector";
 import { supabase } from "@/lib/supabase";
 import type { User } from "@supabase/supabase-js";
+import EditableSkillTags from "@/components/EditableSkillTags";
 
 
 export default function AnalyzePage() {
@@ -76,8 +77,25 @@ export default function AnalyzePage() {
       localStorage.removeItem("approved_project");
     }
 
+    // Save updated analysis back to localStorage so the generator uses it
+    if (analysis) {
+      localStorage.setItem("analysis", JSON.stringify(analysis));
+    }
+
     // Go to generate page
     router.push("/generate");
+  };
+
+  const handleMissingSkillsChange = (newSkills: string[]) => {
+    setAnalysis(prev => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        missing_skills: newSkills,
+        updated_missing_skills: newSkills,
+        all_missing_skills: newSkills,
+      };
+    });
   };
 
   if (loading || !analysis) {
@@ -214,22 +232,16 @@ export default function AnalyzePage() {
                 {(analysis.all_missing_skills ?? analysis.missing_skills).length}
               </span>
             </div>
-            <div className="flex flex-wrap gap-2.5 flex-1 content-start mb-6">
-              {(analysis.all_missing_skills ?? analysis.missing_skills).length > 0 ? (
-                (analysis.all_missing_skills ?? analysis.missing_skills).map((skill, idx) => (
-                  <motion.span
-                    key={idx}
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: 0.4 + idx * 0.02 }}
-                    className="px-3.5 py-1.5 bg-error/10 text-error rounded-xl text-sm font-semibold border border-error/20 hover:bg-error/20 transition-colors"
-                  >
-                    {skill}
-                  </motion.span>
-                ))
-              ) : (
+            <div className="flex flex-col gap-2.5 flex-1 content-start mb-6">
+              {(analysis.all_missing_skills ?? analysis.missing_skills).length === 0 && (
                 <p className="text-sm text-on-surface-variant italic w-full text-center py-4">You have all the required skills!</p>
               )}
+              <EditableSkillTags
+                skills={analysis.all_missing_skills ?? analysis.missing_skills ?? []}
+                onChange={handleMissingSkillsChange}
+                editMode={true}
+                colorClass="bg-error/10 text-error border border-error/20"
+              />
             </div>
             <div className="mt-auto p-4 bg-tertiary-container/10 border border-tertiary-container/30 rounded-2xl flex items-start gap-3">
               <Lightbulb className="w-5 h-5 text-tertiary flex-shrink-0 mt-0.5" />
