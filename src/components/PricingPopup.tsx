@@ -63,7 +63,7 @@ const PLANS = [
 
 // ── Review Banner ─────────────────────────────────────────────────────────────
 const PLAN_REVIEW = {
-  quote: "Before flashresume: 2-3 applications /week->rejection mails. After flashresume: 10-15 applications /week->shortlisting mails.",
+  quote: "Thanks flashresume since i able to completely focus on actual interview preparation instead of resume preparation. no more stress, no more time wastage.",
   author: "Rahul M.",
   role: "Software Engineer",
   avatar: "RM",
