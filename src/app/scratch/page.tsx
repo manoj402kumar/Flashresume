@@ -1114,7 +1114,6 @@ export default function ScratchPage() {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.3 }}
-                    whileHover={{ y: -4 }}
                     className="soothing-light-theme text-on-background bg-surface-container-lowest rounded-[2rem] p-8 shadow-xl hover:shadow-2xl transition-all duration-300 border border-primary/5"
                   >
                     <div className="flex items-center gap-3 mb-6">
@@ -1329,11 +1328,10 @@ export default function ScratchPage() {
 
                       return (
                         <motion.div
-                          layout
+                            layout="position"
                           key={sectionId}
                           initial={{ opacity: 0, y: 20 }}
                           animate={{ opacity: 1, y: 0 }}
-                          whileHover={{ y: -4 }}
                           className="soothing-light-theme text-on-background bg-surface-container-lowest rounded-[2rem] p-8 shadow-xl hover:shadow-2xl transition-all duration-300 border border-primary/5"
                         >
                           <div
@@ -1453,11 +1451,10 @@ export default function ScratchPage() {
                         if (!resume.summary && !editMode) return null;
                         return (
                           <motion.div
-                            layout
+                            layout="position"
                             key="edit-summary"
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
-                            whileHover={{ y: -4 }}
                             className="soothing-light-theme text-on-background bg-surface-container-lowest rounded-[2rem] p-8 shadow-xl hover:shadow-2xl transition-all duration-300 border border-primary/5"
                           >
                             <div
@@ -1494,11 +1491,10 @@ export default function ScratchPage() {
                         if (!editMode && (!resume.education || resume.education.length === 0)) return null;
                         return (
                           <motion.div
-                            layout
+                            layout="position"
                             key="edit-education"
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
-                            whileHover={{ y: -4 }}
                             className="soothing-light-theme text-on-background bg-surface-container-lowest rounded-[2rem] p-8 shadow-xl hover:shadow-2xl transition-all duration-300 border border-primary/5"
                           >
                             <div
@@ -1516,7 +1512,7 @@ export default function ScratchPage() {
                             <div>
                                   <>
                                     {resume.education.map((edu, idx) => (
-                                      <div key={idx} className="mb-6 last:mb-0">
+                                      <div key={`edu-${idx}-${edu.institution?.slice(0, 15) || ""}`} className="mb-6 last:mb-0">
                                         {editMode ? (
                                           <div className="space-y-2">
                                             <input
@@ -1621,11 +1617,10 @@ export default function ScratchPage() {
                         if (!editMode && (!resume.experience || resume.experience.length === 0)) return null;
                         return (
                           <motion.div
-                            layout
+                            layout="position"
                             key="edit-experience"
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
-                            whileHover={{ y: -4 }}
                             className="soothing-light-theme text-on-background bg-surface-container-lowest rounded-[2rem] p-8 shadow-xl hover:shadow-2xl transition-all duration-300 border border-primary/5"
                           >
                             <div
@@ -1644,7 +1639,7 @@ export default function ScratchPage() {
                                   <>
 
                                     {resume.experience.map((exp, idx) => (
-                                      <div key={idx} className="mb-8 last:mb-0">
+                                      <div key={`exp-${idx}-${exp.company?.slice(0, 15) || ""}`} className="mb-8 last:mb-0">
                                         {editMode ? (
                                           <div className="space-y-2 mb-4">
                                             <input
@@ -1784,11 +1779,10 @@ export default function ScratchPage() {
                         if (!editMode && (!resume.projects || resume.projects.length === 0)) return null;
                         return (
                           <motion.div
-                            layout
+                            layout="position"
                             key="edit-projects"
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
-                            whileHover={{ y: -4 }}
                             className="soothing-light-theme text-on-background bg-surface-container-lowest rounded-[2rem] p-8 shadow-xl hover:shadow-2xl transition-all duration-300 border border-primary/5"
                           >
                             <div
@@ -1807,7 +1801,7 @@ export default function ScratchPage() {
                                   <>
 
                                     {resume.projects.map((proj, idx) => (
-                                      <div key={idx} className="mb-8 last:mb-0">
+                                      <div key={`proj-${idx}-${proj.title?.slice(0, 15) || ""}`} className="mb-8 last:mb-0">
                                         {editMode ? (
                                           <div className="space-y-2 mb-4">
                                             <div className="flex flex-col gap-3">
@@ -1958,11 +1952,10 @@ export default function ScratchPage() {
                       case "skills":
                         return (
                           <motion.div
-                            layout
+                            layout="position"
                             key="edit-skills"
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
-                            whileHover={{ y: -4 }}
                             className="soothing-light-theme text-on-background bg-surface-container-lowest rounded-[2rem] p-8 shadow-xl hover:shadow-2xl transition-all duration-300 border border-primary/5"
                           >
                             <div
@@ -2197,11 +2190,10 @@ export default function ScratchPage() {
                         if (!editMode && uniqueItems.length === 0) return null;
                         return (
                           <motion.div
-                            layout
+                            layout="position"
                             key="edit-certifications"
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
-                            whileHover={{ y: -4 }}
                             className="soothing-light-theme text-on-background bg-surface-container-lowest rounded-[2rem] p-8 shadow-xl hover:shadow-2xl transition-all duration-300 border border-primary/5"
                           >
                             <div
