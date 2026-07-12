@@ -56,6 +56,7 @@ export function ApplicationTracker({ userId }: { userId: string }) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [openStatusId, setOpenStatusId] = useState<string | null>(null);
+  const [showStats, setShowStats] = useState(true);
   const statusDropdownRef = useRef<HTMLDivElement | null>(null);
   const debounceTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
 
@@ -194,23 +195,49 @@ export function ApplicationTracker({ userId }: { userId: string }) {
 
   return (
     <div className="flex flex-col gap-4">
-      {/* Storage indicator */}
-      <div className="flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-full w-fit bg-emerald-500/10 text-emerald-600">
-        <Cloud className="w-3 h-3" />
-        {saving ? "Saving…" : "✓ Synced to cloud"}
-      </div>
+      <div className="flex flex-col">
+        <div className="flex items-center justify-between">
+          {/* Storage indicator */}
+          <div className="flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-full w-fit bg-emerald-500/10 text-emerald-600">
+            <Cloud className="w-3 h-3" />
+            {saving ? "Saving…" : "✓ Synced to cloud"}
+          </div>
 
-      {/* Summary Stats */}
-      {apps.length > 0 && (
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
-          {Object.entries(STATUS_CONFIG).filter(([k]) => k !== "").map(([status, cfg]) => (
-            <div key={status} className={`${cfg.bg} rounded-xl p-2.5 text-center border border-current/10`}>
-              <p className={`text-lg font-black ${cfg.text}`}>{statusCounts[status] || 0}</p>
-              <p className={`text-[10px] font-bold ${cfg.text} opacity-80`}>{cfg.label}</p>
-            </div>
-          ))}
+          {/* Toggle Stats Button */}
+          {apps.length > 0 && (
+            <button
+              type="button"
+              onClick={() => setShowStats(!showStats)}
+              aria-label="Toggle application stats"
+              aria-expanded={showStats}
+              className="w-8 h-8 rounded-full flex items-center justify-center text-on-surface-variant hover:text-on-background hover:bg-surface-container-low transition-colors"
+            >
+              <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${showStats ? "rotate-180" : ""}`} />
+            </button>
+          )}
         </div>
-      )}
+
+        {/* Summary Stats */}
+        <AnimatePresence>
+          {apps.length > 0 && showStats && (
+            <motion.div 
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              className="overflow-hidden"
+            >
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 pt-4">
+                {Object.entries(STATUS_CONFIG).filter(([k]) => k !== "").map(([status, cfg]) => (
+                  <div key={status} className={`${cfg.bg} rounded-xl p-2.5 text-center border border-current/10`}>
+                    <p className={`text-lg font-black ${cfg.text}`}>{statusCounts[status] || 0}</p>
+                    <p className={`text-[10px] font-bold ${cfg.text} opacity-80`}>{cfg.label}</p>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
 
       {/* Table */}
       <div className="rounded-2xl border border-on-surface-variant/15 overflow-visible">
