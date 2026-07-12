@@ -925,9 +925,41 @@ export default function App() {
                     transition={{ duration: 0.25 }}
                     className="space-y-2 overflow-hidden"
                   >
-                    <div className="flex items-center gap-2 mb-1 ml-0.5">
-                      <span className="flex items-center justify-center w-5 h-5 rounded-full bg-[#006859] text-white text-[10px] font-black flex-shrink-0">3</span>
-                      <span className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Paste Job Description</span>
+                    <div className="flex items-center justify-between mb-1 ml-0.5">
+                      <div className="flex items-center gap-2">
+                        <span className="flex items-center justify-center w-5 h-5 rounded-full bg-[#006859] text-white text-[10px] font-black flex-shrink-0">3</span>
+                        <span className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Paste Job Description</span>
+                      </div>
+                      {!jobDescription && (
+                        <button
+                          type="button"
+                          onClick={() => setJobDescription(`Work on Java-based application development tasks under the mentorship of senior developers.
+Write clean, structured, and maintainable code using Java, Spring Boot, and related frameworks.
+Assist in developing and maintaining REST APIs and basic microservices.
+Learn to work with SQL/NoSQL databases, perform simple queries, and understand data storage mechanisms.
+Participate in bug fixing, unit testing, and code review processes.
+Learn to create and run unit tests for code quality assurance.
+Understand and follow secure coding practices, authentication basics, and data privacy guidelines.
+Gain exposure to performance optimization, caching, and basic load-balancing concepts.
+Collaborate with Product, QA, and DevOps teams for end-to-end development activities.
+Support and maintain documentation for tasks, modules, and small features.
+Required Skills & Qualifications
+
+Basic understanding of Core Java, OOP concepts, and common coding principles.
+Familiarity with advanced Java concepts like Collections, Exception Handling, and basic Multithreading.
+Knowledge of Spring Boot, REST API concepts, and microservices fundamentals.
+Understanding of SQL and basic CRUD operations.
+Awareness of security, authentication, and data privacy concepts.
+Ability to learn Git, version control workflows, and basic CI/CD tools.
+Strong problem-solving mindset and willingness to learn rapidly.
+Good communication and teamwork skills.
+Pursuing or completed a degree in Computer Science, Engineering, or equivalent technical field.`)}
+                          className="flex items-center gap-1 text-[10px] font-bold text-white bg-[#006859] hover:bg-[#005548] border border-[#006859] px-2.5 py-1 rounded-full transition-all duration-150 active:scale-95 whitespace-nowrap"
+                        >
+                          <Wand2 className="w-2.5 h-2.5" />
+                          Use sample
+                        </button>
+                      )}
                     </div>
                     <textarea
                       value={jobDescription}
