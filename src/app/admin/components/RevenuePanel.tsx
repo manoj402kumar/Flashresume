@@ -80,8 +80,6 @@ export default function RevenuePanel() {
         .catch((e) => console.error("Failed to fetch revenue", e));
 
     fetchRevenue();
-    const id = setInterval(fetchRevenue, 15000);
-    return () => clearInterval(id);
   }, [timeFilter, planFilter, startDate, endDate]);
 
   const plans = data?.breakdown || [];

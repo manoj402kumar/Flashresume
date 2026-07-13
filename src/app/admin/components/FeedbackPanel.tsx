@@ -37,8 +37,6 @@ export default function FeedbackPanel({ totalDownloads = 0 }: { totalDownloads?:
       }
     };
     fetchFeedback();
-    const id = setInterval(fetchFeedback, 15000);
-    return () => clearInterval(id);
   }, [])
 
   const avgRating = feedbacks.length > 0 ? (feedbacks.reduce((sum, f) => sum + f.rating, 0) / feedbacks.length).toFixed(1) : "—";

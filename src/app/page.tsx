@@ -207,14 +207,6 @@ export default function App() {
 
     fetchAccountData();
 
-    // Subscribe to credit updates
-    const channel = supabase.channel(`page_credits_${currentUser.id}`)
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'credit_buckets', filter: `user_id=eq.${currentUser.id}` }, () => {
-        fetchAccountData();
-      })
-      .subscribe();
-
-    return () => { supabase.removeChannel(channel); };
   }, [currentUser]);
 
   const handleDrop = (e: React.DragEvent) => {

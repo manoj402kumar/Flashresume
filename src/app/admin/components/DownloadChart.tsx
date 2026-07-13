@@ -72,8 +72,6 @@ export default function DownloadChart() {
         .catch((e) => console.error("Failed to fetch download analytics", e));
 
     fetchDownloads();
-    const id = setInterval(fetchDownloads, 15000);
-    return () => clearInterval(id);
   }, [timeFilter, startDate, endDate]);
 
   const trend = data?.trend || [];

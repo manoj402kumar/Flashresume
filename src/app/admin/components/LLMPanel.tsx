@@ -133,8 +133,6 @@ export default function LLMPanel() {
 
   useEffect(() => {
     fetchData();
-    const id = setInterval(fetchData, 15000);
-    return () => clearInterval(id);
   }, []);
 
   return (

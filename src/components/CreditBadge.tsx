@@ -54,26 +54,6 @@ export default function CreditBadge({ onTopUpClick }: CreditBadgeProps) {
 
     fetchCredits();
 
-    // Subscribe to realtime updates
-    const channel = supabase
-      .channel(`badge_credits_${user.id}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "credit_buckets",
-          filter: `user_id=eq.${user.id}`,
-        },
-        async () => {
-          fetchCredits();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
   }, [user]);
 
   if (!user || credits === null) return null;

@@ -25,8 +25,6 @@ export default function FunnelChart() {
     };
     
     fetchFunnelStats();
-    const id = setInterval(fetchFunnelStats, 15000);
-    return () => clearInterval(id);
   }, []);
 
   const STAGES = [
