@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "motion/react";
-import { Star, MessageSquare, Clock } from "lucide-react";
+import { Star, MessageSquare, Clock, RefreshCw } from "lucide-react";
 
 interface Feedback {
   id: string;
@@ -16,26 +16,30 @@ export default function FeedbackPanel({ totalDownloads = 0 }: { totalDownloads?:
   const [feedbacks, setFeedbacks] = useState<Feedback[]>([]);
   const [totalCount, setTotalCount] = useState<number>(0);
   const [loading, setLoading] = useState(true);
+  const [lastUpdated, setLastUpdated] = useState<string>("");
+
+  const fetchFeedback = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/admin-proxy/feedback`);
+      const data = await res.json();
+      // Handle both old (array) and new ({reviews, total_count}) response shapes
+      if (Array.isArray(data)) {
+        setFeedbacks(data);
+        setTotalCount(data.length);
+      } else {
+        setFeedbacks(Array.isArray(data.reviews) ? data.reviews : []);
+        setTotalCount(data.total_count ?? data.reviews?.length ?? 0);
+      }
+      setLastUpdated(new Date().toLocaleTimeString());
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchFeedback = async () => {
-      try {
-        const res = await fetch(`/api/admin-proxy/feedback`);
-        const data = await res.json();
-        // Handle both old (array) and new ({reviews, total_count}) response shapes
-        if (Array.isArray(data)) {
-          setFeedbacks(data);
-          setTotalCount(data.length);
-        } else {
-          setFeedbacks(Array.isArray(data.reviews) ? data.reviews : []);
-          setTotalCount(data.total_count ?? data.reviews?.length ?? 0);
-        }
-      } catch (e) {
-        console.error(e);
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchFeedback();
   }, [])
 
@@ -52,11 +56,20 @@ export default function FeedbackPanel({ totalDownloads = 0 }: { totalDownloads?:
           <h2 className="font-headline text-xl font-bold text-[#2c2f30]">User Feedback</h2>
           <p className="text-sm text-[#595c5d]">Ratings, comments & timestamps</p>
         </div>
-        <div className={`border rounded-lg px-3 py-1.5 text-right ${nextFeedbackIn === 0 ? 'bg-yellow-50 border-yellow-200' : 'bg-[#12f8d7]/10 border-[#006859]/20'}`}>
-          <p className={`text-[10px] font-bold uppercase tracking-wider ${nextFeedbackIn === 0 ? 'text-yellow-700' : 'text-[#006859]'}`}>Next Global Trigger</p>
-          <p className={`text-sm font-bold ${nextFeedbackIn === 0 ? 'text-yellow-800' : 'text-[#2c2f30]'}`}>
-            {nextFeedbackIn === 0 ? "🔔 Next Download!" : `In ${nextFeedbackIn} ${nextFeedbackIn === 1 ? 'download' : 'downloads'}`}
-          </p>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={fetchFeedback}
+            className="flex items-center gap-2 text-xs font-bold text-[#006859] border border-[#006859]/20 bg-[#006859]/5 px-3 py-2 rounded-xl hover:bg-[#006859]/10 transition-colors"
+          >
+            <RefreshCw className="w-3.5 h-3.5" />
+            Refresh {lastUpdated && `· ${lastUpdated}`}
+          </button>
+          <div className={`border rounded-lg px-3 py-1.5 text-right ${nextFeedbackIn === 0 ? 'bg-yellow-50 border-yellow-200' : 'bg-[#12f8d7]/10 border-[#006859]/20'}`}>
+            <p className={`text-[10px] font-bold uppercase tracking-wider ${nextFeedbackIn === 0 ? 'text-yellow-700' : 'text-[#006859]'}`}>Next Global Trigger</p>
+            <p className={`text-sm font-bold ${nextFeedbackIn === 0 ? 'text-yellow-800' : 'text-[#2c2f30]'}`}>
+              {nextFeedbackIn === 0 ? "🔔 Next Download!" : `In ${nextFeedbackIn} ${nextFeedbackIn === 1 ? 'download' : 'downloads'}`}
+            </p>
+          </div>
         </div>
       </div>
 
