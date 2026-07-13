@@ -53,11 +53,11 @@ const PLANS = [
     price: 199,
     priceDisplay: "₹199",
     period: "/2 Months",
-    description: "400 Credits (40 Resumes)",
+    description: "300 Credits (30 Resumes)",
     icon: <Crown className="w-5 h-5 text-amber-400" />,
     badge: null,
     borderClass: "border-primary",
-    features: ["400 Credits", "Valid for 2 Months", "All Premium Features"],
+    features: ["300 Credits", "Valid for 2 Months", "All Premium Features"],
   },
 ];
 

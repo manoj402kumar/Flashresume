@@ -1232,7 +1232,7 @@ Pursuing or completed a degree in Computer Science, Engineering, or equivalent t
                   <GraduationCap className={`w-5 h-5 ${hoveredPlan === "student" ? "text-white opacity-90" : "text-amber-500"}`} />
                 </div>
                 <h3 className="font-headline text-2xl font-bold mb-1">Student Plan</h3>
-                <p className={`text-sm mb-4 transition-colors ${hoveredPlan === "student" ? "text-white/90" : "text-on-surface-variant"}`}>400 Credits (40 Resumes)</p>
+                <p className={`text-sm mb-4 transition-colors ${hoveredPlan === "student" ? "text-white/90" : "text-on-surface-variant"}`}>300 Credits (30 Resumes)</p>
                 <div className="flex items-center gap-1.5 mb-0.5">
                   <p className={`text-sm line-through leading-none ${hoveredPlan === "student" ? "text-white/55" : "text-on-surface-variant opacity-60"}`}>₹199</p>
                   <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-md leading-none tracking-wide ${hoveredPlan === "student" ? "bg-white/25 text-white border border-white/30" : "bg-orange-500/15 text-orange-600 border border-orange-400/40"}`}>50% OFF</span>
@@ -1242,7 +1242,7 @@ Pursuing or completed a degree in Computer Science, Engineering, or equivalent t
                 <ul className="space-y-3 mb-10 text-left flex-grow">
                   <li className={`flex items-center gap-3 transition-colors ${hoveredPlan === "student" ? "text-white" : "text-on-surface-variant"}`}>
                     <CheckCircle2 className={`w-4 h-4 flex-shrink-0 transition-colors ${hoveredPlan === "student" ? "text-white" : "text-primary"}`} />
-                    400 Credits
+                    300 Credits
                   </li>
                   <li className={`flex items-center gap-3 transition-colors ${hoveredPlan === "student" ? "text-white" : "text-on-surface-variant"}`}>
                     <CheckCircle2 className={`w-4 h-4 flex-shrink-0 transition-colors ${hoveredPlan === "student" ? "text-white" : "text-primary"}`} />
@@ -1287,13 +1287,13 @@ Pursuing or completed a degree in Computer Science, Engineering, or equivalent t
                   <Star className={`w-5 h-5 transition-colors ${hoveredPlan === "regular" ? "text-white fill-white/80" : "text-primary fill-primary/30"}`} />
                 </div>
                 <h3 className="font-headline text-2xl font-bold mb-1">Standard Plan</h3>
-                <p className={`text-sm mb-4 transition-colors ${hoveredPlan === "regular" ? "text-white/90" : "text-on-surface-variant"}`}>400 Credits (40 Resumes)</p>
+                <p className={`text-sm mb-4 transition-colors ${hoveredPlan === "regular" ? "text-white/90" : "text-on-surface-variant"}`}>300 Credits (30 Resumes)</p>
                 <div className="text-4xl font-black mb-1">₹199</div>
                 <p className={`text-sm mb-8 transition-colors ${hoveredPlan === "regular" ? "text-white/90" : "text-on-surface-variant"}`}>/2 Months</p>
                 <ul className="space-y-3 mb-10 text-left flex-grow">
                   <li className={`flex items-center gap-3 transition-colors ${hoveredPlan === "regular" ? "text-white" : "text-on-background"}`}>
                     <CheckCircle2 className={`w-4 h-4 flex-shrink-0 transition-colors ${hoveredPlan === "regular" ? "text-white" : "text-primary"}`} />
-                    <span>400 Credits</span>
+                    <span>300 Credits</span>
                   </li>
                   <li className={`flex items-center gap-3 transition-colors ${hoveredPlan === "regular" ? "text-white" : "text-on-background"}`}>
                     <CheckCircle2 className={`w-4 h-4 flex-shrink-0 transition-colors ${hoveredPlan === "regular" ? "text-white" : "text-primary"}`} />
