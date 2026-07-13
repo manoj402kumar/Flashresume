@@ -25,14 +25,20 @@ DEFINITION OF A SKILL/KEYWORD — extract ALL ATS-relevant keywords from the ent
 Rules:
 1. Extract ALL critical keywords from the JD using the definition above.
 2. Apply OR CONDITION RULE — normalize slash/OR groups into single slots before matching.
-3. Strict matching: a skill is matched ONLY if explicitly stated in RESUME_TEXT and JOB_DESCRIPTION. Do NOT infer. Scan ALL sections (Summary, Skills, Projects, Experience, Education, Certifications).
-4. matched_skills: skills from JOB_DESCRIPTION explicitly present in RESUME_TEXT.
-5. all_missing_skills: skills from JOB_DESCRIPTION NOT in RESUME_TEXT. One entry per slot; OR groups as single "x/y" entry.
+3. STRICT VERBATIM MATCHING ONLY: A skill counts as matched ONLY if its EXACT TERM (or a universally accepted abbreviation, e.g. "REST API" = "RESTful API") appears literally as a word or phrase in RESUME_TEXT. Do NOT infer from context, do NOT assume that using a technology implies knowing related concepts.
+   - FORBIDDEN inferences (examples of what NOT to do):
+     • Resume mentions "Spring Boot" → do NOT auto-match "REST APIs" unless the words "REST API" / "RESTful" appear literally.
+     • Resume mentions a project built with Django → do NOT auto-match "OOP" unless resume explicitly says OOP/object-oriented.
+     • Resume lists "MySQL" → do NOT auto-match "SQL" unless the word "SQL" also appears literally.
+     • Resume mentions "Docker" → do NOT auto-match "CI/CD" or "DevOps" unless those exact words appear.
+   - Each skill must pass this test: "Does the exact skill keyword appear as a recognizable token in the resume text?" — YES → matched, NO → missing. No exceptions.
+4. matched_skills: skills from JOB_DESCRIPTION whose EXACT TERM is literally present in RESUME_TEXT.
+5. all_missing_skills: skills from JOB_DESCRIPTION whose exact term is NOT literally present in RESUME_TEXT. One entry per slot; OR groups as single "x/y" entry.
 6. A skill cannot appear in both lists.
 7. Do NOT add any skill to matched_skills that is not in JOB_DESCRIPTION.
 8. ATS score = (matched_skills count / (matched + missing) count) * 100.
 
-MANDATORY SELF-VALIDATION: For each skill in all_missing_skills, re-scan ENTIRE RESUME_TEXT once more. If found anywhere — move it to matched_skills.
+MANDATORY SELF-VALIDATION: For each skill in all_missing_skills, scan ENTIRE RESUME_TEXT one final time for the EXACT TERM only. Move to matched_skills ONLY if the verbatim keyword appears — do NOT move based on related terms, synonyms, or implied usage.
 
 ---- TASK 2: PROJECT RELEVANCE CHECK ----
 

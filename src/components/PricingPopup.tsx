@@ -649,7 +649,8 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
                 <motion.div key="plan" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-4">
                   <MiniReviewsMarquee />
                   <div className="flex flex-col md:grid md:grid-cols-2 lg:grid-cols-[repeat(3,240px)] lg:justify-center gap-3 md:gap-4 pt-2 pb-3 px-1">
-                    {PLANS.map((plan) => {
+                    {/* pay_per_use card */}
+                    {PLANS.slice(0, 1).map((plan) => {
                       const isSelected = selectedPlan === plan.id;
                       return (
                         <React.Fragment key={plan.id}>
@@ -781,7 +782,57 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
                       </div>
                     </div>
 
+                    {/* regular (₹199) card */}
+                    {PLANS.slice(1).map((plan) => {
+                      const isSelected = selectedPlan === plan.id;
+                      return (
+                        <React.Fragment key={plan.id}>
+                          <div onClick={() => setSelectedPlan(plan.id)}
+                            className={`relative w-full md:w-auto flex flex-col p-4 md:p-5 rounded-2xl md:rounded-3xl border-2 cursor-pointer transition-all duration-300 ${isSelected ? "border-transparent bg-gradient-to-b from-[#006859] to-[#12f8d7] shadow-xl md:scale-105 text-white" : plan.borderClass + " bg-surface-container-lowest text-on-background hover:border-primary/40 hover:shadow-md"}`}>
 
+                            <div className={`absolute top-3 right-3 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-200 ${isSelected ? "border-white bg-white scale-110" : "border-on-surface-variant/30"}`}>
+                              {isSelected && <CheckCircle2 className="w-4 h-4 text-[#006859]" />}
+                            </div>
+
+                            {plan.badge && <div className={`absolute -top-3 left-1/2 -translate-x-1/2 text-[9px] font-black px-2 py-0.5 rounded-full whitespace-nowrap shadow-sm tracking-wider ${isSelected ? "bg-white text-[#006859]" : "bg-primary text-white"}`}>{plan.badge}</div>}
+
+                            <div className="flex flex-row md:flex-col items-center md:text-center gap-3 md:gap-0 mb-3 md:mb-4 pr-10 md:pr-4">
+                              <div className={`w-10 h-10 rounded-xl flex-shrink-0 flex items-center justify-center md:mb-2 transition-colors ${isSelected ? "bg-white/20" : "bg-surface-container-low"}`}>
+                                {isSelected ? <div className="text-white opacity-90">{plan.icon}</div> : plan.icon}
+                              </div>
+                              <div className="flex-1 text-left md:text-center">
+                                <h4 className="font-bold text-base mb-0 md:mb-0.5">{plan.name}</h4>
+                                <p className={`text-[11px] md:mb-2 ${isSelected ? "text-white/90" : "text-on-surface-variant"}`}>{plan.description}</p>
+                              </div>
+                              <div className="flex flex-col text-right md:text-center md:mb-1">
+                                <p className="font-black text-xl md:text-3xl">{plan.priceDisplay}</p>
+                                <p className={`text-[10px] md:text-[11px] font-medium mt-0.5 ${isSelected ? "text-white/90" : "text-on-surface-variant"}`}>{plan.period}</p>
+                              </div>
+                            </div>
+
+                            <div className={`flex-1 flex flex-col justify-start w-full pt-3 border-t ${isSelected ? "border-white/20" : "border-surface-container-high"}`}>
+                              <ul className="space-y-2 text-sm">
+                                {plan.features.map((feat, idx) => (
+                                  <li key={idx} className="flex items-start gap-2">
+                                    <CheckCircle2 className={`w-4 h-4 flex-shrink-0 mt-0.5 ${isSelected ? "text-white" : "text-primary"}`} />
+                                    <span className={`text-left font-medium text-[12px] ${isSelected ? "text-white" : "text-on-background"}`}>{feat}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                              {isSelected && (
+                                <button
+                                  onClick={() => handleProceedToPayment()}
+                                  disabled={loading}
+                                  className="md:hidden w-full mt-4 bg-white text-[#006859] font-bold py-3 rounded-xl transition-all shadow-md flex justify-center items-center gap-2 active:scale-95"
+                                >
+                                  {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <>Continue <ArrowRight className="w-4 h-4" /></>}
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        </React.Fragment>
+                      );
+                    })}
 
                   </div>
 
