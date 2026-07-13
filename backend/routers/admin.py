@@ -620,12 +620,10 @@ async def apply_referral(body: ApplyReferralRequest, authorization: str = Header
 import urllib.parse
 import random
 
-# Default fallback roles when user has never generated a resume
+# Default fallback role when user has never generated a resume
+# FlashResume is built for IT/software people, so we use a single fixed role.
 _FALLBACK_ROLES = [
     "Software Engineer Fresher",
-    "Frontend Developer Intern",
-    "Backend Developer Fresher",
-    "Data Analyst Intern",
 ]
 
 def _estimate_salary_range(role: str, query: str) -> str:
@@ -909,16 +907,22 @@ async def trigger_cold_email(bg_tasks: BackgroundTasks):
                 display_name = email.split("@")[0].replace(".", " ").title()
                 
                 udata = user_data.get(uid)
-                if udata and udata.get("session_id"):
-                    resume_link = f"https://flashresume.in/result?session_id={udata['session_id']}"
-                else:
-                    resume_link = "https://flashresume.in/profile"
 
-                # Personalised jobs → LinkedIn search urls from Strong matches
-                role_queries = udata.get("queries") if udata else []
-                jobs  = _generate_linkedin_jobs(role_queries)
+                if udata and udata.get("session_id"):
+                    # User has a resume session — point to their exact generated resume
+                    resume_link  = f"https://flashresume.in/result?session_id={udata['session_id']}"
+                    role_queries = udata.get("queries", [])
+                else:
+                    # User signed up but never generated a resume — send them to the homepage
+                    # and use a random generic fresher job search
+                    print(f"[ColdEmail] No resume session for {email} — using homepage + fresher jobs")
+                    resume_link  = "https://flashresume.in"
+                    role_queries = []  # _generate_linkedin_jobs picks a random fresher role
+
+                jobs = _generate_linkedin_jobs(role_queries)
 
                 success = await _send_email_brevo(email, display_name, resume_link, jobs)
+
                 if success:
                     sent_count += 1
                     # Upsert campaign log
