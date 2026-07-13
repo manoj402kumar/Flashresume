@@ -1193,13 +1193,13 @@ Pursuing or completed a degree in Computer Science, Engineering, or equivalent t
                   <CheckCircle2 className={`w-5 h-5 ${hoveredPlan === "pay_per_use" ? "text-white opacity-90" : "text-on-surface-variant"}`} />
                 </div>
                 <h3 className="font-headline text-2xl font-bold mb-1">One-Time</h3>
-                <p className={`text-sm mb-4 ${hoveredPlan === "pay_per_use" ? "text-white/90" : "text-on-surface-variant"}`}>2 resume downloads</p>
+                <p className={`text-sm mb-4 ${hoveredPlan === "pay_per_use" ? "text-white/90" : "text-on-surface-variant"}`}>1 resume download</p>
                 <div className="text-4xl font-black mb-1">₹29</div>
                 <p className={`text-sm mb-8 ${hoveredPlan === "pay_per_use" ? "text-white/90" : "text-on-surface-variant"}`}>/10 Days</p>
                 <ul className="space-y-3 mb-10 text-left flex-grow">
                   <li className={`flex items-center gap-3 ${hoveredPlan === "pay_per_use" ? "text-white" : "text-on-surface-variant"}`}>
                     <CheckCircle2 className={`w-4 h-4 flex-shrink-0 ${hoveredPlan === "pay_per_use" ? "text-white" : "text-primary"}`} />
-                    20 Credits
+                    10 Credits
                   </li>
                   <li className={`flex items-center gap-3 ${hoveredPlan === "pay_per_use" ? "text-white" : "text-on-surface-variant"}`}>
                     <CheckCircle2 className={`w-4 h-4 flex-shrink-0 ${hoveredPlan === "pay_per_use" ? "text-white" : "text-primary"}`} />

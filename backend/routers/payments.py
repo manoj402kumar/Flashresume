@@ -138,7 +138,7 @@ async def verify_payment(body: VerifyRequest, authorization: str = Header(None))
             
             # 2. Process the successful payment in a single Postgres transaction
             PLAN_CREDITS = {
-                "pay_per_use": 20,
+                "pay_per_use": 10,
                 "regular": 300,
                 "student": 300,
                 "bulk_offer": 4000,
@@ -475,7 +475,7 @@ async def razorpay_webhook(request: Request):
             plan_type = payment_record["plan_type"]
             
             PLAN_CREDITS = {
-                "pay_per_use": 20,
+                "pay_per_use": 10,
                 "regular": 300,
                 "student": 300,
                 "bulk_offer": 4000,
@@ -602,7 +602,7 @@ async def reconcile_payments(authorization: str = Header(None)):
                         if payment_id:
                             # 3. Process the payment
                             PLAN_CREDITS = {
-                                "pay_per_use": 20,
+                                "pay_per_use": 10,
                                 "regular": 300,
                                 "student": 300,
                                 "bulk_offer": 4000,
