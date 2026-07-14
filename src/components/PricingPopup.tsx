@@ -270,10 +270,17 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
 
   useEffect(() => {
     if (step !== "plan") return;
-    if (timeLeft <= 0) return;
-    const timer = setInterval(() => setTimeLeft((t) => t - 1), 1000);
+    const timer = setInterval(() => {
+      setTimeLeft((t) => {
+        if (t <= 1) {
+          clearInterval(timer);
+          return 0;
+        }
+        return t - 1;
+      });
+    }, 1000);
     return () => clearInterval(timer);
-  }, [step, timeLeft]);
+  }, [step]);
 
   const formatTime = (s: number) =>
     `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
@@ -281,6 +288,7 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
   useEffect(() => {
     if (isOpen) {
       setError(null);
+      setTimeLeft(300);
       setStep("initializing"); // Show loading spinner while checking session
       if (initialPlan) setSelectedPlan(initialPlan);
       checkUserSession();
