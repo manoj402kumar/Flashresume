@@ -265,6 +265,19 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
   const [error, setError] = useState<string | null>(null);
   const [selectedPlan, setSelectedPlan] = useState<string>(initialPlan || "pay_per_use");
 
+  // FOMO Timer State
+  const [timeLeft, setTimeLeft] = useState(300);
+
+  useEffect(() => {
+    if (step !== "plan") return;
+    if (timeLeft <= 0) return;
+    const timer = setInterval(() => setTimeLeft((t) => t - 1), 1000);
+    return () => clearInterval(timer);
+  }, [step, timeLeft]);
+
+  const formatTime = (s: number) =>
+    `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
+
   useEffect(() => {
     if (isOpen) {
       setError(null);
@@ -781,6 +794,25 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
                         )}
                       </div>
                     </div>
+
+                    {/* FOMO Timer — between student & standard */}
+                    {timeLeft > 0 && (
+                      <div className="w-full flex flex-col items-center md:col-span-full md:order-first lg:max-w-[752px] lg:mx-auto mb-2 md:mb-0">
+                        <div className="w-full relative overflow-hidden rounded-xl bg-gradient-to-r from-red-500/10 via-orange-500/10 to-red-500/10 border border-red-500/20 px-4 py-2.5 flex items-center justify-center gap-2.5 shadow-sm">
+                          {/* Pulsing indicator */}
+                          <div className="relative flex h-2.5 w-2.5 flex-shrink-0">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500"></span>
+                          </div>
+                          <span className="text-[12px] font-bold text-red-600 dark:text-red-400 tracking-wide uppercase">
+                            Offer expires in
+                          </span>
+                          <span className="font-mono text-sm font-black text-red-600 dark:text-red-400 bg-red-500/10 px-2 py-0.5 rounded-md border border-red-500/20 shadow-inner">
+                            {formatTime(timeLeft)}
+                          </span>
+                        </div>
+                      </div>
+                    )}
 
                     {/* regular (₹199) card */}
                     {PLANS.slice(1).map((plan) => {
