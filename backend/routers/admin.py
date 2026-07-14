@@ -369,21 +369,30 @@ def build_trend_data(records, dt_start, dt_end, time_filter, value_key=None, tra
         
     return trend
 
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Download Analytics — powered by get_download_analytics RPC
+# Replaces the old Python chunked-loop aggregation.
+# The RPC handles:
+#   1. Plan resolution via DISTINCT ON payments (single JOIN, no Python iteration)
+#   2. Category resolution with _category field + legacy ats_score_after fallback
+#   3. Dev account exclusion via p_exclude_user_ids array parameter
+#   4. IST-aware trend bucketing entirely inside Postgres
+# ─────────────────────────────────────────────────────────────────────────────
 @router.get("/admin/analytics/downloads", dependencies=[Depends(require_admin)])
 async def get_analytics_downloads(
-    time_filter: str = "all", 
+    time_filter: str = "all",
     plan_filter: str = "all",
     start_date: Optional[str] = None,
     end_date: Optional[str] = None
 ):
     if not sc.supabase:
         return {}
-        
+
     now = datetime.now(timezone.utc)
     dt_start = None
     dt_end = now
-    
-    
+
     if time_filter == "today":
         ist_now = now + IST_OFFSET
         ist_midnight = ist_now.replace(hour=0, minute=0, second=0, microsecond=0)
@@ -403,104 +412,57 @@ async def get_analytics_downloads(
     if not dt_start or dt_start < PROD_START_DATE:
         dt_start = PROD_START_DATE
 
+    # Zero-initialised dicts — safe defaults so the frontend never crashes
+    # even if a category/plan/device has 0 downloads in the selected window.
+    default_plan_counts     = {"regular": 0, "student": 0, "pay_per_use": 0, "bulk_offer": 0, "free": 0}
+    default_category_counts = {"jd_optimized": 0, "no_jd": 0, "no_changes": 0}
+    default_device_counts   = {"desktop": 0, "mobile": 0}
+
     try:
-        # Exclude dev/test accounts
         dev_user_ids = await get_dev_user_ids()
 
-        # Fetch downloads with LIMIT 10000
-        dl_query = sc.supabase.table("resume_downloads").select("user_id, session_id, downloaded_at, device_type").limit(10000).order("downloaded_at", desc=True)
-        if dt_start: dl_query = dl_query.gte("downloaded_at", dt_start.isoformat())
-        if dt_end: dl_query = dl_query.lte("downloaded_at", dt_end.isoformat())
-        
-        dl_res = await _sb(dl_query)
-        downloads = dl_res.data or []
-        
-        user_ids = list(set(d.get("user_id") for d in downloads if d.get("user_id")))
+        # Single RPC call — all 5 aggregations in one Postgres query
+        rpc_res = await asyncio.to_thread(
+            lambda: sc.supabase.rpc(
+                "get_download_analytics",
+                {
+                    "p_start_ts":         dt_start.isoformat(),
+                    "p_end_ts":           dt_end.isoformat(),
+                    "p_time_filter":      time_filter,
+                    "p_plan_filter":      plan_filter,
+                    "p_exclude_user_ids": dev_user_ids or [],
+                }
+            ).execute()
+        )
 
-        # Use payments as the single source of truth for plan type.
-        # Most recent successful payment = the plan the user actually paid for,
-        # regardless of whether their subscription is currently active.
-        user_plans = {}
-        if user_ids:
-            pmt_res = await _sb(
-                sc.supabase.table("payments")
-                .select("user_id, plan_type")
-                .in_("user_id", user_ids)
-                .eq("status", "success")
-                .order("created_at", desc=True)
-            )
-            for p in pmt_res.data or []:
-                uid = p.get("user_id")
-                # First occurrence per user = most recent payment (desc order)
-                if uid and uid not in user_plans:
-                    user_plans[uid] = p.get("plan_type", "free")
-                    
-        if plan_filter != "all":
-            downloads = [d for d in downloads if d.get("user_id") and user_plans.get(d["user_id"], "free") == plan_filter]
-            
-        unique_users = len(set(d.get("user_id") for d in downloads if d.get("user_id")))
-        
-        plan_counts = {"regular": 0, "student": 0, "pay_per_use": 0, "bulk_offer": 0, "free": 0}
-        for d in downloads:
-            uid = d.get("user_id")
-            ptype = user_plans.get(uid, "free") if uid else "free"
-            if ptype in plan_counts: plan_counts[ptype] += 1
-            else: plan_counts[ptype] = 1
-            
-        # Determine categories from sessions
-        session_ids = list(set(d.get("session_id") for d in downloads if d.get("session_id")))
-        session_categories = {}
-        if session_ids:
-            chunk_size = 200
-            for i in range(0, len(session_ids), chunk_size):
-                chunk = session_ids[i:i+chunk_size]
-                # Fetch only the 2 tiny fields we need from generated_output instead of the
-                # full ~50 KB resume JSON blob. PostgREST JSON operators (->> for text, -> for number)
-                # extract just those fields server-side before sending data over the wire.
-                # Before: ~50 KB × 10,000 rows = up to 500 MB egress per admin page load.
-                # After:  ~50 bytes × 10,000 rows = ~500 KB egress. (1000x reduction)
-                s_res = await _sb(sc.supabase.table("resume_sessions").select("id, generated_output->>_category, generated_output->ats_score_after").in_("id", chunk))
-                for s in s_res.data or []:
-                    cat = s.get("_category")
-                    if not cat:
-                        # Legacy fallback: old sessions don't have _category.
-                        # ats_score_after > 0 means a JD was used → jd_optimized.
-                        # ats_score_after = 0 means no JD → no_jd (First Resume).
-                        score = s.get("ats_score_after") or 0
-                        cat = "jd_optimized" if score > 0 else "no_jd"
-                    session_categories[s["id"]] = cat
+        raw = rpc_res.data or {}
 
-        # No "unknown" category — every download belongs to one of the 3 real categories.
-        # Downloads with no session_id are classified as no_jd (no JD/session context).
-        category_counts = {"jd_optimized": 0, "no_jd": 0, "no_changes": 0}
-        device_counts = {"desktop": 0, "mobile": 0}
-        
-        for d in downloads:
-            sid = d.get("session_id")
-            # No session_id = no JD was used → no_jd (First Resume)
-            cat = session_categories.get(sid, "no_jd") if sid else "no_jd"
-            if cat in category_counts: category_counts[cat] += 1
-            else: category_counts[cat] = 1
-            
-            dev = d.get("device_type") or "desktop"  # NULL = pre-tracking = desktop (mobile was never logged before keepalive fix)
-            if dev == "mobile":
-                device_counts["mobile"] += 1
-            else:
-                device_counts["desktop"] += 1
-            
-        trend = build_trend_data(downloads, dt_start, dt_end, time_filter)
-        
+        # Merge RPC output with zero-safe defaults so missing keys
+        # never reach the frontend as undefined/null.
+        plan_counts     = {**default_plan_counts,     **(raw.get("downloads_by_plan",     {}) or {})}
+        category_counts = {**default_category_counts, **(raw.get("downloads_by_category", {}) or {})}
+        device_counts   = {**default_device_counts,   **(raw.get("downloads_by_device",   {}) or {})}
+
         return {
-            "total_downloads": len(downloads),
-            "unique_users": unique_users,
-            "downloads_by_plan": plan_counts,
+            "total_downloads":      raw.get("total_downloads",  0),
+            "unique_users":         raw.get("unique_users",     0),
+            "downloads_by_plan":    plan_counts,
             "downloads_by_category": category_counts,
-            "downloads_by_device": device_counts,
-            "trend": trend
+            "downloads_by_device":  device_counts,
+            "trend":                raw.get("trend",            []),
         }
+
     except Exception as e:
-        print(f"Download Analytics Error: {e}")
-        return {}
+        print(f"Download Analytics RPC Error: {e}")
+        return {
+            "total_downloads":      0,
+            "unique_users":         0,
+            "downloads_by_plan":    default_plan_counts,
+            "downloads_by_category": default_category_counts,
+            "downloads_by_device":  default_device_counts,
+            "trend":                [],
+        }
+
 
 class TrackVisitRequest(BaseModel):
     page_type: str
@@ -647,7 +609,7 @@ def _estimate_salary_range(role: str, query: str) -> str:
         min_lakhs = 6
         max_lakhs = 8
         
-    return f"₹{min_lakhs},00,000 - ₹{max_lakhs},00,000"
+    return f"\u20b9{min_lakhs},00,000 - \u20b9{max_lakhs},00,000"
 
 def _generate_linkedin_jobs(role_queries: list[dict]) -> list[dict]:
     """Generate 1 LinkedIn job search link based on Strong match query.
@@ -772,7 +734,7 @@ async def _send_email_brevo(to_email: str, display_name: str, resume_link: str, 
     payload = {
         "sender":      {"name": BREVO_FROM_NAME, "email": BREVO_FROM_EMAIL},
         "to":          [{"email": to_email, "name": display_name}],
-        "subject":     "Your shortlisted jobs inside — 90% shortlisting chance!",
+        "subject":     "Your shortlisted jobs inside \u2014 90% shortlisting chance!",
         "htmlContent": html,
     }
     try:
