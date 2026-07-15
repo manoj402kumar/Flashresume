@@ -36,7 +36,7 @@ class OrderRequest(BaseModel):
 async def create_order(request: Request, body: OrderRequest, authorization: str = Header(None)):
     PRICES = {
         "pay_per_use": 2900,
-        "regular": 19900,
+        "bulk_offer": 59900,
         "student": 9900
     }
     amount_in_paise = PRICES.get(body.plan_type)
@@ -139,12 +139,12 @@ async def verify_payment(body: VerifyRequest, authorization: str = Header(None))
             # 2. Process the successful payment in a single Postgres transaction
             PLAN_CREDITS = {
                 "pay_per_use": 10,
-                "regular": 300,
+                "regular": 300,   # legacy – keep for old orders
+                "bulk_offer": 3000,
                 "student": 300,
-                "bulk_offer": 4000,
             }
             credits_to_add = PLAN_CREDITS.get(actual_plan_type, 0)
-            validity_days = 365 if actual_plan_type == "bulk_offer" else 60 if actual_plan_type == "regular" else 60 if actual_plan_type == "student" else 10
+            validity_days = 180 if actual_plan_type == "bulk_offer" else 60 if actual_plan_type == "regular" else 60 if actual_plan_type == "student" else 10
             
             rpc_res = await sb(lambda: sc.supabase.rpc("process_successful_payment", {
                 "p_order_id": body.razorpay_order_id,
@@ -476,12 +476,12 @@ async def razorpay_webhook(request: Request):
             
             PLAN_CREDITS = {
                 "pay_per_use": 10,
-                "regular": 300,
+                "regular": 300,   # legacy – keep for old orders
+                "bulk_offer": 3000,
                 "student": 300,
-                "bulk_offer": 4000,
             }
             credits_to_add = PLAN_CREDITS.get(plan_type, 0)
-            validity_days = 365 if plan_type == "bulk_offer" else 60 if plan_type == "regular" else 60 if plan_type == "student" else 10
+            validity_days = 180 if plan_type == "bulk_offer" else 60 if plan_type == "regular" else 60 if plan_type == "student" else 10
 
             rpc_res = await sb(lambda: sc.supabase.rpc("process_successful_payment", {
                 "p_order_id": order_id,
@@ -603,12 +603,12 @@ async def reconcile_payments(authorization: str = Header(None)):
                             # 3. Process the payment
                             PLAN_CREDITS = {
                                 "pay_per_use": 10,
-                                "regular": 300,
+                                "regular": 300,   # legacy – keep for old orders
+                                "bulk_offer": 3000,
                                 "student": 300,
-                                "bulk_offer": 4000,
                             }
                             credits_to_add = PLAN_CREDITS.get(plan_type, 0)
-                            validity_days = 365 if plan_type == "bulk_offer" else 60 if plan_type == "regular" else 60 if plan_type == "student" else 10
+                            validity_days = 180 if plan_type == "bulk_offer" else 60 if plan_type == "regular" else 60 if plan_type == "student" else 10
 
                             await sb(lambda oid=order_id, pid=payment_id, uid=user_id, pt=plan_type, c=credits_to_add, v=validity_days: sc.supabase.rpc("process_successful_payment", {
                                 "p_order_id": oid,

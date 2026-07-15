@@ -258,7 +258,7 @@ async def get_analytics_revenue(
                 "color": "bg-[#12f8d7]/15", "textColor": "text-[#006859]", "barColor": "bg-gradient-to-r from-[#006859] to-[#12f8d7]"
             },
             {
-                "name": "Standard", "price": 199, "users": plan_counts.get("regular", 0), "mrr": plan_mrr.get("regular", 0),
+                "name": "Bulk Offer", "price": 599, "users": plan_counts.get("bulk_offer", 0), "mrr": plan_mrr.get("bulk_offer", 0),
                 "color": "bg-purple-50", "textColor": "text-purple-700", "barColor": "bg-gradient-to-r from-purple-500 to-purple-400"
             },
             {

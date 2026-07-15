@@ -54,8 +54,8 @@ export default function App() {
   const [parsing, setParsing] = useState(false);
   const [showDownloadGate, setShowDownloadGate] = useState(false);
   const [showBuyMoreCredits, setShowBuyMoreCredits] = useState(false);
-  const [selectedPricingPlan, setSelectedPricingPlan] = useState<"pay_per_use" | "regular" | "student" | null>(null);
-  const [hoveredPlan, setHoveredPlan] = useState<string>("regular");
+  const [selectedPricingPlan, setSelectedPricingPlan] = useState<"pay_per_use" | "bulk_offer" | "student" | null>(null);
+  const [hoveredPlan, setHoveredPlan] = useState<string>("bulk_offer");
   const [showLoginOnly, setShowLoginOnly] = useState(false);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [showAccountDropdown, setShowAccountDropdown] = useState(false);
@@ -591,8 +591,8 @@ export default function App() {
                               <div className="space-y-4 mt-5">
                                 {buckets.map(b => {
                                   const activeBucket = buckets.find(b => b.status === 'active');
-                                  const activePlanName = activeBucket ? (activeBucket.plan_type === 'student' ? 'student plan' : activeBucket.plan_type === 'regular' ? 'pro plan' : 'previous plan') : 'previous plan';
-                                  const name = b.plan_type === 'student' ? '🎓 Student Plan' : b.plan_type === 'regular' ? '👑 Pro Monthly' : b.plan_type === 'pay_per_use' ? '💳 Pay Per Use' : '🎁 Referral Credits';
+                                  const activePlanName = activeBucket ? (activeBucket.plan_type === 'student' ? 'student plan' : activeBucket.plan_type === 'bulk_offer' ? 'bulk plan' : activeBucket.plan_type === 'regular' ? 'pro plan' : 'previous plan') : 'previous plan';
+                                  const name = b.plan_type === 'student' ? '🎓 Student Plan' : b.plan_type === 'bulk_offer' ? '📦 Bulk Offer' : b.plan_type === 'regular' ? '👑 Pro Monthly' : b.plan_type === 'pay_per_use' ? '💳 Pay Per Use' : '🎁 Referral Credits';
                                   let validText = "";
                                   if (b.status === 'active' && b.expires_at) {
                                     validText = `Valid till ${new Date(b.expires_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
@@ -1270,45 +1270,54 @@ Pursuing or completed a degree in Computer Science, Engineering, or equivalent t
                 </button>
               </div>
 
-              {/* Most Popular — BEST VALUE */}
+              {/* Bulk Offer — BEST VALUE */}
               <div
-                onMouseEnter={() => setHoveredPlan("regular")}
-                className={`flex-shrink-0 w-[280px] sm:w-auto snap-center p-8 md:p-10 rounded-[2rem] flex flex-col relative border-2 transition-all duration-300 ${hoveredPlan === "regular" ? "border-transparent bg-gradient-to-b from-[#006859] to-[#12f8d7] shadow-2xl shadow-primary/30 md:scale-105 z-10 text-white" : "bg-surface-container-lowest border-primary shadow-lg shadow-primary/5 text-on-background"}`}
+                onMouseEnter={() => setHoveredPlan("bulk_offer")}
+                className={`flex-shrink-0 w-[280px] sm:w-auto snap-center p-8 md:p-10 rounded-[2rem] flex flex-col relative border-2 transition-all duration-300 ${hoveredPlan === "bulk_offer" ? "border-transparent bg-gradient-to-b from-[#006859] to-[#12f8d7] shadow-2xl shadow-primary/30 md:scale-105 z-10 text-white" : "bg-surface-container-lowest border-primary shadow-lg shadow-primary/5 text-on-background"}`}
               >
                 {/* Selection Indicator */}
-                <div className={`absolute top-4 right-4 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-200 z-20 ${hoveredPlan === "regular" ? 'border-white bg-white scale-110' : 'border-primary/30'}`}>
-                  {hoveredPlan === "regular" && <CheckCircle2 className="w-4 h-4 text-[#006859]" />}
+                <div className={`absolute top-4 right-4 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-200 z-20 ${hoveredPlan === "bulk_offer" ? 'border-white bg-white scale-110' : 'border-primary/30'}`}>
+                  {hoveredPlan === "bulk_offer" && <CheckCircle2 className="w-4 h-4 text-[#006859]" />}
                 </div>
 
-                <div className={`absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full text-xs font-black uppercase tracking-widest whitespace-nowrap shadow-sm transition-colors ${hoveredPlan === "regular" ? "bg-white text-[#006859]" : "flash-gradient text-white"}`}>
-                  Standard
+                <div className={`absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full text-xs font-black uppercase tracking-widest whitespace-nowrap shadow-sm transition-colors ${hoveredPlan === "bulk_offer" ? "bg-white text-[#006859]" : "flash-gradient text-white"}`}>
+                  Bulk Offer
                 </div>
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-4 transition-colors ${hoveredPlan === "regular" ? "bg-white/20" : "bg-primary/10"}`}>
-                  <Star className={`w-5 h-5 transition-colors ${hoveredPlan === "regular" ? "text-white fill-white/80" : "text-primary fill-primary/30"}`} />
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-4 transition-colors ${hoveredPlan === "bulk_offer" ? "bg-white/20" : "bg-primary/10"}`}>
+                  <Package className={`w-5 h-5 transition-colors ${hoveredPlan === "bulk_offer" ? "text-white fill-white/30" : "text-primary"}`} />
                 </div>
-                <h3 className="font-headline text-2xl font-bold mb-1">Standard Plan</h3>
-                <p className={`text-sm mb-4 transition-colors ${hoveredPlan === "regular" ? "text-white/90" : "text-on-surface-variant"}`}>300 Credits (30 Resumes)</p>
-                <div className="text-4xl font-black mb-1">₹199</div>
-                <p className={`text-sm mb-8 transition-colors ${hoveredPlan === "regular" ? "text-white/90" : "text-on-surface-variant"}`}>/2 Months</p>
+                <h3 className="font-headline text-2xl font-bold mb-1">Bulk Offer</h3>
+                <p className={`text-sm mb-4 transition-colors ${hoveredPlan === "bulk_offer" ? "text-white/90" : "text-on-surface-variant"}`}>3000 Credits (300 Resumes)</p>
+                {/* Strikethrough price */}
+                <div className="flex items-center gap-1.5 mb-1">
+                  <p className={`text-sm line-through leading-none ${hoveredPlan === "bulk_offer" ? "text-white/55" : "text-on-surface-variant opacity-60"}`}>₹1,500</p>
+                  <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-md leading-none tracking-wide ${hoveredPlan === "bulk_offer" ? "bg-white/25 text-white border border-white/30" : "bg-primary/15 text-primary border border-primary/40"}`}>60% OFF</span>
+                </div>
+                <div className="text-4xl font-black mb-1">₹599</div>
+                <p className={`text-sm mb-8 transition-colors ${hoveredPlan === "bulk_offer" ? "text-white/90" : "text-on-surface-variant"}`}>/6 Months</p>
                 <ul className="space-y-3 mb-10 text-left flex-grow">
-                  <li className={`flex items-center gap-3 transition-colors ${hoveredPlan === "regular" ? "text-white" : "text-on-background"}`}>
-                    <CheckCircle2 className={`w-4 h-4 flex-shrink-0 transition-colors ${hoveredPlan === "regular" ? "text-white" : "text-primary"}`} />
-                    <span>300 Credits</span>
+                  <li className={`flex items-center gap-3 transition-colors ${hoveredPlan === "bulk_offer" ? "text-white" : "text-on-background"}`}>
+                    <CheckCircle2 className={`w-4 h-4 flex-shrink-0 transition-colors ${hoveredPlan === "bulk_offer" ? "text-white" : "text-primary"}`} />
+                    <span>3000 Credits</span>
                   </li>
-                  <li className={`flex items-center gap-3 transition-colors ${hoveredPlan === "regular" ? "text-white" : "text-on-background"}`}>
-                    <CheckCircle2 className={`w-4 h-4 flex-shrink-0 transition-colors ${hoveredPlan === "regular" ? "text-white" : "text-primary"}`} />
-                    <span>Valid for 2 Months</span>
+                  <li className={`flex items-center gap-3 transition-colors ${hoveredPlan === "bulk_offer" ? "text-white" : "text-on-background"}`}>
+                    <CheckCircle2 className={`w-4 h-4 flex-shrink-0 transition-colors ${hoveredPlan === "bulk_offer" ? "text-white" : "text-primary"}`} />
+                    <span>Valid for 6 Months</span>
                   </li>
-                  <li className={`flex items-center gap-3 transition-colors ${hoveredPlan === "regular" ? "text-white" : "text-on-background"}`}>
-                    <CheckCircle2 className={`w-4 h-4 flex-shrink-0 transition-colors ${hoveredPlan === "regular" ? "text-white" : "text-primary"}`} />
+                  <li className={`flex items-center gap-3 transition-colors ${hoveredPlan === "bulk_offer" ? "text-white" : "text-on-background"}`}>
+                    <CheckCircle2 className={`w-4 h-4 flex-shrink-0 transition-colors ${hoveredPlan === "bulk_offer" ? "text-white" : "text-primary"}`} />
+                    <span>Just ₹2 per Resume</span>
+                  </li>
+                  <li className={`flex items-center gap-3 transition-colors ${hoveredPlan === "bulk_offer" ? "text-white" : "text-on-background"}`}>
+                    <CheckCircle2 className={`w-4 h-4 flex-shrink-0 transition-colors ${hoveredPlan === "bulk_offer" ? "text-white" : "text-primary"}`} />
                     <span>All Premium Features</span>
                   </li>
                 </ul>
                 <button
-                  onClick={() => { setSelectedPricingPlan("regular"); setShowDownloadGate(true); }}
-                  className={`w-full py-4 rounded-xl font-bold transition-all ${hoveredPlan === "regular" ? "bg-white text-[#006859] shadow-lg shadow-black/5 hover:bg-white/90" : "flash-gradient text-white hover:opacity-90"}`}
+                  onClick={() => { setSelectedPricingPlan("bulk_offer"); setShowDownloadGate(true); }}
+                  className={`w-full py-4 rounded-xl font-bold transition-all ${hoveredPlan === "bulk_offer" ? "bg-white text-[#006859] shadow-lg shadow-black/5 hover:bg-white/90" : "flash-gradient text-white hover:opacity-90"}`}
                 >
-                  Pay & Continue →
+                  Claim Bulk Offer →
                 </button>
               </div>
 

@@ -48,16 +48,16 @@ const PLANS = [
     features: ["10 Credits", "Valid for 10 Days"],
   },
   {
-    id: "regular",
-    name: "Standard Plan",
-    price: 199,
-    priceDisplay: "₹199",
-    period: "/2 Months",
-    description: "300 Credits (30 Resumes)",
-    icon: <Crown className="w-5 h-5 text-amber-400" />,
-    badge: null,
+    id: "bulk_offer",
+    name: "Bulk Offer",
+    price: 599,
+    priceDisplay: "₹599",
+    period: "/6 Months",
+    description: "3000 Credits (300 Resumes)",
+    icon: <Package className="w-5 h-5 text-amber-400" />,
+    badge: "BULK OFFER",
     borderClass: "border-primary",
-    features: ["300 Credits", "Valid for 2 Months", "All Premium Features"],
+    features: ["3000 Credits", "Valid for 6 Months", "Just ₹2 per Resume", "All Premium Features"],
   },
 ];
 
@@ -263,10 +263,10 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
   // UI State
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [selectedPlan, setSelectedPlan] = useState<string>(initialPlan || "pay_per_use");
+  const [selectedPlan, setSelectedPlan] = useState<string>(initialPlan || "student");
 
   // FOMO Timer State
-  const [timeLeft, setTimeLeft] = useState(300);
+  const [timeLeft, setTimeLeft] = useState(600);
 
   useEffect(() => {
     if (step !== "plan") return;
@@ -288,7 +288,7 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
   useEffect(() => {
     if (isOpen) {
       setError(null);
-      setTimeLeft(300);
+      setTimeLeft(600);
       setStep("initializing"); // Show loading spinner while checking session
       if (initialPlan) setSelectedPlan(initialPlan);
       checkUserSession();
@@ -463,7 +463,7 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
 
     const planDetails =
       planToBuy === "student" ? { amount: 99, plan_type: "student" } :
-        planToBuy === "regular" ? { amount: 199, plan_type: "regular" } :
+        planToBuy === "bulk_offer" ? { amount: 599, plan_type: "bulk_offer" } :
           { amount: 29, plan_type: "pay_per_use" };
 
     try {
@@ -803,9 +803,9 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
                       </div>
                     </div>
 
-                    {/* FOMO Timer — between student & standard */}
+                    {/* FOMO Timer — Mobile only (between student & standard) */}
                     {timeLeft > 0 && (
-                      <div className="w-full flex flex-col items-center md:col-span-full md:order-first lg:max-w-[752px] lg:mx-auto mb-2 md:mb-0">
+                      <div className="w-full flex flex-col items-center mb-2 md:hidden">
                         <div className="w-full relative overflow-hidden rounded-xl bg-gradient-to-r from-red-500/10 via-orange-500/10 to-red-500/10 border border-red-500/20 px-4 py-2.5 flex items-center justify-center gap-2.5 shadow-sm">
                           {/* Pulsing indicator */}
                           <div className="relative flex h-2.5 w-2.5 flex-shrink-0">
@@ -813,7 +813,7 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
                             <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500"></span>
                           </div>
                           <span className="text-[12px] font-bold text-red-600 dark:text-red-400 tracking-wide uppercase">
-                            Offer expires in
+                            Time remaining
                           </span>
                           <span className="font-mono text-sm font-black text-red-600 dark:text-red-400 bg-red-500/10 px-2 py-0.5 rounded-md border border-red-500/20 shadow-inner">
                             {formatTime(timeLeft)}
@@ -822,7 +822,7 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
                       </div>
                     )}
 
-                    {/* regular (₹199) card */}
+                    {/* bulk_offer (₹599) card */}
                     {PLANS.slice(1).map((plan) => {
                       const isSelected = selectedPlan === plan.id;
                       return (
@@ -845,6 +845,12 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
                                 <p className={`text-[11px] md:mb-2 ${isSelected ? "text-white/90" : "text-on-surface-variant"}`}>{plan.description}</p>
                               </div>
                               <div className="flex flex-col text-right md:text-center md:mb-1">
+                                {plan.id === "bulk_offer" && (
+                                  <div className="flex items-center justify-end md:justify-center gap-1.5 mb-0.5">
+                                    <p className={`text-[11px] line-through leading-none ${isSelected ? "text-white/55" : "text-on-surface-variant opacity-60"}`}>₹1,500</p>
+                                    <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-md leading-none tracking-wide ${isSelected ? "bg-white/25 text-white border border-white/30" : "bg-primary/15 text-primary border border-primary/40"}`}>60% OFF</span>
+                                  </div>
+                                )}
                                 <p className="font-black text-xl md:text-3xl">{plan.priceDisplay}</p>
                                 <p className={`text-[10px] md:text-[11px] font-medium mt-0.5 ${isSelected ? "text-white/90" : "text-on-surface-variant"}`}>{plan.period}</p>
                               </div>
@@ -885,6 +891,24 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
                       {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <>Pay & Continue <ArrowRight className="w-4 h-4" /></>}
                     </button>
                   </div>
+
+                  {/* Desktop-only FOMO Timer — below Pay & Continue */}
+                  {timeLeft > 0 && (
+                    <div className="hidden md:flex justify-center mt-3">
+                      <div className="w-full max-w-sm relative overflow-hidden rounded-xl bg-gradient-to-r from-red-500/10 via-orange-500/10 to-red-500/10 border border-red-500/20 px-4 py-2.5 flex items-center justify-center gap-2.5 shadow-sm">
+                        <div className="relative flex h-2.5 w-2.5 flex-shrink-0">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                          <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500"></span>
+                        </div>
+                        <span className="text-[12px] font-bold text-red-600 tracking-wide uppercase">
+                          Time remaining
+                        </span>
+                        <span className="font-mono text-sm font-black text-red-600 bg-red-500/10 px-2 py-0.5 rounded-md border border-red-500/20 shadow-inner">
+                          {formatTime(timeLeft)}
+                        </span>
+                      </div>
+                    </div>
+                  )}
 
                   {/* Review banner — scratch page gets its own quote */}
                   <ReviewBanner review={isScratchPage ? SCRATCH_REVIEW : PLAN_REVIEW} />
