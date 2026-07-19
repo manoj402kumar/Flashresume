@@ -86,6 +86,62 @@ async def get_public_reviews():
     return filtered
 
 
+@router.get("/public/review-stats")
+async def get_review_stats():
+    """Public endpoint: returns aggregate trust stats + total signup count.
+    Matches admin FeedbackPanel.tsx logic exactly:
+    - avg_rating and five_star_rate → computed from most recent 100 reviews
+    - total_reviews                 → exact DB count (count="exact")
+    - total_signups                 → exact count from users table
+    All queries run in parallel via asyncio.gather — zero extra latency.
+    """
+    if not sc.supabase:
+        return {"avg_rating": 4.3, "total_reviews": 0, "five_star_rate": 0, "total_signups": 0}
+
+    # Fire all 3 queries in parallel
+    count_res, sample_res, signups_res = await asyncio.gather(
+        # 1. Exact feedback count
+        sb(lambda: sc.supabase.table("feedback")
+            .select("id", count="exact")
+            .gte("created_at", "2026-05-28T00:00:00Z")
+            .execute()),
+        # 2. Latest 100 ratings for avg & 5★ (same as admin panel)
+        sb(lambda: sc.supabase.table("feedback")
+            .select("rating")
+            .gte("created_at", "2026-05-28T00:00:00Z")
+            .order("created_at", desc=True)
+            .limit(100)
+            .execute()),
+        # 3. Total signup count from users table
+        sb(lambda: sc.supabase.table("users")
+            .select("id", count="exact")
+            .execute()),
+    )
+
+    total_reviews = count_res.count if hasattr(count_res, "count") and count_res.count is not None \
+        else len(count_res.data or [])
+
+    total_signups = signups_res.count if hasattr(signups_res, "count") and signups_res.count is not None \
+        else len(signups_res.data or [])
+
+    ratings = [r["rating"] for r in (sample_res.data or []) if r.get("rating")]
+
+    if not ratings:
+        return {"avg_rating": 4.3, "total_reviews": total_reviews,
+                "five_star_rate": 0, "total_signups": total_signups}
+
+    avg = round(sum(ratings) / len(ratings), 1)
+    five_star = round(len([r for r in ratings if r == 5]) / len(ratings) * 100)
+    return {
+        "avg_rating": avg,
+        "total_reviews": total_reviews,
+        "five_star_rate": five_star,
+        "total_signups": total_signups,
+    }
+
+
+
+
 class IncrementDownloadRequest(BaseModel):
     session_id: str
     user_id: str | None = None

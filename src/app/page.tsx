@@ -27,7 +27,7 @@ import {
   Laptop,
   Package
 } from "lucide-react";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { parseResume, analyzeResume } from "@/lib/api";
 import PricingPopup from "@/components/PricingPopup";
@@ -39,6 +39,130 @@ import TemplatesCarousel from "@/components/TemplatesCarousel";
 import ModelSelector from "@/components/ModelSelector";
 import OnboardingTour from "@/components/OnboardingTour";
 import ReviewsMarquee from "@/components/ReviewsMarquee";
+
+// -- Animated counter hook --------------------------------------------------
+function useCountUp(target: number, duration = 1400, decimals = 0) {
+  const [count, setCount] = useState(0);
+  useEffect(() => {
+    const start = Date.now();
+    const id = setInterval(() => {
+      const t = Math.min((Date.now() - start) / duration, 1);
+      const eased = 1 - Math.pow(1 - t, 3);
+      setCount(eased * target);
+      if (t >= 1) clearInterval(id);
+    }, 16);
+    return () => clearInterval(id);
+  }, [target, duration]);
+  return decimals === 0 ? Math.floor(count) : Number(count.toFixed(decimals));
+}
+
+// ── Review Trust Stats Bar ────────────────────────────────────────────────────
+type ReviewStats = { avg_rating: number; total_reviews: number; five_star_rate: number; total_signups: number; live_users?: number };
+
+function ReviewStatsBar({ onStats, variant = "default" }: { onStats?: (s: ReviewStats) => void; variant?: "default" | "center" }) {
+  const [stats, setStats] = useState<ReviewStats | null>(null);
+
+  useEffect(() => {
+    const fetchStats = () => {
+      fetch("/api/public-review-stats")
+        .then(r => r.json())
+        .then((d: ReviewStats) => { setStats(d); onStats?.(d); })
+        .catch(() => { });
+    };
+
+    fetchStats();
+    const interval = setInterval(fetchStats, 30000);
+    return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const animatedSignups = useCountUp(stats?.total_signups || 0, 3000);
+  const animatedRating = useCountUp(stats?.avg_rating || 0, 3000, 1);
+  const animatedReviews = useCountUp(stats?.total_reviews || 0, 3000);
+  const animatedFiveStar = useCountUp(stats?.five_star_rate || 0, 3000);
+  const animatedLive = useCountUp(stats?.live_users || 0, 3000);
+
+  if (!stats || stats.total_reviews < 5) return null;
+
+  const filledStars = Math.round(animatedRating);
+
+  return (
+    <div className="w-full mb-12">
+      <div className="max-w-7xl mx-auto px-2 sm:px-6">
+        <div className={`border-y border-surface-container-highest py-5 sm:py-6 flex flex-nowrap items-center gap-5 sm:gap-8 md:gap-12 ${variant === "center" ? "justify-center" : "justify-center sm:justify-start"}`}>
+          {/* Avg Rating */}
+          <div className="flex flex-col sm:flex-row items-center gap-0.5 sm:gap-3">
+            <span className="text-base sm:text-3xl font-black text-on-background tabular-nums">{animatedRating}</span>
+            <div className="flex flex-col items-center sm:items-start gap-0.5 sm:gap-1">
+              <span className="flex gap-0.5">
+                {[...Array(5)].map((_, i) => (
+                  <Star
+                    key={i}
+                    className={`w-2.5 h-2.5 sm:w-4 sm:h-4 ${i < filledStars ? "fill-[#006859] text-[#006859]" : "text-surface-container-highest fill-surface-container-highest"
+                      }`}
+                  />
+                ))}
+              </span>
+              <span className="text-[8px] sm:text-xs text-on-surface-variant font-semibold sm:font-medium tracking-wide sm:tracking-normal uppercase sm:normal-case whitespace-nowrap">
+                Total Rating <span className="sm:hidden">({stats.total_reviews})</span>
+              </span>
+            </div>
+          </div>
+
+          {/* Divider */}
+          <div className="hidden sm:block flex-shrink-0 h-10 w-px bg-surface-container-highest" />
+
+          {/* Total Reviews */}
+          <div className="hidden sm:flex flex-col items-center sm:items-start">
+            <span className="text-base sm:text-3xl font-black text-on-background tabular-nums">{animatedReviews.toLocaleString()}</span>
+            <span className="text-[8px] sm:text-xs text-on-surface-variant font-semibold sm:font-medium tracking-wide sm:tracking-normal uppercase sm:normal-case mt-0.5 sm:mt-1 whitespace-nowrap">Total Reviews</span>
+          </div>
+
+          {/* Divider */}
+          <div className="hidden sm:block flex-shrink-0 h-10 w-px bg-surface-container-highest" />
+
+          {/* 5★ Rate */}
+          <div className="flex flex-col items-center sm:items-start">
+            <span className="text-base sm:text-3xl font-black text-on-background tabular-nums">{animatedFiveStar}%</span>
+            <span className="text-[8px] sm:text-xs text-on-surface-variant font-semibold sm:font-medium tracking-wide sm:tracking-normal uppercase sm:normal-case mt-0.5 sm:mt-1 whitespace-nowrap">5★ Rate</span>
+          </div>
+
+          {/* Divider */}
+          <div className="hidden sm:block flex-shrink-0 h-10 w-px bg-surface-container-highest" />
+
+          {/* Total Signups */}
+          <div className="flex flex-col items-center sm:items-start">
+            <span className="text-base sm:text-3xl font-black text-on-background tabular-nums">{animatedSignups.toLocaleString()}</span>
+            <span className="text-[8px] sm:text-xs text-on-surface-variant font-semibold sm:font-medium tracking-wide sm:tracking-normal uppercase sm:normal-case mt-0.5 sm:mt-1 whitespace-nowrap">Total Users</span>
+          </div>
+
+          {/* Divider */}
+          <div className="hidden sm:block flex-shrink-0 h-10 w-px bg-surface-container-highest" />
+
+          {/* Live Users */}
+          <div className="flex flex-col items-center sm:items-start">
+            <div className="flex items-center gap-1 sm:gap-2">
+              <span className="relative flex h-1.5 w-1.5 sm:h-2.5 sm:w-2.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-500 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-1.5 w-1.5 sm:h-2.5 sm:w-2.5 bg-emerald-500"></span>
+              </span>
+              <span className="text-base sm:text-3xl font-black text-on-background tabular-nums">{animatedLive}</span>
+            </div>
+            <span className="text-[8px] sm:text-xs text-on-surface-variant font-semibold sm:font-medium tracking-wide sm:tracking-normal uppercase sm:normal-case mt-0.5 sm:mt-1 whitespace-nowrap">Live Users</span>
+          </div>
+
+          {/* Verified badge */}
+          {variant !== "center" && (
+            <div className="ml-auto hidden md:flex items-center gap-2 px-4 py-2 rounded-full bg-[#006859]/8 border border-[#006859]/20">
+              <Verified className="w-4 h-4 text-[#006859]" />
+              <span className="text-xs font-semibold text-[#006859]">Verified Reviews</span>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function App() {
   const router = useRouter();
@@ -57,6 +181,7 @@ export default function App() {
   const [selectedPricingPlan, setSelectedPricingPlan] = useState<"pay_per_use" | "bulk_offer" | "student" | null>(null);
   const [hoveredPlan, setHoveredPlan] = useState<string>("bulk_offer");
   const [showLoginOnly, setShowLoginOnly] = useState(false);
+  const [totalSignups, setTotalSignups] = useState<number | null>(null);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [showAccountDropdown, setShowAccountDropdown] = useState(false);
   const accountDropdownRef = useRef<HTMLDivElement>(null);
@@ -1097,6 +1222,9 @@ Pursuing or completed a degree in Computer Science, Engineering, or equivalent t
           </div>
         </section>
 
+        {/* ── Trust Stats Divider ──────────────────────────────────────── */}
+        <ReviewStatsBar variant="center" />
+
         {/* ── Templates Section ──────────────────────────────────────── */}
         <TemplatesCarousel />
 
@@ -1174,156 +1302,162 @@ Pursuing or completed a degree in Computer Science, Engineering, or equivalent t
           <section id="pricing" className="bg-surface py-32">
             <div className="max-w-7xl mx-auto px-6 text-center mb-20">
               <h2 className="font-headline text-4xl md:text-5xl font-bold text-on-background mb-4">Invest in yourself</h2>
-              <p className="text-on-surface-variant text-lg">Premium features, student-friendly pricing.</p>
+              {totalSignups && totalSignups > 0 && (
+                <p className="text-on-surface-variant text-lg">
+                  <span className="font-semibold text-[#006859]">
+                    {totalSignups.toLocaleString("en-IN")} users already joined
+                  </span>
+                </p>
+              )}
             </div>
             {/* Mobile: outer div scrolls, inner div provides pt-6 so badges have room */}
             <div className="overflow-x-auto pb-12 sm:overflow-visible">
-            <div className="flex flex-nowrap sm:grid sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 max-w-[1050px] mx-auto px-4 sm:px-6 pt-6 sm:pt-0">
-              {/* One-Time */}
-              <div
-                onMouseEnter={() => setHoveredPlan("pay_per_use")}
-                className={`flex-shrink-0 w-[280px] md:w-auto snap-center p-8 md:p-10 rounded-[2rem] flex flex-col transition-all duration-300 relative border-2 ${hoveredPlan === "pay_per_use" ? "border-transparent bg-gradient-to-b from-[#006859] to-[#12f8d7] shadow-2xl md:scale-105 z-10 text-white" : "bg-surface-container-low border-surface-container-high text-on-background"}`}
-              >
-                {/* Selection Indicator */}
-                <div className={`absolute top-4 right-4 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-200 ${hoveredPlan === "pay_per_use" ? 'border-white bg-white scale-110' : 'border-on-surface-variant/30'}`}>
-                  {hoveredPlan === "pay_per_use" && <CheckCircle2 className="w-4 h-4 text-[#006859]" />}
-                </div>
-
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-4 transition-colors ${hoveredPlan === "pay_per_use" ? "bg-white/20 text-white" : "bg-surface-container-high"}`}>
-                  <CheckCircle2 className={`w-5 h-5 ${hoveredPlan === "pay_per_use" ? "text-white opacity-90" : "text-on-surface-variant"}`} />
-                </div>
-                <h3 className="font-headline text-2xl font-bold mb-1">One-Time</h3>
-                <p className={`text-sm mb-4 ${hoveredPlan === "pay_per_use" ? "text-white/90" : "text-on-surface-variant"}`}>1 resume download</p>
-                <div className="text-4xl font-black mb-1">₹29</div>
-                <p className={`text-sm mb-8 ${hoveredPlan === "pay_per_use" ? "text-white/90" : "text-on-surface-variant"}`}>/10 Days</p>
-                <ul className="space-y-3 mb-10 text-left flex-grow">
-                  <li className={`flex items-center gap-3 ${hoveredPlan === "pay_per_use" ? "text-white" : "text-on-surface-variant"}`}>
-                    <CheckCircle2 className={`w-4 h-4 flex-shrink-0 ${hoveredPlan === "pay_per_use" ? "text-white" : "text-primary"}`} />
-                    10 Credits
-                  </li>
-                  <li className={`flex items-center gap-3 ${hoveredPlan === "pay_per_use" ? "text-white" : "text-on-surface-variant"}`}>
-                    <CheckCircle2 className={`w-4 h-4 flex-shrink-0 ${hoveredPlan === "pay_per_use" ? "text-white" : "text-primary"}`} />
-                    Valid for 10 Days
-                  </li>
-                </ul>
-                <button
-                  onClick={() => { setSelectedPricingPlan("pay_per_use"); setShowDownloadGate(true); }}
-                  className={`w-full py-4 rounded-xl font-bold transition-colors ${hoveredPlan === "pay_per_use" ? "bg-white text-[#006859] shadow-lg shadow-black/5 hover:bg-white/90" : "border border-on-surface-variant/20 hover:bg-surface-container-high"}`}
+              <div className="flex flex-nowrap sm:grid sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 max-w-[1050px] mx-auto px-4 sm:px-6 pt-6 sm:pt-0">
+                {/* One-Time */}
+                <div
+                  onMouseEnter={() => setHoveredPlan("pay_per_use")}
+                  className={`flex-shrink-0 w-[280px] md:w-auto snap-center p-8 md:p-10 rounded-[2rem] flex flex-col transition-all duration-300 relative border-2 ${hoveredPlan === "pay_per_use" ? "border-transparent bg-gradient-to-b from-[#006859] to-[#12f8d7] shadow-2xl md:scale-105 z-10 text-white" : "bg-surface-container-low border-surface-container-high text-on-background"}`}
                 >
-                  Get Started
-                </button>
-              </div>
+                  {/* Selection Indicator */}
+                  <div className={`absolute top-4 right-4 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-200 ${hoveredPlan === "pay_per_use" ? 'border-white bg-white scale-110' : 'border-on-surface-variant/30'}`}>
+                    {hoveredPlan === "pay_per_use" && <CheckCircle2 className="w-4 h-4 text-[#006859]" />}
+                  </div>
 
-              {/* Student Plan — STUDENT OFFER */}
-              <div
-                onMouseEnter={() => setHoveredPlan("student")}
-                className={`flex-shrink-0 w-[280px] sm:w-auto snap-center p-8 md:p-10 rounded-[2rem] flex flex-col relative border-2 transition-all duration-300 ${hoveredPlan === "student" ? "border-transparent bg-gradient-to-b from-[#006859] to-[#12f8d7] shadow-2xl md:scale-105 z-10 text-white" : "bg-surface-container-low border-amber-400/60 text-on-background"}`}
-              >
-                {/* Selection Indicator */}
-                <div className={`absolute top-4 right-4 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-200 z-20 ${hoveredPlan === "student" ? 'border-white bg-white scale-110' : 'border-amber-400/30'}`}>
-                  {hoveredPlan === "student" && <CheckCircle2 className="w-4 h-4 text-[#006859]" />}
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-4 transition-colors ${hoveredPlan === "pay_per_use" ? "bg-white/20 text-white" : "bg-surface-container-high"}`}>
+                    <CheckCircle2 className={`w-5 h-5 ${hoveredPlan === "pay_per_use" ? "text-white opacity-90" : "text-on-surface-variant"}`} />
+                  </div>
+                  <h3 className="font-headline text-2xl font-bold mb-1">One-Time</h3>
+                  <p className={`text-sm mb-4 ${hoveredPlan === "pay_per_use" ? "text-white/90" : "text-on-surface-variant"}`}>1 resume download</p>
+                  <div className="text-4xl font-black mb-1">₹29</div>
+                  <p className={`text-sm mb-8 ${hoveredPlan === "pay_per_use" ? "text-white/90" : "text-on-surface-variant"}`}>/10 Days</p>
+                  <ul className="space-y-3 mb-10 text-left flex-grow">
+                    <li className={`flex items-center gap-3 ${hoveredPlan === "pay_per_use" ? "text-white" : "text-on-surface-variant"}`}>
+                      <CheckCircle2 className={`w-4 h-4 flex-shrink-0 ${hoveredPlan === "pay_per_use" ? "text-white" : "text-primary"}`} />
+                      10 Credits
+                    </li>
+                    <li className={`flex items-center gap-3 ${hoveredPlan === "pay_per_use" ? "text-white" : "text-on-surface-variant"}`}>
+                      <CheckCircle2 className={`w-4 h-4 flex-shrink-0 ${hoveredPlan === "pay_per_use" ? "text-white" : "text-primary"}`} />
+                      Valid for 10 Days
+                    </li>
+                  </ul>
+                  <button
+                    onClick={() => { setSelectedPricingPlan("pay_per_use"); setShowDownloadGate(true); }}
+                    className={`w-full py-4 rounded-xl font-bold transition-colors ${hoveredPlan === "pay_per_use" ? "bg-white text-[#006859] shadow-lg shadow-black/5 hover:bg-white/90" : "border border-on-surface-variant/20 hover:bg-surface-container-high"}`}
+                  >
+                    Get Started
+                  </button>
                 </div>
 
-                <div className={`absolute -top-4 left-1/2 -translate-x-1/2 overflow-hidden flex items-center gap-1.5 text-[10px] font-black px-3 py-0.5 rounded-full shadow-lg whitespace-nowrap tracking-wider border z-20 bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-orange-500/40 border-orange-400/50`}>
-                  STUDENT OFFER
-                  <span className="relative bg-white/25 text-white rounded-full px-1.5 py-0 text-[9px] font-black tracking-wide border border-white/30">50% OFF</span>
-                </div>
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-4 transition-colors ${hoveredPlan === "student" ? "bg-white/20 text-white" : "bg-amber-50 text-amber-500"}`}>
-                  <GraduationCap className={`w-5 h-5 ${hoveredPlan === "student" ? "text-white opacity-90" : "text-amber-500"}`} />
-                </div>
-                <h3 className="font-headline text-2xl font-bold mb-1">Student Plan</h3>
-                <p className={`text-sm mb-4 transition-colors ${hoveredPlan === "student" ? "text-white/90" : "text-on-surface-variant"}`}>300 Credits (30 Resumes)</p>
-                <div className="flex items-center gap-1.5 mb-0.5">
-                  <p className={`text-sm line-through leading-none ${hoveredPlan === "student" ? "text-white/55" : "text-on-surface-variant opacity-60"}`}>₹199</p>
-                  <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-md leading-none tracking-wide ${hoveredPlan === "student" ? "bg-white/25 text-white border border-white/30" : "bg-orange-500/15 text-orange-600 border border-orange-400/40"}`}>50% OFF</span>
-                </div>
-                <div className="text-4xl font-black mb-1">₹99</div>
-                <p className={`text-sm mb-8 transition-colors ${hoveredPlan === "student" ? "text-white/90" : "text-on-surface-variant"}`}>/2 months</p>
-                <ul className="space-y-3 mb-10 text-left flex-grow">
-                  <li className={`flex items-center gap-3 transition-colors ${hoveredPlan === "student" ? "text-white" : "text-on-surface-variant"}`}>
-                    <CheckCircle2 className={`w-4 h-4 flex-shrink-0 transition-colors ${hoveredPlan === "student" ? "text-white" : "text-primary"}`} />
-                    300 Credits
-                  </li>
-                  <li className={`flex items-center gap-3 transition-colors ${hoveredPlan === "student" ? "text-white" : "text-on-surface-variant"}`}>
-                    <CheckCircle2 className={`w-4 h-4 flex-shrink-0 transition-colors ${hoveredPlan === "student" ? "text-white" : "text-primary"}`} />
-                    Valid for 2 Months
-                  </li>
-                  <li className={`flex items-center gap-3 transition-colors ${hoveredPlan === "student" ? "text-white" : "text-on-surface-variant"}`}>
-                    <CheckCircle2 className={`w-4 h-4 flex-shrink-0 transition-colors ${hoveredPlan === "student" ? "text-white" : "text-primary"}`} />
-                    All Premium Features
-                  </li>
-                  <li className="flex justify-center">
-                    <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black tracking-wide border shadow-sm whitespace-nowrap ${hoveredPlan === "student"
+                {/* Student Plan — STUDENT OFFER */}
+                <div
+                  onMouseEnter={() => setHoveredPlan("student")}
+                  className={`flex-shrink-0 w-[280px] sm:w-auto snap-center p-8 md:p-10 rounded-[2rem] flex flex-col relative border-2 transition-all duration-300 ${hoveredPlan === "student" ? "border-transparent bg-gradient-to-b from-[#006859] to-[#12f8d7] shadow-2xl md:scale-105 z-10 text-white" : "bg-surface-container-low border-amber-400/60 text-on-background"}`}
+                >
+                  {/* Selection Indicator */}
+                  <div className={`absolute top-4 right-4 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-200 z-20 ${hoveredPlan === "student" ? 'border-white bg-white scale-110' : 'border-amber-400/30'}`}>
+                    {hoveredPlan === "student" && <CheckCircle2 className="w-4 h-4 text-[#006859]" />}
+                  </div>
+
+                  <div className={`absolute -top-4 left-1/2 -translate-x-1/2 overflow-hidden flex items-center gap-1.5 text-[10px] font-black px-3 py-0.5 rounded-full shadow-lg whitespace-nowrap tracking-wider border z-20 bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-orange-500/40 border-orange-400/50`}>
+                    STUDENT OFFER
+                    <span className="relative bg-white/25 text-white rounded-full px-1.5 py-0 text-[9px] font-black tracking-wide border border-white/30">50% OFF</span>
+                  </div>
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-4 transition-colors ${hoveredPlan === "student" ? "bg-white/20 text-white" : "bg-amber-50 text-amber-500"}`}>
+                    <GraduationCap className={`w-5 h-5 ${hoveredPlan === "student" ? "text-white opacity-90" : "text-amber-500"}`} />
+                  </div>
+                  <h3 className="font-headline text-2xl font-bold mb-1">Student Plan</h3>
+                  <p className={`text-sm mb-4 transition-colors ${hoveredPlan === "student" ? "text-white/90" : "text-on-surface-variant"}`}>300 Credits (30 Resumes)</p>
+                  <div className="flex items-center gap-1.5 mb-0.5">
+                    <p className={`text-sm line-through leading-none ${hoveredPlan === "student" ? "text-white/55" : "text-on-surface-variant opacity-60"}`}>₹199</p>
+                    <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-md leading-none tracking-wide ${hoveredPlan === "student" ? "bg-white/25 text-white border border-white/30" : "bg-orange-500/15 text-orange-600 border border-orange-400/40"}`}>50% OFF</span>
+                  </div>
+                  <div className="text-4xl font-black mb-1">₹99</div>
+                  <p className={`text-sm mb-8 transition-colors ${hoveredPlan === "student" ? "text-white/90" : "text-on-surface-variant"}`}>/2 months</p>
+                  <ul className="space-y-3 mb-10 text-left flex-grow">
+                    <li className={`flex items-center gap-3 transition-colors ${hoveredPlan === "student" ? "text-white" : "text-on-surface-variant"}`}>
+                      <CheckCircle2 className={`w-4 h-4 flex-shrink-0 transition-colors ${hoveredPlan === "student" ? "text-white" : "text-primary"}`} />
+                      300 Credits
+                    </li>
+                    <li className={`flex items-center gap-3 transition-colors ${hoveredPlan === "student" ? "text-white" : "text-on-surface-variant"}`}>
+                      <CheckCircle2 className={`w-4 h-4 flex-shrink-0 transition-colors ${hoveredPlan === "student" ? "text-white" : "text-primary"}`} />
+                      Valid for 2 Months
+                    </li>
+                    <li className={`flex items-center gap-3 transition-colors ${hoveredPlan === "student" ? "text-white" : "text-on-surface-variant"}`}>
+                      <CheckCircle2 className={`w-4 h-4 flex-shrink-0 transition-colors ${hoveredPlan === "student" ? "text-white" : "text-primary"}`} />
+                      All Premium Features
+                    </li>
+                    <li className="flex justify-center">
+                      <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black tracking-wide border shadow-sm whitespace-nowrap ${hoveredPlan === "student"
                         ? "bg-gradient-to-r from-orange-500 to-amber-500 border-orange-400 text-white shadow-lg shadow-orange-500/20"
                         : "bg-orange-500/10 border-orange-400/40 text-orange-600"
-                      }`}>
-                      <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse flex-shrink-0" />
-                      Grab before {new Date(Date.now() + 86400000).toLocaleDateString("en-GB", { day: "2-digit", month: "2-digit", year: "numeric" }).replace(/\//g, "/")}
-                    </div>
-                  </li>
-                </ul>
-                <button
-                  onClick={() => { setSelectedPricingPlan("student"); setShowDownloadGate(true); }}
-                  className={`w-full py-4 rounded-xl font-bold transition-all ${hoveredPlan === "student" ? "bg-white text-[#006859] shadow-lg shadow-black/5 hover:bg-white/90" : "border-2 border-amber-400 bg-amber-50 text-amber-700 hover:bg-amber-100"}`}
+                        }`}>
+                        <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse flex-shrink-0" />
+                        Grab before {new Date(Date.now() + 86400000).toLocaleDateString("en-GB", { day: "2-digit", month: "2-digit", year: "numeric" }).replace(/\//g, "/")}
+                      </div>
+                    </li>
+                  </ul>
+                  <button
+                    onClick={() => { setSelectedPricingPlan("student"); setShowDownloadGate(true); }}
+                    className={`w-full py-4 rounded-xl font-bold transition-all ${hoveredPlan === "student" ? "bg-white text-[#006859] shadow-lg shadow-black/5 hover:bg-white/90" : "border-2 border-amber-400 bg-amber-50 text-amber-700 hover:bg-amber-100"}`}
+                  >
+                    Claim Student Offer
+                  </button>
+                </div>
+
+                {/* Bulk Offer — BEST VALUE */}
+                <div
+                  onMouseEnter={() => setHoveredPlan("bulk_offer")}
+                  className={`flex-shrink-0 w-[280px] sm:w-auto snap-center p-8 md:p-10 rounded-[2rem] flex flex-col relative border-2 transition-all duration-300 ${hoveredPlan === "bulk_offer" ? "border-transparent bg-gradient-to-b from-[#006859] to-[#12f8d7] shadow-2xl shadow-primary/30 md:scale-105 z-10 text-white" : "bg-surface-container-lowest border-primary shadow-lg shadow-primary/5 text-on-background"}`}
                 >
-                  Claim Student Offer
-                </button>
+                  {/* Selection Indicator */}
+                  <div className={`absolute top-4 right-4 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-200 z-20 ${hoveredPlan === "bulk_offer" ? 'border-white bg-white scale-110' : 'border-primary/30'}`}>
+                    {hoveredPlan === "bulk_offer" && <CheckCircle2 className="w-4 h-4 text-[#006859]" />}
+                  </div>
+
+                  <div className={`absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full text-xs font-black uppercase tracking-widest whitespace-nowrap shadow-sm transition-colors ${hoveredPlan === "bulk_offer" ? "bg-white text-[#006859]" : "flash-gradient text-white"}`}>
+                    Bulk Offer
+                  </div>
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-4 transition-colors ${hoveredPlan === "bulk_offer" ? "bg-white/20" : "bg-primary/10"}`}>
+                    <Package className={`w-5 h-5 transition-colors ${hoveredPlan === "bulk_offer" ? "text-white fill-white/30" : "text-primary"}`} />
+                  </div>
+                  <h3 className="font-headline text-2xl font-bold mb-1">Bulk Offer</h3>
+                  <p className={`text-sm mb-4 transition-colors ${hoveredPlan === "bulk_offer" ? "text-white/90" : "text-on-surface-variant"}`}>3000 Credits (300 Resumes)</p>
+                  {/* Strikethrough price */}
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <p className={`text-sm line-through leading-none ${hoveredPlan === "bulk_offer" ? "text-white/55" : "text-on-surface-variant opacity-60"}`}>₹1,500</p>
+                    <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-md leading-none tracking-wide ${hoveredPlan === "bulk_offer" ? "bg-white/25 text-white border border-white/30" : "bg-primary/15 text-primary border border-primary/40"}`}>60% OFF</span>
+                  </div>
+                  <div className="text-4xl font-black mb-1">₹599</div>
+                  <p className={`text-sm mb-8 transition-colors ${hoveredPlan === "bulk_offer" ? "text-white/90" : "text-on-surface-variant"}`}>/6 Months</p>
+                  <ul className="space-y-3 mb-10 text-left flex-grow">
+                    <li className={`flex items-center gap-3 transition-colors ${hoveredPlan === "bulk_offer" ? "text-white" : "text-on-background"}`}>
+                      <CheckCircle2 className={`w-4 h-4 flex-shrink-0 transition-colors ${hoveredPlan === "bulk_offer" ? "text-white" : "text-primary"}`} />
+                      <span>3000 Credits</span>
+                    </li>
+                    <li className={`flex items-center gap-3 transition-colors ${hoveredPlan === "bulk_offer" ? "text-white" : "text-on-background"}`}>
+                      <CheckCircle2 className={`w-4 h-4 flex-shrink-0 transition-colors ${hoveredPlan === "bulk_offer" ? "text-white" : "text-primary"}`} />
+                      <span>Valid for 6 Months</span>
+                    </li>
+                    <li className={`flex items-center gap-3 transition-colors ${hoveredPlan === "bulk_offer" ? "text-white" : "text-on-background"}`}>
+                      <CheckCircle2 className={`w-4 h-4 flex-shrink-0 transition-colors ${hoveredPlan === "bulk_offer" ? "text-white" : "text-primary"}`} />
+                      <span>Just ₹2 per Resume</span>
+                    </li>
+                    <li className={`flex items-center gap-3 transition-colors ${hoveredPlan === "bulk_offer" ? "text-white" : "text-on-background"}`}>
+                      <CheckCircle2 className={`w-4 h-4 flex-shrink-0 transition-colors ${hoveredPlan === "bulk_offer" ? "text-white" : "text-primary"}`} />
+                      <span>All Premium Features</span>
+                    </li>
+                  </ul>
+                  <button
+                    onClick={() => { setSelectedPricingPlan("bulk_offer"); setShowDownloadGate(true); }}
+                    className={`w-full py-4 rounded-xl font-bold transition-all ${hoveredPlan === "bulk_offer" ? "bg-white text-[#006859] shadow-lg shadow-black/5 hover:bg-white/90" : "flash-gradient text-white hover:opacity-90"}`}
+                  >
+                    Claim Bulk Offer →
+                  </button>
+                </div>
+
+
+
               </div>
-
-              {/* Bulk Offer — BEST VALUE */}
-              <div
-                onMouseEnter={() => setHoveredPlan("bulk_offer")}
-                className={`flex-shrink-0 w-[280px] sm:w-auto snap-center p-8 md:p-10 rounded-[2rem] flex flex-col relative border-2 transition-all duration-300 ${hoveredPlan === "bulk_offer" ? "border-transparent bg-gradient-to-b from-[#006859] to-[#12f8d7] shadow-2xl shadow-primary/30 md:scale-105 z-10 text-white" : "bg-surface-container-lowest border-primary shadow-lg shadow-primary/5 text-on-background"}`}
-              >
-                {/* Selection Indicator */}
-                <div className={`absolute top-4 right-4 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-200 z-20 ${hoveredPlan === "bulk_offer" ? 'border-white bg-white scale-110' : 'border-primary/30'}`}>
-                  {hoveredPlan === "bulk_offer" && <CheckCircle2 className="w-4 h-4 text-[#006859]" />}
-                </div>
-
-                <div className={`absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full text-xs font-black uppercase tracking-widest whitespace-nowrap shadow-sm transition-colors ${hoveredPlan === "bulk_offer" ? "bg-white text-[#006859]" : "flash-gradient text-white"}`}>
-                  Bulk Offer
-                </div>
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-4 transition-colors ${hoveredPlan === "bulk_offer" ? "bg-white/20" : "bg-primary/10"}`}>
-                  <Package className={`w-5 h-5 transition-colors ${hoveredPlan === "bulk_offer" ? "text-white fill-white/30" : "text-primary"}`} />
-                </div>
-                <h3 className="font-headline text-2xl font-bold mb-1">Bulk Offer</h3>
-                <p className={`text-sm mb-4 transition-colors ${hoveredPlan === "bulk_offer" ? "text-white/90" : "text-on-surface-variant"}`}>3000 Credits (300 Resumes)</p>
-                {/* Strikethrough price */}
-                <div className="flex items-center gap-1.5 mb-1">
-                  <p className={`text-sm line-through leading-none ${hoveredPlan === "bulk_offer" ? "text-white/55" : "text-on-surface-variant opacity-60"}`}>₹1,500</p>
-                  <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-md leading-none tracking-wide ${hoveredPlan === "bulk_offer" ? "bg-white/25 text-white border border-white/30" : "bg-primary/15 text-primary border border-primary/40"}`}>60% OFF</span>
-                </div>
-                <div className="text-4xl font-black mb-1">₹599</div>
-                <p className={`text-sm mb-8 transition-colors ${hoveredPlan === "bulk_offer" ? "text-white/90" : "text-on-surface-variant"}`}>/6 Months</p>
-                <ul className="space-y-3 mb-10 text-left flex-grow">
-                  <li className={`flex items-center gap-3 transition-colors ${hoveredPlan === "bulk_offer" ? "text-white" : "text-on-background"}`}>
-                    <CheckCircle2 className={`w-4 h-4 flex-shrink-0 transition-colors ${hoveredPlan === "bulk_offer" ? "text-white" : "text-primary"}`} />
-                    <span>3000 Credits</span>
-                  </li>
-                  <li className={`flex items-center gap-3 transition-colors ${hoveredPlan === "bulk_offer" ? "text-white" : "text-on-background"}`}>
-                    <CheckCircle2 className={`w-4 h-4 flex-shrink-0 transition-colors ${hoveredPlan === "bulk_offer" ? "text-white" : "text-primary"}`} />
-                    <span>Valid for 6 Months</span>
-                  </li>
-                  <li className={`flex items-center gap-3 transition-colors ${hoveredPlan === "bulk_offer" ? "text-white" : "text-on-background"}`}>
-                    <CheckCircle2 className={`w-4 h-4 flex-shrink-0 transition-colors ${hoveredPlan === "bulk_offer" ? "text-white" : "text-primary"}`} />
-                    <span>Just ₹2 per Resume</span>
-                  </li>
-                  <li className={`flex items-center gap-3 transition-colors ${hoveredPlan === "bulk_offer" ? "text-white" : "text-on-background"}`}>
-                    <CheckCircle2 className={`w-4 h-4 flex-shrink-0 transition-colors ${hoveredPlan === "bulk_offer" ? "text-white" : "text-primary"}`} />
-                    <span>All Premium Features</span>
-                  </li>
-                </ul>
-                <button
-                  onClick={() => { setSelectedPricingPlan("bulk_offer"); setShowDownloadGate(true); }}
-                  className={`w-full py-4 rounded-xl font-bold transition-all ${hoveredPlan === "bulk_offer" ? "bg-white text-[#006859] shadow-lg shadow-black/5 hover:bg-white/90" : "flash-gradient text-white hover:opacity-90"}`}
-                >
-                  Claim Bulk Offer →
-                </button>
-              </div>
-
-
-
-            </div>
             </div>
           </section>
         )}
@@ -1333,11 +1467,84 @@ Pursuing or completed a degree in Computer Science, Engineering, or equivalent t
         {/* Reviews Section */}
         <section id="reviews" className="py-32">
           <div className="max-w-7xl mx-auto px-6">
-            <div className="mb-20">
+            <div className="mb-12">
               <h2 className="font-headline text-4xl md:text-5xl font-bold text-on-background mb-4">Real people. Real Trust.</h2>
-              <p className="text-on-surface-variant text-lg">Join 10,000+ career-starters who landed their dream roles.</p>
+              <p className="text-on-surface-variant text-lg">Join the #fightclub.</p>
             </div>
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+          </div>
+
+          <ReviewStatsBar onStats={(s) => setTotalSignups(s.total_signups)} />
+
+          <div className="max-w-7xl mx-auto px-6">
+            {/* ── Mobile: horizontal snap-scroll  ── Desktop: 3-col grid ── */}
+            <div
+              className="
+                flex md:hidden
+                gap-4
+                overflow-x-auto
+                snap-x snap-mandatory
+                scroll-smooth
+                pb-4
+                -mx-6 px-6
+                [&::-webkit-scrollbar]:hidden
+                [scrollbar-width:none]
+              "
+            >
+              {[
+                {
+                  name: "Arjun Mehta",
+                  role: "Product Designer @ Fintech",
+                  img: "https://lh3.googleusercontent.com/aida-public/AB6AXuBamvFX_lBj5oKYuP3ghkp_o6OL_suAAV1WS1J7PdMpK39HZC-xoeZh_TJ8fZiaS4qOs--6_mlsJ1XJy7ZYKcS-omO1jm1ow_Va6cDJbd5RMEpBYn_7UyAe2Frj8n3wM10ICWjAR-g4j-QTdf-Q2yNF6vg6wLC_qL0KzWSpYklfVpUr-XZbwrvgWIcPCJ9k40HnMA9WRu7pvz23wE7gDEHRsti9zZvYgRRZUg2S2E_RmbT58tDUfQDzqNN6_nezn65tRJ8Z2ZwprVNP",
+                  text: "Literally took me 2 minutes. I was struggling with my resume for weeks. before this 3 applications per day now it is more than 20."
+                },
+                {
+                  name: "Sarah Chen",
+                  role: "Software Engineer",
+                  img: "https://lh3.googleusercontent.com/aida-public/AB6AXuCJ9LQtMFP_xybQ9Q1zQcecq6WmoxdyOx-5ZNB1kDkzuhx3NhZREE0ApteR9jc_O1wDIkYlWZ2-vVsJlWyDMAVTPFr7hMJGdm7FfZJXSpuTWsY7pXHG6XHw7c4mdhVazs2VGcXevgWrzDE29CMWlQAg0q2_3Z3diGNQnFdPsrevQ3MWiJ-1Fc2OEjy48nAb4ZnPfMMiAB4XfpmBqfrs7uGoiYZFnqoEHLUxXveQoAC5Hws3nfKSTkHyNLiit90JD9XRRIFQf_Nvq4Yj",
+                  text: "The editorial templates are fire. I've never seen a resume builder that actually cares about design this much."
+                },
+                {
+                  name: "Rahul Verma",
+                  role: "Marketing Specialist",
+                  img: "https://lh3.googleusercontent.com/aida-public/AB6AXuCPfj15XNt8XC7KiUq7HSu8kMnUpZdT0-3K3XhKNCP6MYPOjzPXHm8iGw-aOyBQ_9ghnoAiT5SCv_bXhyEvcgjFgbb4NTNiqdLUp_XTeJEy_zLhk8JhnSkER5-QQoP-a_I_hCLHSzRNq1EAgkfNgafppwDhA-FumFkoRgonIaTAi8U7psjLGOYdfT4cNL_xrxO1eThFxscDz875qAU5tUWRLtnvG-Bu5AAxuNA0lm6C0HrmvQqA-ELDfMPlOmJsfVzy1hDE-61hKQ8C",
+                  text: "₹99 is a steal for this value. I have seen agencies and other tools charging in 1000s still fail in giving results."
+                }
+              ].map((review, idx) => (
+                <div
+                  key={idx}
+                  className="
+                    snap-center snap-always
+                    flex-shrink-0
+                    w-[82vw]
+                    bg-surface-container-low p-7 rounded-3xl
+                    border border-surface-container-highest
+                  "
+                >
+                  <div className="flex items-center gap-4 mb-5">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={review.img}
+                      alt={review.name}
+                      className="w-12 h-12 rounded-full object-cover"
+                      referrerPolicy="no-referrer"
+                    />
+                    <div>
+                      <h4 className="font-bold">{review.name}</h4>
+                      <p className="text-xs text-on-surface-variant">{review.role}</p>
+                    </div>
+                  </div>
+                  <div className="flex gap-1 mb-4 text-primary">
+                    {[...Array(5)].map((_, i) => (
+                      <Star key={i} className="w-4 h-4 fill-primary" />
+                    ))}
+                  </div>
+                  <p className="text-on-surface-variant italic leading-relaxed">"{review.text}"</p>
+                </div>
+              ))}
+            </div>
+
+            {/* ── Desktop grid (unchanged) ── */}
+            <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-3 gap-8">
               {[
                 {
                   name: "Arjun Mehta",
