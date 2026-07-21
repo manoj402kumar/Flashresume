@@ -1152,6 +1152,43 @@ Pursuing or completed a degree in Computer Science, Engineering, or equivalent t
           </motion.div>
         </section>
 
+        {/* ── YouTube Demo Video Section ──────────────────────────────────── */}
+        <section className="w-full max-w-5xl mx-auto px-4 sm:px-6 pb-16 md:pb-24">
+          <motion.div
+            initial={{ opacity: 0, y: 32 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-60px" }}
+            transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+            className="relative"
+          >
+            {/* Label */}
+            <div className="flex items-center justify-center gap-3 mb-6">
+              <div className="h-px flex-1 bg-gradient-to-r from-transparent to-surface-container-highest" />
+              <span className="text-[11px] font-black uppercase tracking-[0.2em] text-on-surface-variant whitespace-nowrap">Watch it in action</span>
+              <div className="h-px flex-1 bg-gradient-to-l from-transparent to-surface-container-highest" />
+            </div>
+
+            {/* Video frame with ambient glow */}
+            <div className="relative">
+              {/* Ambient glows */}
+              <div className="absolute -inset-4 bg-gradient-to-r from-[#006859]/20 via-[#12f8d7]/10 to-[#006859]/20 blur-3xl rounded-3xl opacity-60 pointer-events-none" />
+              {/* Outer decorative border */}
+              <div className="relative rounded-2xl sm:rounded-3xl overflow-hidden border border-[#006859]/15 shadow-[0_32px_80px_rgba(0,104,89,0.12)] bg-surface-container-lowest p-1.5 sm:p-2">
+                {/* 16:9 responsive container */}
+                <div className="relative w-full rounded-xl sm:rounded-2xl overflow-hidden" style={{ paddingBottom: "56.25%" }}>
+                  <iframe
+                    className="absolute inset-0 w-full h-full"
+                    src="https://www.youtube.com/embed/EMWhuH0L-K4?rel=0&modestbranding=1&color=white"
+                    title="Flashresume — Apply-ready ATS resume in 60 seconds"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    allowFullScreen
+                  />
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        </section>
+
         {/* ── Inspirational Quote Section ──────────────────────────────── */}
         <section className="py-24 overflow-hidden relative">
           {/* Ambient background glow */}
