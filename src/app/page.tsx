@@ -25,7 +25,8 @@ import {
   Briefcase,
   Info,
   Laptop,
-  Package
+  Package,
+  AlertCircle
 } from "lucide-react";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
@@ -200,6 +201,7 @@ export default function App() {
     };
   }, []);
   const [credits, setCredits] = useState<number>(0);
+  const [fraudCounter, setFraudCounter] = useState<number>(0);
   const [analysisCountdown, setAnalysisCountdown] = useState<number | null>(null);
   const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [buckets, setBuckets] = useState<any[]>([]);
@@ -305,9 +307,12 @@ export default function App() {
     if (!currentUser) return;
 
     const fetchAccountData = async () => {
-      // 1. Fetch referral code
-      const { data: uData } = await supabase.from("users").select("referral_code").eq("id", currentUser.id).single();
+      // 1. Fetch referral code & fraud tracker counter
+      const { data: uData } = await supabase.from("users").select("referral_code, fraud_tracker_counter").eq("id", currentUser.id).single();
       if (uData?.referral_code) setReferralCode(uData.referral_code);
+      if (uData?.fraud_tracker_counter !== undefined && uData?.fraud_tracker_counter !== null) {
+        setFraudCounter(uData.fraud_tracker_counter);
+      }
 
       // 2. Fetch all active/queued/fallback buckets
       const { data: bucketData } = await supabase
@@ -333,6 +338,60 @@ export default function App() {
     fetchAccountData();
 
   }, [currentUser]);
+
+  const isBlocked = currentUser ? (fraudCounter >= 5 && credits <= 0) : false;
+
+  if (isBlocked) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-[#08110f] text-white px-6 py-12 relative overflow-hidden font-sans">
+        {/* Subtle background glow */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-[#006859]/20 rounded-full blur-[140px] pointer-events-none" />
+        
+        <div className="relative z-10 max-w-md w-full bg-white/5 border border-white/10 backdrop-blur-2xl rounded-3xl p-8 text-center shadow-2xl flex flex-col items-center">
+          <div className="w-16 h-16 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center mb-6">
+            <AlertCircle className="w-8 h-8 text-amber-400" />
+          </div>
+          
+          <h1 className="text-2xl font-bold font-headline mb-3 text-white">
+            Usage Limit Reached
+          </h1>
+          
+          <p className="text-sm text-white/75 leading-relaxed mb-8 font-medium">
+            Your free resume generation has reached limit. Upgrade or buy plan to continue the flash resume.
+          </p>
+          
+          <button
+            onClick={() => setShowBuyMoreCredits(true)}
+            className="w-full bg-gradient-to-r from-[#006859] to-[#12f8d7] text-white font-bold py-4 rounded-xl shadow-lg hover:opacity-95 transition-all transform active:scale-98 flex items-center justify-center gap-2 text-base"
+          >
+            Upgrade
+          </button>
+        </div>
+
+        {/* Buy More Credits popup — modal for purchasing */}
+        <PricingPopup
+          isOpen={showBuyMoreCredits}
+          onClose={() => setShowBuyMoreCredits(false)}
+          onSuccess={() => {
+            setShowBuyMoreCredits(false);
+            if (currentUser) {
+              supabase.from("users").select("credits_balance, fraud_tracker_counter").eq("id", currentUser.id).single()
+                .then(({ data }) => {
+                  if (data) {
+                    setCredits(data.credits_balance || 0);
+                    setFraudCounter(data.fraud_tracker_counter || 0);
+                  }
+                });
+            }
+          }}
+          forcePlanSelect={true}
+          prefetchedUser={currentUser}
+          prefetchedCredits={credits}
+          disableClose={true}
+        />
+      </div>
+    );
+  }
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();

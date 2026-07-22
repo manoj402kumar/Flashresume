@@ -96,6 +96,10 @@ export default function GeneratePage() {
           router.push("/result");
         }
       } catch (err: any) {
+        if (err.message && (err.message.includes("LIMIT_REACHED") || err.message.includes("limit"))) {
+          router.push("/");
+          return;
+        }
         setError(err.message || "Failed to generate resume. Please try again.");
         setProgress(0);
       }
