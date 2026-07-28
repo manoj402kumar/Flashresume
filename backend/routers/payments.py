@@ -36,6 +36,7 @@ class OrderRequest(BaseModel):
 async def create_order(request: Request, body: OrderRequest, authorization: str = Header(None)):
     PRICES = {
         "pay_per_use": 2900,
+        "regular": 19900,
         "bulk_offer": 59900,
         "student": 9900
     }

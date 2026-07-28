@@ -47,19 +47,35 @@ const PLANS = [
     borderClass: "border-surface-container-high",
     features: ["10 Credits", "Valid for 10 Days"],
   },
-  {
-    id: "bulk_offer",
-    name: "Bulk Offer",
-    price: 599,
-    priceDisplay: "₹599",
-    period: "/6 Months",
-    description: "3000 Credits (300 Resumes)",
-    icon: <Package className="w-5 h-5 text-amber-400" />,
-    badge: "BULK OFFER",
-    borderClass: "border-primary",
-    features: ["3000 Credits", "Valid for 6 Months", "Just ₹2 per Resume", "All Premium Features"],
-  },
 ];
+
+// 3rd card shown to RETURNING users (already purchased a plan before)
+const PLAN_BULK_OFFER = {
+  id: "bulk_offer",
+  name: "Bulk Offer",
+  price: 599,
+  priceDisplay: "₹599",
+  period: "/6 Months",
+  description: "3000 Credits (300 Resumes)",
+  icon: <Package className="w-5 h-5 text-amber-400" />,
+  badge: "BULK OFFER",
+  borderClass: "border-primary",
+  features: ["3000 Credits", "Valid for 6 Months", "Just ₹2 per Resume", "All Premium Features"],
+};
+
+// 3rd card shown to NEW users (never purchased) — anchors them toward the ₹99 student plan
+const PLAN_STANDARD = {
+  id: "regular",
+  name: "Standard Plan",
+  price: 199,
+  priceDisplay: "₹199",
+  period: "/2 Months",
+  description: "300 Credits (30 Resumes)",
+  icon: <Crown className="w-5 h-5 text-amber-400" />,
+  badge: null,
+  borderClass: "border-primary",
+  features: ["300 Credits", "Valid for 2 Months", "All Premium Features"],
+};
 
 // ── Review Banner ─────────────────────────────────────────────────────────────
 const PLAN_REVIEW = {
@@ -264,6 +280,7 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedPlan, setSelectedPlan] = useState<string>(initialPlan || "student");
+  const [hasEverPurchased, setHasEverPurchased] = useState(false);
 
   // FOMO Timer State
   const [timeLeft, setTimeLeft] = useState(600);
@@ -304,6 +321,11 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
       if (userData?.is_student && userData?.student_verified_at) {
         setIsAlreadyVerified(true);
       }
+      // Check if user has ever successfully purchased any plan
+      const { data: paymentCheck } = await supabase
+        .from("payments").select("id").eq("user_id", prefetchedUser.id).eq("status", "success").limit(1);
+      setHasEverPurchased(!!(paymentCheck && paymentCheck.length > 0));
+
       const credits = prefetchedCredits ?? 0;
       if (loginOnly) {
         onSuccess();
@@ -327,6 +349,11 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
       if (userData?.is_student && userData?.student_verified_at) {
         setIsAlreadyVerified(true);
       }
+
+      // Check if user has ever successfully purchased any plan
+      const { data: paymentCheck } = await supabase
+        .from("payments").select("id").eq("user_id", sessionUser.id).eq("status", "success").limit(1);
+      setHasEverPurchased(!!(paymentCheck && paymentCheck.length > 0));
 
       const { data: creditData } = await supabase.rpc("get_total_active_credits", { p_user_id: sessionUser.id });
       const currentCredits = creditData ?? 0;
@@ -464,7 +491,8 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
     const planDetails =
       planToBuy === "student" ? { amount: 99, plan_type: "student" } :
         planToBuy === "bulk_offer" ? { amount: 599, plan_type: "bulk_offer" } :
-          { amount: 29, plan_type: "pay_per_use" };
+          planToBuy === "regular" ? { amount: 199, plan_type: "regular" } :
+            { amount: 29, plan_type: "pay_per_use" };
 
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -822,8 +850,8 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
                       </div>
                     )}
 
-                    {/* bulk_offer (₹599) card */}
-                    {PLANS.slice(1).map((plan) => {
+                    {/* Dynamic 3rd card: Bulk Offer if returning user, Standard Plan if new user */}
+                    {[hasEverPurchased ? PLAN_BULK_OFFER : PLAN_STANDARD].map((plan) => {
                       const isSelected = selectedPlan === plan.id;
                       return (
                         <React.Fragment key={plan.id}>
