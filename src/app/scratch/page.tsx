@@ -1512,7 +1512,7 @@ export default function ScratchPage() {
                             <div>
                                   <>
                                     {resume.education.map((edu, idx) => (
-                                      <div key={`edu-${idx}-${edu.institution?.slice(0, 15) || ""}`} className="mb-6 last:mb-0">
+                                      <div key={`edu-${idx}`} className="mb-6 last:mb-0">
                                         {editMode ? (
                                           <div className="space-y-2">
                                             <input
@@ -1639,7 +1639,7 @@ export default function ScratchPage() {
                                   <>
 
                                     {resume.experience.map((exp, idx) => (
-                                      <div key={`exp-${idx}-${exp.company?.slice(0, 15) || ""}`} className="mb-8 last:mb-0">
+                                      <div key={`exp-${idx}`} className="mb-8 last:mb-0">
                                         {editMode ? (
                                           <div className="space-y-2 mb-4">
                                             <input
@@ -1801,7 +1801,7 @@ export default function ScratchPage() {
                                   <>
 
                                     {resume.projects.map((proj, idx) => (
-                                      <div key={`proj-${idx}-${proj.title?.slice(0, 15) || ""}`} className="mb-8 last:mb-0">
+                                      <div key={`proj-${idx}`} className="mb-8 last:mb-0">
                                         {editMode ? (
                                           <div className="space-y-2 mb-4">
                                             <div className="flex flex-col gap-3">
