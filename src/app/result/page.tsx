@@ -227,6 +227,7 @@ export default function ResultPage() {
       setCanRedo(false);
       // Persist history so undo/redo survives a page refresh
       try {
+        localStorage.setItem("generated_resume", JSON.stringify(next));
         localStorage.setItem("resume_history", JSON.stringify(truncated));
         localStorage.setItem("resume_history_index", String(truncated.length - 1));
         if (next.session_id) {

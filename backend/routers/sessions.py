@@ -12,7 +12,7 @@ async def get_session(session_id: str):
         
     try:
         res = await asyncio.to_thread(
-            lambda: sc.supabase.table("resume_sessions").select("id, generated_output").eq("id", session_id).execute()
+            lambda: sc.supabase.table("resume_sessions").select("id").eq("id", session_id).execute()
         )
         if not res.data:
             raise HTTPException(status_code=404, detail="Session not found")

@@ -89,12 +89,11 @@ export default function GeneratePage() {
         setProgress(100);
         await new Promise((r) => setTimeout(r, 800));
 
-        if ((generatedResume as any).session_id) {
-          router.push(`/result?session_id=${(generatedResume as any).session_id}`);
-        } else {
-          localStorage.setItem("generated_resume", JSON.stringify(generatedResume));
-          router.push("/result");
-        }
+        // Always save to localStorage immediately — the result page relies entirely on this.
+        // (Stateless architecture: no resume content stored in DB, localStorage is the source of truth.)
+        localStorage.setItem("generated_resume", JSON.stringify(generatedResume));
+        const sid = (generatedResume as any).session_id;
+        router.push(sid ? `/result?session_id=${sid}` : "/result");
       } catch (err: any) {
         if (err.message && (err.message.includes("LIMIT_REACHED") || err.message.includes("limit"))) {
           router.push("/");

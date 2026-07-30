@@ -1,4 +1,5 @@
 import os
+import uuid
 import asyncio
 import random
 from fastapi import APIRouter, HTTPException, Request, Header
@@ -97,21 +98,30 @@ async def generate_resume_endpoint(request: Request, payload: GenerateRequest, a
     else:
         generated["_category"] = "jd_optimized"
 
-    # Step 4: Save to resume_sessions table (non-blocking — frees event loop during DB round-trip)
-    # Also saves user_id for session ownership tracking now that we decode the JWT above.
+    # Step 4: Generate session_id locally — no DB round-trip, no content stored.
+    # The full resume JSON (resume text, generated output, AI suggestions, job strategy, changes)
+    # is sent directly to the client and stored in localStorage only.
+    # Only a minimal skeleton row {id, user_id} is persisted to Supabase for:
+    #   - feedback ownership validation (download_count tracking)
+    #   - payment session linking
+    #   - admin queue health count
+    session_id = str(uuid.uuid4())
+    generated["session_id"] = session_id
+
+    # Fire-and-forget: insert skeleton row — never blocks the response
     if sc.supabase:
-        try:
-            res = await asyncio.to_thread(
-                lambda: sc.supabase.table("resume_sessions").insert({
-                    "resume_text": payload.resume_text,
-                    "generated_output": generated,
-                    **({"user_id": user_id} if user_id else {}),
-                }).select("id").execute()  # Only return the id — avoids 55KB echo egress on every generation
-            )
-            if res.data:
-                generated["session_id"] = res.data[0]["id"]
-        except Exception as e:
-            print(f"Failed to save resume_session: {e}")
+        async def _save_session_skeleton():
+            try:
+                row = {"id": session_id}
+                if user_id:
+                    row["user_id"] = user_id
+                await asyncio.to_thread(
+                    lambda: sc.supabase.table("resume_sessions").insert(row).execute()
+                )
+            except Exception as e:
+                print(f"[Generate] Background session skeleton save failed (non-critical): {e}")
+
+        asyncio.create_task(_save_session_skeleton())
 
     # Step 5: Increment fraud tracker counter — fire-and-forget, never blocks the response.
     # Counts consecutive generations without a download. Reset happens in deduct_credits_v2 on download.
@@ -125,5 +135,5 @@ async def generate_resume_endpoint(request: Request, payload: GenerateRequest, a
         
         asyncio.create_task(safe_increment())
 
-    # Return Template v1 JSON directly (no wrapper)
+    # Return Template v1 JSON directly to client — client stores in localStorage
     return JSONResponse(content=generated)

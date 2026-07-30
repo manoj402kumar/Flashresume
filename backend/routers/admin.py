@@ -642,7 +642,7 @@ def _generate_linkedin_jobs(role_queries: list[dict]) -> list[dict]:
     return jobs
 
 
-async def _send_email_brevo(to_email: str, display_name: str, resume_link: str, jobs: list[dict]) -> bool:
+async def _send_email_brevo(to_email: str, display_name: str, resume_link: str) -> bool:
     """Send a single cold email via Brevo's transactional API.
     Returns True on success, False on failure.
     In mock mode (no BREVO_API_KEY) always returns True and logs the action.
@@ -699,26 +699,20 @@ async def _send_email_brevo(to_email: str, display_name: str, resume_link: str, 
             <tr>
               <td style='padding:32px 36px;'>
                 <p style='font-size:16px;color:#1a1a1a;margin:0 0 8px;'>Hi <strong>{display_name}</strong>,</p>
-                <p style='font-size:14px;color:#444;margin:0 0 20px;line-height:1.6;'>
-                  You forgot your shortlisting resume here &mdash;
-                  <a href='{resume_link}' style='color:#006859;font-weight:700;text-decoration:none;'>&#128196; Download Resume</a>
+                <p style='font-size:15px;color:#1a1a1a;font-weight:700;margin:0 0 6px;line-height:1.5;'>
+                  Your resume is waiting here &#8212; and jobs aren&#8217;t waiting.
+                </p>
+                <p style='font-size:14px;color:#555;margin:0 0 24px;line-height:1.6;'>
+                  Every day you delay, another candidate with a weaker resume gets shortlisted simply because they applied first.<br>
+                  <strong style='color:#006859;'>Don&#8217;t let that be you.</strong>
                 </p>
 
-                <div style='background:#f0faf8;border-left:4px solid #006859;border-radius:8px;padding:14px 18px;margin-bottom:22px;'>
-                  <p style='margin:0;font-size:13px;color:#006859;font-weight:700;'>&#127919; We researched &amp; gathered the below jobs specially for you</p>
-                  <p style='margin:4px 0 0;font-size:12px;color:#555;'>You have a <strong>90% chance of shortlisting</strong> for these roles.</p>
+                <div style='background:#006859;border-radius:10px;text-align:center;padding:18px;margin-top:8px;'>
+                  <a href='{resume_link}' style='color:#ffffff;font-size:15px;font-weight:800;text-decoration:none;'>&#128640; Download &amp; Start Applying Now</a>
                 </div>
 
-                <table width='100%' cellpadding='0' cellspacing='0'>
-                  {job_rows}
-                </table>
-
-                <div style='background:#006859;border-radius:10px;text-align:center;padding:18px;margin-top:24px;'>
-                  <a href='{resume_link}' style='color:#ffffff;font-size:15px;font-weight:800;text-decoration:none;'>&#128640; Download Resume &amp; Apply Now</a>
-                </div>
-
-                <p style='font-size:14px;color:#555;margin:20px 0 0;line-height:1.6;'>
-                  Just download the above resume and apply to these jobs &mdash; it is that much easy. &#128512;
+                <p style='font-size:13px;color:#888;margin:20px 0 0;line-height:1.6;text-align:center;'>
+                  Takes 30 seconds. Your resume is already optimized &#8212; just download and apply. &#128512;
                 </p>
               </td>
             </tr>
@@ -734,7 +728,7 @@ async def _send_email_brevo(to_email: str, display_name: str, resume_link: str, 
     payload = {
         "sender":      {"name": BREVO_FROM_NAME, "email": BREVO_FROM_EMAIL},
         "to":          [{"email": to_email, "name": display_name}],
-        "subject":     "Your shortlisted jobs inside \u2014 90% shortlisting chance!",
+        "subject":     "Your FlashResume is ready \u2014 download it now!",
         "htmlContent": html,
     }
     try:
@@ -804,58 +798,6 @@ async def trigger_cold_email(bg_tasks: BackgroundTasks):
             target_batch = free_users[:290]
             print(f"[ColdEmail] Free users: {len(free_users)}, Paid filtered: {len(paid_ids)}, Batch size: {len(target_batch)}")
 
-
-            # 4. Pre-fetch job strategies from resume_sessions for all target users at once
-            target_ids = [u["id"] for _, u, _ in target_batch]
-            sessions_res = await _sb(
-                sc.supabase.table("resume_sessions")
-                .select("id, user_id, generated_output")
-                .in_("user_id", target_ids)
-                .order("created_at", desc=True)
-            )
-            # Keep only the MOST RECENT session per user
-            user_data: dict[str, dict] = {}
-            for sess in (sessions_res.data or []):
-                uid = sess.get("user_id")
-                if uid in user_data:
-                    continue  # already captured the most recent
-                
-                sess_id = sess.get("id")
-                gen = sess.get("generated_output") or {}
-                strategy = gen.get("job_strategy", [])
-                
-                queries = []
-                if strategy and isinstance(strategy, list):
-                    for item in strategy:
-                        if isinstance(item, dict) and str(item.get("match", "")).lower() == "strong":
-                            role = item.get("role", "")
-                            sq = item.get("search_queries", [])
-                            raw_query = ""
-                            
-                            if sq and isinstance(sq, list):
-                                # Find the non-url string query
-                                for q in sq:
-                                    if not str(q).startswith("http"):
-                                        raw_query = str(q)
-                                        break
-                                
-                                # Fallback to parsing from URL
-                                if not raw_query and str(sq[0]).startswith("http"):
-                                    try:
-                                        parsed = urllib.parse.urlparse(str(sq[0]))
-                                        raw_query = urllib.parse.parse_qs(parsed.query).get("keywords", [""])[0]
-                                    except Exception:
-                                        pass
-                            
-                            if not raw_query:
-                                raw_query = role + " India"
-                                
-                            if role and raw_query:
-                                queries.append({"role": role, "query": raw_query})
-                                
-                if queries:
-                    user_data[uid] = {"session_id": sess_id, "queries": queries}
-
             # 5. Send emails sequentially — 0.5 s gap to protect Render RAM
             sent_count  = 0
             error_count = 0
@@ -867,23 +809,10 @@ async def trigger_cold_email(bg_tasks: BackgroundTasks):
                 email = u["email"]
                 # Friendly name = part before @ (capitalised)
                 display_name = email.split("@")[0].replace(".", " ").title()
-                
-                udata = user_data.get(uid)
 
-                if udata and udata.get("session_id"):
-                    # User has a resume session — point to their exact generated resume
-                    resume_link  = f"https://flashresume.in/result?session_id={udata['session_id']}"
-                    role_queries = udata.get("queries", [])
-                else:
-                    # User signed up but never generated a resume — send them to the homepage
-                    # and use a random generic fresher job search
-                    print(f"[ColdEmail] No resume session for {email} — using homepage + fresher jobs")
-                    resume_link  = "https://flashresume.in"
-                    role_queries = []  # _generate_linkedin_jobs picks a random fresher role
+                resume_link = "https://flashresume.in/result"
 
-                jobs = _generate_linkedin_jobs(role_queries)
-
-                success = await _send_email_brevo(email, display_name, resume_link, jobs)
+                success = await _send_email_brevo(email, display_name, resume_link)
 
                 if success:
                     sent_count += 1
