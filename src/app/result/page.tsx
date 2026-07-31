@@ -130,14 +130,18 @@ export default function ResultPage() {
 
   // 5-Second Teaser Auth Wall: Allow unauthenticated users to see the result for 5s, then lock it down.
   useEffect(() => {
+    let timer: NodeJS.Timeout;
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!session?.user) {
-        const timer = setTimeout(() => {
+        timer = setTimeout(() => {
           setShowTeaserAuthGate(true);
         }, 5000);
-        return () => clearTimeout(timer);
       }
     });
+
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
   }, []);
 
   useEffect(() => {
@@ -716,7 +720,7 @@ export default function ResultPage() {
             const isSecondEverDownload = data.user_total_downloads === 2;
             const isGlobalReferralMilestone = data.total_platform_downloads > 0 && data.total_platform_downloads % 3 === 0;
             const isGlobalFeedbackMilestone = data.total_platform_downloads > 0 && data.total_platform_downloads % 20 === 0;
-            
+
             if (isFirstEverDownload) {
               shouldShowFeedback = true;
             } else if (isSecondEverDownload || isGlobalReferralMilestone) {
@@ -1543,7 +1547,7 @@ export default function ResultPage() {
 
                       return (
                         <motion.div
-                            layout="position"
+                          layout="position"
                           key={sectionId}
                           initial={{ opacity: 0, y: 20 }}
                           animate={{ opacity: 1, y: 0 }}
@@ -2301,9 +2305,9 @@ export default function ResultPage() {
                                       resume.technical_skills.cloud_and_dev_tools?.length > 0
                                         ? resume.technical_skills.cloud_and_dev_tools
                                         : [
-                                            ...(resume.technical_skills.cloud_services ?? []),
-                                            ...(resume.technical_skills.developer_tools ?? []),
-                                          ];
+                                          ...(resume.technical_skills.cloud_services ?? []),
+                                          ...(resume.technical_skills.developer_tools ?? []),
+                                        ];
                                     return (editMode || cloudDevSkills.length > 0) ? (
                                       <div>
                                         <p className="font-semibold text-on-background mb-2">Cloud &amp; Dev Tools:</p>
@@ -2640,7 +2644,7 @@ export default function ResultPage() {
                                 </p>
                                 {item.search_queries.map((query, qIdx) => {
                                   const isLocked = credits === 0 && qIdx === 0;
-                                  
+
                                   const isUrl = query.startsWith("http");
                                   const targetUrl = isUrl ? query : `https://www.google.com/search?q=${encodeURIComponent(query)}`;
                                   const displayLabel = isUrl && query.includes("linkedin.com") ? "Search Posts on LinkedIn" : query;
