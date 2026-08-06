@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from "motion/react";
 import {
   Copy, Check, LogIn, LogOut, Zap, Users, IndianRupee,
   TrendingUp, Clock, CheckCircle2, AlertCircle, Search,
-  ExternalLink, Mail, Phone, ArrowRight, Loader2, Wallet, Gift,
+  ExternalLink, Mail, Phone, ArrowRight, Loader2, Wallet, Gift, Banknote,
 } from "lucide-react";
 
 const supabase = createClient(
@@ -325,7 +325,7 @@ export default function AffiliatePage() {
               <Gift className="w-3.5 h-3.5" /> Affiliate Program
             </div>
             <h1 className="text-4xl md:text-5xl font-black text-[#1a1a1a] leading-tight mb-4">
-              Earn <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#006859] to-[#12f8d7]">Money 💰</span><br />
+              Earn <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#006859] to-[#12f8d7]">Money</span> 💵<br />
               With Flashresume
             </h1>
             <p className="text-[#595c5d] text-lg max-w-xl mx-auto">
