@@ -30,6 +30,7 @@ class OrderRequest(BaseModel):
     plan_type: str
     user_id: str
     email: str = None
+    affiliate_code: str | None = None  # ref cookie value from frontend
 
 @router.post("/payments/create-order")
 @limiter.limit("10/minute")
@@ -72,13 +73,16 @@ async def create_order(request: Request, body: OrderRequest, authorization: str 
         
         # Insert pending payment into Supabase
         if sc.supabase:
-            await sb(lambda: sc.supabase.table("payments").insert({
+            insert_data = {
                 "user_id": body.user_id,
                 "razorpay_order_id": razorpay_order_id,
                 "amount": amount_in_paise,
                 "plan_type": body.plan_type,
                 "status": "pending"
-            }).execute())
+            }
+            if body.affiliate_code:
+                insert_data["affiliate_code"] = body.affiliate_code
+            await sb(lambda: sc.supabase.table("payments").insert(insert_data).execute())
         
         return {
             "razorpay_order_id": razorpay_order_id,
@@ -180,6 +184,80 @@ async def verify_payment(body: VerifyRequest, authorization: str = Header(None))
             except Exception as ref_err:
                 # Never block payment success for referral errors
                 print(f"Referral bonus error (non-critical): {ref_err}")
+
+            # 3b. Affiliate commission — 30% on first payment only
+            try:
+                # Fetch affiliate_code stored on this payment row
+                pay_rec = await sb(
+                    lambda: sc.supabase.table("payments")
+                    .select("affiliate_code")
+                    .eq("razorpay_order_id", body.razorpay_order_id)
+                    .execute()
+                )
+                aff_code = (pay_rec.data[0].get("affiliate_code") if pay_rec.data else None)
+
+                if aff_code:
+                    # Check this is user's FIRST successful payment
+                    prev_pays = await sb(
+                        lambda: sc.supabase.table("payments")
+                        .select("id")
+                        .eq("user_id", actual_user_id)
+                        .eq("status", "captured")
+                        .execute()
+                    )
+                    # Only credit if ≤ 1 captured payments (this one just became captured)
+                    if len(prev_pays.data or []) <= 1:
+                        aff_res = await sb(
+                            lambda: sc.supabase.table("affiliates")
+                            .select("id, earnings_balance, total_earned")
+                            .eq("affiliate_code", aff_code)
+                            .eq("status", "active")
+                            .execute()
+                        )
+                        if aff_res.data:
+                            aff = aff_res.data[0]
+                            aff_id = aff["id"]
+                            # Plan amounts in rupees
+                            PLAN_AMOUNTS_INR = {
+                                "pay_per_use": 29,
+                                "regular": 599,
+                                "bulk_offer": 599,
+                                "student": 99,
+                            }
+                            plan_inr = PLAN_AMOUNTS_INR.get(actual_plan_type, 0)
+                            commission = round(plan_inr * 0.30, 2)
+
+                            if commission > 0:
+                                # Insert conversion record
+                                await sb(
+                                    lambda: sc.supabase.table("affiliate_conversions")
+                                    .insert({
+                                        "affiliate_id": aff_id,
+                                        "payment_id": body.razorpay_payment_id,
+                                        "new_user_id": actual_user_id,
+                                        "plan_type": actual_plan_type,
+                                        "plan_amount": plan_inr,
+                                        "commission_amount": commission,
+                                        "status": "credited",
+                                    })
+                                    .execute()
+                                )
+                                # Update affiliate balance
+                                new_balance = float(aff["earnings_balance"] or 0) + commission
+                                new_total = float(aff["total_earned"] or 0) + commission
+                                await sb(
+                                    lambda: sc.supabase.table("affiliates")
+                                    .update({
+                                        "earnings_balance": new_balance,
+                                        "total_earned": new_total,
+                                    })
+                                    .eq("id", aff_id)
+                                    .execute()
+                                )
+                                print(f"[Affiliate] Commission ₹{commission} credited to affiliate {aff_code} for payment {body.razorpay_payment_id}")
+            except Exception as aff_err:
+                # Never block payment success for affiliate errors
+                print(f"[Affiliate] Commission error (non-critical): {aff_err}")
 
             # 4. Link session_id to the user (only if session_id is still anonymous)
             if body.session_id:

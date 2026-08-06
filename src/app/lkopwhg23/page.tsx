@@ -13,6 +13,7 @@ import DownloadChart from "./components/DownloadChart";
 import RevenuePanel from "./components/RevenuePanel";
 import FunnelChart from "./components/FunnelChart";
 import FeedbackPanel from "./components/FeedbackPanel";
+import AffiliatePanel from "./components/AffiliatePanel";
 // supabase import removed — Realtime channel replaced with lightweight backend poll
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
@@ -25,6 +26,7 @@ const NAV_ITEMS = [
   { id: "funnel",     label: "Conversion",     icon: Filter },
   { id: "feedback",   label: "Feedback",       icon: Star },
   { id: "cold-email", label: "Cold Emails",    icon: Send },
+  { id: "affiliates", label: "Affiliates",     icon: Users },
 ];
 
 function Sidebar({
@@ -396,6 +398,15 @@ export default function AdminPage() {
                 Without it the endpoint runs in mock mode (no emails sent).
               </p>
             </div>
+          </section>
+
+          {/* -- Affiliates ------------------------------------------ */}
+          <section id="affiliates" ref={setRef("affiliates")}>
+            <SectionTitle
+              title="Affiliates"
+              subtitle="Payout requests from creators — send UPI payment then mark as processed"
+            />
+            <AffiliatePanel />
           </section>
 
         </main>
