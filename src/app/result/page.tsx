@@ -1274,6 +1274,38 @@ export default function ResultPage() {
                   transition={{ duration: 0.3 }}
                   className="w-full max-w-4xl mx-auto space-y-6"
                 >
+                  <motion.div
+                    initial={{ opacity: 0, y: -20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{
+                      opacity: { duration: 0.5 },
+                      y: { duration: 0.5 },
+                      backgroundPosition: { duration: 10, ease: "easeInOut", repeat: Infinity }
+                    }}
+                    className="rounded-2xl overflow-hidden shadow-lg relative"
+                    style={{
+                      backgroundImage: "linear-gradient(270deg, #006859 0%, #0a9e83 40%, #12f8d7 60%, #006859 100%)",
+                      backgroundSize: "200% 200%"
+                    }}
+                  >
+                    <div className="px-5 py-4">
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                        <div className="flex-1">
+                          <p className="text-sm font-semibold text-white leading-snug">
+                            Do you wanna learn DSA in 21 days?
+                          </p>
+                        </div>
+                        <a
+                          href="https://memecode.in"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex-shrink-0 flex items-center gap-2 bg-white text-primary font-bold px-5 py-2.5 rounded-xl text-sm hover:shadow-xl hover:scale-105 active:scale-95 transition-all shadow-md whitespace-nowrap"
+                        >
+                          Yes <ExternalLink className="w-4 h-4" />
+                        </a>
+                      </div>
+                    </div>
+                  </motion.div>
 
                   {/* Reorder tab — shown only when __reorder__ pill is active */}
                   {activeEditSection === '__reorder__' && (
