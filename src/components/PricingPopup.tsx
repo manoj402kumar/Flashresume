@@ -503,6 +503,13 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
       const { data: { session } } = await supabase.auth.getSession();
       const token = session?.access_token;
 
+      const getCookie = (name: string) => {
+        if (typeof document === "undefined") return null;
+        const match = document.cookie.match(new RegExp(`(^| )${name}=([^;]+)`));
+        return match ? decodeURIComponent(match[2]) : null;
+      };
+      const affiliateCode = getCookie('affiliate_ref');
+
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
       const orderRes = await fetch(`${apiUrl}/api/payments/create-order`, {
         method: "POST",
@@ -510,7 +517,12 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
           "Content-Type": "application/json",
           ...(token ? { Authorization: `Bearer ${token}` } : {})
         },
-        body: JSON.stringify({ plan_type: planDetails.plan_type, user_id: activeUser.id, email: activeUser.email }),
+        body: JSON.stringify({ 
+          plan_type: planDetails.plan_type, 
+          user_id: activeUser.id, 
+          email: activeUser.email,
+          affiliate_code: affiliateCode
+        }),
       });
       if (!orderRes.ok) throw new Error("Failed to create payment order.");
       const orderData = await orderRes.json();
