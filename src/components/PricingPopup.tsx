@@ -67,8 +67,8 @@ const PLAN_BULK_OFFER = {
 const PLAN_STANDARD = {
   id: "regular",
   name: "Standard Plan",
-  price: 199,
-  priceDisplay: "₹199",
+  price: 599,
+  priceDisplay: "₹599",
   period: "/2 Months",
   description: "300 Credits (30 Resumes)",
   icon: <Crown className="w-5 h-5 text-amber-400" />,
@@ -496,7 +496,7 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
     const planDetails =
       planToBuy === "student" ? { amount: 99, plan_type: "student" } :
         planToBuy === "bulk_offer" ? { amount: 599, plan_type: "bulk_offer" } :
-          planToBuy === "regular" ? { amount: 199, plan_type: "regular" } :
+          planToBuy === "regular" ? { amount: 599, plan_type: "regular" } :
             { amount: 29, plan_type: "pay_per_use" };
 
     try {
@@ -788,7 +788,7 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
                         <div className="flex flex-col items-end md:items-center md:mb-1 flex-shrink-0">
                           {/* Strikethrough + badge row */}
                           <div className="flex items-center gap-1.5 mb-0.5">
-                            <p className={`text-[11px] line-through leading-none ${selectedPlan === "student" ? "text-white/55" : "text-on-surface-variant opacity-60"}`}>₹199</p>
+                            <p className={`text-[11px] line-through leading-none ${selectedPlan === "student" ? "text-white/55" : "text-on-surface-variant opacity-60"}`}>₹599</p>
                             <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-md leading-none tracking-wide ${selectedPlan === "student" ? "bg-white/25 text-white border border-white/30" : "bg-orange-500/15 text-orange-600 border border-orange-400/40"}`}>50% OFF</span>
                           </div>
                           {/* Big price */}
