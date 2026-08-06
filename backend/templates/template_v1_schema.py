@@ -3,9 +3,9 @@ from typing import Optional, Union, List
 
 class Heading(BaseModel):
     name: str
-    phone: str
-    email: str
-    linkedin_url: str
+    phone: Optional[str] = ""
+    email: Optional[str] = ""
+    linkedin_url: Optional[str] = ""
     linkedin_url_href: Optional[str] = None
     github_url: Optional[str] = None
     github_url_href: Optional[str] = None

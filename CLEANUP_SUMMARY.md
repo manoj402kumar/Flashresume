@@ -1,4 +1,4 @@
-# FlashResume - Complete Cleanup Summary
+![alt text](image.png)# FlashResume - Complete Cleanup Summary
 ## Alignment with Core Algorithm (generation_prompt.py)
 
 **Date**: Current Session  

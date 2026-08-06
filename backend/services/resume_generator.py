@@ -121,6 +121,19 @@ async def generate_resume(resume_text: str, job_description: str, ats_score_befo
             if isinstance(proj, dict) and isinstance(proj.get("tech_stack"), list):
                 proj["tech_stack"] = ", ".join(str(t) for t in proj["tech_stack"])
 
+    # Pre-process heading: inject safe defaults for any missing required fields
+    # (LLM occasionally omits phone/email/linkedin_url/name when resume text is sparse)
+    if "heading" not in data or not isinstance(data.get("heading"), dict):
+        data["heading"] = {}
+    heading = data["heading"]
+    if not heading.get("name"):
+        # Try to extract name from resume_text (first non-empty line)
+        first_line = next((line.strip() for line in resume_text.splitlines() if line.strip()), "")
+        heading["name"] = first_line[:80] if first_line else "Candidate"
+    heading.setdefault("phone", "")
+    heading.setdefault("email", "")
+    heading.setdefault("linkedin_url", "")
+
     # Validate against Pydantic Template v1 schema
     try:
         validated = TemplateV1(**data)
