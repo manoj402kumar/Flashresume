@@ -112,7 +112,10 @@ async def generate_resume_endpoint(request: Request, payload: GenerateRequest, a
     if sc.supabase:
         async def _save_session_skeleton():
             try:
-                row = {"id": session_id}
+                row = {
+                    "id": session_id,
+                    "generated_output": {"_category": generated.get("_category", "no_jd")}
+                }
                 if user_id:
                     row["user_id"] = user_id
                 await asyncio.to_thread(
