@@ -4,7 +4,7 @@ import type { NextRequest } from 'next/server';
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Protect all /admin routes except /admin/login
+  // Protect all /admin routes except /admin/login (legacy) and the secret access URL
   if (pathname.startsWith('/admin') && !pathname.startsWith('/admin/login')) {
     const adminSession = request.cookies.get('admin_session');
 
@@ -18,6 +18,7 @@ export function proxy(request: NextRequest) {
   // Allow all other requests to proceed
   return NextResponse.next();
 }
+
 
 export const config = {
   matcher: ['/admin/:path*'],
