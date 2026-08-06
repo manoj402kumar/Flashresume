@@ -325,8 +325,8 @@ export default function AffiliatePage() {
               <Gift className="w-3.5 h-3.5" /> Affiliate Program
             </div>
             <h1 className="text-4xl md:text-5xl font-black text-[#1a1a1a] leading-tight mb-4">
-              Earn <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#006859] to-[#12f8d7]">{COMMISSION_RATE}% Commission</span><br />
-              on every referral
+              Earn <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#006859] to-[#12f8d7]">Money 💰</span><br />
+              With Flashresume
             </h1>
             <p className="text-[#595c5d] text-lg max-w-xl mx-auto">
               Share your unique link. When someone pays through it for the first time, you earn {COMMISSION_RATE}%.
@@ -339,7 +339,7 @@ export default function AffiliatePage() {
             className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-3xl mx-auto mt-8">
             {[
               { step: "01", title: "Sign in with Google", desc: "Get your unique affiliate link instantly — no approval needed." },
-              { step: "02", title: "Share your link", desc: "Share on LinkedIn, YouTube, WhatsApp — anywhere you have an audience." },
+              { step: "02", title: "Share your link", desc: "Share on LinkedIn, YouTube, WhatsApp, Instagram — anywhere you have an audience." },
               { step: "03", title: "Get paid", desc: "Earn 30% on every first purchase. Withdraw to UPI within 24 hours." },
             ].map(({ step, title, desc }) => (
               <div key={step} className="bg-white rounded-2xl border border-[#e0efec] p-5 text-left shadow-sm">
@@ -441,7 +441,7 @@ export default function AffiliatePage() {
                       className={`flex items-center gap-2 px-5 py-3 rounded-xl font-bold text-sm transition-all ${copied
                         ? "bg-emerald-500 text-white"
                         : "bg-[#006859] text-white hover:bg-[#005245]"
-                      }`}>
+                        }`}>
                       {copied ? <><Check className="w-4 h-4" /> Copied!</> : <><Copy className="w-4 h-4" /> Copy</>}
                     </button>
                   </div>
@@ -490,7 +490,7 @@ export default function AffiliatePage() {
                             className={`w-full flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-sm transition-all ${canWithdraw
                               ? "bg-gradient-to-r from-[#006859] to-[#0d9e84] text-white hover:shadow-lg hover:shadow-[#006859]/30 hover:scale-[1.01]"
                               : "bg-[#f5f9f8] text-[#595c5d] border border-[#e0efec] cursor-not-allowed"
-                            }`}>
+                              }`}>
                             {payoutLoading
                               ? <Loader2 className="w-4 h-4 animate-spin" />
                               : <><IndianRupee className="w-4 h-4" /> Withdraw {balance >= 300 ? formatINR(balance) : "(min ₹300)"}</>
