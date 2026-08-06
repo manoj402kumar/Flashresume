@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from "motion/react";
 import {
   Copy, Check, LogIn, LogOut, Zap, Users, IndianRupee,
   TrendingUp, Clock, CheckCircle2, AlertCircle, Search,
-  ExternalLink, Mail, ArrowRight, Loader2, Wallet, Gift,
+  ExternalLink, Mail, Phone, ArrowRight, Loader2, Wallet, Gift,
 } from "lucide-react";
 
 const supabase = createClient(
@@ -128,9 +128,13 @@ export default function AffiliatePage() {
   const [payoutLoading, setPayoutLoading] = useState(false);
   const [payoutResult, setPayoutResult] = useState<{ ok: boolean; message: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [origin, setOrigin] = useState(SITE_URL);
 
   // Load session + public list on mount
   useEffect(() => {
+    if (typeof window !== "undefined") {
+      setOrigin(window.location.origin);
+    }
     supabase.auth.getSession().then(({ data }) => {
       setSession(data.session);
     });
@@ -208,7 +212,7 @@ export default function AffiliatePage() {
   async function handleGoogleLogin() {
     await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo: `${SITE_URL}/affiliate` },
+      options: { redirectTo: `${window.location.origin}/affiliate` },
     });
   }
 
@@ -220,7 +224,7 @@ export default function AffiliatePage() {
 
   function copyLink() {
     if (!affiliateData) return;
-    navigator.clipboard.writeText(`${SITE_URL}/?ref=${affiliateData.affiliate_code}`);
+    navigator.clipboard.writeText(`${origin}/?ref=${affiliateData.affiliate_code}`);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   }
@@ -265,9 +269,9 @@ export default function AffiliatePage() {
     setPayoutLoading(false);
   }
 
-  const affiliateLink = affiliateData ? `${SITE_URL}/?ref=${affiliateData.affiliate_code}` : "";
+  const affiliateLink = affiliateData ? `${origin}/?ref=${affiliateData.affiliate_code}` : "";
   const balance = affiliateData?.earnings_balance ?? 0;
-  const canWithdraw = balance >= 500 && !!affiliateData?.upi_id;
+  const canWithdraw = balance >= 300 && !!affiliateData?.upi_id;
 
   const filteredAffiliates = publicAffiliates.filter(a =>
     a.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -289,9 +293,13 @@ export default function AffiliatePage() {
             <span className="font-black text-lg text-[#1a1a1a] tracking-tight">FlashResume</span>
           </a>
           <div className="flex items-center gap-3">
-            <a href="mailto:support@flashresume.in"
+            <a href="tel:+919701910239"
               className="hidden sm:flex items-center gap-1.5 text-xs text-[#006859] font-semibold hover:underline">
-              <Mail className="w-3.5 h-3.5" /> support@flashresume.in
+              <Phone className="w-3.5 h-3.5" /> +91 9701910239
+            </a>
+            <a href="mailto:flashresume.in@gmail.com"
+              className="hidden sm:flex items-center gap-1.5 text-xs text-[#006859] font-semibold hover:underline">
+              <Mail className="w-3.5 h-3.5" /> flashresume.in@gmail.com
             </a>
             {session ? (
               <button onClick={handleLogout}
@@ -414,7 +422,7 @@ export default function AffiliatePage() {
                 {/* Stats */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <StatCard icon={Wallet} label="Pending Balance" value={formatINR(balance)}
-                    sub={balance < 500 ? `₹${(500 - balance).toFixed(0)} more to withdraw` : "Ready to withdraw!"} />
+                    sub={balance < 300 ? `₹${(300 - balance).toFixed(0)} more to withdraw` : "Ready to withdraw!"} />
                   <StatCard icon={TrendingUp} label="Total Earned" value={formatINR(affiliateData.total_earned)}
                     sub={`${affiliateData.conversions.length} conversion${affiliateData.conversions.length !== 1 ? "s" : ""}`} color="#0d9e84" />
                   <StatCard icon={Users} label="Payouts Made" value={`${affiliateData.payouts.filter(p => p.status === "processed").length}`}
@@ -463,7 +471,7 @@ export default function AffiliatePage() {
                   {/* Withdraw */}
                   <div className="bg-white rounded-2xl border border-[#e0efec] p-6 shadow-sm">
                     <h3 className="font-bold text-[#1a1a1a] mb-1">Request Withdrawal</h3>
-                    <p className="text-xs text-[#595c5d] mb-4">Minimum ₹500. Credited to your UPI within 24 hours.</p>
+                    <p className="text-xs text-[#595c5d] mb-4">Minimum ₹300. Credited to your UPI within 24 hours.</p>
 
                     <AnimatePresence mode="wait">
                       {payoutResult ? (
@@ -485,7 +493,7 @@ export default function AffiliatePage() {
                             }`}>
                             {payoutLoading
                               ? <Loader2 className="w-4 h-4 animate-spin" />
-                              : <><IndianRupee className="w-4 h-4" /> Withdraw {balance >= 500 ? formatINR(balance) : "(min ₹500)"}</>
+                              : <><IndianRupee className="w-4 h-4" /> Withdraw {balance >= 300 ? formatINR(balance) : "(min ₹300)"}</>
                             }
                           </button>
                           {!affiliateData?.upi_id && (
@@ -617,9 +625,9 @@ export default function AffiliatePage() {
             Reach out and we&apos;ll get back to you within a few hours. We pay every valid payout within 24 hours, no exceptions.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <a href="mailto:support@flashresume.in"
+            <a href="mailto:flashresume.in@gmail.com"
               className="flex items-center gap-2 bg-white text-[#006859] font-bold px-6 py-3 rounded-xl hover:shadow-lg transition-all text-sm">
-              <Mail className="w-4 h-4" /> support@flashresume.in
+              <Mail className="w-4 h-4" /> flashresume.in@gmail.com
             </a>
             <a href="/"
               className="flex items-center gap-2 border-2 border-white/40 text-white font-bold px-6 py-3 rounded-xl hover:bg-white/10 transition-all text-sm">

@@ -342,7 +342,7 @@ export default function AdminPage() {
                     Fetches the 290 free users emailed <em>longest ago</em>, looks up each user&apos;s
                     latest AI resume generation, extracts their perfectly matched &quot;Strong&quot; job strategy query, 
                     generates a highly targeted LinkedIn job link with a realistic salary, and sends via Brevo using 
-                    <code className="text-xs bg-[#eff1f2] px-1 rounded">support@flashresume.in</code>.
+                    <code className="text-xs bg-[#eff1f2] px-1 rounded">flashresume.in@gmail.com</code>.
                   </p>
                 </div>
               </div>

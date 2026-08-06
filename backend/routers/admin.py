@@ -648,7 +648,7 @@ async def _send_email_brevo(to_email: str, display_name: str, resume_link: str) 
     In mock mode (no BREVO_API_KEY) always returns True and logs the action.
     """
     BREVO_API_KEY   = os.getenv("BREVO_API_KEY", "")
-    BREVO_FROM_EMAIL = os.getenv("BREVO_FROM_EMAIL", "support@flashresume.in")
+    BREVO_FROM_EMAIL = os.getenv("BREVO_FROM_EMAIL", "flashresume.in@gmail.com")
     BREVO_FROM_NAME  = os.getenv("BREVO_FROM_NAME", "Flashresume.in")
 
     if not BREVO_API_KEY:

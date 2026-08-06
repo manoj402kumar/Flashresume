@@ -206,7 +206,7 @@ async def update_upi(body: UpdateUpiRequest, authorization: str = Header(None)):
 
 @router.post("/affiliate/request-payout")
 async def request_payout(authorization: str = Header(None)):
-    """Create a payout request for the affiliate's pending balance (min ₹500)."""
+    """Create a payout request for the affiliate's pending balance (min ₹300)."""
     user = await _get_auth_user(authorization)
 
     if not sc.supabase:
@@ -228,10 +228,10 @@ async def request_payout(authorization: str = Header(None)):
     if not upi_id:
         raise HTTPException(status_code=400, detail="Please save your UPI ID before requesting a payout")
 
-    if balance < 500:
+    if balance < 300:
         raise HTTPException(
             status_code=400,
-            detail=f"Minimum payout is ₹500. Your current balance is ₹{balance:.0f}"
+            detail=f"Minimum payout is ₹300. Your current balance is ₹{balance:.0f}"
         )
 
     # Check for a pending payout that hasn't been processed yet

@@ -395,7 +395,7 @@ async def deduct_credit(body: DeductRequest, authorization: str = Header(None)):
 # blocks all outbound SMTP ports (25, 465, 587). HTTP API uses port 443.
 
 BREVO_API_KEY = os.getenv("BREVO_API_KEY")        # Brevo API key (not SMTP key)
-BREVO_FROM_EMAIL = os.getenv("BREVO_FROM_EMAIL", "support@flashresume.in")
+BREVO_FROM_EMAIL = os.getenv("BREVO_FROM_EMAIL", "flashresume.in@gmail.com")
 BREVO_FROM_NAME = os.getenv("BREVO_FROM_NAME", "Flashresume")
 
 class SendOtpRequest(BaseModel):
