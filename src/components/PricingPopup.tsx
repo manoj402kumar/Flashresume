@@ -70,11 +70,11 @@ const PLAN_STANDARD = {
   price: 599,
   priceDisplay: "₹599",
   period: "/2 Months",
-  description: "300 Credits (30 Resumes)",
+  description: "500 Credits (50 Resumes)",
   icon: <Crown className="w-5 h-5 text-amber-400" />,
   badge: null,
   borderClass: "border-primary",
-  features: ["300 Credits", "Valid for 2 Months", "All Premium Features"],
+  features: ["500 Credits", "Valid for 2 Months", "All Premium Features"],
 };
 
 // ── Review Banner ─────────────────────────────────────────────────────────────
@@ -494,7 +494,7 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
     setError(null);
 
     const planDetails =
-      planToBuy === "student" ? { amount: 99, plan_type: "student" } :
+      planToBuy === "student" ? { amount: 149, plan_type: "student" } :
         planToBuy === "bulk_offer" ? { amount: 599, plan_type: "bulk_offer" } :
           planToBuy === "regular" ? { amount: 599, plan_type: "regular" } :
             { amount: 29, plan_type: "pay_per_use" };
@@ -665,7 +665,7 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
               {step === "initializing" ? "Loading..." : step === "auth" ? "Sign In to Continue" : step === "processing" ? "Processing..." : step === "student_verify" ? "Student Verification" : "Invest in Yourself"}
             </h2>
             <p className="text-sm text-on-surface-variant mt-1 max-w-lg mx-auto">
-              {step === "initializing" ? "Please wait a moment." : step === "auth" ? "Use your Google account to access downloads." : step === "processing" ? "Securely setting up Razorpay..." : step === "student_verify" ? "Verify to unlock the ₹99 plan." : "Returns >>> Investment(paying for servers)"}
+              {step === "initializing" ? "Please wait a moment." : step === "auth" ? "Use your Google account to access downloads." : step === "processing" ? "Securely setting up Razorpay..." : step === "student_verify" ? "Verify to unlock the ₹149 plan." : "Returns >>> Investment(paying for servers)"}
             </p>
           </div>
 
@@ -793,18 +793,18 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
                         </div>
                         <div className="flex-1 text-left md:text-center">
                           <h4 className="font-bold text-base mb-0 md:mb-0.5">Student Plan</h4>
-                          <p className={`text-[11px] md:mb-2 ${selectedPlan === "student" ? "text-white/90" : "text-on-surface-variant"}`}>300 Credits (30 Resumes)</p>
+                          <p className={`text-[11px] md:mb-2 ${selectedPlan === "student" ? "text-white/90" : "text-on-surface-variant"}`}>500 Credits (50 Resumes)</p>
                         </div>
 
                         {/* Price block — vertical stack on mobile, centered on desktop */}
                         <div className="flex flex-col items-end md:items-center md:mb-1 flex-shrink-0">
                           {/* Strikethrough + badge row */}
                           <div className="flex items-center gap-1.5 mb-0.5">
-                            <p className={`text-[11px] line-through leading-none ${selectedPlan === "student" ? "text-white/55" : "text-on-surface-variant opacity-60"}`}>₹599</p>
+                            <p className={`text-[11px] line-through leading-none ${selectedPlan === "student" ? "text-white/55" : "text-on-surface-variant opacity-60"}`}>₹299</p>
                             <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-md leading-none tracking-wide ${selectedPlan === "student" ? "bg-white/25 text-white border border-white/30" : "bg-orange-500/15 text-orange-600 border border-orange-400/40"}`}>50% OFF</span>
                           </div>
                           {/* Big price */}
-                          <p className={`font-black text-2xl md:text-3xl leading-none ${selectedPlan === "student" ? "text-white" : "text-tertiary"}`}>₹99</p>
+                          <p className={`font-black text-2xl md:text-3xl leading-none ${selectedPlan === "student" ? "text-white" : "text-tertiary"}`}>₹149</p>
                           <p className={`text-[10px] md:text-[11px] font-medium mt-0.5 ${selectedPlan === "student" ? "text-white/80" : "text-on-surface-variant"}`}>/2 months</p>
                         </div>
                       </div>
@@ -813,7 +813,7 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
                         <ul className="space-y-2 text-sm mb-3">
                           <li className="flex items-start gap-2">
                             <CheckCircle2 className={`w-4 h-4 flex-shrink-0 mt-0.5 ${selectedPlan === "student" ? "text-white" : "text-tertiary"}`} />
-                            <span className={`text-left font-medium text-[12px] ${selectedPlan === "student" ? "text-white" : "text-on-background"}`}>300 Credits</span>
+                            <span className={`text-left font-medium text-[12px] ${selectedPlan === "student" ? "text-white" : "text-on-background"}`}>500 Credits</span>
                           </li>
                           <li className="flex items-start gap-2">
                             <CheckCircle2 className={`w-4 h-4 flex-shrink-0 mt-0.5 ${selectedPlan === "student" ? "text-white" : "text-tertiary"}`} />
@@ -867,8 +867,8 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
                       </div>
                     )}
 
-                    {/* Dynamic 3rd card: Bulk Offer if returning user, Standard Plan if new user */}
-                    {[hasEverPurchased ? PLAN_BULK_OFFER : PLAN_STANDARD].map((plan) => {
+                    {/* 3rd card: Bulk Offer */}
+                    {[PLAN_BULK_OFFER].map((plan) => {
                       const isSelected = selectedPlan === plan.id;
                       return (
                         <React.Fragment key={plan.id}>

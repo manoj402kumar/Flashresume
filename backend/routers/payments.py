@@ -39,7 +39,7 @@ async def create_order(request: Request, body: OrderRequest, authorization: str 
         "pay_per_use": 2900,
         "regular": 19900,
         "bulk_offer": 59900,
-        "student": 9900
+        "student": 14900
     }
     amount_in_paise = PRICES.get(body.plan_type)
     if not amount_in_paise:
@@ -144,9 +144,9 @@ async def verify_payment(body: VerifyRequest, authorization: str = Header(None))
             # 2. Process the successful payment in a single Postgres transaction
             PLAN_CREDITS = {
                 "pay_per_use": 10,
-                "regular": 300,   # legacy – keep for old orders
+                "regular": 500,   # legacy – keep for old orders
                 "bulk_offer": 3000,
-                "student": 300,
+                "student": 500,
             }
             credits_to_add = PLAN_CREDITS.get(actual_plan_type, 0)
             validity_days = 180 if actual_plan_type == "bulk_offer" else 60 if actual_plan_type == "regular" else 60 if actual_plan_type == "student" else 10
@@ -222,7 +222,7 @@ async def verify_payment(body: VerifyRequest, authorization: str = Header(None))
                                 "pay_per_use": 29,
                                 "regular": 599,
                                 "bulk_offer": 599,
-                                "student": 99,
+                                "student": 149,
                             }
                             plan_inr = PLAN_AMOUNTS_INR.get(actual_plan_type, 0)
                             commission = round(plan_inr * 0.30, 2)
@@ -555,9 +555,9 @@ async def razorpay_webhook(request: Request):
             
             PLAN_CREDITS = {
                 "pay_per_use": 10,
-                "regular": 300,   # legacy – keep for old orders
+                "regular": 500,   # legacy – keep for old orders
                 "bulk_offer": 3000,
-                "student": 300,
+                "student": 500,
             }
             credits_to_add = PLAN_CREDITS.get(plan_type, 0)
             validity_days = 180 if plan_type == "bulk_offer" else 60 if plan_type == "regular" else 60 if plan_type == "student" else 10
@@ -682,9 +682,9 @@ async def reconcile_payments(authorization: str = Header(None)):
                             # 3. Process the payment
                             PLAN_CREDITS = {
                                 "pay_per_use": 10,
-                                "regular": 300,   # legacy – keep for old orders
+                                "regular": 500,   # legacy – keep for old orders
                                 "bulk_offer": 3000,
-                                "student": 300,
+                                "student": 500,
                             }
                             credits_to_add = PLAN_CREDITS.get(plan_type, 0)
                             validity_days = 180 if plan_type == "bulk_offer" else 60 if plan_type == "regular" else 60 if plan_type == "student" else 10
