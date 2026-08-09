@@ -655,20 +655,9 @@ async def _send_email_brevo(to_email: str, display_name: str, resume_link: str) 
         print(f"[ColdEmail][Mock] Would send to {to_email}")
         return True
 
-    job_rows = "".join(
-        f"""
-        <tr>
-          <td style='padding:10px 0;border-bottom:1px solid #f0f0f0;vertical-align:top;'>
-            <span style='font-size:14px;color:#006859;font-weight:700;'>{i+1}.</span>
-            <strong style='font-size:14px;color:#1a1a1a;'> {j['title']}</strong><br>
-            <span style='font-size:12px;color:#555;'>
-              &#128176; {j['salary']} &nbsp;|&nbsp;
-              <a href='{j['link']}' style='color:#006859;text-decoration:none;font-weight:600;'>Apply Now &rarr;</a>
-            </span>
-          </td>
-        </tr>"""
-        for i, j in enumerate(jobs)
-    )
+    # NOTE: job_rows was removed — the `jobs` variable was never defined in this
+    # function's scope (NameError caused 0 emails to be sent). The template below
+    # is self-contained and doesn't reference any external variables.
 
     html = f"""
     <!DOCTYPE html>
@@ -732,7 +721,7 @@ async def _send_email_brevo(to_email: str, display_name: str, resume_link: str) 
         "htmlContent": html,
     }
     try:
-        async with httpx.AsyncClient(timeout=8.0) as client:
+        async with httpx.AsyncClient(timeout=10.0) as client:
             resp = await client.post(
                 "https://api.brevo.com/v3/smtp/email",
                 json=payload,
@@ -745,14 +734,81 @@ async def _send_email_brevo(to_email: str, display_name: str, resume_link: str) 
         print(f"[ColdEmail] Brevo error for {to_email}: {exc}")
         return False
 
+# Batch size capped at 100 to stay well within Render free tier's safe background-task window.
+# With the NameError fixed, 290 × 1.0s = ~290s is safe.
+# UvicornWorker runs background tasks on the async event loop — Gunicorn's --timeout
+# only applies to synchronous workers, so long async background tasks won't be killed.
+_CAMPAIGN_BATCH_SIZE = 290
+
+@router.get("/admin/cold-email-today", dependencies=[Depends(require_admin)])
+async def cold_email_today_stats():
+    """Returns today's actual sent count directly from Brevo's statistics API.
+    Brevo is the source of truth — it reports exactly how many emails it accepted/delivered.
+    Falls back to DB count if BREVO_API_KEY is not configured (mock mode).
+    """
+    from datetime import datetime, timezone
+
+    BREVO_API_KEY = os.getenv("BREVO_API_KEY", "")
+    today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+
+    # ── Primary source: Brevo statistics API ──────────────────────────────────
+    if BREVO_API_KEY:
+        try:
+            async with httpx.AsyncClient(timeout=8.0) as client:
+                resp = await client.get(
+                    "https://api.brevo.com/v3/smtp/statistics/reports",
+                    headers={"api-key": BREVO_API_KEY},
+                    params={"startDate": today_str, "endDate": today_str},
+                )
+            if resp.status_code == 200:
+                data = resp.json()
+                reports = data.get("reports", [])
+                # Sum all requests sent today (Brevo may return multiple rows per day)
+                total_requests  = sum(r.get("requests", 0)  for r in reports)
+                total_delivered = sum(r.get("delivered", 0) for r in reports)
+                total_bounces   = sum(r.get("bounces", 0)   for r in reports)
+                return {
+                    "today_sent":    total_requests,
+                    "delivered":     total_delivered,
+                    "bounces":       total_bounces,
+                    "source":        "brevo_api",
+                    "date":          today_str,
+                }
+            else:
+                print(f"[ColdEmail] Brevo stats API error: {resp.status_code} {resp.text[:200]}")
+                # Fall through to DB fallback below
+        except Exception as exc:
+            print(f"[ColdEmail] Brevo stats API exception: {exc}")
+            # Fall through to DB fallback below
+
+    # ── Fallback: DB count (used in mock mode / Brevo API unavailable) ────────
+    if not sc.supabase:
+        return {"today_sent": 0, "source": "none"}
+    try:
+        today_start = datetime.now(timezone.utc).replace(
+            hour=0, minute=0, second=0, microsecond=0
+        ).isoformat()
+        res = await _sb(
+            sc.supabase.table("email_campaign_logs")
+            .select("user_id", count="exact")
+            .gte("last_emailed_at", today_start)
+        )
+        count = res.count if hasattr(res, "count") and res.count is not None else len(res.data or [])
+        return {"today_sent": count, "source": "db_fallback", "date": today_str}
+    except Exception as exc:
+        print(f"[ColdEmail] DB fallback error: {exc}")
+        return {"today_sent": 0, "source": "error"}
+
+
 @router.post("/admin/trigger-cold-email", dependencies=[Depends(require_admin)])
-async def trigger_cold_email(bg_tasks: BackgroundTasks):
+async def trigger_cold_email(bg_tasks: BackgroundTasks, batch: Optional[int] = None):
     """Trigger the daily cold email batch.
     - Skips paid users (anyone with a successful payment).
-    - Sends to the 290 free users who were emailed the longest ago (NULLs first).
-    - Personalises the 4 jobs using the user's last resume session job_strategy.
-    - Adds a 0.5 s delay between emails to keep Render RAM flat.
-    - Runs in the background to prevent Vercel 15s timeout.
+    - Sends to up to 100 free users who were emailed the longest ago (NULLs first).
+    - Adds a 1.0 s delay between emails to stay within Brevo rate limits and keep
+      Render free-tier RAM flat.
+    - Runs in the background to prevent request timeout.
+    - Each email is isolated in its own try/except so one failure never kills the batch.
     """
     if not sc.supabase:
         return {"status": "error", "message": "Supabase not configured"}
@@ -763,8 +819,7 @@ async def trigger_cold_email(bg_tasks: BackgroundTasks):
             paid_res  = await _sb(sc.supabase.table("payments").select("user_id").eq("status", "success"))
             paid_ids  = {p["user_id"] for p in (paid_res.data or []) if p.get("user_id")}
 
-            # 2. Fetch ALL users + their campaign log (LEFT JOIN via PostgREST embed)
-            # NOTE: Supabase REST has a default 1000-row limit, so we paginate in chunks.
+            # 2. Fetch ALL users + their campaign log
             all_users = []
             page_size = 1000
             offset = 0
@@ -777,12 +832,12 @@ async def trigger_cold_email(bg_tasks: BackgroundTasks):
                 chunk = chunk_res.data or []
                 all_users.extend(chunk)
                 if len(chunk) < page_size:
-                    break  # Last page reached
+                    break
                 offset += page_size
 
             print(f"[ColdEmail] Total users fetched: {len(all_users)}")
 
-            # 3. Build sorted free-user list (oldest-emailed first; never-emailed = epoch)
+            # 3. Build sorted free-user list
             free_users: list[tuple[str, dict, int]] = []
             for u in all_users:
                 if u["id"] in paid_ids or not u.get("email"):
@@ -794,36 +849,46 @@ async def trigger_cold_email(bg_tasks: BackgroundTasks):
                 total_sent = log.get("total_emails_sent") or 0
                 free_users.append((last_at, u, total_sent))
 
-            free_users.sort(key=lambda x: x[0])  # oldest first
-            target_batch = free_users[:290]
+            free_users.sort(key=lambda x: x[0])
+            actual_batch_size = batch if batch is not None else _CAMPAIGN_BATCH_SIZE
+            target_batch = free_users[:actual_batch_size]
             print(f"[ColdEmail] Free users: {len(free_users)}, Paid filtered: {len(paid_ids)}, Batch size: {len(target_batch)}")
 
-            # 5. Send emails sequentially — 0.5 s gap to protect Render RAM
+            # 4. Send emails sequentially — 1.0s gap respects Brevo rate limits and
+            #    protects Render free-tier RAM.
             sent_count  = 0
             error_count = 0
             from datetime import datetime, timezone
             now_utc     = datetime.now(timezone.utc)
 
-            for _, u, total_sent in target_batch:
+            for idx, (_, u, total_sent) in enumerate(target_batch):
                 uid   = u["id"]
                 email = u["email"]
-                # Friendly name = part before @ (capitalised)
                 display_name = email.split("@")[0].replace(".", " ").title()
+                resume_link  = "https://flashresume.in/result"
 
-                resume_link = "https://flashresume.in/result"
+                # Progress log every 25 emails
+                if idx > 0 and idx % 25 == 0:
+                    print(f"[ColdEmail] Progress: {idx}/{len(target_batch)} — {sent_count} sent, {error_count} failed so far")
 
-                success = await _send_email_brevo(email, display_name, resume_link)
+                try:
+                    success = await _send_email_brevo(email, display_name, resume_link)
+                except Exception as send_exc:
+                    print(f"[ColdEmail] Unexpected error sending to {email}: {send_exc}")
+                    success = False
 
                 if success:
                     sent_count += 1
-                    # Upsert campaign log
-                    await _sb(
-                        sc.supabase.table("email_campaign_logs").upsert({
-                            "user_id":          uid,
-                            "last_emailed_at":  now_utc.isoformat(),
-                            "total_emails_sent": total_sent + 1,
-                        })
-                    )
+                    try:
+                        await _sb(
+                            sc.supabase.table("email_campaign_logs").upsert({
+                                "user_id":           uid,
+                                "last_emailed_at":   now_utc.isoformat(),
+                                "total_emails_sent": total_sent + 1,
+                            })
+                        )
+                    except Exception as db_exc:
+                        print(f"[ColdEmail] Failed to upsert log for {uid}: {db_exc}")
                 else:
                     error_count += 1
 

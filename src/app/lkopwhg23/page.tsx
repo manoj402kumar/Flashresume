@@ -144,6 +144,11 @@ export default function AdminPage() {
   const [emailResult, setEmailResult] = useState<{
     sent_count: number; error_count: number; target_count: number; free_total: number;
   } | null>(null);
+  // Today's email stats — sourced from Brevo API (source of truth), resets each day
+  const [emailStats, setEmailStats] = useState<{
+    today_sent: number; delivered: number; bounces: number; source: string;
+  } | null>(null);
+  const [batchCount, setBatchCount] = useState(0);
 
   // Live clock
   useEffect(() => {
@@ -205,6 +210,24 @@ export default function AdminPage() {
     fetchStats();
   }, []);
 
+  // Fetch today's accurate sent count from Brevo API (source of truth)
+  const fetchTodaySent = async () => {
+    try {
+      const res = await fetch("/api/admin-proxy/cold-email-today");
+      const json = await res.json();
+      setEmailStats({
+        today_sent: json.today_sent ?? 0,
+        delivered:  json.delivered  ?? 0,
+        bounces:    json.bounces    ?? 0,
+        source:     json.source     ?? "unknown",
+      });
+    } catch { /* ignore */ }
+  };
+
+  useEffect(() => {
+    fetchTodaySent();
+  }, []);
+
   // Intersection observer for active section highlight
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -236,6 +259,7 @@ export default function AdminPage() {
       if (json.status === "ok") {
         setEmailResult(json);
         setEmailStatus("done");
+        setBatchCount(prev => prev + 1);
       } else {
         setEmailStatus("error");
       }
@@ -329,20 +353,68 @@ export default function AdminPage() {
           <section id="cold-email" ref={setRef("cold-email")}>
             <SectionTitle
               title="Cold Email Campaign"
-              subtitle="Send personalised job-matching emails to free users (max 290/day via Brevo)"
+              subtitle="Send cold emails to free users in batches of 290. Trigger multiple times to reach more users."
             />
             <div className="bg-white rounded-2xl border border-[#eff1f2] p-8 max-w-xl">
-              <div className="flex items-start gap-4 mb-6">
-                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#006859] to-[#12f8d7] flex items-center justify-center shrink-0">
-                  <Send className="w-5 h-5 text-white" />
-                </div>
+
+              {/* Today's Sent Counter — DB-backed, resets each day */}
+              <div className="flex items-center justify-between mb-6 p-4 rounded-xl bg-[#f8fffe] border border-[#006859]/15">
                 <div>
-                  <h3 className="font-bold text-[#2c2f30] text-base">Daily Email Trigger</h3>
-                  <p className="text-sm text-[#595c5d] mt-1">
-                    Fetches the 290 free users emailed <em>longest ago</em>, looks up each user&apos;s
-                    latest AI resume generation, extracts their perfectly matched &quot;Strong&quot; job strategy query, 
-                    generates a highly targeted LinkedIn job link with a realistic salary, and sends via Brevo using 
-                    <code className="text-xs bg-[#eff1f2] px-1 rounded">flashresume.in@gmail.com</code>.
+                  <div className="flex items-center gap-2 mb-0.5">
+                    <p className="text-xs font-bold text-[#595c5d] uppercase tracking-wider">Emails Sent Today</p>
+                    {emailStats && (
+                      <span className={`text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded-full ${
+                        emailStats.source === "brevo_api"
+                          ? "bg-[#006859]/10 text-[#006859]"
+                          : "bg-amber-100 text-amber-700"
+                      }`}>
+                        {emailStats.source === "brevo_api" ? "✓ Brevo" : "DB fallback"}
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex items-baseline gap-2">
+                    {emailStats === null ? (
+                      <Loader2 className="w-5 h-5 animate-spin text-[#006859]" />
+                    ) : (
+                      <span className="text-3xl font-black text-[#006859]">{emailStats.today_sent.toLocaleString()}</span>
+                    )}
+                    {batchCount > 0 && (
+                      <span className="text-xs font-bold text-[#595c5d]/60">{batchCount} batch{batchCount > 1 ? "es" : ""} triggered</span>
+                    )}
+                  </div>
+                  {emailStats && emailStats.source === "brevo_api" && (
+                    <div className="flex items-center gap-3 mt-1">
+                      <span className="text-[10px] text-emerald-600 font-bold">✓ {emailStats.delivered.toLocaleString()} delivered</span>
+                      {emailStats.bounces > 0 && (
+                        <span className="text-[10px] text-red-400 font-bold">✗ {emailStats.bounces} bounced</span>
+                      )}
+                    </div>
+                  )}
+                  <p className="text-[10px] text-[#595c5d]/40 mt-0.5">Resets at midnight UTC</p>
+                </div>
+                <button
+                  onClick={fetchTodaySent}
+                  className="text-[#006859] hover:bg-[#006859]/10 p-2 rounded-lg transition-colors"
+                  title="Refresh count"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
+                    <path d="M21 3v5h-5"/>
+                    <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
+                    <path d="M8 16H3v5"/>
+                  </svg>
+                </button>
+              </div>
+
+              <div className="flex items-start gap-4 mb-5">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#006859] to-[#12f8d7] flex items-center justify-center shrink-0">
+                  <Send className="w-4 h-4 text-white" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-bold text-[#2c2f30] text-sm">Daily Email Trigger</h3>
+                  <p className="text-sm text-[#595c5d] mt-0.5">
+                    Picks the 290 free users emailed <em>longest ago</em> and queues them via Brevo.
+                    Each trigger = 1 batch of 290. Trigger again to send the next 290.
                   </p>
                 </div>
               </div>
@@ -358,9 +430,11 @@ export default function AdminPage() {
                 }`}
               >
                 {emailStatus === "sending" ? (
-                  <><Loader2 className="w-4 h-4 animate-spin" /> Sending batch… (this may take ~2.5 min)</>
+                  <><Loader2 className="w-4 h-4 animate-spin" /> Queuing batch… takes ~2s to confirm</>
+                ) : batchCount === 0 ? (
+                  <><Send className="w-4 h-4" /> Send Cold Emails — Batch 1 (290 users)</>
                 ) : (
-                  <><Send className="w-4 h-4" /> Send Daily Cold Emails (290)</>
+                  <><Send className="w-4 h-4" /> Send Next Batch (290 more users)</>
                 )}
               </button>
 
@@ -368,15 +442,15 @@ export default function AdminPage() {
                 <motion.div
                   initial={{ opacity: 0, y: 6 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="mt-5 p-4 rounded-xl bg-emerald-50 border border-emerald-200"
+                  className="mt-4 p-4 rounded-xl bg-emerald-50 border border-emerald-200"
                 >
-                  <div className="flex items-center gap-2 mb-2">
-                    <CheckCircle2 className="w-5 h-5 text-emerald-600" />
-                    <span className="font-bold text-emerald-700 text-sm">Campaign launched in background!</span>
+                  <div className="flex items-center gap-2 mb-1">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                    <span className="font-bold text-emerald-700 text-sm">Batch {batchCount} queued!</span>
                   </div>
                   <p className="text-sm text-emerald-700">
-                    Up to <strong>{emailResult.target_count}</strong> emails are now being sent in the background.
-                    Check your <strong>Brevo dashboard</strong> or <strong>Render logs</strong> to track delivery progress.
+                    <strong>{emailResult.target_count}</strong> emails are being sent in the background.
+                    Hit the <strong>↻ refresh button</strong> above to check the latest count.
                   </p>
                 </motion.div>
               )}
@@ -385,7 +459,7 @@ export default function AdminPage() {
                 <motion.div
                   initial={{ opacity: 0, y: 6 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="mt-5 p-4 rounded-xl bg-red-50 border border-red-200 flex items-center gap-2"
+                  className="mt-4 p-4 rounded-xl bg-red-50 border border-red-200 flex items-center gap-2"
                 >
                   <AlertCircle className="w-5 h-5 text-red-500 shrink-0" />
                   <p className="text-sm text-red-700 font-medium">Failed to trigger campaign. Check backend logs.</p>
@@ -393,8 +467,7 @@ export default function AdminPage() {
               )}
 
               <p className="mt-5 text-xs text-[#595c5d]/70">
-                ⚠️ Make sure <code className="bg-[#eff1f2] px-1 rounded">BREVO_API_KEY</code> is set in the backend
-                <code className="bg-[#eff1f2] px-1 rounded">.env</code> before sending real emails.
+                ⚠️ Make sure <code className="bg-[#eff1f2] px-1 rounded">BREVO_API_KEY</code> is set in Render env vars.
                 Without it the endpoint runs in mock mode (no emails sent).
               </p>
             </div>

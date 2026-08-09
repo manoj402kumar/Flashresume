@@ -3,5 +3,19 @@
     "deploymentEnabled": {
       "main": true
     }
-  }
+  },
+  "crons": [
+    {
+      "path": "/api/cron/cold-email?batch=150",
+      "schedule": "30 22 * * *"
+    },
+    {
+      "path": "/api/cron/cold-email?batch=150",
+      "schedule": "30 12 * * *"
+    },
+    {
+      "path": "/api/cron/cold-email?batch=300",
+      "schedule": "30 13 * * *"
+    }
+  ]
 }
