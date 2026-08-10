@@ -5,7 +5,7 @@ import { motion } from "motion/react";
 import {
   LayoutDashboard, Users, IndianRupee, Download,
   Cpu, Filter, Star, Zap, ExternalLink, Menu, X,
-  Server, Clock, Send, Loader2, CheckCircle2, AlertCircle,
+  Server, Clock, Send, Loader2,
 } from "lucide-react";
 import KPICards from "./components/KPICards";
 import LLMPanel from "./components/LLMPanel";
@@ -140,15 +140,11 @@ export default function AdminPage() {
   const sectionRefs = useRef<Record<string, HTMLElement | null>>({});
 
   // Cold Email Campaign state
-  const [emailStatus, setEmailStatus] = useState<"idle" | "sending" | "done" | "error">("idle");
-  const [emailResult, setEmailResult] = useState<{
-    sent_count: number; error_count: number; target_count: number; free_total: number;
-  } | null>(null);
   // Today's email stats — sourced from Brevo API (source of truth), resets each day
   const [emailStats, setEmailStats] = useState<{
     today_sent: number; delivered: number; bounces: number; source: string;
   } | null>(null);
-  const [batchCount, setBatchCount] = useState(0);
+
 
   // Live clock
   useEffect(() => {
@@ -250,23 +246,6 @@ export default function AdminPage() {
     sectionRefs.current[id] = el;
   };
 
-  const triggerColdEmail = async () => {
-    setEmailStatus("sending");
-    setEmailResult(null);
-    try {
-      const res = await fetch("/api/admin-proxy/trigger-cold-email", { method: "POST" });
-      const json = await res.json();
-      if (json.status === "ok") {
-        setEmailResult(json);
-        setEmailStatus("done");
-        setBatchCount(prev => prev + 1);
-      } else {
-        setEmailStatus("error");
-      }
-    } catch {
-      setEmailStatus("error");
-    }
-  };
 
   return (
     <div className="min-h-screen bg-[#f5f6f7] font-sans flex">
@@ -353,7 +332,7 @@ export default function AdminPage() {
           <section id="cold-email" ref={setRef("cold-email")}>
             <SectionTitle
               title="Cold Email Campaign"
-              subtitle="Send cold emails to free users in batches of 290. Trigger multiple times to reach more users."
+              subtitle="Daily cold emails sent to free users via automated Vercel CRON jobs."
             />
             <div className="bg-white rounded-2xl border border-[#eff1f2] p-8 max-w-xl">
 
@@ -377,9 +356,6 @@ export default function AdminPage() {
                       <Loader2 className="w-5 h-5 animate-spin text-[#006859]" />
                     ) : (
                       <span className="text-3xl font-black text-[#006859]">{emailStats.today_sent.toLocaleString()}</span>
-                    )}
-                    {batchCount > 0 && (
-                      <span className="text-xs font-bold text-[#595c5d]/60">{batchCount} batch{batchCount > 1 ? "es" : ""} triggered</span>
                     )}
                   </div>
                   {emailStats && emailStats.source === "brevo_api" && (
@@ -406,65 +382,18 @@ export default function AdminPage() {
                 </button>
               </div>
 
-              <div className="flex items-start gap-4 mb-5">
+              <div className="flex items-start gap-4 mb-2">
                 <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#006859] to-[#12f8d7] flex items-center justify-center shrink-0">
                   <Send className="w-4 h-4 text-white" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="font-bold text-[#2c2f30] text-sm">Daily Email Trigger</h3>
+                  <h3 className="font-bold text-[#2c2f30] text-sm">Automated Schedule</h3>
                   <p className="text-sm text-[#595c5d] mt-0.5">
-                    Picks the 290 free users emailed <em>longest ago</em> and queues them via Brevo.
-                    Each trigger = 1 batch of 290. Trigger again to send the next 290.
+                    Campaign runs automatically via CRON at <b>4:00 AM</b>, <b>6:00 PM</b>, and <b>7:00 PM (IST)</b>.
+                    Picks the oldest free users and queues them via Brevo.
                   </p>
                 </div>
               </div>
-
-              <button
-                id="cold-email-trigger-btn"
-                onClick={triggerColdEmail}
-                disabled={emailStatus === "sending"}
-                className={`w-full flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-bold text-sm transition-all ${
-                  emailStatus === "sending"
-                    ? "bg-[#eff1f2] text-[#595c5d] cursor-not-allowed"
-                    : "bg-gradient-to-r from-[#006859] to-[#0d9e84] text-white hover:shadow-lg hover:shadow-[#006859]/30 hover:scale-[1.01]"
-                }`}
-              >
-                {emailStatus === "sending" ? (
-                  <><Loader2 className="w-4 h-4 animate-spin" /> Queuing batch… takes ~2s to confirm</>
-                ) : batchCount === 0 ? (
-                  <><Send className="w-4 h-4" /> Send Cold Emails — Batch 1 (290 users)</>
-                ) : (
-                  <><Send className="w-4 h-4" /> Send Next Batch (290 more users)</>
-                )}
-              </button>
-
-              {emailStatus === "done" && emailResult && (
-                <motion.div
-                  initial={{ opacity: 0, y: 6 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="mt-4 p-4 rounded-xl bg-emerald-50 border border-emerald-200"
-                >
-                  <div className="flex items-center gap-2 mb-1">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                    <span className="font-bold text-emerald-700 text-sm">Batch {batchCount} queued!</span>
-                  </div>
-                  <p className="text-sm text-emerald-700">
-                    <strong>{emailResult.target_count}</strong> emails are being sent in the background.
-                    Hit the <strong>↻ refresh button</strong> above to check the latest count.
-                  </p>
-                </motion.div>
-              )}
-
-              {emailStatus === "error" && (
-                <motion.div
-                  initial={{ opacity: 0, y: 6 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="mt-4 p-4 rounded-xl bg-red-50 border border-red-200 flex items-center gap-2"
-                >
-                  <AlertCircle className="w-5 h-5 text-red-500 shrink-0" />
-                  <p className="text-sm text-red-700 font-medium">Failed to trigger campaign. Check backend logs.</p>
-                </motion.div>
-              )}
 
               <p className="mt-5 text-xs text-[#595c5d]/70">
                 ⚠️ Make sure <code className="bg-[#eff1f2] px-1 rounded">BREVO_API_KEY</code> is set in Render env vars.
