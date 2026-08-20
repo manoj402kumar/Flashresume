@@ -67,8 +67,8 @@ const PLAN_BULK_OFFER = {
 const PLAN_STANDARD = {
   id: "regular",
   name: "Standard Plan",
-  price: 599,
-  priceDisplay: "₹599",
+  price: 699,
+  priceDisplay: "₹699",
   period: "/2 Months",
   description: "500 Credits (50 Resumes)",
   icon: <Crown className="w-5 h-5 text-amber-400" />,
@@ -867,8 +867,8 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
                       </div>
                     )}
 
-                    {/* 3rd card: Bulk Offer */}
-                    {[PLAN_BULK_OFFER].map((plan) => {
+                    {/* 3rd card: Standard Plan */}
+                    {[PLAN_STANDARD].map((plan) => {
                       const isSelected = selectedPlan === plan.id;
                       return (
                         <React.Fragment key={plan.id}>
@@ -890,12 +890,7 @@ export default function PricingPopup({ isOpen, onClose, onSuccess, initialPlan, 
                                 <p className={`text-[11px] md:mb-2 ${isSelected ? "text-white/90" : "text-on-surface-variant"}`}>{plan.description}</p>
                               </div>
                               <div className="flex flex-col text-right md:text-center md:mb-1">
-                                {plan.id === "bulk_offer" && (
-                                  <div className="flex items-center justify-end md:justify-center gap-1.5 mb-0.5">
-                                    <p className={`text-[11px] line-through leading-none ${isSelected ? "text-white/55" : "text-on-surface-variant opacity-60"}`}>₹1,500</p>
-                                    <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-md leading-none tracking-wide ${isSelected ? "bg-white/25 text-white border border-white/30" : "bg-primary/15 text-primary border border-primary/40"}`}>60% OFF</span>
-                                  </div>
-                                )}
+
                                 <p className="font-black text-xl md:text-3xl">{plan.priceDisplay}</p>
                                 <p className={`text-[10px] md:text-[11px] font-medium mt-0.5 ${isSelected ? "text-white/90" : "text-on-surface-variant"}`}>{plan.period}</p>
                               </div>
