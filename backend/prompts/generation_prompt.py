@@ -22,17 +22,6 @@ INPUT LABELS:
 - EXTRACTED_LINKS: URLs pre-extracted from PDF annotation layer (see bottom). Use for heading and project link_href fields.
 
 
-❗ JOB STRATEGY RULES (read this BEFORE the optimization algorithm below):
-The "job_strategy" JSON field must be computed from RESUME_TEXT alone. Read RESUME_TEXT now and mentally identify the candidate's actual tech skills, experience level, and project domains.
-- 🚨 CRITICAL: IGNORE JOB_DESCRIPTION COMPLETELY FOR THIS FIELD. Do NOT suggest roles from the JD.
-- Determine 3-5 job roles that best match the candidate's actual background.
-- The goal is to suggest roles where their original resume can easily get shortlisted.
-- Base this ONLY on skills, experience, projects, and education found in RESUME_TEXT.
-- For each role output: role name, match level ("Strong" / "Good" / "Moderate"), and exactly 2 ready-to-use search queries.
-- The FIRST search query MUST be a direct LinkedIn posts search URL. It MUST include BOTH the role AND the candidate's experience level derived from their resume (e.g. "intern", "fresher", "1 year experience", "2 years experience", "junior", "senior"). Format example: "https://www.linkedin.com/search/results/content/?keywords=React+Developer+intern+hiring" or "https://www.linkedin.com/search/results/content/?keywords=Java+Developer+2+years+experience+hiring". Use URL-encoded spaces (%20 or +). The experience level keyword in the URL MUST reflect the actual level from RESUME_TEXT — do NOT use a generic keyword.
-- The SECOND search query MUST be a standard Google search string including: role, key tech stack, experience level (intern/fresher/junior/senior derived from RESUME_TEXT), location (Hyderabad or Bengaluru). Location is MANDATORY.
-- Output as array of 3-5 objects.
-- If the candidate is a fresher, new graduate, or has no prior full-time work experience (projects and internships do NOT count as experience), suggest entry-level / intern roles and use "intern" or "fresher" as the experience keyword in the LinkedIn URL and google search query.
 
 KEYWORD DEFINITIONS:
 - Tech Stack Keywords: Languages (Java, Python, C++), Frameworks (Angular, Spring Boot, Django, Express.js, Node.js), Libraries (React, NumPy, Pandas), Databases (MongoDB, PostgreSQL), Cloud (AWS, Azure), Dev Tools (Docker, Kubernetes).
@@ -122,7 +111,7 @@ REMOVE frameworks from a completely different ecosystem:
 - JD Python/Django → remove Spring Boot, Hibernate, Express.js
 - JD Node.js/Express → remove Django, Spring Boot, Laravel
 - JD React → remove Angular or Vue (keep only JD one)
-Log every removal in "changes". Max 5.
+Max 5 total skills per field.
 
 DATABASES: JD databases first → append resume databases → max 5.
 CLOUD & DEV TOOLS (combined field "cloud_and_dev_tools"): JD cloud services first → JD developer tools next → append resume cloud → append resume dev tools → trim to max 5 most JD-relevant.
@@ -141,19 +130,6 @@ Step 6: Certifications & Achievements
 RULES:
 1. Return ONLY valid JSON. No markdown, no **bold**, no *italics*, no # headers inside values. Plain text only.
 2. NEVER output null for string fields (degree, company, job_title, etc.). Use empty string "" if missing.
-3. "changes" field: list EVERY modification — "Enhanced [section] bullet X: [old] → [new]", "Injected 'keyword' into Project X bullet Y", "Added X to developer_tools", "Removed Django — not relevant to Java/Spring Boot JD", etc.
-4. "ai_suggestions" field: 5-8 honest, personalized, actionable career tips based on THIS candidate's gaps and JD requirements.
-   - Be specific — mention actual JD tech stack and their specific gaps, not generic advice.
-   - FIRST tip (always, no exceptions): "For campus placements, just focus on DSA, OOPs, SQL, and 2 strong projects. That's it."
-   - Always include: "Reach out to HRs, Talent Acquisition, Lead developers for referrals for more chances to get shortlisted."
-   - Always include DSA tip: "Solve top interview 150 DSA problems on LeetCode focusing on Arrays, Strings, Trees, DP, and Graphs. Aim for 1700+ contest rating to clear most coding interviews."
-   - Always include: "Conribute to opensource on github in x tech stack" where x is jd core tech s
-   - Always include: "Join job posting communities on whatsapp, telegram or discord"
-   - Always include: "Turn on job alerts on LinkedIn, Indeed, or Naukri for your target roles — so that you never miss new postings."
-   - If approved project was suggested → include: "Build the [project title] project using [tech stack] — this directly fills your [JD tech] gap and gives you something concrete to show recruiters."
-   - Suggest 1 specific certfication relevant to the JD tech stack.
-   - Address user as "you". Output as flat array of plain strings. Only give suggestions when genuinely needed.
-5. "job_strategy" field: Follow the JOB STRATEGY RULES defined at the top of this prompt.
 
 
 MANDATORY SELF-VALIDATION (run before writing JSON output):
@@ -184,16 +160,6 @@ OUTPUT FORMAT:
     "portfolio_url": "Portfolio",
     "portfolio_url_href": "refer ALL_URLS"
   }},
-  "job_strategy": [
-    {{
-      "role": "<Job Role Title e.g. Backend Developer (Java/Spring Boot)>",
-      "match": "<Strong | Good | Moderate>",
-      "search_queries": [
-        "<Ready-to-use Google search sentence 1 for this role>",
-        "<Ready-to-use Google search sentence 2 for this role>"
-      ]
-    }}
-  ],
   "summary": "follow above rules",
   "education": [
     {{
@@ -232,19 +198,6 @@ OUTPUT FORMAT:
   "certifications_and_achievements": [
     "AWS Certified Cloud Practitioner (2024)",
     "Solved 300+ problems on LeetCode (Rating: 1650)"
-  ],
-  "ai_suggestions": [
-    "<Personalized suggestion 1>",
-    "<Personalized suggestion 2>",
-    "<Personalized suggestion 3>",
-    "<Personalized suggestion 4>",
-    "<Personalized suggestion 5>"
-  ],
-  "changes": [
-    "Rewrote Summary: [old] → [new]",
-    "Enhanced Project bullet 1: 'Built app' → 'Developed scalable food delivery platform using React and Node.js serving 500+ users'",
-    "Added Docker to cloud_and_dev_tools",
-    "Removed non-relevant skill: Basic Excel"
   ],
   "ats_score_before": {ats_score_before},
   "ats_score_after": 0

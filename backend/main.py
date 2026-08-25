@@ -10,7 +10,7 @@ from pydantic import BaseModel
 # Load environment variables before importing routers that depend on them
 load_dotenv()
 
-from routers import parse, analyze, generate, payments, admin, sessions, feedback, affiliate
+from routers import parse, analyze, generate, payments, admin, sessions, feedback, affiliate, insights
 import supabase_client as sc
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
@@ -64,6 +64,7 @@ app.include_router(admin.router, prefix="/api")
 app.include_router(sessions.router, prefix="/api")
 app.include_router(feedback.router, prefix="/api")
 app.include_router(affiliate.router, prefix="/api")
+app.include_router(insights.router, prefix="/api")
 
 ACTIVE_SESSIONS = {}
 peak_record = {"count": -1, "timestamp": None}

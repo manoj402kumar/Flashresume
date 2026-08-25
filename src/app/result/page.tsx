@@ -128,6 +128,16 @@ export default function ResultPage() {
   const accountDropdownRef = useRef<HTMLDivElement>(null);
   const [showTeaserAuthGate, setShowTeaserAuthGate] = useState(false);
 
+  // ── Lazy panel load state — LLM calls on demand ───────────────────────
+  const [jobStrategyLoading, setJobStrategyLoading] = useState(false);
+  const [jobStrategyLoaded, setJobStrategyLoaded] = useState(false);
+  const [aiSuggestionsLoading, setAiSuggestionsLoading] = useState(false);
+  const [aiSuggestionsLoaded, setAiSuggestionsLoaded] = useState(false);
+  const [aiChangesLoading, setAiChangesLoading] = useState(false);
+  const [aiChangesLoaded, setAiChangesLoaded] = useState(false);
+  // Which sub-tab is active inside the AI Analysis panel
+  const [activeInsightTab, setActiveInsightTab] = useState<'job-strategy' | 'ai-suggestions' | 'ai-changes' | null>(null);
+
   // 5-Second Teaser Auth Wall: Allow unauthenticated users to see the result for 5s, then lock it down.
   useEffect(() => {
     let timer: NodeJS.Timeout;
@@ -462,6 +472,18 @@ export default function ResultPage() {
 
       const isNoJd = localStorage.getItem("no_jd_mode") === "true";
       setNoJdMode(isNoJd);
+
+      // Restore lazy panel loaded state if the data is already in cached localStorage
+      if (parsed.job_strategy && Array.isArray(parsed.job_strategy) && parsed.job_strategy.length > 0) {
+        setJobStrategyLoaded(true);
+      }
+      if (parsed.ai_suggestions && Array.isArray(parsed.ai_suggestions) && parsed.ai_suggestions.length > 0) {
+        setAiSuggestionsLoaded(true);
+      }
+      if (parsed.changes && Array.isArray(parsed.changes) && parsed.changes.length > 0) {
+        setAiChangesLoaded(true);
+      }
+
       // JD optimization mode → default to "Edit Form" panel
       // if (!isNoJd) {
       //   setEditMode(false);
@@ -633,6 +655,145 @@ export default function ResultPage() {
       authListener.subscription.unsubscribe();
     };
   }, []);
+
+  // ── Lazy panel fetchers — called on first tab click ──────────────────
+  const fetchJobStrategy = async () => {
+    if (!resume || jobStrategyLoading || jobStrategyLoaded) return;
+    // Already have data (e.g. from old session before this feature)
+    if (resume.job_strategy && resume.job_strategy.length > 0) {
+      setJobStrategyLoaded(true);
+      return;
+    }
+    setJobStrategyLoading(true);
+    try {
+      const resumeText = localStorage.getItem("resume_text") || "";
+      const jobDescription = localStorage.getItem("job_description") || "";
+      const preferredModel = localStorage.getItem("preferred_model") || "";
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+      const { data: { session } } = await supabase.auth.getSession();
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (session?.access_token) headers["Authorization"] = `Bearer ${session.access_token}`;
+      const res = await fetch(`${apiUrl}/api/insights/job-strategy`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          session_id: resume.session_id || "",
+          resume_text: resumeText,
+          job_description: jobDescription,
+          preferred_model: preferredModel,
+        }),
+        signal: AbortSignal.timeout(60000),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.job_strategy) {
+          updateResume({ job_strategy: data.job_strategy }, { immediate: true });
+          setJobStrategyLoaded(true);
+        }
+      } else {
+        console.error("[fetchJobStrategy] Failed:", res.status);
+      }
+    } catch (e) {
+      console.error("[fetchJobStrategy] Error:", e);
+    } finally {
+      setJobStrategyLoading(false);
+    }
+  };
+
+  const fetchAiSuggestions = async () => {
+    if (!resume || aiSuggestionsLoading || aiSuggestionsLoaded) return;
+    // Already have data
+    if (resume.ai_suggestions && resume.ai_suggestions.length > 0) {
+      setAiSuggestionsLoaded(true);
+      return;
+    }
+    setAiSuggestionsLoading(true);
+    try {
+      const resumeText = localStorage.getItem("resume_text") || "";
+      const jobDescription = localStorage.getItem("job_description") || "";
+      const preferredModel = localStorage.getItem("preferred_model") || "";
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+      const { data: { session } } = await supabase.auth.getSession();
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (session?.access_token) headers["Authorization"] = `Bearer ${session.access_token}`;
+      const res = await fetch(`${apiUrl}/api/insights/ai-suggestions`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          session_id: resume.session_id || "",
+          resume_text: resumeText,
+          job_description: jobDescription,
+          preferred_model: preferredModel,
+        }),
+        signal: AbortSignal.timeout(60000),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.ai_suggestions) {
+          updateResume({ ai_suggestions: data.ai_suggestions }, { immediate: true });
+          setAiSuggestionsLoaded(true);
+        }
+      } else {
+        console.error("[fetchAiSuggestions] Failed:", res.status);
+      }
+    } catch (e) {
+      console.error("[fetchAiSuggestions] Error:", e);
+    } finally {
+      setAiSuggestionsLoading(false);
+    }
+  };
+
+  const fetchAiChanges = async () => {
+    if (!resume || aiChangesLoading || aiChangesLoaded) return;
+    // Already have data (old session or format-only cached)
+    if (resume.changes && resume.changes.length > 0) {
+      setAiChangesLoaded(true);
+      return;
+    }
+    setAiChangesLoading(true);
+    try {
+      const resumeText = localStorage.getItem("resume_text") || "";
+      const jobDescription = localStorage.getItem("job_description") || "";
+      const preferredModel = localStorage.getItem("preferred_model") || "";
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+      const { data: { session } } = await supabase.auth.getSession();
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (session?.access_token) headers["Authorization"] = `Bearer ${session.access_token}`;
+      // Serialize key resume fields for the diff (avoid sending full JSON to save tokens)
+      const optimizedSnapshot = JSON.stringify({
+        summary: resume.summary,
+        experience: resume.experience,
+        projects: resume.projects,
+        technical_skills: resume.technical_skills,
+        certifications_and_achievements: resume.certifications_and_achievements,
+      });
+      const res = await fetch(`${apiUrl}/api/insights/ai-changes`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          session_id: resume.session_id || "",
+          resume_text: resumeText,
+          job_description: jobDescription,
+          preferred_model: preferredModel,
+          optimized_resume_json: optimizedSnapshot,
+        }),
+        signal: AbortSignal.timeout(60000),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.changes) {
+          updateResume({ changes: data.changes }, { immediate: true });
+          setAiChangesLoaded(true);
+        }
+      } else {
+        console.error("[fetchAiChanges] Failed:", res.status);
+      }
+    } catch (e) {
+      console.error("[fetchAiChanges] Error:", e);
+    } finally {
+      setAiChangesLoading(false);
+    }
+  };
 
   const handleStartOver = () => {
     // Only clear resume workflow keys — do NOT clear auth session
@@ -2590,268 +2751,354 @@ export default function ResultPage() {
                   transition={{ duration: 0.3 }}
                   className="w-full max-w-2xl mx-auto space-y-5"
                 >
-                  {/* ── Sub-section Nav Pills ── */}
-                  <div className="flex gap-2 flex-wrap">
-                    {resume.job_strategy && resume.job_strategy.length > 0 && (
-                      <button
-                        type="button"
-                        onClick={() => document.getElementById('ai-analysis-job-strategy')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-amber-500/10 text-amber-600 border border-amber-400/25 hover:bg-amber-500/20 hover:border-amber-400/50 transition-all active:scale-95"
-                      >
-                        💼 Job Strategy
-                      </button>
-                    )}
+                  {/* ── Sub-section Selector Buttons ── */}
+                  <p className="text-center text-sm font-medium text-white/70 tracking-wide">
+                    👇 Click any of below 3 buttons to generate that insight
+                  </p>
+                  <div className="flex gap-2">
                     <button
                       type="button"
-                      onClick={() => document.getElementById('ai-analysis-suggestions')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-[#006859]/10 text-[#006859] border border-[#006859]/25 hover:bg-[#006859]/20 hover:border-[#006859]/50 transition-all active:scale-95"
+                      onClick={() => {
+                        setActiveInsightTab('job-strategy');
+                        fetchJobStrategy();
+                      }}
+                      className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-2xl text-xs font-bold transition-all active:scale-95 border ${activeInsightTab === 'job-strategy'
+                        ? 'bg-amber-500 text-white border-amber-500 shadow-lg shadow-amber-500/30'
+                        : 'bg-amber-500/10 text-amber-600 border-amber-400/25 hover:bg-amber-500/20'
+                        }`}
+                    >
+                      💼 Job Strategy
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setActiveInsightTab('ai-suggestions');
+                        fetchAiSuggestions();
+                      }}
+                      className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-2xl text-xs font-bold transition-all active:scale-95 border ${activeInsightTab === 'ai-suggestions'
+                        ? 'bg-[#006859] text-white border-[#006859] shadow-lg shadow-[#006859]/30'
+                        : 'bg-[#006859]/10 text-[#006859] border-[#006859]/25 hover:bg-[#006859]/20'
+                        }`}
                     >
                       💡 AI Suggestions
                     </button>
                     <button
                       type="button"
-                      onClick={() => document.getElementById('ai-analysis-changes')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-[#12f8d7]/10 text-[#0a9980] border border-[#12f8d7]/25 hover:bg-[#12f8d7]/20 hover:border-[#12f8d7]/50 transition-all active:scale-95"
+                      onClick={() => { setActiveInsightTab('ai-changes'); fetchAiChanges(); }}
+                      className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-2xl text-xs font-bold transition-all active:scale-95 border ${activeInsightTab === 'ai-changes'
+                        ? 'bg-[#0a9980] text-white border-[#0a9980] shadow-lg shadow-[#0a9980]/30'
+                        : 'bg-[#12f8d7]/10 text-[#0a9980] border-[#12f8d7]/25 hover:bg-[#12f8d7]/20'
+                        }`}
                     >
                       ✨ AI Changes
                     </button>
                   </div>
 
-                  {/* ── Job Strategy Card ── (shown first) */}
-                  {resume.job_strategy && resume.job_strategy.length > 0 && (
-                    <div id="ai-analysis-job-strategy" className="rounded-[2rem] overflow-hidden shadow-xl border border-amber-500/20">
-                      {/* Header */}
-                      <div className="bg-gradient-to-r from-amber-600 to-orange-500 px-6 py-4 flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0">
-                          <MapPin className="w-4 h-4 text-white" />
+                  {/* ── Job Strategy Card ── */}
+                  {activeInsightTab === 'job-strategy' && (
+                    <div id="ai-analysis-job-strategy">
+                      {jobStrategyLoading ? (
+                        <div className="rounded-[2rem] border border-amber-500/20 bg-amber-500/5 px-6 py-10 flex flex-col items-center justify-center gap-3">
+                          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-500" />
+                          <p className="text-xs font-bold text-amber-600/70">Generating job strategy…</p>
                         </div>
-                        <div>
-                          <h3 className="text-white font-bold text-base leading-tight">Job Strategy</h3>
-                          <p className="text-white/70 text-xs">Best-fit roles from your original resume + search queries</p>
+                      ) : jobStrategyLoaded && resume.job_strategy && resume.job_strategy.length > 0 ? (
+                        <div className="rounded-[2rem] overflow-hidden shadow-xl border border-amber-500/20">
+                          {/* Header */}
+                          <div className="bg-gradient-to-r from-amber-600 to-orange-500 px-6 py-4 flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0">
+                              <MapPin className="w-4 h-4 text-white" />
+                            </div>
+                            <div>
+                              <h3 className="text-white font-bold text-base leading-tight">Job Strategy</h3>
+                              <p className="text-white/70 text-xs">Best-fit roles from your original resume + search queries</p>
+                            </div>
+                            <span className="ml-auto bg-white/20 text-white text-xs font-bold px-2.5 py-1 rounded-full">
+                              {resume.job_strategy.length} roles
+                            </span>
+                          </div>
+                          {/* Role Cards */}
+                          <div className="bg-surface-container-lowest px-5 py-5 space-y-4">
+                            {resume.job_strategy.map((item, idx) => {
+                              const matchColor =
+                                item.match === "Strong"
+                                  ? "bg-emerald-500/15 text-emerald-600 border-emerald-400/30"
+                                  : item.match === "Good"
+                                    ? "bg-blue-500/15 text-blue-600 border-blue-400/30"
+                                    : "bg-amber-500/15 text-amber-600 border-amber-400/30";
+                              const matchDot =
+                                item.match === "Strong"
+                                  ? "bg-emerald-500"
+                                  : item.match === "Good"
+                                    ? "bg-blue-500"
+                                    : "bg-amber-500";
+                              return (
+                                <motion.div
+                                  key={idx}
+                                  initial={{ opacity: 0, y: 12 }}
+                                  animate={{ opacity: 1, y: 0 }}
+                                  transition={{ delay: 0.08 + idx * 0.07 }}
+                                  className="p-4 rounded-2xl bg-amber-500/5 border border-amber-400/15 hover:bg-amber-500/10 transition-colors"
+                                >
+                                  {/* Role title + match badge */}
+                                  <div className="flex items-center gap-2 mb-3 flex-wrap">
+                                    <div className="w-6 h-6 rounded-full bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center text-white text-[10px] font-black flex-shrink-0">
+                                      {idx + 1}
+                                    </div>
+                                    <p className="font-bold text-sm text-on-background flex-1">{item.role}</p>
+                                    <span className={`inline-flex items-center gap-1 text-[10px] font-black px-2 py-0.5 rounded-full border ${matchColor}`}>
+                                      <span className={`w-1.5 h-1.5 rounded-full ${matchDot}`} />
+                                      {item.match} Match
+                                    </span>
+                                  </div>
+                                  {/* Search Query Pills */}
+                                  <div className="space-y-2">
+                                    <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider flex items-center gap-1">
+                                      <Search className="w-3 h-3" /> Recommended Searches <span className="opacity-70">🔗</span>
+                                    </p>
+                                    {item.search_queries.map((query, qIdx) => {
+                                      const isLocked = credits === 0 && qIdx === 0;
+                                      const isUrl = query.startsWith("http");
+                                      const targetUrl = isUrl ? query : `https://www.google.com/search?q=${encodeURIComponent(query)}`;
+                                      const displayLabel = isUrl && query.includes("linkedin.com") ? "Search Posts on LinkedIn" : query;
+                                      if (isLocked) {
+                                        return (
+                                          <button
+                                            key={qIdx}
+                                            type="button"
+                                            onClick={() => { setPricingTrigger("download"); setShowPricingPopup(true); }}
+                                            className="relative flex items-start gap-2 w-full text-left px-3 py-2 rounded-xl bg-white/60 border border-amber-300/30 overflow-hidden group cursor-pointer"
+                                          >
+                                            <Search className="w-3.5 h-3.5 text-amber-500 flex-shrink-0 mt-0.5 opacity-30" />
+                                            <span className="text-xs text-on-background leading-relaxed flex-1 font-medium blur-sm select-none pointer-events-none truncate">
+                                              {displayLabel}
+                                            </span>
+                                            <div className="absolute inset-0 flex items-center justify-center gap-1.5 bg-amber-50/80 backdrop-blur-[2px] rounded-xl">
+                                              <span className="text-sm">🔒</span>
+                                              <span className="text-xs font-bold text-amber-700">Unlock full strategy</span>
+                                              <span className="text-[10px] font-black bg-amber-500 text-white px-2 py-0.5 rounded-full ml-1">Upgrade</span>
+                                            </div>
+                                          </button>
+                                        );
+                                      }
+                                      return (
+                                        <a
+                                          key={qIdx}
+                                          href={targetUrl}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          className="flex items-start gap-2 w-full text-left px-3 py-2 rounded-xl bg-white/60 border border-amber-300/30 hover:bg-amber-50 hover:border-amber-400/50 transition-all group"
+                                        >
+                                          <Search className="w-3.5 h-3.5 text-amber-500 flex-shrink-0 mt-0.5 group-hover:scale-110 transition-transform" />
+                                          <span className="text-xs text-on-background leading-relaxed flex-1 font-medium break-words">{displayLabel}</span>
+                                          <ExternalLink className="w-3 h-3 text-amber-400 flex-shrink-0 mt-0.5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                        </a>
+                                      );
+                                    })}
+                                  </div>
+                                </motion.div>
+                              );
+                            })}
+                          </div>
                         </div>
-                        <span className="ml-auto bg-white/20 text-white text-xs font-bold px-2.5 py-1 rounded-full">
-                          {resume.job_strategy.length} roles
-                        </span>
-                      </div>
-
-                      {/* Role Cards */}
-                      <div className="bg-surface-container-lowest px-5 py-5 space-y-4">
-                        {resume.job_strategy.map((item, idx) => {
-                          const matchColor =
-                            item.match === "Strong"
-                              ? "bg-emerald-500/15 text-emerald-600 border-emerald-400/30"
-                              : item.match === "Good"
-                                ? "bg-blue-500/15 text-blue-600 border-blue-400/30"
-                                : "bg-amber-500/15 text-amber-600 border-amber-400/30";
-                          const matchDot =
-                            item.match === "Strong"
-                              ? "bg-emerald-500"
-                              : item.match === "Good"
-                                ? "bg-blue-500"
-                                : "bg-amber-500";
-                          return (
-                            <motion.div
-                              key={idx}
-                              initial={{ opacity: 0, y: 12 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              transition={{ delay: 0.08 + idx * 0.07 }}
-                              className="p-4 rounded-2xl bg-amber-500/5 border border-amber-400/15 hover:bg-amber-500/10 transition-colors"
-                            >
-                              {/* Role title + match badge */}
-                              <div className="flex items-center gap-2 mb-3 flex-wrap">
-                                <div className="w-6 h-6 rounded-full bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center text-white text-[10px] font-black flex-shrink-0">
-                                  {idx + 1}
-                                </div>
-                                <p className="font-bold text-sm text-on-background flex-1">{item.role}</p>
-                                <span className={`inline-flex items-center gap-1 text-[10px] font-black px-2 py-0.5 rounded-full border ${matchColor}`}>
-                                  <span className={`w-1.5 h-1.5 rounded-full ${matchDot}`} />
-                                  {item.match} Match
-                                </span>
-                              </div>
-
-                              {/* Search Query Pills */}
-                              <div className="space-y-2">
-                                <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider flex items-center gap-1">
-                                  <Search className="w-3 h-3" /> Recommended Searches <span className="opacity-70">🔗</span>
-                                </p>
-                                {item.search_queries.map((query, qIdx) => {
-                                  const isLocked = credits === 0 && qIdx === 0;
-
-                                  const isUrl = query.startsWith("http");
-                                  const targetUrl = isUrl ? query : `https://www.google.com/search?q=${encodeURIComponent(query)}`;
-                                  const displayLabel = isUrl && query.includes("linkedin.com") ? "Search Posts on LinkedIn" : query;
-
-                                  if (isLocked) {
-                                    return (
-                                      <button
-                                        key={qIdx}
-                                        type="button"
-                                        onClick={() => { setPricingTrigger("download"); setShowPricingPopup(true); }}
-                                        className="relative flex items-start gap-2 w-full text-left px-3 py-2 rounded-xl bg-white/60 border border-amber-300/30 overflow-hidden group cursor-pointer"
-                                      >
-                                        <Search className="w-3.5 h-3.5 text-amber-500 flex-shrink-0 mt-0.5 opacity-30" />
-                                        <span className="text-xs text-on-background leading-relaxed flex-1 font-medium blur-sm select-none pointer-events-none truncate">
-                                          {displayLabel}
-                                        </span>
-                                        <div className="absolute inset-0 flex items-center justify-center gap-1.5 bg-amber-50/80 backdrop-blur-[2px] rounded-xl">
-                                          <span className="text-sm">🔒</span>
-                                          <span className="text-xs font-bold text-amber-700">Unlock full strategy</span>
-                                          <span className="text-[10px] font-black bg-amber-500 text-white px-2 py-0.5 rounded-full ml-1">Upgrade</span>
-                                        </div>
-                                      </button>
-                                    );
-                                  }
-                                  return (
-                                    <a
-                                      key={qIdx}
-                                      href={targetUrl}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="flex items-start gap-2 w-full text-left px-3 py-2 rounded-xl bg-white/60 border border-amber-300/30 hover:bg-amber-50 hover:border-amber-400/50 transition-all group"
-                                    >
-                                      <Search className="w-3.5 h-3.5 text-amber-500 flex-shrink-0 mt-0.5 group-hover:scale-110 transition-transform" />
-                                      <span className="text-xs text-on-background leading-relaxed flex-1 font-medium break-words">{displayLabel}</span>
-                                      <ExternalLink className="w-3 h-3 text-amber-400 flex-shrink-0 mt-0.5 opacity-0 group-hover:opacity-100 transition-opacity" />
-                                    </a>
-                                  );
-                                })}
-                              </div>
-                            </motion.div>
-                          );
-                        })}
-                      </div>
+                      ) : (
+                        /* CTA placeholder — not yet fetched */
+                        <div className="rounded-[2rem] border border-amber-500/20 bg-amber-500/5 px-6 py-8 flex flex-col items-center text-center gap-3">
+                          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center shadow-lg">
+                            <MapPin className="w-6 h-6 text-white" />
+                          </div>
+                          <div>
+                            <h3 className="font-bold text-sm text-on-background">Job Strategy</h3>
+                            <p className="text-xs text-on-surface-variant mt-0.5">Best-fit roles + ready-to-use search queries tailored to your profile</p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={fetchJobStrategy}
+                            className="mt-1 px-5 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-white text-xs font-bold shadow-md hover:opacity-90 active:scale-95 transition-all"
+                          >
+                            Generate 💼 Job Strategy
+                          </button>
+                        </div>
+                      )}
                     </div>
                   )}
 
                   {/* AI Suggestions Card */}
-                  {resume.ai_suggestions && resume.ai_suggestions.length > 0 && (
-                    <div id="ai-analysis-suggestions" className="rounded-[2rem] overflow-hidden shadow-xl border border-[#006859]/15">
-                      {/* Header */}
-                      <div className="bg-gradient-to-r from-[#006859] to-[#0a9980] px-6 py-4 flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0">
-                          <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a2 2 0 0 1-2 2H10a2 2 0 0 1-2-2v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7z" /><line x1="9" y1="21" x2="15" y2="21" />
-                          </svg>
+                  {activeInsightTab === 'ai-suggestions' && (
+                    <div id="ai-analysis-suggestions">
+                      {aiSuggestionsLoading ? (
+                        <div className="rounded-[2rem] border border-[#006859]/15 bg-[#006859]/5 px-6 py-10 flex flex-col items-center justify-center gap-3">
+                          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#006859]" />
+                          <p className="text-xs font-bold text-[#006859]/70">Generating AI suggestions…</p>
                         </div>
-                        <div>
-                          <h3 className="text-white font-bold text-base leading-tight">AI Suggestions</h3>
-                          <p className="text-white/70 text-xs">These tips make you stand among top1% applicants</p>
-                        </div>
-                        <span className="ml-auto bg-white/20 text-white text-xs font-bold px-2.5 py-1 rounded-full">
-                          {resume.ai_suggestions.length}
-                        </span>
-                      </div>
-                      {/* Suggestions List */}
-                      <div className="bg-surface-container-lowest px-6 py-5 space-y-3">
-                        {resume.ai_suggestions.map((tip, idx) => {
-                          const total = resume.ai_suggestions!.length;
-                          const isLocked = credits === 0 && idx >= total - 3;
-
-                          // For the first tip (campus placement), blur only the actionable keywords for 0-credit users
-                          const isCampusTip = idx === 0 && credits === 0;
-                          const splitKey = "focus on ";
-                          const splitIdx = isCampusTip ? tip.toLowerCase().indexOf(splitKey) : -1;
-                          const tipPrefix = splitIdx !== -1 ? tip.slice(0, splitIdx + splitKey.length) : tip;
-                          const tipBlurred = splitIdx !== -1 ? tip.slice(splitIdx + splitKey.length) : null;
-
-                          return (
-                            <motion.div
-                              key={idx}
-                              initial={{ opacity: 0, x: -16 }}
-                              animate={{ opacity: 1, x: 0 }}
-                              transition={{ delay: 0.1 + idx * 0.06 }}
-                              className={`relative flex items-start gap-3 p-3 rounded-xl border transition-colors overflow-hidden ${isLocked
-                                ? "bg-[#006859]/5 border-[#006859]/10 cursor-pointer"
-                                : "bg-[#006859]/5 border-[#006859]/10 hover:bg-[#006859]/10"
-                                }`}
-                              onClick={isLocked ? () => { setPricingTrigger("download"); setShowPricingPopup(true); } : undefined}
-                            >
-                              <div className="w-5 h-5 rounded-full bg-gradient-to-br from-[#006859] to-[#12f8d7] flex items-center justify-center text-white text-[10px] font-black flex-shrink-0 mt-0.5">
-                                {idx + 1}
-                              </div>
-                              {tipBlurred ? (
-                                <p className="text-sm text-on-background leading-relaxed flex-1">
-                                  {tipPrefix}
-                                  <span className="relative inline-block">
-                                    <span
-                                      style={{ filter: "blur(3px)" }}
-                                      className="select-none"
-                                    >{tipBlurred}</span>
-                                    <span
-                                      onClick={() => { setPricingTrigger("download"); setShowPricingPopup(true); }}
-                                      className="absolute inset-0 flex items-center justify-center cursor-pointer"
-                                    >
-                                      <span className="inline-flex items-center gap-1 bg-[#006859] text-white text-[10px] font-black px-2 py-0.5 rounded-full whitespace-nowrap shadow-md">
-                                        🔒 Unlock golden formula
+                      ) : aiSuggestionsLoaded && resume.ai_suggestions && resume.ai_suggestions.length > 0 ? (
+                        <div className="rounded-[2rem] overflow-hidden shadow-xl border border-[#006859]/15">
+                          {/* Header */}
+                          <div className="bg-gradient-to-r from-[#006859] to-[#0a9980] px-6 py-4 flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0">
+                              <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a2 2 0 0 1-2 2H10a2 2 0 0 1-2-2v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7z" /><line x1="9" y1="21" x2="15" y2="21" />
+                              </svg>
+                            </div>
+                            <div>
+                              <h3 className="text-white font-bold text-base leading-tight">AI Suggestions</h3>
+                              <p className="text-white/70 text-xs">These tips make you stand among top1% applicants</p>
+                            </div>
+                            <span className="ml-auto bg-white/20 text-white text-xs font-bold px-2.5 py-1 rounded-full">
+                              {resume.ai_suggestions.length}
+                            </span>
+                          </div>
+                          {/* Suggestions List */}
+                          <div className="bg-surface-container-lowest px-6 py-5 space-y-3">
+                            {resume.ai_suggestions.map((tip, idx) => {
+                              const total = resume.ai_suggestions!.length;
+                              const isLocked = credits === 0 && idx >= total - 3;
+                              const isCampusTip = idx === 0 && credits === 0;
+                              const splitKey = "focus on ";
+                              const splitIdx = isCampusTip ? tip.toLowerCase().indexOf(splitKey) : -1;
+                              const tipPrefix = splitIdx !== -1 ? tip.slice(0, splitIdx + splitKey.length) : tip;
+                              const tipBlurred = splitIdx !== -1 ? tip.slice(splitIdx + splitKey.length) : null;
+                              return (
+                                <motion.div
+                                  key={idx}
+                                  initial={{ opacity: 0, x: -16 }}
+                                  animate={{ opacity: 1, x: 0 }}
+                                  transition={{ delay: 0.1 + idx * 0.06 }}
+                                  className={`relative flex items-start gap-3 p-3 rounded-xl border transition-colors overflow-hidden ${isLocked
+                                    ? "bg-[#006859]/5 border-[#006859]/10 cursor-pointer"
+                                    : "bg-[#006859]/5 border-[#006859]/10 hover:bg-[#006859]/10"
+                                    }`}
+                                  onClick={isLocked ? () => { setPricingTrigger("download"); setShowPricingPopup(true); } : undefined}
+                                >
+                                  <div className="w-5 h-5 rounded-full bg-gradient-to-br from-[#006859] to-[#12f8d7] flex items-center justify-center text-white text-[10px] font-black flex-shrink-0 mt-0.5">
+                                    {idx + 1}
+                                  </div>
+                                  {tipBlurred ? (
+                                    <p className="text-sm text-on-background leading-relaxed flex-1">
+                                      {tipPrefix}
+                                      <span className="relative inline-block">
+                                        <span style={{ filter: "blur(3px)" }} className="select-none">{tipBlurred}</span>
+                                        <span onClick={() => { setPricingTrigger("download"); setShowPricingPopup(true); }} className="absolute inset-0 flex items-center justify-center cursor-pointer">
+                                          <span className="inline-flex items-center gap-1 bg-[#006859] text-white text-[10px] font-black px-2 py-0.5 rounded-full whitespace-nowrap shadow-md">
+                                            🔒 Unlock golden formula
+                                          </span>
+                                        </span>
                                       </span>
-                                    </span>
-                                  </span>
-                                </p>
-                              ) : (
-                                <p className={`text-sm text-on-background leading-relaxed flex-1 ${isLocked ? "blur-sm select-none pointer-events-none" : ""}`}>{tip}</p>
-                              )}
-                              {isLocked && (
-                                <div className="absolute inset-0 flex items-center justify-center gap-1.5 bg-[#e8faf7]/80 backdrop-blur-[2px] rounded-xl">
-                                  <span className="text-sm">🔒</span>
-                                  <span className="text-xs font-bold text-[#006859]">Unlock all tips</span>
-                                  <span className="text-[10px] font-black bg-[#006859] text-white px-2 py-0.5 rounded-full ml-1">Upgrade</span>
-                                </div>
-                              )}
-                            </motion.div>
-                          );
-                        })}
-                      </div>
+                                    </p>
+                                  ) : (
+                                    <p className={`text-sm text-on-background leading-relaxed flex-1 ${isLocked ? "blur-sm select-none pointer-events-none" : ""}`}>{tip}</p>
+                                  )}
+                                  {isLocked && (
+                                    <div className="absolute inset-0 flex items-center justify-center gap-1.5 bg-[#e8faf7]/80 backdrop-blur-[2px] rounded-xl">
+                                      <span className="text-sm">🔒</span>
+                                      <span className="text-xs font-bold text-[#006859]">Unlock all tips</span>
+                                      <span className="text-[10px] font-black bg-[#006859] text-white px-2 py-0.5 rounded-full ml-1">Upgrade</span>
+                                    </div>
+                                  )}
+                                </motion.div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      ) : (
+                        /* CTA placeholder — not yet fetched */
+                        <div className="rounded-[2rem] border border-[#006859]/15 bg-[#006859]/5 px-6 py-8 flex flex-col items-center text-center gap-3">
+                          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#006859] to-[#12f8d7] flex items-center justify-center shadow-lg">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a2 2 0 0 1-2 2H10a2 2 0 0 1-2-2v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7z" /><line x1="9" y1="21" x2="15" y2="21" />
+                            </svg>
+                          </div>
+                          <div>
+                            <h3 className="font-bold text-sm text-on-background">AI Suggestions</h3>
+                            <p className="text-xs text-on-surface-variant mt-0.5">Personalized career tips to help you stand out among the top 1% of applicants</p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={fetchAiSuggestions}
+                            className="mt-1 px-5 py-2 rounded-xl bg-gradient-to-r from-[#006859] to-[#12f8d7] text-white text-xs font-bold shadow-md hover:opacity-90 active:scale-95 transition-all"
+                          >
+                            Generate 💡 AI Suggestions
+                          </button>
+                        </div>
+                      )}
                     </div>
                   )}
 
-                  {/* AI Analysis Card */}
-                  <div id="ai-analysis-changes" className="rounded-[2rem] overflow-hidden shadow-xl border border-[#006859]/15">
-                    {/* Header */}
-                    <div className="bg-gradient-to-r from-[#006859] to-[#0a9980] px-6 py-4 flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0">
-                        <Sparkles className="w-4 h-4 text-white" />
-                      </div>
-                      <div>
-                        <h3 className="text-white font-bold text-base leading-tight">AI Changes</h3>
-                        <p className="text-white/70 text-xs">What the AI improved in your resume</p>
-                      </div>
-                      <span className="ml-auto bg-white/20 text-white text-xs font-bold px-2.5 py-1 rounded-full">
-                        {resume.changes.length}
-                      </span>
-                    </div>
-
-                    <div className="bg-surface-container-lowest px-6 py-5">
-                      {/* Statistics */}
-                      <div className="grid grid-cols-2 gap-4 mb-5">
-                        <div className="bg-[#006859]/8 p-4 rounded-xl text-center border border-[#006859]/10">
-                          <p className="text-3xl font-bold text-[#006859]">+{scoreImprovement}</p>
-                          <p className="text-xs text-on-surface-variant mt-1">Points Gained</p>
+                  {/* AI Changes Card */}
+                  {activeInsightTab === 'ai-changes' && (
+                    <div id="ai-analysis-changes">
+                      {aiChangesLoading ? (
+                        <div className="rounded-[2rem] border border-[#006859]/15 bg-[#006859]/5 px-6 py-10 flex flex-col items-center justify-center gap-3">
+                          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#0a9980]" />
+                          <p className="text-xs font-bold text-[#0a9980]/70">Analysing AI changes…</p>
                         </div>
-                        <div className="bg-[#006859]/8 p-4 rounded-xl text-center border border-[#006859]/10">
-                          <p className="text-3xl font-bold text-[#006859]">{resume.changes.length}</p>
-                          <p className="text-xs text-on-surface-variant mt-1">Improvements</p>
-                        </div>
-                      </div>
-
-                      {/* Change List — scrollable */}
-                      <div className="space-y-3 max-h-96 overflow-y-auto pr-2">
-                        {resume.changes.map((change, idx) => (
-                          <motion.div
-                            key={idx}
-                            initial={{ opacity: 0, x: -16 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ delay: 0.1 + idx * 0.05 }}
-                            className="flex items-start gap-3 p-3 rounded-xl bg-[#006859]/5 border border-[#006859]/10 hover:bg-[#006859]/10 transition-colors"
-                          >
-                            <div className="w-5 h-5 rounded-full bg-gradient-to-br from-[#006859] to-[#12f8d7] flex items-center justify-center text-white text-[10px] font-black flex-shrink-0 mt-0.5">
-                              {idx + 1}
+                      ) : aiChangesLoaded && resume.changes && resume.changes.length > 0 ? (
+                        <div className="rounded-[2rem] overflow-hidden shadow-xl border border-[#006859]/15">
+                          {/* Header */}
+                          <div className="bg-gradient-to-r from-[#006859] to-[#0a9980] px-6 py-4 flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0">
+                              <Sparkles className="w-4 h-4 text-white" />
                             </div>
-                            <p className="text-sm text-on-background leading-relaxed flex-1">{change}</p>
-                          </motion.div>
-                        ))}
-                      </div>
+                            <div>
+                              <h3 className="text-white font-bold text-base leading-tight">AI Changes</h3>
+                              <p className="text-white/70 text-xs">What the AI improved in your resume</p>
+                            </div>
+                            <span className="ml-auto bg-white/20 text-white text-xs font-bold px-2.5 py-1 rounded-full">
+                              {resume.changes.length}
+                            </span>
+                          </div>
+                          <div className="bg-surface-container-lowest px-6 py-5">
+                            {/* Statistics */}
+                            <div className="grid grid-cols-2 gap-4 mb-5">
+                              <div className="bg-[#006859]/8 p-4 rounded-xl text-center border border-[#006859]/10">
+                                <p className="text-3xl font-bold text-[#006859]">+{scoreImprovement}</p>
+                                <p className="text-xs text-on-surface-variant mt-1">Points Gained</p>
+                              </div>
+                              <div className="bg-[#006859]/8 p-4 rounded-xl text-center border border-[#006859]/10">
+                                <p className="text-3xl font-bold text-[#006859]">{resume.changes.length}</p>
+                                <p className="text-xs text-on-surface-variant mt-1">Improvements</p>
+                              </div>
+                            </div>
+                            {/* Change List */}
+                            <div className="space-y-3 max-h-96 overflow-y-auto pr-2">
+                              {resume.changes.map((change, idx) => (
+                                <motion.div
+                                  key={idx}
+                                  initial={{ opacity: 0, x: -16 }}
+                                  animate={{ opacity: 1, x: 0 }}
+                                  transition={{ delay: 0.1 + idx * 0.05 }}
+                                  className="flex items-start gap-3 p-3 rounded-xl bg-[#006859]/5 border border-[#006859]/10 hover:bg-[#006859]/10 transition-colors"
+                                >
+                                  <div className="w-5 h-5 rounded-full bg-gradient-to-br from-[#006859] to-[#12f8d7] flex items-center justify-center text-white text-[10px] font-black flex-shrink-0 mt-0.5">
+                                    {idx + 1}
+                                  </div>
+                                  <p className="text-sm text-on-background leading-relaxed flex-1">{change}</p>
+                                </motion.div>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        /* CTA placeholder — not yet fetched */
+                        <div className="rounded-[2rem] border border-[#006859]/15 bg-[#006859]/5 px-6 py-8 flex flex-col items-center text-center gap-3">
+                          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#006859] to-[#12f8d7] flex items-center justify-center shadow-lg">
+                            <Sparkles className="w-6 h-6 text-white" />
+                          </div>
+                          <div>
+                            <h3 className="font-bold text-sm text-on-background">AI Changes</h3>
+                            <p className="text-xs text-on-surface-variant mt-0.5">See every improvement the AI made to your resume compared to the original</p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={fetchAiChanges}
+                            className="mt-1 px-5 py-2 rounded-xl bg-gradient-to-r from-[#006859] to-[#12f8d7] text-white text-xs font-bold shadow-md hover:opacity-90 active:scale-95 transition-all"
+                          >
+                            Generate ✨ AI Changes
+                          </button>
+                        </div>
+                      )}
                     </div>
-                  </div>
+                  )}
 
                 </motion.div>
               )}
