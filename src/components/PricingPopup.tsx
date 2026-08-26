@@ -141,12 +141,20 @@ function ReviewBanner({ review }: { review: typeof PLAN_REVIEW }) {
 // ── Mini Scrolling Reviews ────────────────────────────────────────────────────
 function MiniReviewsMarquee() {
   const [items, setItems] = React.useState<{ suggestion: string; rating: number }[]>([]);
+  const [stats, setStats] = React.useState<{ avg_rating: number; total_reviews: number } | null>(null);
 
   React.useEffect(() => {
     fetch("/api/public-reviews")
       .then((r) => r.json())
       .then((data) => {
         if (Array.isArray(data) && data.length > 0) setItems(data);
+      })
+      .catch(() => { });
+
+    fetch("/api/public-review-stats")
+      .then((r) => r.json())
+      .then((d) => {
+        if (d?.avg_rating) setStats({ avg_rating: d.avg_rating, total_reviews: d.total_reviews });
       })
       .catch(() => { });
   }, []);
@@ -167,21 +175,51 @@ function MiniReviewsMarquee() {
         overflow: "hidden",
       }}
     >
-      <p
+      <div
         style={{
-          textAlign: "center",
-          fontSize: "9px",
-          fontWeight: 700,
-          letterSpacing: "0.12em",
-          color: "rgba(255,255,255,0.35)",
-          textTransform: "uppercase",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: "8px",
           marginBottom: "8px",
           paddingLeft: "12px",
           paddingRight: "12px",
         }}
       >
-        Trusted by 1000s of aspirants
-      </p>
+        <p
+          style={{
+            fontSize: "9px",
+            fontWeight: 700,
+            letterSpacing: "0.12em",
+            color: "rgba(255,255,255,0.35)",
+            textTransform: "uppercase",
+            margin: 0,
+          }}
+        >
+          Trusted by 1000s of aspirants
+        </p>
+        {stats && (
+          <span
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "3px",
+              background: "rgba(251,191,36,0.12)",
+              border: "1px solid rgba(251,191,36,0.25)",
+              borderRadius: "999px",
+              padding: "2px 7px",
+              fontSize: "9px",
+              fontWeight: 700,
+              color: "#fbbf24",
+              letterSpacing: "0.03em",
+              whiteSpace: "nowrap",
+            }}
+          >
+            ★ {stats.avg_rating} ({stats.total_reviews.toLocaleString()})
+          </span>
+        )}
+      </div>
+
 
       <div style={{ position: "relative", overflow: "hidden" }} aria-hidden="true">
         {/* fade edges */}

@@ -74,7 +74,6 @@ async def get_public_reviews():
         .select("rating, suggestion, created_at, users(email)")
         .gte("created_at", "2026-05-28T00:00:00Z")
         .order("created_at", desc=True)
-        .limit(200)
         .execute())
     # Filter: must have non-empty suggestion, >1 word, exclude internal email
     filtered = [
@@ -84,6 +83,7 @@ async def get_public_reviews():
         and r.get("rating", 0) >= 3
     ]
     return filtered
+
 
 
 @router.get("/public/review-stats")
