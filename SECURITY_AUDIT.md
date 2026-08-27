@@ -1,5 +1,8 @@
 # Security Audit
 
+> **Last verified**: 2026-08-28  
+> **Verified against**: `backend/routers/jobs.py`, `backend/services/latex_compiler.py`, `backend/worker.py`, `backend/llm/quota_manager.py`, `backend/queue_manager.py`, `backend/Dockerfile`
+
 ## 1. LaTeX Arbitrary Code Execution (RCE)
 - **Component**: `backend/services/latex_compiler.py` & Docker Sandbox
 - **Exploit Mechanism**: Malicious LaTeX payloads executing shell commands via `\write18` if enabled.
@@ -36,11 +39,22 @@
 - **Verification**: Verified in `test_claim_check`.
 
 ## 6. Authorization & SSE Data Isolation
-- **Component**: `routers/jobs.py` (SSE Endpoint)
+- **Component**: `routers/jobs.py` (SSE Endpoint and Status Endpoint)
 - **Exploit Mechanism**: Unauthorized clients eavesdropping on job status streams of other users.
 - **Risk**: High
-- **Remediation**: Added mandatory Supabase JWT token verification (`?token=...`) in `GET /api/jobs/{job_id}/stream`, ensuring clients can only listen to jobs matching their `owner_id`.
-- **Verification**: Inspected authorization checks in `jobs.py`.
+- **Remediation**: Both `GET /api/jobs/{job_id}/stream` and `GET /api/jobs/{job_id}/status` verify the caller's identity before returning data. Authentication token accepted via either:
+  1. `Authorization: Bearer <token>` HTTP header, or
+  2. `?token=<jwt>` query parameter (for browser `EventSource` compatibility)
+  The authenticated user's `sub` (user ID) is compared against the job's `owner_id` stored in Redis. Non-matching callers receive `401` (unauthenticated) or `403` (authenticated but unauthorized).
+- **Verification**: Inspected authorization flow in `routers/jobs.py:get_authenticated_user_id()` and `stream_job_status()`.
+
+## 7. API Rate Limiting (Process-Independent)
+- **Component**: `rate_limiter.py` (SlowAPI + Redis)
+- **Exploit Mechanism**: Burst requests exhausting API capacity or triggering excessive LLM calls.
+- **Risk**: Medium
+- **Remediation**: SlowAPI rate limiter (`100 req/min per IP`) is applied to API endpoints. Distributed via Redis storage backend, ensuring limits hold across multiple API node replicas. LLM quota additionally protected by distributed token-bucket (`quota_manager.py`).
+- **Verification**: Inspected `rate_limiter.py` and `main.py` `limiter` integration.
 
 ---
-**Audit Status**: ✅ PASSED & VERIFIED
+**Audit Status**: ✅ PASSED & VERIFIED  
+**Last verified**: 2026-08-28

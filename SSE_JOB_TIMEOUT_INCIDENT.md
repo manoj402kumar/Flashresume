@@ -1,5 +1,10 @@
 # SSE Job Timeout — Root Cause & Fix (VERIFIED)
 
+> **Current Status**: ✅ RESOLVED (2026-08-28)  
+> **Resolution**: `await asyncio.sleep(0.5)` added after all terminal `yield` statements in `jobs.py` to ensure TCP flush before stream close. Explicit `event: error` emitted when result key is absent. See "Wire Evidence" section below for verified SSE event trace.
+
+---
+
 ## Root Cause: Proxy Truncation of Terminal SSE Frame
 
 When `jobs.py` yielded `event: result\ndata: {...}\n\n` and immediately returned,

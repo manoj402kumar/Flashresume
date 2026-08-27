@@ -80,3 +80,22 @@ This postmortem analyzes the root causes of past incidents, evaluates previous d
 
 **Status:** Document Created & Verified  
 **Next Steps:** Document Architectural Decision Records (`ARCHITECTURE_DECISIONS.md`) and prepare implementation plan.
+
+---
+
+## 6. Current Status (2026-08-28) — All Corrective Actions Implemented
+
+> This section documents the current resolved state. The historical analysis above is preserved.
+
+| Component | Historical Flaw | Current Implementation | Status |
+| :--- | :--- | :--- | :--- |
+| **PDF Asset Storage** | Redis Key (`transient:file:*` base64) | Object Storage (`storage_service.py`), `file_key` reference in Redis payload | ✅ RESOLVED |
+| **Redis Payload** | Contains PDF bytes + metadata | Minimal `{job_id, file_key, job_type, owner_id}` reference only | ✅ RESOLVED |
+| **PDF Retention** | Deleted unconditionally before null-check | Deleted only after `COMPLETE` status confirmed and result persisted | ✅ RESOLVED |
+| **Job State Machine** | Implicit string updates | Formal: `QUEUED → PROCESSING → COMPLETE / RETRYING / FAILED / DLQ` | ✅ RESOLVED |
+| **SSE Protocol** | Raw pub/sub events, no snapshot | Snapshot state hydration on connect + live pub/sub stream + `asyncio.sleep(0.5)` terminal flush | ✅ RESOLVED |
+| **Idempotency** | Two-step `setnx + setex` with crash window | Single atomic `SET key val NX EX ttl` | ✅ RESOLVED |
+| **LLM Fallback** | Gemini → Qwen → DeepSeek | DeepSeek → POOL_1 (Mistral) → POOL_2 (Ministral/Cloudflare/NVIDIA) with circuit breaker | ✅ REFACTORED |
+
+See `ARCHITECTURE_DECISIONS.md`, `ARCHITECTURE.md`, and `VERIFICATION_REPORT.md` for implementation details.
+

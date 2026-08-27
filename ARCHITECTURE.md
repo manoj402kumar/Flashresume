@@ -1,5 +1,7 @@
 # FlashResume - System Architecture
 
+> Last verified: 2026-08-28
+
 ## Complete Flow & Component Interaction
 
 ---
@@ -23,7 +25,7 @@ FlashResume is built using a **Two-Tier Service Architecture** separating a ligh
 │                 ├────────────────────►│   CORE API GATEWAY        │
 │                 │                     │   (FastAPI / main.py)     │
 │                 │  SSE Stream / Polling│   - Input Validation      │
-│  NEXT.JS 15     │◄────────────────────┤   - Job Creation (202)    │
+│  NEXT.JS 16     │◄────────────────────┤   - Job Creation (202)    │
 │  FRONTEND       │                     │   - SSE Event Streaming   │
 │  (Vercel)       │                     └─────────────┬─────────────┘
 │                 │                                   │
@@ -160,15 +162,24 @@ To prevent queue payload bloat and high memory pressure in Redis:
 ## 🧠 LLM FALLBACK CHAIN & RATE LIMITING
 
 ### Master Caller Logic (`master_llm_caller.py`)
+
+> **Note**: The LLM provider chain was refactored from a linear 3-layer model to a two-pool round-robin architecture. See `ALGORITHM_DOCUMENTATION_FOLLOWUP.md` for details on this change and the required documentation update.
+
 ```
-master_llm_caller.py
+master_llm_caller.py → call_llm_balanced()
     ↓
-Try Layer 1: Gemini (gemini-2.5-flash-lite → gemini-2.5-flash)
-    ↓ (on error or rate-limit)
-Try Layer 2: Qwen (via OpenRouter: qwen3.6-plus → qwen3-next-80b)
-    ↓ (on error or rate-limit)
-Try Layer 3: DeepSeek (via NVIDIA NIM: deepseek-r1-distill-qwen-32b)
+1. DeepSeek (deepseek-v4-flash) — primary attempt
+    ↓ (on error, 429, or circuit-tripped)
+2. POOL_1 — Round-Robin across Mistral variants (18 slots across 3 API keys):
+   mistral-medium-3.5 / mistral-medium-2604 / mistral-large-2512 / mistral-medium-2508 / mistral-large-latest
+    ↓ (on exhaustion)
+3. POOL_2 — Round-Robin across fallback providers (16 slots):
+   Ministral-14b / Mistral-small / Cloudflare llama-3.3-70b / NVIDIA Ministral / Cloudflare mistral-small-3.1 / NVIDIA mistral-nemotron
 ```
+
+**Circuit Breaker**: Each `(provider, model_id, key_label)` slot has an independent circuit breaker. 429s trip for 120s; 402s trip until midnight; 401s trip for 24h. Tripped state is persisted to Supabase `llm_usage` table.
+
+**Global Round-Robin Counter**: Pool index is persisted in Supabase `rr_counters` table, ensuring workers resume from a different slot after restart (avoids always hammering the same provider).
 
 ### Response Cleaning Pipeline
 1. Strips reasoning blocks (`<think>...</think>`).
@@ -178,7 +189,8 @@ Try Layer 3: DeepSeek (via NVIDIA NIM: deepseek-r1-distill-qwen-32b)
 
 ### Distributed Token Bucket Rate Limiter (`quota_manager.py`)
 - Centralized `RedisQuotaManager` executes distributed token-bucket Lua scripts.
-- Enforces strict Requests Per Minute (RPM) limits across worker processes to shield upstream LLM providers from rate-limit exhaustion.
+- Enforces strict Requests Per Minute (RPM) limits (default 15 RPM per provider) across worker processes to shield upstream LLM providers from rate-limit exhaustion.
+- Quota consumed before each LLM call in `call_llm_balanced()`.
 
 ---
 
@@ -214,20 +226,25 @@ Try Layer 3: DeepSeek (via NVIDIA NIM: deepseek-r1-distill-qwen-32b)
 - **Service 3: Redis Broker** (Render Redis Instance)
 
 ### Frontend Deployment (Vercel)
-- Next.js 15 App Router deployed on Vercel with environment variable:
+- Next.js 16 App Router deployed on Vercel with environment variable:
   `NEXT_PUBLIC_API_URL=https://flashresume-backend.onrender.com`
 
 ---
 
 ## 🎯 VERIFICATION & RECOVERY STATUS
 
-- **Claim Check**: Verified via `test_claim_check` (Redis base64/transient ref + TTL).
-- **Queue Reliability**: Verified via `test_zombie_recovery` (Lua script atomic recovery).
-- **Idempotency**: Verified via `test_idempotency_concurrency` (`SETNX`).
-- **Token Limiter**: Verified via `test_token_bucket` (Lua RPM enforcement).
-- **LaTeX Security**: Verified via non-root Docker `appuser` and `-no-shell-escape`.
-- **SSE Stream Reliability**: Verified via real browser flow testing and pub/sub race condition fixes.
+> All verifications performed using test scripts in `test_all_fixed.py`, `test_job_pipeline_e2e.py`, and direct code inspection. See `VERIFICATION_REPORT.md` for full evidence.
+
+- **Object Storage Claim-Check**: Verified — worker retrieves PDF bytes from `storage_service`, not Redis. File deleted only after `COMPLETE` status is persisted.
+- **Queue Reliability**: Verified — `BRPOPLPUSH` guarantees atomic dequeue; Lua-based zombie recovery requeues timed-out jobs.
+- **Idempotency**: Verified — enqueue uses atomic `SET NX EX` (single command); 10 concurrent requests produce 1 job ID.
+- **Token Limiter**: Verified — distributed Lua token bucket, 20/20 requests correctly throttled to `max_rpm=15`.
+- **LaTeX Security**: Verified — `pdflatex -no-shell-escape`, 15s timeout, non-root `appuser` in Docker.
+- **SSE Stream Reliability**: Verified — initial state hydration before pub/sub subscription; `await asyncio.sleep(0.5)` after terminal frame prevents proxy truncation.
+- **Transient PDF Incident**: RESOLVED — PDF stored in Object Storage (not Redis), deleted only after confirmed `COMPLETE`. (Historical: was Redis base64+TTL, fixed in current implementation.)
+- **Authorization**: Verified — `GET /api/jobs/{job_id}/stream` and `/status` enforce JWT ownership check.
 
 ---
 
-**Status**: ✅ PRODUCTION READY & FULLY ALIGNED WITH TWO-TIER ARCHITECTURE
+**Status**: ✅ PRODUCTION READY — TWO-TIER ARCHITECTURE FULLY IMPLEMENTED  
+**Last verified**: 2026-08-28

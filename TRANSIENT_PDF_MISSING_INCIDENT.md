@@ -1,5 +1,11 @@
 # TRANSIENT_PDF_MISSING_INCIDENT.md
 
+> **Current Status**: ✅ RESOLVED (2026-08-28)  
+> **Resolution**: The architecture has been redesigned. PDFs are now stored in **Object Storage** (`storage_service.py`), not Redis. The `transient:file:*` Redis key pattern described below no longer exists in production. The worker now retrieves files via `storage_service.get_file_bytes(file_key)` and deletes them via `storage_service.delete_file(file_key)` only after confirmed `COMPLETE` status.  
+> This document is preserved as historical record. Do not rewrite it as if the incident never happened.
+
+---
+
 ## Exact Failure
 
 ```

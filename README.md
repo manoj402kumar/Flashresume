@@ -2,6 +2,8 @@
 
 **AI-powered resume optimization for B.Tech freshers**
 
+> Last verified: 2026-08-28
+
 FlashResume helps students get shortlisted in ATS while ensuring they can confidently handle interviews. Built with Next.js (frontend) and FastAPI (backend).
 
 ---
@@ -56,7 +58,7 @@ API runs on [http://localhost:8000](http://localhost:8000)
 ## 🎯 Core Features
 
 - **3-Layer PDF Parsing**: pdfplumber → PyMuPDF → Tesseract OCR
-- **Multi-Provider LLM Fallback**: DeepSeek → Mistral → NVIDIA → Cloudflare (99.9% uptime)
+- **Multi-Provider LLM Fallback**: DeepSeek → Mistral (POOL_1) → Ministral/Cloudflare/NVIDIA (POOL_2) with circuit breaker
 - **Smart ATS Optimization**: Preserves good content, enhances weak content
 - **MAX 2 Projects**: Enforced at prompt + code + schema levels
 - **Authentic Metrics**: Only countable, technical, or measured metrics
@@ -75,10 +77,12 @@ API runs on [http://localhost:8000](http://localhost:8000)
 
 ### Backend
 - FastAPI + Python 3.10+
-- DeepSeek API
-- Mistral AI
-- NVIDIA API
-- Cloudflare Workers AI
+- Mistral AI (primary, 3 API keys across POOL_1)
+- DeepSeek API (primary first attempt)
+- NVIDIA API (POOL_2 fallback)
+- Cloudflare Workers AI (POOL_2 fallback)
+- Redis (queue, job state, rate limiting, presence, pub/sub)
+- Supabase (PostgreSQL + Object Storage)
 
 ---
 
@@ -86,13 +90,26 @@ API runs on [http://localhost:8000](http://localhost:8000)
 
 ### Backend `.env`
 ```bash
+# LLM Provider API Keys (multiple keys supported for round-robin)
+MISTRAL_R1_API_KEY=your_mistral_key_1
+MISTRAL_R2_API_KEY=your_mistral_key_2
+MISTRAL_R3_API_KEY=your_mistral_key_3
 DEEPSEEK_API_KEY=your_deepseek_key
-MISTRAL_API_KEY=your_mistral_key
 NVIDIA_API_KEY=your_nvidia_key
+NVIDIA_R2_API_KEY=your_nvidia_key_2
 CLOUDFLARE_API_KEY=your_cloudflare_key
+CLOUDFLARE_R2_API_KEY=your_cloudflare_key_2
+CLOUDFLARE_ACCOUNT_ID=your_cf_account_id
 
-# Optional: set preferred LLM provider
-PREFERRED_LLM=gemini
+# Redis (required for queue, job state, rate limiting)
+REDIS_URL=redis://localhost:6379
+
+# Supabase
+SUPABASE_URL=your_supabase_url
+SUPABASE_SERVICE_ROLE_KEY=your_supabase_key
+
+# Worker configuration
+WORKER_CONCURRENCY=4  # concurrent jobs per worker process
 
 # Set this when deploying frontend to Vercel
 FRONTEND_URL=https://your-app.vercel.app
@@ -117,14 +134,16 @@ NEXT_PUBLIC_API_URL=http://localhost:8000
 
 ## 🔁 LLM Fallback Chain
 
+> Note: The fallback chain is implemented as a two-pool round-robin system with circuit breakers. See `ARCHITECTURE.md` for full details.
+
 ```
 Request
-        └─► Mistral (mistral-medium → mistral-large)
-              └─► NVIDIA (mistral-nemotron → ministral-14b)
-                    └─► Cloudflare (llama-3.3-70b-fast)
+  └─► DeepSeek (deepseek-v4-flash) — primary attempt
+        └─► POOL_1: Mistral variants (round-robin, 18 slots, 3 API keys)
+              └─► POOL_2: Ministral / Cloudflare / NVIDIA (round-robin, 16 slots)
 ```
 
-Set `PREFERRED_LLM=mistral` (or any provider) in `.env` to change primary order.
+Circuit breakers prevent retrying failed providers. Set `preferred_model` in the generate request to override the automatic chain.
 
 ---
 

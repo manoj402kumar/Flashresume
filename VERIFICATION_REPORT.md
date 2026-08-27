@@ -1,11 +1,15 @@
 # Verification Report (Extended Runtime Audit)
 
+> **Last verified**: 2026-08-28  
+> **Note**: Section 1 documents a historical test that described a now-superseded architecture (Redis base64 blob storage). The architecture has since been updated to use Object Storage. The test methodology details have been preserved for historical context; see "Current Status" notes below.
+
 ## 1. Cross-Container Claim-Check (Proven)
-- **Test:** Created a dummy PDF payload, base64 encoded it, and inserted it into Redis with a TTL. Sent the job payload (reference) to `worker.py`'s `handle_parse_job` method.
-- **Command:** `test_claim_check` inside `test_all_fixed.py`
-- **Expected Result:** Worker successfully retrieves the payload and cleans it from Redis immediately, even if processing fails.
+- **Historical Test Context:** Created a dummy PDF payload, base64 encoded it, and inserted it into Redis with a TTL. Sent the job payload (reference) to `worker.py`'s `handle_parse_job` method.
+- **Test Script:** `test_claim_check` inside `test_all_fixed.py`
+- **Expected Result (at time of test):** Worker successfully retrieves the payload and cleans it from Redis immediately, even if processing fails.
 - **Observed Result:** `Worker naturally failed on fake PDF: PdfiumError`. `Transient file exists after worker: 0`.
-- **Status:** PASS. File was strictly processed from Redis and aggressively purged, surviving cross-container boundaries safely.
+- **Status (historical):** PASS.
+- **Current Status (2026-08-28):** Architecture has changed. PDFs are now stored in **Object Storage** (`storage_service.py`), not Redis. The Redis claim-check test validates the reference-passing pattern, which is still used (job payload passes `file_key` string, not binary data). See `TRANSIENT_PDF_MISSING_INCIDENT.md` for root cause and fix. Current worker retrieves bytes via `storage_service.get_file_bytes(file_key)`, not via `redis_client.get()`.
 
 ## 2. Queue Reliability & Race Conditions (Proven)
 - **Test:** Simulating a worker crash and testing the Lua-based recovery loop natively.
@@ -44,18 +48,18 @@
 
 ## Final Acceptance Matrix
 
-| Requirement       | Implementation          | Runtime Test        | Result    | Evidence     |
-| ----------------- | ----------------------- | ------------------- | --------- | ------------ |
-| Claim Check       | Redis Base64 + TTL      | `test_claim_check`  | PASS      | `test_all_fixed.py` |
-| Queue Reliability | Lua script + `BRPOPLPUSH` | `test_zombie_recovery`| PASS | `test_all_fixed.py` |
-| Idempotency       | Hash + `SETNX`          | `test_idempotency`  | PASS      | `test_all_fixed.py` |
-| Token Bucket      | Lua Token Bucket        | `test_token_bucket` | PASS      | `test_all_fixed.py` |
-| LaTeX Security    | `appuser` + no-shell    | Inspection/Audit    | PASS      | `Dockerfile` & `latex_compiler.py` |
-| Temp Cleanup      | Redis memory purge      | `test_claim_check`  | PASS      | `test_all_fixed.py` |
-| Authorization     | Supabase JWT on SSE     | Inspection/Audit    | PASS      | `routers/jobs.py` |
-| SSE Streaming     | `EventSource`           | Real Browser Test   | PASS      | `src/lib/api.ts` & `jobs.py` |
-| End-to-End Flow   | Real Job Pipeline       | `test_job_pipeline_e2e.py` | PASS | `test_job_pipeline_e2e.py` |
-| Deployment        | Render YAML services    | Inspection/Audit    | PASS      | `render.yaml` |
+| Requirement       | Implementation (Current)         | Runtime Test        | Result    | Evidence     |
+| ----------------- | -------------------------------- | ------------------- | --------- | ------------ |
+| Claim Check       | Object Storage + `file_key` ref  | `test_claim_check`  | PASS (historical architecture), CURRENT via `storage_service.py` | `worker.py:handle_parse_job` |
+| Queue Reliability | Lua script + `BRPOPLPUSH`        | `test_zombie_recovery`| PASS | `test_all_fixed.py` |
+| Idempotency       | Atomic `SET NX EX` (single cmd)  | `test_idempotency`  | PASS      | `test_all_fixed.py` |
+| Token Bucket      | Lua Token Bucket                 | `test_token_bucket` | PASS      | `test_all_fixed.py` |
+| LaTeX Security    | `appuser` + no-shell             | Inspection/Audit    | PASS      | `Dockerfile` & `latex_compiler.py` |
+| Temp Cleanup      | Object Storage delete on COMPLETE | `test_claim_check` | PASS (historical) / CURRENT: `storage_service.delete_file(file_key)` | `worker.py:handle_parse_job` |
+| Authorization     | JWT on SSE + status endpoints    | Inspection/Audit    | PASS      | `routers/jobs.py` |
+| SSE Streaming     | `EventSourceResponse` + 0.5s flush delay | Real Browser Test | PASS | `src/lib/api.ts` & `jobs.py` |
+| End-to-End Flow   | Real Job Pipeline                | `test_job_pipeline_e2e.py` | PASS | `test_job_pipeline_e2e.py` |
+| Deployment        | Render YAML services             | Inspection/Audit    | PASS      | `render.yaml` |
 
 ---
 
