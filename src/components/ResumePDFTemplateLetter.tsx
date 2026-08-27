@@ -407,7 +407,20 @@ export default function ResumePDFTemplateLetter({ resume, showHighlights = false
                   ))}
                 </View>
               );
-            case "skills":
+            case "skills": {
+              const totalSkillsCount =
+                (resume.technical_skills?.languages?.length ?? 0) +
+                (resume.technical_skills?.frameworks_and_libraries?.length ?? 0) +
+                (resume.technical_skills?.databases?.length ?? 0) +
+                ((resume.technical_skills?.cloud_and_dev_tools?.length ?? 0) > 0
+                  ? resume.technical_skills.cloud_and_dev_tools!.length
+                  : ((resume.technical_skills?.cloud_services?.length ?? 0) + (resume.technical_skills?.developer_tools?.length ?? 0))) +
+                (resume.technical_skills?.miscellaneous?.length ?? 0) +
+                (resume.technical_skills?.custom_categories || []).reduce((acc, cat) => acc + (cat.skills?.length ?? 0), 0);
+              const hasTechnicalSkills = totalSkillsCount > 0;
+
+              if (!hasTechnicalSkills) return null;
+
               return (
                 <View key="skills" wrap={false}>
                   <Text style={styles.sectionTitle}>Technical Skills</Text>
@@ -499,6 +512,7 @@ export default function ResumePDFTemplateLetter({ resume, showHighlights = false
                   </View>
                 </View>
               );
+            }
             case "certifications":
               const items = [
                 ...(resume.certifications_and_achievements ?? []),

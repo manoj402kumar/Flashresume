@@ -65,6 +65,10 @@ app.include_router(sessions.router, prefix="/api")
 app.include_router(feedback.router, prefix="/api")
 app.include_router(affiliate.router, prefix="/api")
 
+from routers import jobs, latex_pdf
+app.include_router(jobs.router, prefix="/api/jobs")
+app.include_router(latex_pdf.router, prefix="/api")
+
 ACTIVE_SESSIONS = {}
 peak_record = {"count": -1, "timestamp": None}
 _peak_upsert_tasks: set = set()  # Hold references to prevent GC
@@ -213,3 +217,14 @@ async def get_queue_status(request: Request):
     except Exception as e:
         print(f"[health/queue] Error: {e}")
         return {"processing": 0}
+
+@app.get("/health/readiness")
+@limiter.limit("60/minute")
+async def readiness(request: Request):
+    from redis_client import redis_client
+    try:
+        await redis_client.ping()
+        return {"status": "ready", "redis": "connected"}
+    except Exception as e:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=503, detail="Service Unavailable: Redis disconnected")

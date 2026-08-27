@@ -1,6 +1,30 @@
 services:
   - type: web
-    name: flashresume-backend
+    name: flashresume-core-api
     env: docker
     dockerfilePath: ./Dockerfile
     rootDir: backend
+    envVars:
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: flashresume-redis
+          property: connectionString
+
+  - type: worker
+    name: flashresume-heavy-worker
+    env: docker
+    dockerfilePath: ./Dockerfile
+    rootDir: backend
+    dockerCommand: "python worker.py"
+    envVars:
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: flashresume-redis
+          property: connectionString
+
+  - type: redis
+    name: flashresume-redis
+    ipAllowList: []
+    plan: free

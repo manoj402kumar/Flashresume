@@ -40,6 +40,13 @@ function arrayMove<T>(arr: T[], from: number, to: number): T[] {
 }
 import type { TemplateV1 } from "@/lib/api";
 import {
+  saveResumeDraft,
+  loadResumeDraft,
+  clearAllWorkflowStorage,
+  saveHistoryStack,
+  loadHistoryStack,
+} from "@/lib/storage";
+import {
   isBulletEnhanced,
   getHighlightClass,
 } from "@/lib/highlighting";
@@ -100,21 +107,34 @@ function EditableSkillTags({
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: idx * 0.02 }}
-            className={`px-3 py-1.5 ${colorClass} rounded-full text-sm font-medium flex items-center gap-2 ${showHighlights && isHighlighted ? "ring-2 ring-yellow-400 shadow-lg shadow-yellow-200/50 scale-105" : ""
-              } transition-all`}
+            onClick={editMode ? () => removeSkill(idx) : undefined}
+            role={editMode ? "button" : undefined}
+            aria-label={editMode ? `Remove ${skill}` : undefined}
+            tabIndex={editMode ? 0 : undefined}
+            onKeyDown={
+              editMode
+                ? (e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      removeSkill(idx);
+                    }
+                  }
+                : undefined
+            }
+            className={`px-3 py-1.5 ${colorClass} rounded-full text-sm font-medium flex items-center gap-2 ${
+              editMode ? "cursor-pointer hover:opacity-80" : ""
+            } ${
+              showHighlights && isHighlighted ? "ring-2 ring-yellow-400 shadow-lg shadow-yellow-200/50 scale-105" : ""
+            } transition-all`}
           >
             {skill}
             {showHighlights && isHighlighted && (
-              <Sparkles className="w-3 h-3 text-yellow-500 animate-pulse" />
+              <Sparkles className="w-3 h-3 text-yellow-500 animate-pulse pointer-events-none" />
             )}
             {editMode && (
-              <button
-                onClick={() => removeSkill(idx)}
-                className="hover:text-error font-bold"
-                type="button"
-              >
+              <span className="font-bold pointer-events-none select-none" aria-hidden="true">
                 ×
-              </button>
+              </span>
             )}
           </motion.span>
         );
@@ -178,6 +198,31 @@ export default function ScratchPage() {
   };
   const [showHighlights, setShowHighlights] = useState(true);
   const [downloadingPDF, setDownloadingPDF] = useState(false);
+
+  // Focus-driven dynamic expansion and auto-resizing for textareas
+  const handleTextareaFocus = (e: React.FocusEvent<HTMLTextAreaElement>) => {
+    const el = e.currentTarget;
+    el.style.height = 'auto';
+    const minH = el.classList.contains('focus:min-h-[130px]') ? 130 : 44;
+    el.style.height = `${Math.max(minH, el.scrollHeight)}px`;
+  };
+
+  const handleTextareaInput = (e: React.FormEvent<HTMLTextAreaElement>) => {
+    const el = e.currentTarget;
+    el.style.height = 'auto';
+    const minH = el.classList.contains('focus:min-h-[130px]') ? 130 : 44;
+    el.style.height = `${Math.max(minH, el.scrollHeight)}px`;
+  };
+
+  const handleTextareaBlur = (e: React.FocusEvent<HTMLTextAreaElement>) => {
+    const el = e.currentTarget;
+    if (!el.classList.contains('focus:min-h-[130px]')) {
+      el.style.height = 'auto';
+      el.style.height = `${Math.max(44, el.scrollHeight)}px`;
+    } else {
+      el.style.height = '';
+    }
+  };
   const [missingKeywords, setMissingKeywords] = useState<string[]>([]);
   const [matchedKeywords, setMatchedKeywords] = useState<string[]>([]);
   const [selectedTemplate, setSelectedTemplate] = useState<"templateLetter" | "templateA4">("templateLetter");
@@ -299,19 +344,16 @@ export default function ScratchPage() {
     updateResume({ section_order: arrayMove(currentOrder, idx, idx + 2) }, { immediate: true });
   };
 
-  // ── Scratch mode: restore saved draft or load a blank template ──
+  // ── Scratch mode: restore saved draft (survives refresh within 20 minutes) or load a blank template ──
   useEffect(() => {
-    // Try to restore a previously saved scratch draft (survives refresh & post-payment redirect)
-    try {
-      const saved = localStorage.getItem("scratch_resume_draft");
-      if (saved) {
-        const parsed = JSON.parse(saved) as TemplateV1;
-        setResume(parsed);
-        setNoJdMode(true);
-        setLoading(false);
-        return;
-      }
-    } catch (_) {}
+    // Try to restore a previously saved scratch draft (survives refresh & post-payment redirect within 20-min TTL)
+    const saved = loadResumeDraft(true);
+    if (saved) {
+      setResume(saved);
+      setNoJdMode(true);
+      setLoading(false);
+      return;
+    }
 
     // No saved draft → load blank template
     const blankResume: TemplateV1 = {
@@ -442,49 +484,63 @@ export default function ScratchPage() {
     };
   }, []);
 
-  // Seed undo history exactly once when the blank template first loads
+  // Hydrate or seed undo history when resume first loads
   const hasSeeded = useRef(false);
   useEffect(() => {
     if (!resume || hasSeeded.current) return;
     hasSeeded.current = true;
-    historyRef.current = [resume];
-    historyIndexRef.current = 0;
-    setCanUndo(false);
-    setCanRedo(false);
+    const savedHistory = loadHistoryStack<TemplateV1>(true);
+    if (savedHistory) {
+      const fullStack = [...savedHistory.past, savedHistory.present, ...savedHistory.future];
+      const activeIndex = savedHistory.past.length;
+      historyRef.current = fullStack;
+      historyIndexRef.current = activeIndex;
+      setCanUndo(activeIndex > 0);
+      setCanRedo(activeIndex < fullStack.length - 1);
+    } else {
+      historyRef.current = [resume];
+      historyIndexRef.current = 0;
+      setCanUndo(false);
+      setCanRedo(false);
+      saveHistoryStack(historyRef.current, 0, true);
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [resume]);
 
-  // Keyboard shortcuts: Ctrl+Z undo, Ctrl+Y redo
+  // Keyboard shortcuts: Ctrl+Z / Cmd+Z → undo, Ctrl+Y / Cmd+Shift+Z → redo
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (!editMode) return;
-      const el = e.target as HTMLElement;
-      const tag = el?.tagName;
-      // Block when user is typing in any text input
-      if (tag === 'INPUT' || tag === 'TEXTAREA') return;
-      if (el?.isContentEditable) return;
-      if (e.ctrlKey || e.metaKey) {
-        if (e.key === 'z' && !e.shiftKey) { e.preventDefault(); handleUndo(); }
-        if (e.key === 'y' || (e.key === 'z' && e.shiftKey)) { e.preventDefault(); handleRedo(); }
+
+      const isMac = typeof navigator !== "undefined" && /Mac|iPod|iPhone|iPad/.test(navigator.userAgent || navigator.platform);
+      const modifier = isMac ? e.metaKey : e.ctrlKey;
+
+      if (modifier) {
+        const key = e.key.toLowerCase();
+        if (key === "z" && !e.shiftKey) {
+          e.preventDefault();
+          handleUndo();
+        } else if (key === "y" || (key === "z" && e.shiftKey)) {
+          e.preventDefault();
+          handleRedo();
+        }
       }
     };
-    window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editMode, canUndo, canRedo]);
 
   const handleStartOver = () => {
-    // Only clear resume workflow keys — do NOT clear auth session
-    ["resume_text", "job_description", "analysis", "generated_resume",
-      "no_jd_mode", "no_ai_changes", "approved_project", "preferred_model",
-      "scratch_resume_draft"].forEach(
-        (key) => localStorage.removeItem(key)
-      );
+    // Clean up all resume workflow data from browser storage
+    clearAllWorkflowStorage();
     router.push("/");
   };
 
   const lastEditTimeRef = useRef<number>(0);
   const chunkStartTimeRef = useRef<number>(0);
+  const lastEditDirectionRef = useRef<"insert" | "delete" | "neutral" | null>(null);
 
   const updateResume = (updates: Partial<TemplateV1>, opts?: { immediate?: boolean }) => {
     setResume((prev) => {
@@ -496,26 +552,50 @@ export default function ScratchPage() {
 
       const prevStr = JSON.stringify(prev);
       const nextStr = JSON.stringify(next);
-      const lengthDelta = Math.abs(nextStr.length - prevStr.length);
-      const isPaste = lengthDelta > 20;
+      const lengthDelta = nextStr.length - prevStr.length;
+
+      // Determine editing direction (character insertion vs deletion/backspacing)
+      let currentDirection: "insert" | "delete" | "neutral" = "neutral";
+      if (lengthDelta > 0) currentDirection = "insert";
+      else if (lengthDelta < 0) currentDirection = "delete";
+
+      // Directional boundary check: transition between typing and backspacing creates a distinct undo unit
+      const directionChanged =
+        lastEditDirectionRef.current !== null &&
+        currentDirection !== "neutral" &&
+        lastEditDirectionRef.current !== "neutral" &&
+        currentDirection !== lastEditDirectionRef.current;
+
+      const isPaste = Math.abs(lengthDelta) > 20;
+
+      // 600ms debounce timer for batching continuous keystrokes into a single undo boundary
+      const DEBOUNCE_WINDOW_MS = 600;
+      const MAX_CHUNK_MS = 3000;
 
       const shouldCoalesce =
         !opts?.immediate &&
         !isPaste &&
-        timeSinceLast < 1000 &&
-        chunkDuration < 3000 &&
+        !directionChanged &&
+        timeSinceLast < DEBOUNCE_WINDOW_MS &&
+        chunkDuration < MAX_CHUNK_MS &&
         historyRef.current.length > 0;
 
       const truncated = historyRef.current.slice(0, historyIndexRef.current + 1);
 
       if (shouldCoalesce) {
+        // Coalesce continuous typing in current batch
         truncated[truncated.length - 1] = next;
       } else {
+        // Create new history snapshot boundary (pause, discrete action, or directional flip)
         truncated.push(next);
         chunkStartTimeRef.current = now;
       }
 
       lastEditTimeRef.current = now;
+      if (currentDirection !== "neutral") {
+        lastEditDirectionRef.current = currentDirection;
+      }
+
       if (truncated.length > MAX_HISTORY) {
         truncated.shift();
         historyIndexRef.current = Math.max(0, historyIndexRef.current - 1);
@@ -524,10 +604,10 @@ export default function ScratchPage() {
       historyIndexRef.current = truncated.length - 1;
       setCanUndo(historyIndexRef.current > 0);
       setCanRedo(false);
-      try {
-        localStorage.setItem("generated_resume", JSON.stringify(next));
-        localStorage.setItem("scratch_resume_draft", JSON.stringify(next));
-      } catch (_) {}
+
+      // Persist draft and history stack to browser storage with 20-minute sliding TTL
+      saveResumeDraft(next, true);
+      saveHistoryStack(truncated, historyIndexRef.current, true);
       return next;
     });
   };
@@ -536,20 +616,24 @@ export default function ScratchPage() {
     if (historyIndexRef.current <= 0) return;
     historyIndexRef.current -= 1;
     const state = historyRef.current[historyIndexRef.current];
+    lastEditDirectionRef.current = null;
     setResume(state);
     setCanUndo(historyIndexRef.current > 0);
     setCanRedo(true);
-    try { localStorage.setItem("generated_resume", JSON.stringify(state)); } catch (_) {}
+    saveResumeDraft(state, true);
+    saveHistoryStack(historyRef.current, historyIndexRef.current, true);
   };
 
   const handleRedo = () => {
     if (historyIndexRef.current >= historyRef.current.length - 1) return;
     historyIndexRef.current += 1;
     const state = historyRef.current[historyIndexRef.current];
+    lastEditDirectionRef.current = null;
     setResume(state);
     setCanUndo(true);
     setCanRedo(historyIndexRef.current < historyRef.current.length - 1);
-    try { localStorage.setItem("generated_resume", JSON.stringify(state)); } catch (_) {}
+    saveResumeDraft(state, true);
+    saveHistoryStack(historyRef.current, historyIndexRef.current, true);
   };
 
   const handleDownloadPDF = async () => {
@@ -1337,24 +1421,27 @@ export default function ScratchPage() {
                           <div
                             className="flex items-center justify-between mb-6"
                           >
-                            <div className="flex items-center gap-3">
-                              <div className="w-12 h-12 rounded-2xl bg-primary-container/20 flex items-center justify-center">
-                                <FileText className="w-6 h-6 text-primary" />
+                            <div className="flex flex-row items-start gap-2 sm:gap-3 flex-1 min-w-0">
+                              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-primary-container/20 flex items-center justify-center flex-shrink-0">
+                                <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
                               </div>
                               {editMode ? (
-                                <input
-                                  type="text"
+                                <textarea
                                   value={customSection.heading}
                                   onChange={(e) => {
                                     const newCustoms = [...(resume.custom_sections || [])];
                                     newCustoms[customIndex] = { ...newCustoms[customIndex], heading: e.target.value };
                                     updateResume({ custom_sections: newCustoms }, { immediate: true });
                                   }}
-                                  className="font-headline text-2xl font-bold rounded-xl px-4 py-2 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm w-full"
+                                  onFocus={handleTextareaFocus}
+                                  onInput={handleTextareaInput}
+                                  onBlur={handleTextareaBlur}
+                                  rows={1}
+                                  className="w-full flex-1 font-headline text-xl sm:text-2xl font-bold rounded-xl px-3 py-2 sm:px-4 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm resize-none overflow-hidden box-border min-h-[44px]"
                                   placeholder="Section Heading"
                                 />
                               ) : (
-                                <h3 className="font-headline text-2xl font-bold text-on-background">{customSection.heading || "Custom Section"}</h3>
+                                <h3 className="font-headline text-xl sm:text-2xl font-bold text-on-background">{customSection.heading || "Custom Section"}</h3>
                               )}
                             </div>
                           </div>
@@ -1378,7 +1465,10 @@ export default function ScratchPage() {
                                               }
                                               updateResume({ custom_sections: newCustoms }, { immediate: true });
                                             }}
-                                            className="w-full sm:flex-[2] rounded-lg px-3 py-2 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm resize-none min-w-0"
+                                            onFocus={handleTextareaFocus}
+                                            onInput={handleTextareaInput}
+                                            onBlur={handleTextareaBlur}
+                                            className="w-full sm:flex-[2] rounded-lg px-3 py-2 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 hover:border-on-surface-variant/40 transition-all duration-300 ease-in-out shadow-sm resize-none min-h-[44px] focus:min-h-[130px] focus:shadow-2xl focus:shadow-primary/20 focus:z-20 focus:relative overflow-hidden text-sm min-w-0"
                                             rows={2}
                                             placeholder="Bullet text..."
                                           />
@@ -1475,8 +1565,11 @@ export default function ScratchPage() {
                                       <textarea
                                         value={resume.summary || ''}
                                         onChange={(e) => updateResume({ summary: e.target.value })}
-                                        className="w-full rounded-xl px-4 py-3 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm resize-none"
-                                        rows={3}
+                                        onFocus={handleTextareaFocus}
+                                        onInput={handleTextareaInput}
+                                        onBlur={handleTextareaBlur}
+                                        className="w-full rounded-xl px-4 py-3 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 hover:border-on-surface-variant/40 transition-all duration-300 ease-in-out shadow-sm resize-none min-h-[60px] focus:min-h-[140px] focus:shadow-2xl focus:shadow-primary/20 focus:z-20 focus:relative overflow-hidden text-sm"
+                                        rows={2}
                                         placeholder="Professional summary..."
                                       />
                                     ) : (
@@ -1515,17 +1608,22 @@ export default function ScratchPage() {
                                       <div key={`edu-${idx}`} className="mb-6 last:mb-0">
                                         {editMode ? (
                                           <div className="space-y-2">
-                                            <input
-                                              type="text"
-                                              value={edu.degree || ''}
-                                              onChange={(e) => {
-                                                const newEducation = [...resume.education];
-                                                newEducation[idx] = { ...newEducation[idx], degree: e.target.value };
-                                                updateResume({ education: newEducation });
-                                              }}
-                                              className="w-full font-bold rounded-xl px-4 py-2 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm"
-                                              placeholder="Degree"
-                                            />
+                                            <div className="flex flex-row items-start gap-2 sm:gap-3 w-full min-w-0">
+                                              <textarea
+                                                value={edu.degree || ''}
+                                                onChange={(e) => {
+                                                  const newEducation = [...resume.education];
+                                                  newEducation[idx] = { ...newEducation[idx], degree: e.target.value };
+                                                  updateResume({ education: newEducation });
+                                                }}
+                                                onFocus={handleTextareaFocus}
+                                                onInput={handleTextareaInput}
+                                                onBlur={handleTextareaBlur}
+                                                rows={1}
+                                                className="w-full flex-1 font-bold text-base sm:text-lg rounded-xl px-3 py-2 sm:px-4 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm resize-none overflow-hidden box-border min-h-[44px]"
+                                                placeholder="Degree"
+                                              />
+                                            </div>
                                             <input
                                               type="text"
                                               value={edu.institution || ''}
@@ -1642,17 +1740,22 @@ export default function ScratchPage() {
                                       <div key={`exp-${idx}`} className="mb-8 last:mb-0">
                                         {editMode ? (
                                           <div className="space-y-2 mb-4">
-                                            <input
-                                              type="text"
-                                              value={exp.job_title || ''}
-                                              onChange={(e) => {
-                                                const newExperience = [...resume.experience];
-                                                newExperience[idx] = { ...newExperience[idx], job_title: e.target.value };
-                                                updateResume({ experience: newExperience });
-                                              }}
-                                              className="w-full font-bold rounded-xl px-4 py-2 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm"
-                                              placeholder="Job Title"
-                                            />
+                                            <div className="flex flex-row items-start gap-2 sm:gap-3 w-full min-w-0">
+                                              <textarea
+                                                value={exp.job_title || ''}
+                                                onChange={(e) => {
+                                                  const newExperience = [...resume.experience];
+                                                  newExperience[idx] = { ...newExperience[idx], job_title: e.target.value };
+                                                  updateResume({ experience: newExperience });
+                                                }}
+                                                onFocus={handleTextareaFocus}
+                                                onInput={handleTextareaInput}
+                                                onBlur={handleTextareaBlur}
+                                                rows={1}
+                                                className="w-full flex-1 font-bold text-base sm:text-lg rounded-xl px-3 py-2 sm:px-4 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm resize-none overflow-hidden box-border min-h-[44px]"
+                                                placeholder="Job Title"
+                                              />
+                                            </div>
                                             <input
                                               type="text"
                                               value={exp.company || ''}
@@ -1710,11 +1813,14 @@ export default function ScratchPage() {
                                                     onChange={(e) => {
                                                       const newExperience = [...resume.experience];
                                                       const newBullets = [...newExperience[idx].bullets];
-                                              newBullets[bidx] = e.target.value;
-                                              newExperience[idx] = { ...newExperience[idx], bullets: newBullets };
+                                                      newBullets[bidx] = e.target.value;
+                                                      newExperience[idx] = { ...newExperience[idx], bullets: newBullets };
                                                       updateResume({ experience: newExperience });
                                                     }}
-                                                    className="flex-1 rounded-lg px-3 py-2 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm resize-none"
+                                                    onFocus={handleTextareaFocus}
+                                                    onInput={handleTextareaInput}
+                                                    onBlur={handleTextareaBlur}
+                                                    className="flex-1 w-full rounded-lg px-3 py-2 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 hover:border-on-surface-variant/40 transition-all duration-300 ease-in-out shadow-sm resize-none min-h-[44px] focus:min-h-[130px] focus:shadow-2xl focus:shadow-primary/20 focus:z-20 focus:relative overflow-hidden text-sm"
                                                     rows={2}
                                                   />
                                                 ) : (
@@ -1805,17 +1911,22 @@ export default function ScratchPage() {
                                         {editMode ? (
                                           <div className="space-y-2 mb-4">
                                             <div className="flex flex-col gap-3">
-                                              <input
-                                                type="text"
-                                                value={proj.title}
-                                                onChange={(e) => {
-                                                  const newProjects = [...resume.projects];
-                                                  newProjects[idx] = { ...newProjects[idx], title: e.target.value };
-                                                  updateResume({ projects: newProjects });
-                                                }}
-                                                className="w-full font-bold rounded-xl px-4 py-2 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm"
-                                                placeholder="Project Title"
-                                              />
+                                              <div className="flex flex-row items-start gap-2 sm:gap-3 w-full min-w-0">
+                                                <textarea
+                                                  value={proj.title}
+                                                  onChange={(e) => {
+                                                    const newProjects = [...resume.projects];
+                                                    newProjects[idx] = { ...newProjects[idx], title: e.target.value };
+                                                    updateResume({ projects: newProjects });
+                                                  }}
+                                                  onFocus={handleTextareaFocus}
+                                                  onInput={handleTextareaInput}
+                                                  onBlur={handleTextareaBlur}
+                                                  rows={1}
+                                                  className="w-full flex-1 font-bold text-base sm:text-lg rounded-xl px-3 py-2 sm:px-4 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm resize-none overflow-hidden box-border min-h-[44px]"
+                                                  placeholder="Project Title"
+                                                />
+                                              </div>
                                               <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
                                                 <input
                                                   type="text"
@@ -1825,7 +1936,7 @@ export default function ScratchPage() {
                                                     newProjects[idx] = { ...newProjects[idx], link: e.target.value };
                                                     updateResume({ projects: newProjects });
                                                   }}
-                                                  className="w-full sm:flex-[1] min-w-0 text-sm rounded-xl px-4 py-2 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm"
+                                                  className="w-full sm:flex-1 sm:w-auto min-w-[120px] max-w-full text-sm rounded-xl px-4 py-2 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm"
                                                   placeholder="Display Text (Link/GitHub)"
                                                 />
                                                 <input
@@ -1836,7 +1947,7 @@ export default function ScratchPage() {
                                                     newProjects[idx] = { ...newProjects[idx], link_href: e.target.value };
                                                     updateResume({ projects: newProjects });
                                                   }}
-                                                  className="w-full sm:flex-[2] min-w-0 text-sm rounded-xl px-4 py-2 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm"
+                                                  className="w-full sm:flex-[2] sm:w-auto min-w-[180px] text-sm rounded-xl px-4 py-2 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm"
                                                   placeholder="Actual Repo URL"
                                                 />
                                               </div>
@@ -1949,7 +2060,20 @@ export default function ScratchPage() {
                           </motion.div>
                         );
 
-                      case "skills":
+                      case "skills": {
+                        const totalSkillsCount =
+                          (resume.technical_skills?.languages?.length ?? 0) +
+                          (resume.technical_skills?.frameworks_and_libraries?.length ?? 0) +
+                          (resume.technical_skills?.databases?.length ?? 0) +
+                          ((resume.technical_skills?.cloud_and_dev_tools?.length ?? 0) > 0
+                            ? resume.technical_skills.cloud_and_dev_tools!.length
+                            : ((resume.technical_skills?.cloud_services?.length ?? 0) + (resume.technical_skills?.developer_tools?.length ?? 0))) +
+                          (resume.technical_skills?.miscellaneous?.length ?? 0) +
+                          (resume.technical_skills?.custom_categories || []).reduce((acc, cat) => acc + (cat.skills?.length ?? 0), 0);
+                        const hasTechnicalSkills = totalSkillsCount > 0;
+
+                        if (!editMode && !hasTechnicalSkills) return null;
+
                         return (
                           <motion.div
                             layout="position"
@@ -2179,6 +2303,7 @@ export default function ScratchPage() {
                             </div>
                           </motion.div>
                         );
+                      }
 
                       case "certifications": {
                         const combinedItems = [
@@ -2227,7 +2352,10 @@ export default function ScratchPage() {
                                                     achievements: []
                                                   });
                                                 }}
-                                                className="flex-1 rounded-lg px-3 py-2 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm resize-none"
+                                                onFocus={handleTextareaFocus}
+                                                onInput={handleTextareaInput}
+                                                onBlur={handleTextareaBlur}
+                                                className="flex-1 w-full rounded-lg px-3 py-2 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 hover:border-on-surface-variant/40 transition-all duration-300 ease-in-out shadow-sm resize-none min-h-[44px] focus:min-h-[130px] focus:shadow-2xl focus:shadow-primary/20 focus:z-20 focus:relative overflow-hidden text-sm"
                                                 rows={2}
                                               />
                                               <button

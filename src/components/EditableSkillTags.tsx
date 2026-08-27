@@ -48,22 +48,34 @@ export default function EditableSkillTags({
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: idx * 0.02 }}
-            className={`px-3 py-1.5 ${colorClass} rounded-full text-sm font-medium flex items-center gap-2 ${showHighlights && isHighlighted ? "ring-2 ring-yellow-400 shadow-lg shadow-yellow-200/50 scale-105" : ""
-              } transition-all`}
+            onClick={editMode ? () => removeSkill(idx) : undefined}
+            role={editMode ? "button" : undefined}
+            aria-label={editMode ? `Remove ${skill}` : undefined}
+            tabIndex={editMode ? 0 : undefined}
+            onKeyDown={
+              editMode
+                ? (e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      removeSkill(idx);
+                    }
+                  }
+                : undefined
+            }
+            className={`px-3 py-1.5 ${colorClass} rounded-full text-sm font-medium flex items-center gap-2 ${
+              editMode ? "cursor-pointer hover:opacity-80" : ""
+            } ${
+              showHighlights && isHighlighted ? "ring-2 ring-yellow-400 shadow-lg shadow-yellow-200/50 scale-105" : ""
+            } transition-all`}
           >
             {skill}
             {showHighlights && isHighlighted && (
-              <Sparkles className="w-3 h-3 text-yellow-500 animate-pulse" />
+              <Sparkles className="w-3 h-3 text-yellow-500 animate-pulse pointer-events-none" />
             )}
             {editMode && (
-              <button
-                onClick={() => removeSkill(idx)}
-                className="hover:opacity-60 font-bold"
-                type="button"
-                aria-label={`Remove ${skill}`}
-              >
+              <span className="font-bold pointer-events-none select-none" aria-hidden="true">
                 ×
-              </button>
+              </span>
             )}
           </motion.span>
         );

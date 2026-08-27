@@ -31,6 +31,7 @@ import {
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { parseResume, analyzeResume } from "@/lib/api";
+import { clearResumeDraft } from "@/lib/storage";
 import PricingPopup from "@/components/PricingPopup";
 import { supabase } from "@/lib/supabase";
 import { User } from "@supabase/supabase-js";
@@ -178,6 +179,10 @@ export default function App() {
   const [showParsedText, setShowParsedText] = useState(false);
   const [parsing, setParsing] = useState(false);
   const [showDownloadGate, setShowDownloadGate] = useState(false);
+  const [tomorrowDate, setTomorrowDate] = useState("");
+  useEffect(() => {
+    setTomorrowDate(new Date(Date.now() + 86400000).toLocaleDateString("en-GB", { day: "2-digit", month: "2-digit", year: "numeric" }).replace(/\//g, "/"));
+  }, []);
   const [showBuyMoreCredits, setShowBuyMoreCredits] = useState(false);
   const [selectedPricingPlan, setSelectedPricingPlan] = useState<"pay_per_use" | "bulk_offer" | "student" | null>(null);
   const [hoveredPlan, setHoveredPlan] = useState<string>("bulk_offer");
@@ -493,7 +498,7 @@ export default function App() {
 
     // Clear stale flags and cache from any previous session
     localStorage.removeItem("no_jd_mode");
-    localStorage.removeItem("generated_resume");
+    clearResumeDraft(false);
     localStorage.removeItem("analysis");
 
     try {
@@ -1488,7 +1493,7 @@ Pursuing or completed a degree in Computer Science, Engineering, or equivalent t
                         : "bg-orange-500/10 border-orange-400/40 text-orange-600"
                         }`}>
                         <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse flex-shrink-0" />
-                        Grab before {new Date(Date.now() + 86400000).toLocaleDateString("en-GB", { day: "2-digit", month: "2-digit", year: "numeric" }).replace(/\//g, "/")}
+                        Grab before {tomorrowDate || <span className="w-12 h-3 inline-block bg-current/20 rounded animate-pulse" />}
                       </div>
                     </li>
                   </ul>

@@ -16,3 +16,5 @@ supabase>=2.0.0
 razorpay
 httpx<0.28
 gunicorn
+redis>=5.0.0
+fakeredis>=2.20.0

@@ -1,6 +1,19 @@
 FROM python:3.11-slim
 
+# Install system dependencies (including pdflatex and OCR tools)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    texlive-latex-base \
+    texlive-fonts-recommended \
+    texlive-fonts-extra \
+    poppler-utils \
+    tesseract-ocr \
+    && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app
+
+# Create a non-root user for security (unprivileged execution)
+RUN useradd -m -s /bin/bash appuser && \
+    chown -R appuser:appuser /app
 
 # Copy requirements and install
 COPY requirements.txt .
@@ -9,6 +22,10 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy the rest of the app
 COPY . .
+RUN chown -R appuser:appuser /app
+
+# Switch to non-root user
+USER appuser
 
 # Expose port
 EXPOSE 8000

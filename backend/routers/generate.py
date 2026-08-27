@@ -63,80 +63,50 @@ async def generate_resume_endpoint(request: Request, payload: GenerateRequest, a
         except Exception as e:
             print(f"[Generate] Pre-check error (non-fatal): {e}")
 
-    # Step 1: Generate the rewritten resume with Template v1 validation
-    try:
-        generated, model_used = await generate_resume(
-            payload.resume_text,
-            payload.job_description,
-            payload.ats_score_before,
-            payload.approved_project,
-            missing_keywords=payload.missing_keywords,
-            selected_projects=payload.selected_projects,
-            no_ai_changes=payload.no_ai_changes,
-            preferred_model=payload.preferred_model or "",
-            extracted_links=payload.extracted_links.model_dump() if payload.extracted_links else None,
-        )
-    except ValueError as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-    # Step 2: Assign ats_score_after — random between 86-93 when JD is present
-    # (missing keywords are already injected into the resume, no re-scoring needed)
-    if payload.job_description and payload.job_description.strip():
-        ats_after = random.randint(86, 93)
-    else:
-        ats_after = 0  # No JD mode — ATS scoring not applicable
-
-    # Step 3: Inject score and model info into the response
-    generated["ats_score_after"] = ats_after
-    generated["_model_used"] = model_used
-
-    # Track category for analytics
-    if payload.no_ai_changes:
-        generated["_category"] = "no_changes"
-    elif not payload.job_description or not payload.job_description.strip():
-        generated["_category"] = "no_jd"
-    else:
-        generated["_category"] = "jd_optimized"
-
-    # Step 4: Generate session_id locally — no DB round-trip, no content stored.
-    # The full resume JSON (resume text, generated output, AI suggestions, job strategy, changes)
-    # is sent directly to the client and stored in localStorage only.
-    # Only a minimal skeleton row {id, user_id} is persisted to Supabase for:
-    #   - feedback ownership validation (download_count tracking)
-    #   - payment session linking
-    #   - admin queue health count
-    session_id = str(uuid.uuid4())
-    generated["session_id"] = session_id
-
-    # Fire-and-forget: insert skeleton row — never blocks the response
-    if sc.supabase:
-        async def _save_session_skeleton():
-            try:
-                row = {
-                    "id": session_id,
-                    "generated_output": {"_category": generated.get("_category", "no_jd")}
-                }
-                if user_id:
-                    row["user_id"] = user_id
-                await asyncio.to_thread(
-                    lambda: sc.supabase.table("resume_sessions").insert(row).execute()
-                )
-            except Exception as e:
-                print(f"[Generate] Background session skeleton save failed (non-critical): {e}")
-
-        asyncio.create_task(_save_session_skeleton())
-
-    # Step 5: Increment fraud tracker counter — fire-and-forget, never blocks the response.
-    # Counts consecutive generations without a download. Reset happens in deduct_credits_v2 on download.
-    if sc.supabase and user_id:
-        async def safe_increment():
-            try:
-                await sc.sb(lambda: sc.supabase.rpc("increment_fraud_counter", {"p_user_id": user_id}).execute())
-            except Exception as e:
-                print(f"[Generate] Background fraud counter failed: {e}")
-                pass
+    # Step 1: Enqueue the generate job
+    from queue_manager import queue_manager
+    job_payload = {
+        "resume_text": payload.resume_text,
+        "job_description": payload.job_description,
+        "ats_score_before": payload.ats_score_before,
+        "approved_project": payload.approved_project,
+        "missing_keywords": payload.missing_keywords,
+        "selected_projects": payload.selected_projects,
+        "no_ai_changes": payload.no_ai_changes,
+        "preferred_model": payload.preferred_model or "",
+        "extracted_links": payload.extracted_links.model_dump() if payload.extracted_links else None,
+        "user_id": user_id
+    }
+    import hashlib
+    import json
+    import uuid
+    from redis_client import redis_client
+    
+    # Create deterministic hash for idempotency
+    hash_input = json.dumps(job_payload, sort_keys=True).encode("utf-8")
+    payload_hash = hashlib.sha256(hash_input).hexdigest()
+    idempotency_key = f"idempotency:generate:{payload_hash}"
+    
+    existing_job = await redis_client.get(idempotency_key)
+    if existing_job:
+        return JSONResponse(status_code=202, content={"job_id": existing_job})
         
-        asyncio.create_task(safe_increment())
+    job_id = str(uuid.uuid4())
+    is_first = await redis_client.setnx(idempotency_key, job_id)
+    if not is_first:
+        existing_job = await redis_client.get(idempotency_key)
+        return JSONResponse(status_code=202, content={"job_id": existing_job})
+        
+    await redis_client.setex(idempotency_key, 3600, job_id)
+    
+    try:
+        await queue_manager.enqueue(
+            job_type="generate_resume",
+            payload=job_payload,
+            job_id=job_id
+        )
+    except Exception as e:
+        import logging; logging.error(f"Failed to enqueue generation job: {str(e)}", exc_info=True); raise HTTPException(status_code=503, detail="Service temporarily unavailable. Could not connect to the job queue.")
 
-    # Return Template v1 JSON directly to client — client stores in localStorage
-    return JSONResponse(content=generated)
+    return JSONResponse(status_code=202, content={"job_id": job_id})
+

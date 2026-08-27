@@ -16,10 +16,30 @@ npm run dev
 Open [http://localhost:3000](http://localhost:3000)
 
 ### Backend (FastAPI)
+
+#### Option 1: Startup Scripts (Recommended)
 ```bash
-cd backend
-pip install -r requirements.txt
-uvicorn main:app --reload
+cd ~/Desktop/Flashresume
+
+# Terminal 1: Start Core API Server
+./start.sh --reload
+
+# Terminal 2: Start Heavy Worker
+./start_worker.sh
+```
+
+#### Option 2: Manual Start (Virtual Environment)
+```bash
+cd ~/Desktop/Flashresume/backend
+
+# Activate virtualenv to isolate dependencies from global Python
+source venv/bin/activate
+
+# Terminal 1: Start Core API Server
+python -m uvicorn main:app --port 8000 --reload
+
+# Terminal 2: Start Heavy Worker
+python worker.py
 ```
 API runs on [http://localhost:8000](http://localhost:8000)
 

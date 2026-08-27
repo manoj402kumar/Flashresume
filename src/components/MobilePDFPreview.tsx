@@ -63,7 +63,7 @@ export default function MobilePDFPreview({ children, refreshKey }: Props) {
     if (debounceTimer.current) clearTimeout(debounceTimer.current);
     debounceTimer.current = setTimeout(() => {
       generateBlob();
-    }, 1500);
+    }, 450);
     return () => {
       if (debounceTimer.current) clearTimeout(debounceTimer.current);
     };

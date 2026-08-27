@@ -44,6 +44,15 @@ function arrayMove<T>(arr: T[], from: number, to: number): T[] {
 
 import type { TemplateV1 } from "@/lib/api";
 import {
+  saveResumeDraft,
+  loadResumeDraft,
+  clearAllWorkflowStorage,
+  getStorageWithTTL,
+  setStorageWithTTL,
+  saveHistoryStack,
+  loadHistoryStack,
+} from "@/lib/storage";
+import {
   isBulletEnhanced,
   getHighlightClass,
 } from "@/lib/highlighting";
@@ -174,6 +183,31 @@ export default function ResultPage() {
     };
   }, []);
 
+  // Focus-driven dynamic expansion and auto-resizing for textareas
+  const handleTextareaFocus = (e: React.FocusEvent<HTMLTextAreaElement>) => {
+    const el = e.currentTarget;
+    el.style.height = 'auto';
+    const minH = el.classList.contains('focus:min-h-[130px]') ? 130 : 44;
+    el.style.height = `${Math.max(minH, el.scrollHeight)}px`;
+  };
+
+  const handleTextareaInput = (e: React.FormEvent<HTMLTextAreaElement>) => {
+    const el = e.currentTarget;
+    el.style.height = 'auto';
+    const minH = el.classList.contains('focus:min-h-[130px]') ? 130 : 44;
+    el.style.height = `${Math.max(minH, el.scrollHeight)}px`;
+  };
+
+  const handleTextareaBlur = (e: React.FocusEvent<HTMLTextAreaElement>) => {
+    const el = e.currentTarget;
+    if (!el.classList.contains('focus:min-h-[130px]')) {
+      el.style.height = 'auto';
+      el.style.height = `${Math.max(44, el.scrollHeight)}px`;
+    } else {
+      el.style.height = '';
+    }
+  };
+
   const [showMobilePreview, setShowMobilePreview] = useState(true);
   const [showFeedback, setShowFeedback] = useState(false);
   const [showReferral, setShowReferral] = useState(false);
@@ -190,6 +224,7 @@ export default function ResultPage() {
 
   const lastEditTimeRef = useRef<number>(0);
   const chunkStartTimeRef = useRef<number>(0);
+  const lastEditDirectionRef = useRef<"insert" | "delete" | "neutral" | null>(null);
 
   const updateResume = (updates: Partial<TemplateV1>, opts?: { immediate?: boolean }) => {
     setResume((prev) => {
@@ -201,26 +236,50 @@ export default function ResultPage() {
 
       const prevStr = JSON.stringify(prev);
       const nextStr = JSON.stringify(next);
-      const lengthDelta = Math.abs(nextStr.length - prevStr.length);
-      const isPaste = lengthDelta > 20;
+      const lengthDelta = nextStr.length - prevStr.length;
+
+      // Determine editing direction (character insertion vs deletion/backspacing)
+      let currentDirection: "insert" | "delete" | "neutral" = "neutral";
+      if (lengthDelta > 0) currentDirection = "insert";
+      else if (lengthDelta < 0) currentDirection = "delete";
+
+      // Directional boundary check: transition between typing and backspacing creates a distinct undo unit
+      const directionChanged =
+        lastEditDirectionRef.current !== null &&
+        currentDirection !== "neutral" &&
+        lastEditDirectionRef.current !== "neutral" &&
+        currentDirection !== lastEditDirectionRef.current;
+
+      const isPaste = Math.abs(lengthDelta) > 20;
+
+      // 600ms debounce timer for batching continuous keystrokes into a single undo boundary
+      const DEBOUNCE_WINDOW_MS = 600;
+      const MAX_CHUNK_MS = 3000;
 
       const shouldCoalesce =
         !opts?.immediate &&
         !isPaste &&
-        timeSinceLast < 1000 &&
-        chunkDuration < 3000 &&
+        !directionChanged &&
+        timeSinceLast < DEBOUNCE_WINDOW_MS &&
+        chunkDuration < MAX_CHUNK_MS &&
         historyRef.current.length > 0;
 
       const truncated = historyRef.current.slice(0, historyIndexRef.current + 1);
 
       if (shouldCoalesce) {
+        // Coalesce continuous typing in current batch
         truncated[truncated.length - 1] = next;
       } else {
+        // Create new history snapshot boundary (pause, discrete action, or directional flip)
         truncated.push(next);
         chunkStartTimeRef.current = now;
       }
 
       lastEditTimeRef.current = now;
+      if (currentDirection !== "neutral") {
+        lastEditDirectionRef.current = currentDirection;
+      }
+
       if (truncated.length > MAX_HISTORY) {
         truncated.shift();
         historyIndexRef.current = Math.max(0, historyIndexRef.current - 1);
@@ -229,15 +288,10 @@ export default function ResultPage() {
       historyIndexRef.current = truncated.length - 1;
       setCanUndo(historyIndexRef.current > 0);
       setCanRedo(false);
-      // Persist history so undo/redo survives a page refresh
-      try {
-        localStorage.setItem("generated_resume", JSON.stringify(next));
-        localStorage.setItem("resume_history", JSON.stringify(truncated));
-        localStorage.setItem("resume_history_index", String(truncated.length - 1));
-        if (next.session_id) {
-          localStorage.setItem("resume_history_session_id", next.session_id);
-        }
-      } catch (_) { }
+
+      // Persist draft and history stack to browser storage with 20-minute sliding TTL
+      saveResumeDraft(next, false);
+      saveHistoryStack(truncated, historyIndexRef.current, false);
       return next;
     });
   };
@@ -246,20 +300,24 @@ export default function ResultPage() {
     if (historyIndexRef.current <= 0) return;
     historyIndexRef.current -= 1;
     const prev = historyRef.current[historyIndexRef.current];
+    lastEditDirectionRef.current = null;
     setResume(prev);
     setCanUndo(historyIndexRef.current > 0);
     setCanRedo(true);
-    try { localStorage.setItem("resume_history_index", String(historyIndexRef.current)); } catch (_) { }
+    saveResumeDraft(prev, false);
+    saveHistoryStack(historyRef.current, historyIndexRef.current, false);
   };
 
   const handleRedo = () => {
     if (historyIndexRef.current >= historyRef.current.length - 1) return;
     historyIndexRef.current += 1;
     const next = historyRef.current[historyIndexRef.current];
+    lastEditDirectionRef.current = null;
     setResume(next);
     setCanUndo(true);
     setCanRedo(historyIndexRef.current < historyRef.current.length - 1);
-    try { localStorage.setItem("resume_history_index", String(historyIndexRef.current)); } catch (_) { }
+    saveResumeDraft(next, false);
+    saveHistoryStack(historyRef.current, historyIndexRef.current, false);
   };
 
   const handleSectionDragStart = (e: React.DragEvent, sectionId: string) => {
@@ -388,29 +446,18 @@ export default function ResultPage() {
       const sessionId = urlParams.get("session_id");
       if (sessionId) setSessionGuid(sessionId);
 
-      let parsed = null;
+      let parsed: TemplateV1 | null = null;
       let isFreshFromAPI = false;
 
-      // ── STEP 1: Always try localStorage FIRST ────────────────────────────
-      // localStorage holds the user's latest edits (auto-saved on every change).
-      // It must take priority over the API so refreshing never erases edits.
-      const localData = localStorage.getItem("generated_resume");
-      if (localData) {
-        try {
-          parsed = JSON.parse(localData);
-          // If URL requests a specific session, and it doesn't match our local edits, force fetch from API.
-          if (sessionId && parsed.session_id !== sessionId) {
-            parsed = null;
-          }
-        } catch (e) {
-          // Corrupt data — fall through to API
-          parsed = null;
-        }
-      }
+      // ── STEP 1: Always try local browser draft (with 20-min TTL) FIRST ─────
+      // Browser storage holds the user's latest edits.
+      // If refreshed within 20 minutes, edits are preserved in user's browser.
+      // If > 20 minutes has elapsed, it expires cleanly.
+      parsed = loadResumeDraft(false, sessionId);
 
-      // ── STEP 2: Only fetch from API if localStorage is empty ──────────────
+      // ── STEP 2: Only fetch from API if browser storage is empty or expired ──
       // This only happens on the very first load right after generation,
-      // before anything has been saved to localStorage yet.
+      // or if the draft has expired after 20 minutes.
       if (!parsed && sessionId) {
         try {
           const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
@@ -419,6 +466,9 @@ export default function ResultPage() {
             const data = await res.json();
             parsed = data.generated_output;
             isFreshFromAPI = true;
+            if (parsed) {
+              saveResumeDraft(parsed, false);
+            }
           }
         } catch (e) {
           console.error("Failed to fetch session", e);
@@ -431,7 +481,7 @@ export default function ResultPage() {
       }
 
       // ── STEP 3: One-time display normalization — only for fresh API data ──
-      // When loading from localStorage these values are already correct;
+      // When loading from browser storage these values are already correct;
       // running them again would overwrite any user edits to those fields.
       if (isFreshFromAPI) {
         // Build hrefs from raw LLM output FIRST (before sanitizing display text)
@@ -462,11 +512,6 @@ export default function ResultPage() {
 
       const isNoJd = localStorage.getItem("no_jd_mode") === "true";
       setNoJdMode(isNoJd);
-      // JD optimization mode → default to "Edit Form" panel
-      // if (!isNoJd) {
-      //   setEditMode(false);
-      //   setShowChanges(true);
-      // }
 
       if (!parsed.section_order || parsed.section_order.length === 0) {
         parsed.section_order = ["summary", "education", "experience", "projects", "skills", "certifications"];
@@ -492,55 +537,49 @@ export default function ResultPage() {
     fetchSession();
   }, [router]);
 
-  // Seed history once resume first loads — restore from localStorage if it belongs to THIS session
+  // Hydrate or seed history once resume first loads — restores past & future stacks within 20-min TTL window
   useEffect(() => {
     if (resume && historyRef.current.length === 0) {
-      try {
-        const savedHistory = localStorage.getItem("resume_history");
-        const savedIndex = localStorage.getItem("resume_history_index");
-        const savedSessionId = localStorage.getItem("resume_history_session_id");
-        const currentSessionId = resume.session_id || "";
-
-        if (savedHistory && savedIndex !== null && savedSessionId === currentSessionId && currentSessionId !== "") {
-          const parsedHistory: TemplateV1[] = JSON.parse(savedHistory);
-          const parsedIndex = parseInt(savedIndex, 10);
-          if (Array.isArray(parsedHistory) && parsedHistory.length > 0 && parsedIndex >= 0 && parsedIndex < parsedHistory.length) {
-            historyRef.current = parsedHistory;
-            historyIndexRef.current = parsedIndex;
-            setCanUndo(parsedIndex > 0);
-            setCanRedo(parsedIndex < parsedHistory.length - 1);
-            return; // restored — skip default seed
-          }
-        }
-      } catch (_) { }
-      // Different session or no saved history — start fresh
-      localStorage.removeItem("resume_history");
-      localStorage.removeItem("resume_history_index");
-      localStorage.removeItem("resume_history_session_id");
-      if (resume.session_id) {
-        localStorage.setItem("resume_history_session_id", resume.session_id);
+      const savedHistory = loadHistoryStack<TemplateV1>(false);
+      if (savedHistory) {
+        const fullStack = [...savedHistory.past, savedHistory.present, ...savedHistory.future];
+        const activeIndex = savedHistory.past.length;
+        historyRef.current = fullStack;
+        historyIndexRef.current = activeIndex;
+        setCanUndo(activeIndex > 0);
+        setCanRedo(activeIndex < fullStack.length - 1);
+      } else {
+        historyRef.current = [resume];
+        historyIndexRef.current = 0;
+        setCanUndo(false);
+        setCanRedo(false);
+        saveHistoryStack(historyRef.current, 0, false);
       }
-      historyRef.current = [resume];
-      historyIndexRef.current = 0;
-      setCanUndo(false);
-      setCanRedo(false);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [!!resume]);
 
-  // Keyboard shortcuts: Ctrl+Z → undo, Ctrl+Y / Ctrl+Shift+Z → redo
+  // Keyboard shortcuts: Ctrl+Z / Cmd+Z → undo, Ctrl+Y / Cmd+Shift+Z → redo
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (!editMode) return;
-      const tag = (e.target as HTMLElement)?.tagName;
-      if (tag === 'INPUT' || tag === 'TEXTAREA') return;
-      if (e.ctrlKey || e.metaKey) {
-        if (e.key === 'z' && !e.shiftKey) { e.preventDefault(); handleUndo(); }
-        if (e.key === 'y' || (e.key === 'z' && e.shiftKey)) { e.preventDefault(); handleRedo(); }
+
+      const isMac = typeof navigator !== "undefined" && /Mac|iPod|iPhone|iPad/.test(navigator.userAgent || navigator.platform);
+      const modifier = isMac ? e.metaKey : e.ctrlKey;
+
+      if (modifier) {
+        const key = e.key.toLowerCase();
+        if (key === "z" && !e.shiftKey) {
+          e.preventDefault();
+          handleUndo();
+        } else if (key === "y" || (key === "z" && e.shiftKey)) {
+          e.preventDefault();
+          handleRedo();
+        }
       }
     };
-    window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
+
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editMode, canUndo, canRedo]);
 
@@ -635,21 +674,10 @@ export default function ResultPage() {
   }, []);
 
   const handleStartOver = () => {
-    // Only clear resume workflow keys — do NOT clear auth session
-    ["resume_text", "job_description", "analysis", "generated_resume",
-      "no_jd_mode", "no_ai_changes", "approved_project", "preferred_model",
-      "resume_history", "resume_history_index", "extracted_links"].forEach(
-        (key) => localStorage.removeItem(key)
-      );
+    // Clean up all resume workflow data from browser storage
+    clearAllWorkflowStorage();
     router.push("/");
   };
-
-  // Auto-save: persist resume to localStorage whenever it changes
-  useEffect(() => {
-    if (resume) {
-      localStorage.setItem("generated_resume", JSON.stringify(resume));
-    }
-  }, [resume]);
 
   const handleDownloadPDF = async () => {
     if (!resume) return;
@@ -1588,24 +1616,27 @@ export default function ResultPage() {
                           <div
                             className="flex items-center justify-between mb-6"
                           >
-                            <div className="flex items-center gap-3">
-                              <div className="w-12 h-12 rounded-2xl bg-primary-container/20 flex items-center justify-center">
-                                <FileText className="w-6 h-6 text-primary" />
+                            <div className="flex flex-row items-start gap-2 sm:gap-3 flex-1 min-w-0">
+                              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-primary-container/20 flex items-center justify-center flex-shrink-0">
+                                <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
                               </div>
                               {editMode ? (
-                                <input
-                                  type="text"
+                                <textarea
                                   value={customSection.heading}
                                   onChange={(e) => {
                                     const newCustoms = [...(resume.custom_sections || [])];
                                     newCustoms[customIndex] = { ...newCustoms[customIndex], heading: e.target.value };
                                     updateResume({ custom_sections: newCustoms }, { immediate: true });
                                   }}
-                                  className="font-headline text-2xl font-bold rounded-xl px-4 py-2 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm w-full"
+                                  onFocus={handleTextareaFocus}
+                                  onInput={handleTextareaInput}
+                                  onBlur={handleTextareaBlur}
+                                  rows={1}
+                                  className="w-full flex-1 font-headline text-xl sm:text-2xl font-bold rounded-xl px-3 py-2 sm:px-4 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm resize-none overflow-hidden box-border min-h-[44px]"
                                   placeholder="Section Heading"
                                 />
                               ) : (
-                                <h3 className="font-headline text-2xl font-bold text-on-background">{customSection.heading || "Custom Section"}</h3>
+                                <h3 className="font-headline text-xl sm:text-2xl font-bold text-on-background">{customSection.heading || "Custom Section"}</h3>
                               )}
                             </div>
                           </div>
@@ -1629,7 +1660,10 @@ export default function ResultPage() {
                                           }
                                           updateResume({ custom_sections: newCustoms }, { immediate: true });
                                         }}
-                                        className="w-full sm:flex-[2] rounded-lg px-3 py-2 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm resize-none min-w-0"
+                                        onFocus={handleTextareaFocus}
+                                        onInput={handleTextareaInput}
+                                        onBlur={handleTextareaBlur}
+                                        className="w-full sm:flex-[2] rounded-lg px-3 py-2 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 hover:border-on-surface-variant/40 transition-all duration-300 ease-in-out shadow-sm resize-none min-h-[44px] focus:min-h-[130px] focus:shadow-2xl focus:shadow-primary/20 focus:z-20 focus:relative overflow-hidden text-sm min-w-0"
                                         rows={2}
                                         placeholder="Bullet text..."
                                       />
@@ -1720,16 +1754,11 @@ export default function ResultPage() {
                               <textarea
                                 value={resume.summary || ''}
                                 onChange={(e) => updateResume({ summary: e.target.value })}
-                                onInput={(e) => {
-                                  const el = e.currentTarget;
-                                  el.style.height = 'auto';
-                                  el.style.height = el.scrollHeight + 'px';
-                                }}
-                                ref={(el) => {
-                                  if (el) { el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px'; }
-                                }}
-                                className="w-full rounded-xl px-4 py-3 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm resize-none overflow-hidden"
-                                rows={1}
+                                onFocus={handleTextareaFocus}
+                                onInput={handleTextareaInput}
+                                onBlur={handleTextareaBlur}
+                                className="w-full rounded-xl px-4 py-3 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 hover:border-on-surface-variant/40 transition-all duration-300 ease-in-out shadow-sm resize-none min-h-[60px] focus:min-h-[140px] focus:shadow-2xl focus:shadow-primary/20 focus:z-20 focus:relative overflow-hidden text-sm"
+                                rows={2}
                                 placeholder="Professional summary..."
                               />
                             ) : (
@@ -1778,17 +1807,22 @@ export default function ResultPage() {
                                   <div key={`edu-${idx}`} className="mb-6 last:mb-0">
                                     {editMode ? (
                                       <div className="space-y-2">
-                                        <input
-                                          type="text"
-                                          value={edu.degree || ''}
-                                          onChange={(e) => {
-                                            const newEducation = [...resume.education];
-                                            newEducation[idx] = { ...newEducation[idx], degree: e.target.value };
-                                            updateResume({ education: newEducation });
-                                          }}
-                                          className="w-full font-bold rounded-xl px-4 py-2 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm"
-                                          placeholder="Degree"
-                                        />
+                                        <div className="flex flex-row items-start gap-2 sm:gap-3 w-full min-w-0">
+                                          <textarea
+                                            value={edu.degree || ''}
+                                            onChange={(e) => {
+                                              const newEducation = [...resume.education];
+                                              newEducation[idx] = { ...newEducation[idx], degree: e.target.value };
+                                              updateResume({ education: newEducation });
+                                            }}
+                                            onFocus={handleTextareaFocus}
+                                            onInput={handleTextareaInput}
+                                            onBlur={handleTextareaBlur}
+                                            rows={1}
+                                            className="w-full flex-1 font-bold text-base sm:text-lg rounded-xl px-3 py-2 sm:px-4 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm resize-none overflow-hidden box-border min-h-[44px]"
+                                            placeholder="Degree"
+                                          />
+                                        </div>
                                         <input
                                           type="text"
                                           value={edu.institution || ''}
@@ -1917,17 +1951,22 @@ export default function ResultPage() {
                                   <div key={`exp-${idx}`} className="mb-8 last:mb-0">
                                     {editMode ? (
                                       <div className="space-y-2 mb-4">
-                                        <input
-                                          type="text"
-                                          value={exp.job_title || ''}
-                                          onChange={(e) => {
-                                            const newExperience = [...resume.experience];
-                                            newExperience[idx] = { ...newExperience[idx], job_title: e.target.value };
-                                            updateResume({ experience: newExperience });
-                                          }}
-                                          className="w-full font-bold rounded-xl px-4 py-2 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm"
-                                          placeholder="Job Title"
-                                        />
+                                        <div className="flex flex-row items-start gap-2 sm:gap-3 w-full min-w-0">
+                                          <textarea
+                                            value={exp.job_title || ''}
+                                            onChange={(e) => {
+                                              const newExperience = [...resume.experience];
+                                              newExperience[idx] = { ...newExperience[idx], job_title: e.target.value };
+                                              updateResume({ experience: newExperience });
+                                            }}
+                                            onFocus={handleTextareaFocus}
+                                            onInput={handleTextareaInput}
+                                            onBlur={handleTextareaBlur}
+                                            rows={1}
+                                            className="w-full flex-1 font-bold text-base sm:text-lg rounded-xl px-3 py-2 sm:px-4 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm resize-none overflow-hidden box-border min-h-[44px]"
+                                            placeholder="Job Title"
+                                          />
+                                        </div>
                                         <input
                                           type="text"
                                           value={exp.company || ''}
@@ -1989,7 +2028,10 @@ export default function ResultPage() {
                                                   newExperience[idx] = { ...newExperience[idx], bullets: newBullets };
                                                   updateResume({ experience: newExperience });
                                                 }}
-                                                className="flex-1 rounded-lg px-3 py-2 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm resize-none"
+                                                onFocus={handleTextareaFocus}
+                                                onInput={handleTextareaInput}
+                                                onBlur={handleTextareaBlur}
+                                                className="flex-1 w-full rounded-lg px-3 py-2 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 hover:border-on-surface-variant/40 transition-all duration-300 ease-in-out shadow-sm resize-none min-h-[44px] focus:min-h-[130px] focus:shadow-2xl focus:shadow-primary/20 focus:z-20 focus:relative overflow-hidden text-sm"
                                                 rows={2}
                                               />
                                             ) : (
@@ -2080,17 +2122,22 @@ export default function ResultPage() {
                                     {editMode ? (
                                       <div className="space-y-2 mb-4">
                                         <div className="flex flex-col gap-3">
-                                          <input
-                                            type="text"
-                                            value={proj.title}
-                                            onChange={(e) => {
-                                              const newProjects = [...resume.projects];
-                                              newProjects[idx] = { ...newProjects[idx], title: e.target.value };
-                                              updateResume({ projects: newProjects });
-                                            }}
-                                            className="w-full font-bold rounded-xl px-4 py-2 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm"
-                                            placeholder="Project Title"
-                                          />
+                                          <div className="flex flex-row items-start gap-2 sm:gap-3 w-full min-w-0">
+                                            <textarea
+                                              value={proj.title || ''}
+                                              onChange={(e) => {
+                                                const newProjects = [...resume.projects];
+                                                newProjects[idx] = { ...newProjects[idx], title: e.target.value };
+                                                updateResume({ projects: newProjects });
+                                              }}
+                                              onFocus={handleTextareaFocus}
+                                              onInput={handleTextareaInput}
+                                              onBlur={handleTextareaBlur}
+                                              rows={1}
+                                              className="w-full flex-1 font-bold text-base sm:text-lg rounded-xl px-3 py-2 sm:px-4 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm resize-none overflow-hidden box-border min-h-[44px]"
+                                              placeholder="Project Title"
+                                            />
+                                          </div>
                                           <div className="flex flex-col sm:flex-row gap-2">
                                             <input
                                               type="text"
@@ -2100,8 +2147,8 @@ export default function ResultPage() {
                                                 newProjects[idx] = { ...newProjects[idx], link: e.target.value };
                                                 updateResume({ projects: newProjects });
                                               }}
-                                              className="sm:w-24 w-full flex-shrink-0 text-sm rounded-xl px-3 py-2 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm"
-                                              placeholder="Link"
+                                              className="w-full sm:flex-1 sm:w-auto min-w-[120px] max-w-full text-sm rounded-xl px-3 py-2 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm"
+                                              placeholder="Link Title"
                                             />
                                             <input
                                               type="url"
@@ -2111,7 +2158,7 @@ export default function ResultPage() {
                                                 newProjects[idx] = { ...newProjects[idx], link_href: e.target.value };
                                                 updateResume({ projects: newProjects });
                                               }}
-                                              className="flex-1 text-sm rounded-xl px-3 py-2 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm"
+                                              className="w-full sm:flex-[2] sm:w-auto min-w-[180px] text-sm rounded-xl px-3 py-2 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm"
                                               placeholder="https://github.com/..."
                                             />
                                           </div>
@@ -2163,7 +2210,10 @@ export default function ResultPage() {
                                                   newProjects[idx] = { ...newProjects[idx], bullets: newBullets };
                                                   updateResume({ projects: newProjects });
                                                 }}
-                                                className="flex-1 rounded-lg px-3 py-2 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm resize-none"
+                                                onFocus={handleTextareaFocus}
+                                                onInput={handleTextareaInput}
+                                                onBlur={handleTextareaBlur}
+                                                className="flex-1 w-full rounded-lg px-3 py-2 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 hover:border-on-surface-variant/40 transition-all duration-300 ease-in-out shadow-sm resize-none min-h-[44px] focus:min-h-[130px] focus:shadow-2xl focus:shadow-primary/20 focus:z-20 focus:relative overflow-hidden text-sm"
                                                 rows={2}
                                               />
                                             ) : (
@@ -2224,7 +2274,20 @@ export default function ResultPage() {
                           </motion.div>
                         );
 
-                      case "skills":
+                      case "skills": {
+                        const totalSkillsCount =
+                          (resume.technical_skills?.languages?.length ?? 0) +
+                          (resume.technical_skills?.frameworks_and_libraries?.length ?? 0) +
+                          (resume.technical_skills?.databases?.length ?? 0) +
+                          ((resume.technical_skills?.cloud_and_dev_tools?.length ?? 0) > 0
+                            ? resume.technical_skills.cloud_and_dev_tools!.length
+                            : ((resume.technical_skills?.cloud_services?.length ?? 0) + (resume.technical_skills?.developer_tools?.length ?? 0))) +
+                          (resume.technical_skills?.miscellaneous?.length ?? 0) +
+                          (resume.technical_skills?.custom_categories || []).reduce((acc, cat) => acc + (cat.skills?.length ?? 0), 0);
+                        const hasTechnicalSkills = totalSkillsCount > 0;
+
+                        if (!editMode && !hasTechnicalSkills) return null;
+
                         return (
                           <motion.div
                             layout="position"
@@ -2459,6 +2522,7 @@ export default function ResultPage() {
                             </div>
                           </motion.div>
                         );
+                      }
 
                       case "certifications": {
                         const combinedItems = [
@@ -2523,7 +2587,10 @@ export default function ResultPage() {
                                                 achievements: []
                                               });
                                             }}
-                                            className="flex-1 rounded-lg px-3 py-2 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 focus:shadow-lg focus:shadow-primary/20 hover:border-on-surface-variant/40 transition-all duration-300 shadow-sm resize-none"
+                                            onFocus={handleTextareaFocus}
+                                            onInput={handleTextareaInput}
+                                            onBlur={handleTextareaBlur}
+                                            className="flex-1 w-full rounded-lg px-3 py-2 border border-on-surface-variant/20 bg-surface-container-lowest/50 backdrop-blur-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/25 shadow-primary/10 hover:border-on-surface-variant/40 transition-all duration-300 ease-in-out shadow-sm resize-none min-h-[44px] focus:min-h-[130px] focus:shadow-2xl focus:shadow-primary/20 focus:z-20 focus:relative overflow-hidden text-sm"
                                             rows={2}
                                           />
                                           <button

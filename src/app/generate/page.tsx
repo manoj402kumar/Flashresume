@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "motion/react";
 import { AlertCircle, RefreshCw, ArrowLeft } from "lucide-react";
 import { generateResume } from "@/lib/api";
+import { saveResumeDraft } from "@/lib/storage";
 
 const TIPS = [
   "Tailoring skills to each job description can boost your ATS score by up to 40%.",
@@ -89,9 +90,9 @@ export default function GeneratePage() {
         setProgress(100);
         await new Promise((r) => setTimeout(r, 800));
 
-        // Always save to localStorage immediately — the result page relies entirely on this.
-        // (Stateless architecture: no resume content stored in DB, localStorage is the source of truth.)
-        localStorage.setItem("generated_resume", JSON.stringify(generatedResume));
+        // Save to browser storage with 20-minute TTL — the result page relies on this.
+        // (Stateless architecture: no resume content stored in DB, browser storage is the source of truth.)
+        saveResumeDraft(generatedResume, false);
         const sid = (generatedResume as any).session_id;
         router.push(sid ? `/result?session_id=${sid}` : "/result");
       } catch (err: any) {

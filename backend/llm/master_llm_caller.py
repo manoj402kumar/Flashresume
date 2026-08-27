@@ -327,6 +327,13 @@ async def call_llm_balanced(prompt: str, is_r1: bool, preferred_model: str = "",
                     all_attempts.append({"model": f"{model_id} - {key_label}", "status": "circuit_breaker_active"})
                     continue
 
+                from llm.quota_manager import quota_manager
+                # Use Token Bucket: consume 1 token, max 15 RPM (adjust as needed based on provider limits)
+                has_quota = await quota_manager.consume(provider, max_rpm=15, requested=1)
+                if not has_quota:
+                    all_attempts.append({"model": f"{model_id} - {key_label}", "status": "rate_limit_exceeded"})
+                    continue
+
                 # ✅ Caller resolved by (provider, key_label) — correct API account always used
                 caller = _CALLERS.get((provider, key_label), call_single_mistral_r1)
                 result = await caller(model_id, prompt, max_tokens)

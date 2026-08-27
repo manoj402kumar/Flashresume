@@ -2,7 +2,30 @@
 // All backend calls with error handling and timeouts
 import { supabase } from "./supabase";
 
-const BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+let BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+
+// Remove trailing slash if present
+if (BASE.endsWith("/")) {
+  BASE = BASE.slice(0, -1);
+}
+
+// Client-side environment checks
+if (typeof window !== "undefined") {
+  const isLocalHost = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
+  
+  // 1. Prevent Mixed Content
+  if (window.location.protocol === "https:" && BASE.startsWith("http://") && !BASE.includes("localhost") && !BASE.includes("127.0.0.1")) {
+    console.warn(`Upgrading API URL from HTTP to HTTPS to prevent mixed-content blocking: ${BASE}`);
+    BASE = BASE.replace("http://", "https://");
+  }
+
+  // 2. Detect missing Vercel environment variable (Baked-in localhost on public domain)
+  if (!isLocalHost && (BASE.includes("localhost") || BASE.includes("127.0.0.1"))) {
+    console.error(`FATAL: Frontend deployed to ${window.location.hostname} but API URL is ${BASE}. NEXT_PUBLIC_API_URL was missing during the Vercel build.`);
+    // We cannot proceed, the browser will refuse to connect to localhost from a remote domain.
+  }
+}
+
 
 // ────────────────────────────────────────────────────────────────────────────
 // STEP 1: Parse Resume (PDF Upload or Text Paste)
@@ -17,6 +40,55 @@ export interface ParseResponse {
   page_count: number;
   parser_used: "pdfplumber" | "gemini_vision" | "pypdfium2" | "python-docx";
   extracted_links?: ExtractedLinks;
+}
+
+async function waitForJobSSE(jobId: string, timeoutMs: number): Promise<any> {
+  // Get token for SSE authentication
+  const { data: { session } } = await supabase.auth.getSession();
+  const token = session?.access_token || "";
+  const sseUrl = `${BASE}/api/jobs/${jobId}/stream${token ? `?token=${encodeURIComponent(token)}` : ''}`;
+  
+  return new Promise((resolve, reject) => {
+    const timeout = setTimeout(() => {
+      reject(new Error("Job timed out."));
+    }, timeoutMs);
+
+    const eventSource = new EventSource(sseUrl);
+
+    eventSource.addEventListener("result", (event) => {
+      clearTimeout(timeout);
+      eventSource.close();
+      try {
+        resolve(JSON.parse(event.data));
+      } catch (e) {
+        reject(new Error("Failed to parse job result."));
+      }
+    });
+
+    eventSource.addEventListener("error", (event: any) => {
+      // EventSource doesn't give much detail on error
+      // If we receive an error event with data, we parse it
+      if (event.data) {
+        try {
+          const errData = JSON.parse(event.data);
+          if (errData.error) {
+             clearTimeout(timeout);
+             eventSource.close();
+             reject(new Error(errData.error));
+             return;
+          }
+        } catch(e) {}
+      }
+    });
+
+    // Handle generic connection error
+    eventSource.onerror = (err) => {
+      // Don't close on every error as it auto-reconnects, but if we want to fail fast:
+      // clearTimeout(timeout);
+      // eventSource.close();
+      // reject(new Error("SSE connection error"));
+    };
+  });
 }
 
 export async function parseResume(file: File): Promise<ParseResponse> {
@@ -34,6 +106,10 @@ export async function parseResume(file: File): Promise<ParseResponse> {
     throw new Error("Unsupported file type. Please upload PDF, DOCX, JPG, or PNG.");
   }
 
+  if (typeof window !== "undefined" && !["localhost", "127.0.0.1"].includes(window.location.hostname) && (BASE.includes("localhost") || BASE.includes("127.0.0.1"))) {
+    throw new Error("Configuration Error: NEXT_PUBLIC_API_URL is pointing to localhost in production. Please update Vercel environment variables and redeploy.");
+  }
+
   const formData = new FormData();
   formData.append("file", file);
 
@@ -41,18 +117,28 @@ export async function parseResume(file: File): Promise<ParseResponse> {
     const res = await fetch(`${BASE}/api/parse`, {
       method: "POST",
       body: formData,
-      signal: AbortSignal.timeout(30000), // 30s timeout
+      signal: AbortSignal.timeout(30000), // 30s timeout for enqueueing
     });
 
     if (!res.ok) {
       const errorText = await res.text();
-      throw new Error(`Parse failed (${res.status}): ${errorText}`);
+      throw new Error(`Parse enqueue failed (${res.status}): ${errorText}`);
     }
 
-    return await res.json();
+    const { job_id } = await res.json();
+    if (!job_id) throw new Error("No job ID returned from server.");
+    
+    // Wait for the job via SSE
+    return await waitForJobSSE(job_id, 120000); // 120s max wait for processing
+
   } catch (err: any) {
+    console.error("[Parse Resume Error]", err);
     if (err.name === "TimeoutError") {
       throw new Error("Request timed out. Please try again.");
+    }
+    // If it's a TypeError from fetch(), it's likely a network issue (CORS, DNS, connection refused)
+    if (err.name === "TypeError" && err.message === "Failed to fetch") {
+      throw new Error("Network Error: Failed to fetch. Please check your internet connection or verify the backend is reachable.");
     }
     throw new Error(err.message || "Failed to parse resume. Please try again.");
   }
@@ -96,6 +182,10 @@ export async function analyzeResume(
     throw new Error("Resume text cannot be empty.");
   }
 
+  if (typeof window !== "undefined" && !["localhost", "127.0.0.1"].includes(window.location.hostname) && (BASE.includes("localhost") || BASE.includes("127.0.0.1"))) {
+    throw new Error("Configuration Error: NEXT_PUBLIC_API_URL is pointing to localhost in production. Please update Vercel environment variables and redeploy.");
+  }
+
   try {
     const { data: { session } } = await supabase.auth.getSession();
     const headers: Record<string, string> = { "Content-Type": "application/json" };
@@ -121,8 +211,12 @@ export async function analyzeResume(
 
     return await res.json();
   } catch (err: any) {
+    console.error("[Analyze Resume Error]", err);
     if (err.name === "TimeoutError") {
       throw new Error("Analysis timed out. Please try again.");
+    }
+    if (err.name === "TypeError" && err.message === "Failed to fetch") {
+      throw new Error("Network Error: Failed to fetch. Please check your internet connection or verify the backend is reachable.");
     }
     throw new Error(err.message || "Failed to analyze resume. Please try again.");
   }
@@ -226,6 +320,10 @@ export async function generateResume(
     throw new Error("Resume text cannot be empty.");
   }
 
+  if (typeof window !== "undefined" && !["localhost", "127.0.0.1"].includes(window.location.hostname) && (BASE.includes("localhost") || BASE.includes("127.0.0.1"))) {
+    throw new Error("Configuration Error: NEXT_PUBLIC_API_URL is pointing to localhost in production. Please update Vercel environment variables and redeploy.");
+  }
+
   try {
     const { data: { session } } = await supabase.auth.getSession();
     const headers: Record<string, string> = { "Content-Type": "application/json" };
@@ -237,18 +335,27 @@ export async function generateResume(
       method: "POST",
       headers,
       body: JSON.stringify(payload),
-      signal: AbortSignal.timeout(180000), // 180s timeout (generation is slower)
+      signal: AbortSignal.timeout(30000), // 30s timeout for enqueueing
     });
 
     if (!res.ok) {
       const errorText = await res.text();
-      throw new Error(`Generation failed (${res.status}): ${errorText}`);
+      throw new Error(`Generation enqueue failed (${res.status}): ${errorText}`);
     }
 
-    return await res.json();
+    const { job_id } = await res.json();
+    if (!job_id) throw new Error("No job ID returned from server.");
+    
+    // Wait for the job via SSE
+    return await waitForJobSSE(job_id, 180000); // 180s max wait for generation
+
   } catch (err: any) {
+    console.error("[Generate Resume Error]", err);
     if (err.name === "TimeoutError") {
       throw new Error("Generation timed out. The AI is taking longer than expected. Please try again.");
+    }
+    if (err.name === "TypeError" && err.message === "Failed to fetch") {
+      throw new Error("Network Error: Failed to fetch. Please check your internet connection or verify the backend is reachable.");
     }
     throw new Error(err.message || "Failed to generate resume. Please try again.");
   }
