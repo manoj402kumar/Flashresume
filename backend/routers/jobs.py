@@ -3,14 +3,19 @@ from fastapi.responses import EventSourceResponse
 import asyncio
 import json
 from queue_manager import queue_manager
+from rate_limiter import extract_user_id_from_jwt
+import supabase_client as sc
 
 router = APIRouter()
 
-import supabase_client as sc
+def get_authenticated_user_id(token: str) -> str | None:
+    if not token:
+        return None
+    uid = extract_user_id_from_jwt(f"Bearer {token}" if not token.startswith("Bearer ") else token)
+    return uid
 
 @router.get("/{job_id}/status")
 async def get_job_status(job_id: str, request: Request, token: str = None):
-    # Retrieve token from Authorization header or query parameter
     auth_header = request.headers.get("Authorization")
     if auth_header and auth_header.startswith("Bearer "):
         token = auth_header.split(" ", 1)[1]
@@ -19,21 +24,15 @@ async def get_job_status(job_id: str, request: Request, token: str = None):
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
         
-    # Check authorization if job has an owner
     payload = job.get("payload", {})
-    owner_id = payload.get("user_id")
+    owner_id = job.get("user_id") or (payload.get("user_id") if isinstance(payload, dict) else None)
     if owner_id:
-        if not token:
+        user_id = get_authenticated_user_id(token)
+        if not user_id:
             raise HTTPException(status_code=401, detail="Authentication required to view this job")
-        try:
-            user_resp = await asyncio.to_thread(lambda: sc.supabase.auth.get_user(token))
-            user_id = user_resp.user.id if user_resp and user_resp.user else None
-            if user_id != owner_id:
-                raise HTTPException(status_code=403, detail="Not authorized to view this job")
-        except Exception:
-            raise HTTPException(status_code=401, detail="Invalid authentication token")
+        if user_id != owner_id:
+            raise HTTPException(status_code=403, detail="Not authorized to view this job")
             
-    # Strip payload and result unless complete
     response = {
         "id": job["id"],
         "status": job["status"],
@@ -45,60 +44,99 @@ async def get_job_status(job_id: str, request: Request, token: str = None):
         
     return response
 
-@router.get("/{job_id}/stream")
-async def stream_job_status(job_id: str, request: Request, token: str = None):
+@router.post("/{job_id}/stream-ticket")
+async def create_stream_ticket(job_id: str, request: Request, token: str = None):
     """
-    SSE endpoint for frontend to subscribe to job status updates.
+    Exchanges a valid JWT for a short-lived, single-use SSE ticket.
+    Prevents JWTs from appearing in EventSource URLs and server logs.
     """
-    # Retrieve token from query parameter or header
     auth_header = request.headers.get("Authorization")
     if auth_header and auth_header.startswith("Bearer "):
         token = auth_header.split(" ", 1)[1]
         
-    async def event_generator():
-        from redis_client import redis_client
+    user_id = get_authenticated_user_id(token)
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Authentication required")
         
-        # Subscribe to pubsub FIRST to avoid race condition where job completes
-        # between our initial check and our subscription
+    job = await queue_manager.get_job(job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+        
+    payload = job.get("payload", {})
+    owner_id = job.get("user_id") or (payload.get("user_id") if isinstance(payload, dict) else None)
+    if owner_id and user_id != owner_id:
+        raise HTTPException(status_code=403, detail="Not authorized to view this job")
+        
+    import uuid
+    ticket = str(uuid.uuid4())
+    from redis_client import redis_client
+    
+    # Store ticket with 60s TTL
+    ticket_key = f"sse_ticket:{ticket}"
+    ticket_data = json.dumps({"user_id": user_id, "job_id": job_id})
+    await redis_client.set(ticket_key, ticket_data, ex=60)
+    
+    from fastapi.responses import JSONResponse
+    return JSONResponse(
+        content={"ticket": ticket},
+        headers={"Cache-Control": "no-store, no-cache, must-revalidate"}
+    )
+
+@router.get("/{job_id}/stream")
+async def stream_job_status(job_id: str, request: Request, ticket: str = None):
+    if not ticket:
+        raise HTTPException(status_code=401, detail="Missing SSE ticket")
+        
+    from redis_client import redis_client
+    
+    # Atomically consume the ticket (Redis 6.2+ GETDEL)
+    # GETDEL guarantees the ticket is single-use and consumed instantly
+    ticket_key = f"sse_ticket:{ticket}"
+    ticket_data_raw = await redis_client.execute_command("GETDEL", ticket_key)
+    
+    if not ticket_data_raw:
+        raise HTTPException(status_code=401, detail="Invalid or expired SSE ticket")
+        
+    ticket_data = json.loads(ticket_data_raw)
+    if ticket_data.get("job_id") != job_id:
+        raise HTTPException(status_code=403, detail="Ticket is not bound to this job")
+        
+    # User ID from ticket is authoritative
+    ticket_user_id = ticket_data.get("user_id")
+
+    async def event_generator(ticket_user_id_val=ticket_user_id):
+        from redis_client import redis_client
         pubsub = redis_client.pubsub()
-        await pubsub.subscribe(f"job_updates:{job_id}")
         
         try:
-            # Check initial state AFTER subscribing
+            # 1. Subscribe to Pub/Sub BEFORE checking job state to avoid race condition
+            await pubsub.subscribe(f"job_updates:{job_id}")
+
+            # 2. Reconcile current state (durable)
             job = await queue_manager.get_job(job_id)
             if not job:
-                yield "event: error\ndata: {\"error\": \"Error occurred\"}\n\n"
+                yield 'event: error\ndata: {"error": "Job not found"}\n\n'
                 return
                 
-            # Check authorization if job has an owner
             payload = job.get("payload", {})
-            owner_id = payload.get("user_id")
-            if owner_id:
-                if not token:
-                    yield "event: error\ndata: {\"error\": \"Error occurred\"}\n\n"
-                    return
-                try:
-                    user_resp = await asyncio.to_thread(lambda: sc.supabase.auth.get_user(token))
-                    user_id = user_resp.user.id if user_resp and user_resp.user else None
-                    if user_id != owner_id:
-                        yield "event: error\ndata: {\"error\": \"Error occurred\"}\n\n"
-                        return
-                except Exception:
-                    yield "event: error\ndata: {\"error\": \"Error occurred\"}\n\n"
-                    return
+            owner_id = job.get("user_id") or (payload.get("user_id") if isinstance(payload, dict) else None)
+            if owner_id and ticket_user_id_val != owner_id:
+                yield 'event: error\ndata: {"error": "Not authorized to view this job"}\n\n'
+                return
                 
-            yield f"event: status\ndata: {json.dumps({'status': job['status']})}\n\n"
+            yield f'event: status\ndata: {json.dumps({"status": job["status"]})}\n\n'
             
             if job["status"] in ["COMPLETE", "FAILED"]:
                 if job["status"] == "COMPLETE":
                     if "result" in job:
-                        yield f"event: result\ndata: {job['result']}\n\n"
+                        res_str = json.dumps(job["result"]) if isinstance(job["result"], dict) else str(job["result"])
+                        yield f'event: result\ndata: {res_str}\n\n'
                     else:
-                        yield f"event: error\ndata: {json.dumps({'error': 'Job completed but result payload is missing.'})}\n\n"
+                        yield 'event: error\ndata: {"error": "Job completed but result payload is missing."}\n\n'
                 elif job["status"] == "FAILED":
                     err_msg = job.get("error", "Job failed during processing.")
-                    yield f"event: error\ndata: {json.dumps({'error': err_msg})}\n\n"
-                await asyncio.sleep(0.5)  # Allow proxy to flush terminal chunk
+                    yield f'event: error\ndata: {json.dumps({"error": err_msg})}\n\n'
+                await asyncio.sleep(0.5)
                 return
                 
             while True:
@@ -111,26 +149,24 @@ async def stream_job_status(job_id: str, request: Request, token: str = None):
                     status = data.get("status")
                     error = data.get("error", "")
                     
-                    yield f"event: status\ndata: {json.dumps({'status': status, 'error': error})}\n\n"
+                    yield f'event: status\ndata: {json.dumps({"status": status, "error": error})}\n\n'
                     
                     if status == "COMPLETE":
-                        # Fetch the final result
                         job = await queue_manager.get_job(job_id)
                         if job and "result" in job:
-                            yield f"event: result\ndata: {job['result']}\n\n"
+                            res_str = json.dumps(job["result"]) if isinstance(job["result"], dict) else str(job["result"])
+                            yield f'event: result\ndata: {res_str}\n\n'
                         else:
-                            yield f"event: error\ndata: {json.dumps({'error': 'Job completed but result payload is missing.'})}\n\n"
+                            yield 'event: error\ndata: {"error": "Job completed but result payload is missing."}\n\n'
                         await asyncio.sleep(0.5)
                         break
                     elif status == "FAILED":
-                        yield f"event: error\ndata: {json.dumps({'error': error or 'Job failed during processing.'})}\n\n"
+                        yield f'event: error\ndata: {json.dumps({"error": error or "Job failed during processing."})}\n\n'
                         await asyncio.sleep(0.5)
                         break
                 else:
-                    # Keepalive ping
-                    yield ": ping\n\n"
+                    yield ': ping\n\n'
         finally:
-
             await pubsub.unsubscribe(f"job_updates:{job_id}")
             await pubsub.close()
 

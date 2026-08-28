@@ -43,52 +43,137 @@ export interface ParseResponse {
 }
 
 async function waitForJobSSE(jobId: string, timeoutMs: number): Promise<any> {
-  // Get token for SSE authentication
   const { data: { session } } = await supabase.auth.getSession();
   const token = session?.access_token || "";
-  const sseUrl = `${BASE}/api/jobs/${jobId}/stream${token ? `?token=${encodeURIComponent(token)}` : ''}`;
+  const overallStartTime = Date.now();
+  let attempt = 0;
+  const maxAttempts = 10;
   
-  return new Promise((resolve, reject) => {
-    const timeout = setTimeout(() => {
-      reject(new Error("Job timed out."));
-    }, timeoutMs);
-
-    const eventSource = new EventSource(sseUrl);
-
-    eventSource.addEventListener("result", (event) => {
-      clearTimeout(timeout);
-      eventSource.close();
+  while (Date.now() - overallStartTime < timeoutMs) {
+    attempt++;
+    const remainingMs = timeoutMs - (Date.now() - overallStartTime);
+    if (remainingMs <= 0) {
+      throw new Error("Job timed out.");
+    }
+    
+    // Check durable state first on reconnects
+    if (attempt > 1) {
       try {
-        resolve(JSON.parse(event.data));
+        const res = await fetch(`${BASE}/api/jobs/${jobId}/status${token ? `?token=${encodeURIComponent(token)}` : ''}`, {
+          headers: token ? { "Authorization": `Bearer ${token}` } : {}
+        });
+        if (res.ok) {
+          const job = await res.json();
+          if (job.status === "COMPLETE" && job.result) {
+            return job.result;
+          } else if (job.status === "FAILED") {
+            throw new Error(job.error || "Job failed during processing.");
+          }
+        }
       } catch (e) {
-        reject(new Error("Failed to parse job result."));
+        console.warn("Durable status check failed", e);
       }
-    });
+      
+      // Bounded backoff: 500ms, 1s, 2s, max 5s
+      const backoff = Math.min(500 * Math.pow(2, attempt - 2), 5000);
+      await new Promise(r => setTimeout(r, backoff));
+    }
 
-    eventSource.addEventListener("error", (event: any) => {
-      // EventSource doesn't give much detail on error
-      // If we receive an error event with data, we parse it
-      if (event.data) {
-        try {
-          const errData = JSON.parse(event.data);
-          if (errData.error) {
+    // Get fresh ticket
+    let ticket = "";
+    if (token) {
+      try {
+        const ticketRes = await fetch(`${BASE}/api/jobs/${jobId}/stream-ticket`, {
+          method: "POST",
+          headers: { "Authorization": `Bearer ${token}` }
+        });
+        if (ticketRes.ok) {
+          const ticketData = await ticketRes.json();
+          ticket = ticketData.ticket;
+        }
+      } catch (e) {
+        console.warn("Failed to get SSE ticket", e);
+      }
+    }
+
+    const sseUrl = `${BASE}/api/jobs/${jobId}/stream${ticket ? `?ticket=${encodeURIComponent(ticket)}` : ''}`;
+    
+    try {
+      const result = await new Promise((resolve, reject) => {
+        let isResolved = false;
+        
+        const timeout = setTimeout(() => {
+          if (!isResolved) {
+            isResolved = true;
+            eventSource.close();
+            reject(new Error("Job timed out."));
+          }
+        }, remainingMs);
+
+        const eventSource = new EventSource(sseUrl);
+
+        eventSource.addEventListener("status", (event) => {
+           // handled for debug purposes
+        });
+
+        eventSource.addEventListener("result", (event) => {
+          if (isResolved) return;
+          isResolved = true;
+          clearTimeout(timeout);
+          eventSource.close();
+          try {
+            resolve(JSON.parse(event.data));
+          } catch (e) {
+            reject(new Error("Failed to parse job result."));
+          }
+        });
+
+        eventSource.addEventListener("error", (event: any) => {
+          if (isResolved) return;
+          if (event.data) {
+            try {
+              const errData = JSON.parse(event.data);
+              if (errData.error) {
+                 isResolved = true;
+                 clearTimeout(timeout);
+                 eventSource.close();
+                 // Terminal failure from server
+                 reject(new Error(errData.error));
+              }
+            } catch(e) {}
+          }
+        });
+
+        eventSource.onerror = (err) => {
+          if (isResolved) return;
+          // Transient network error or ticket spent, let the promise resolve as transient so loop can retry
+          if (eventSource.readyState === 2) {
+             isResolved = true;
              clearTimeout(timeout);
              eventSource.close();
-             reject(new Error(errData.error));
-             return;
+             // We reject with a specific string to signal retryable
+             reject(new Error("TRANSIENT_RECONNECT"));
           }
-        } catch(e) {}
+        };
+      });
+      
+      // If we made it here, the promise resolved successfully
+      return result;
+      
+    } catch (err: any) {
+      if (err.message === "TRANSIENT_RECONNECT") {
+        if (attempt >= maxAttempts) {
+          throw new Error("Connection failed after maximum retries.");
+        }
+        // loop will retry
+        continue;
       }
-    });
-
-    // Handle generic connection error
-    eventSource.onerror = (err) => {
-      // Don't close on every error as it auto-reconnects, but if we want to fail fast:
-      // clearTimeout(timeout);
-      // eventSource.close();
-      // reject(new Error("SSE connection error"));
-    };
-  });
+      // Bubble up terminal errors (like job failed, timeout, or parsing error)
+      throw err;
+    }
+  }
+  
+  throw new Error("Job timed out.");
 }
 
 export async function parseResume(file: File): Promise<ParseResponse> {
@@ -209,7 +294,11 @@ export async function analyzeResume(
       throw new Error(`Analysis failed (${res.status}): ${errorText}`);
     }
 
-    return await res.json();
+    const data = await res.json();
+    if (res.status === 202 && data.job_id) {
+      return await waitForJobSSE(data.job_id, 120000);
+    }
+    return data;
   } catch (err: any) {
     console.error("[Analyze Resume Error]", err);
     if (err.name === "TimeoutError") {
