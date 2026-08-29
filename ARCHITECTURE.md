@@ -1,3 +1,8 @@
+
+
+> [!NOTE]
+> **Update**: The single-use SSE ticket (`/stream-ticket`) and `?token=` architecture has been fully replaced with a Fetch-based SSE implementation utilizing `Authorization: Bearer` headers. All references to GETDEL tickets are strictly historical.
+
 # FlashResume - System Architecture
 
 > Last verified: 2026-08-28
@@ -246,5 +251,5 @@ master_llm_caller.py → call_llm_balanced()
 
 ---
 
-**Status**: ✅ PRODUCTION READY — TWO-TIER ARCHITECTURE FULLY IMPLEMENTED  
+**Status**: ✅ VERIFIED — TWO-TIER ARCHITECTURE IMPLEMENTED  
 **Last verified**: 2026-08-28

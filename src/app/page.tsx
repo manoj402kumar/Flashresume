@@ -469,7 +469,7 @@ export default function App() {
     setError("");
 
     try {
-      const parseResult = await parseResume(file);
+      const parseResult = await parseResume(file, signal);
       setParsedText(parseResult.resume_text);
       setShowParsedText(true);
     } catch (err: any) {
@@ -564,7 +564,7 @@ export default function App() {
         try {
           // Read R1 model preference (set by the R1 ModelSelector on this page)
           const r1Model = localStorage.getItem("r1_preferred_model") ?? "";
-          const analysisResult = await analyzeResume(finalResumeText, jobDescription, r1Model);
+          const analysisResult = await analyzeResume(finalResumeText, jobDescription, r1Model, signal);
           localStorage.setItem("analysis", JSON.stringify(analysisResult));
           if (countdownRef.current) clearInterval(countdownRef.current);
           setAnalysisCountdown(null);

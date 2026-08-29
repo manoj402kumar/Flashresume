@@ -17,9 +17,10 @@ npm run dev
 ```
 Open [http://localhost:3000](http://localhost:3000)
 
-### Backend (FastAPI)
+### Backend (FastAPI - Python 3.11 Required)
 
 #### Option 1: Startup Scripts (Recommended)
+These scripts automatically validate Python 3.11, isolate dependencies, and auto-start local Redis.
 ```bash
 cd ~/Desktop/Flashresume
 
@@ -31,11 +32,15 @@ cd ~/Desktop/Flashresume
 ```
 
 #### Option 2: Manual Start (Virtual Environment)
+Ensure you have Python 3.11 installed.
+
 ```bash
 cd ~/Desktop/Flashresume/backend
 
-# Activate virtualenv to isolate dependencies from global Python
+# Create and activate virtual environment
+python3.11 -m venv venv
 source venv/bin/activate
+pip install -r requirements.txt
 
 # Terminal 1: Start Core API Server
 python -m uvicorn main:app --port 8000 --reload

@@ -11,6 +11,8 @@
 #   directly.  The venv has include-system-site-packages = false, so
 #   ~/.local is never loaded.
 #
+#   AUTHORITATIVE RUNTIME: Python 3.11 (matches Dockerfile/Production)
+#
 # USAGE (from the repo root ~/Desktop/Flashresume):
 #   chmod +x start.sh
 #   ./start.sh            # plain start, port 8000
@@ -23,7 +25,17 @@ PYTHON="$BACKEND_DIR/venv/bin/python"
 
 if [[ ! -x "$PYTHON" ]]; then
   echo "ERROR: venv not found at $BACKEND_DIR/venv"
-  echo "       Run: python3 -m venv backend/venv && backend/venv/bin/pip install -r backend/requirements.txt"
+  echo "       Run: python3.11 -m venv backend/venv && backend/venv/bin/pip install -r backend/requirements.txt"
+  exit 1
+fi
+
+# Strict runtime validation
+PYTHON_VERSION=$("$PYTHON" -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")')
+if [[ "$PYTHON_VERSION" != "3.11" ]]; then
+  echo "ERROR: Virtual environment is using Python $PYTHON_VERSION."
+  echo "       FlashResume requires Python 3.11 to match the production container."
+  echo "       Please delete the venv and recreate it using python3.11:"
+  echo "       rm -rf backend/venv && python3.11 -m venv backend/venv"
   exit 1
 fi
 

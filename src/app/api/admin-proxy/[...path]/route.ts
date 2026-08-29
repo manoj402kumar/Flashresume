@@ -14,11 +14,12 @@ export async function GET(
   try {
     const res = await fetch(targetUrl, {
       headers: { "X-Admin-Key": process.env.ADMIN_SECRET_KEY || "" },
+      signal: AbortSignal.timeout(10000)
     });
     const data = await res.json();
     return NextResponse.json(data, { status: res.status });
-  } catch {
-    return NextResponse.json({ error: "Failed to proxy request" }, { status: 500 });
+  } catch (err) {
+    return NextResponse.json({ error: "Backend service unavailable. Please check if FastAPI is running." }, { status: 503 });
   }
 }
 
@@ -41,10 +42,11 @@ export async function POST(
         "Content-Type": "application/json",
       },
       ...(body ? { body } : {}),
+      signal: AbortSignal.timeout(10000)
     });
     const data = await res.json();
     return NextResponse.json(data, { status: res.status });
-  } catch {
-    return NextResponse.json({ error: "Failed to proxy POST request" }, { status: 500 });
+  } catch (err) {
+    return NextResponse.json({ error: "Backend service unavailable. Please check if FastAPI is running." }, { status: 503 });
   }
 }

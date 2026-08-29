@@ -1,64 +1,75 @@
-from fastapi import APIRouter, HTTPException, Request, Header
+import hashlib
+import json
+import uuid
+from fastapi import APIRouter, HTTPException, Request, Header, Depends
+from auth_utils import verify_user
+from fastapi.responses import JSONResponse
 from models.request_models import AnalyzeRequest
-from models.response_models import CombinedAnalysisResponse
-from services.combined_analyzer import analyze_resume_combined
 from rate_limiter import limiter
+from queue_manager import queue_manager, QueueCapacityError, UserJobLimitError
+from redis_client import redis_client
 
 router = APIRouter()
 
-# P2-3: Request size limits — prevents oversized inputs from consuming LLM quota
-_MAX_RESUME_CHARS = 15_000   # ~4,000 tokens; a 2-page resume is ~3,000–6,000 chars
-_MAX_JD_CHARS     = 8_000    # ~2,000 tokens; normal JDs are 1,000–4,000 chars
+_MAX_RESUME_CHARS = 15_000
+_MAX_JD_CHARS     = 8_000
 
-@router.post("/analyze", response_model=CombinedAnalysisResponse)
-@limiter.limit("5/minute")
-async def analyze_resume(request: Request, payload: AnalyzeRequest, authorization: str = Header(None)):
+@router.post("/analyze")
+@limiter.limit("10/minute")
+async def analyze_resume(request: Request, payload: AnalyzeRequest, user_id: str = Depends(verify_user)):
     """
-    Combined endpoint: Analyze resume against JD for ATS score AND check project relevance.
-    Uses a SINGLE LLM call (combined prompt) instead of two parallel calls.
-
-    Returns:
-    - ATS score, matched skills, missing skills (pre-filtered using covered_jd_tech)
-    - Project case (1/2), selected_projects, suggested_project (if needed)
-    - requires_consent flag (true for Case 2)
+    Asynchronous ATS Scoring & Project Check endpoint.
+    Enqueues job to Redis and returns 202 Accepted with job_id for SSE streaming.
     """
-    # Size validation — reject before spending any LLM tokens
     if len(payload.resume_text) > _MAX_RESUME_CHARS:
         raise HTTPException(
             status_code=400,
-            detail=f"Resume text is too large ({len(payload.resume_text):,} characters). "
-                   f"Maximum allowed is {_MAX_RESUME_CHARS:,} characters. "
-                   f"Please trim your resume to 2 pages or less."
+            detail=f"Resume text is too large ({len(payload.resume_text):,} characters). Maximum allowed is {_MAX_RESUME_CHARS:,} characters."
         )
     if payload.job_description and len(payload.job_description) > _MAX_JD_CHARS:
         raise HTTPException(
             status_code=400,
-            detail=f"Job description is too large ({len(payload.job_description):,} characters). "
-                   f"Maximum allowed is {_MAX_JD_CHARS:,} characters."
+            detail=f"Job description is too large ({len(payload.job_description):,} characters). Maximum allowed is {_MAX_JD_CHARS:,} characters."
         )
+
+
+
+    job_payload = {
+        "resume_text": payload.resume_text,
+        "job_description": payload.job_description,
+        "preferred_model": payload.preferred_model or "",
+        "user_id": user_id
+    }
+
+    # Idempotency hash
+    hash_input = json.dumps(job_payload, sort_keys=True).encode("utf-8")
+    payload_hash = hashlib.sha256(hash_input).hexdigest()
+    idempotency_key = f"idempotency:analyze:{payload_hash}"
+
+    existing_job = await redis_client.get(idempotency_key)
+    if existing_job:
+        return JSONResponse(status_code=202, content={"job_id": existing_job})
+
+    job_id = str(uuid.uuid4())
+    is_first = await redis_client.set(idempotency_key, job_id, nx=True, ex=3600)
+    if not is_first:
+        existing_job = await redis_client.get(idempotency_key)
+        return JSONResponse(status_code=202, content={"job_id": existing_job})
 
     try:
-        result = await analyze_resume_combined(
-            payload.resume_text,
-            payload.job_description,
-            payload.preferred_model or ""
+        await queue_manager.enqueue(
+            job_type="analyze_resume",
+            payload=job_payload,
+            job_id=job_id,
+            user_id=user_id
         )
+    except QueueCapacityError as e:
+        raise HTTPException(status_code=503, detail=str(e), headers={"Retry-After": "30"})
+    except UserJobLimitError as e:
+        raise HTTPException(status_code=429, detail=str(e), headers={"Retry-After": "15"})
+    except Exception as e:
+        import logging
+        logging.error(f"Failed to enqueue analysis job: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=503, detail="Service temporarily unavailable. Could not connect to the job queue.")
 
-        return CombinedAnalysisResponse(
-            ats_score=result["ats_score"],
-            matched_skills=result["matched_skills"],
-            missing_skills=result["updated_missing_skills"],
-            all_missing_skills=result.get("all_missing_skills", []),
-            has_relevant_projects=result["has_relevant_projects"],
-            relevant_projects=result["relevant_projects"],
-            total_projects_count=result.get("total_projects_count", 0),
-            least_relevant_project=result.get("least_relevant_project"),
-            suggested_project=result.get("suggested_project"),
-            requires_consent=result["requires_consent"],
-            selected_projects=result.get("selected_projects", []),
-            case=result.get("case", 1),
-            model_used=result.get("_model_used")
-        )
-    except ValueError as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
+    return JSONResponse(status_code=202, content={"job_id": job_id})

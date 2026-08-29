@@ -23,6 +23,15 @@ export default function GeneratePage() {
   const [tipIndex, setTipIndex] = useState(0);
   const [tipVisible, setTipVisible] = useState(true);
   const tipTimer = useRef<NodeJS.Timeout | null>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
+  }, []);
 
   // Countdown
   useEffect(() => {
@@ -47,6 +56,8 @@ export default function GeneratePage() {
     hasStartedRef.current = true;
 
     const generate = async () => {
+      abortControllerRef.current = new AbortController();
+      const signal = abortControllerRef.current.signal;
       try {
         const resumeText = localStorage.getItem("resume_text");
         const jobDescription = localStorage.getItem("job_description");
@@ -80,8 +91,8 @@ export default function GeneratePage() {
           selected_projects: analysis.selected_projects || [],
           preferred_model: preferredModel,
           no_ai_changes: noAiChanges,
-          extracted_links: extractedLinks ?? null,
-        });
+          extracted_links: extractedLinks
+        }, signal);
 
         setProgress(70);
         await new Promise((r) => setTimeout(r, 600));

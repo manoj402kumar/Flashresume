@@ -1,6 +1,8 @@
 // FlashResume API Integration Layer
 // All backend calls with error handling and timeouts
 import { supabase } from "./supabase";
+import { fetchEventSource } from '@microsoft/fetch-event-source';
+
 
 let BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -42,141 +44,169 @@ export interface ParseResponse {
   extracted_links?: ExtractedLinks;
 }
 
-async function waitForJobSSE(jobId: string, timeoutMs: number): Promise<any> {
-  const { data: { session } } = await supabase.auth.getSession();
-  const token = session?.access_token || "";
+async function waitForJobSSE(jobId: string, timeoutMs: number, signal?: AbortSignal): Promise<any> {
   const overallStartTime = Date.now();
   let attempt = 0;
+  let authRetryCount = 0;
   const maxAttempts = 10;
   
-  while (Date.now() - overallStartTime < timeoutMs) {
-    attempt++;
-    const remainingMs = timeoutMs - (Date.now() - overallStartTime);
-    if (remainingMs <= 0) {
-      throw new Error("Job timed out.");
-    }
-    
-    // Check durable state first on reconnects
-    if (attempt > 1) {
-      try {
-        const res = await fetch(`${BASE}/api/jobs/${jobId}/status${token ? `?token=${encodeURIComponent(token)}` : ''}`, {
-          headers: token ? { "Authorization": `Bearer ${token}` } : {}
-        });
-        if (res.ok) {
-          const job = await res.json();
-          if (job.status === "COMPLETE" && job.result) {
-            return job.result;
-          } else if (job.status === "FAILED") {
-            throw new Error(job.error || "Job failed during processing.");
-          }
-        }
-      } catch (e) {
-        console.warn("Durable status check failed", e);
-      }
-      
-      // Bounded backoff: 500ms, 1s, 2s, max 5s
-      const backoff = Math.min(500 * Math.pow(2, attempt - 2), 5000);
-      await new Promise(r => setTimeout(r, backoff));
-    }
-
-    // Get fresh ticket
-    let ticket = "";
-    if (token) {
-      try {
-        const ticketRes = await fetch(`${BASE}/api/jobs/${jobId}/stream-ticket`, {
-          method: "POST",
-          headers: { "Authorization": `Bearer ${token}` }
-        });
-        if (ticketRes.ok) {
-          const ticketData = await ticketRes.json();
-          ticket = ticketData.ticket;
-        }
-      } catch (e) {
-        console.warn("Failed to get SSE ticket", e);
-      }
-    }
-
-    const sseUrl = `${BASE}/api/jobs/${jobId}/stream${ticket ? `?ticket=${encodeURIComponent(ticket)}` : ''}`;
-    
-    try {
-      const result = await new Promise((resolve, reject) => {
-        let isResolved = false;
-        
-        const timeout = setTimeout(() => {
-          if (!isResolved) {
-            isResolved = true;
-            eventSource.close();
-            reject(new Error("Job timed out."));
-          }
-        }, remainingMs);
-
-        const eventSource = new EventSource(sseUrl);
-
-        eventSource.addEventListener("status", (event) => {
-           // handled for debug purposes
-        });
-
-        eventSource.addEventListener("result", (event) => {
-          if (isResolved) return;
-          isResolved = true;
-          clearTimeout(timeout);
-          eventSource.close();
-          try {
-            resolve(JSON.parse(event.data));
-          } catch (e) {
-            reject(new Error("Failed to parse job result."));
-          }
-        });
-
-        eventSource.addEventListener("error", (event: any) => {
-          if (isResolved) return;
-          if (event.data) {
-            try {
-              const errData = JSON.parse(event.data);
-              if (errData.error) {
-                 isResolved = true;
-                 clearTimeout(timeout);
-                 eventSource.close();
-                 // Terminal failure from server
-                 reject(new Error(errData.error));
-              }
-            } catch(e) {}
-          }
-        });
-
-        eventSource.onerror = (err) => {
-          if (isResolved) return;
-          // Transient network error or ticket spent, let the promise resolve as transient so loop can retry
-          if (eventSource.readyState === 2) {
-             isResolved = true;
-             clearTimeout(timeout);
-             eventSource.close();
-             // We reject with a specific string to signal retryable
-             reject(new Error("TRANSIENT_RECONNECT"));
-          }
-        };
-      });
-      
-      // If we made it here, the promise resolved successfully
-      return result;
-      
-    } catch (err: any) {
-      if (err.message === "TRANSIENT_RECONNECT") {
-        if (attempt >= maxAttempts) {
-          throw new Error("Connection failed after maximum retries.");
-        }
-        // loop will retry
-        continue;
-      }
-      // Bubble up terminal errors (like job failed, timeout, or parsing error)
-      throw err;
-    }
+  // Create an internal controller to abort the fetch if the overall timeout is reached or component unmounts
+  const internalController = new AbortController();
+  if (signal) {
+    signal.addEventListener("abort", () => internalController.abort(signal.reason));
   }
   
-  throw new Error("Job timed out.");
+  const timeoutId = setTimeout(() => {
+    internalController.abort(new Error("Job timed out."));
+  }, timeoutMs);
+
+  return new Promise(async (resolve, reject) => {
+    // Cleanup helper
+    const cleanup = () => {
+      clearTimeout(timeoutId);
+      internalController.abort();
+    };
+
+    const handleSuccess = (data: any) => {
+      cleanup();
+      resolve(data);
+    };
+
+    const handleError = (err: any) => {
+      cleanup();
+      reject(err);
+    };
+
+    internalController.signal.addEventListener("abort", () => {
+      handleError(internalController.signal.reason || new Error("Aborted"));
+    });
+
+    const connectStream = async () => {
+      if (internalController.signal.aborted) return;
+      
+      attempt++;
+      
+      // PHASE 6: AUTH TOKEN REFRESH before each connection attempt
+      // Fetch fresh session token directly from Supabase
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      const token = session?.access_token || "";
+
+      // PHASE 11: DURABLE STATE RECOVERY
+      // On reconnects (attempt > 1), check durable state first to avoid missing COMPLETE events
+      if (attempt > 1) {
+        try {
+          const res = await fetch(`${BASE}/api/jobs/${jobId}/status${token ? `?token=${encodeURIComponent(token)}` : ''}`, {
+            headers: token ? { "Authorization": `Bearer ${token}` } : {},
+            signal: internalController.signal
+          });
+          if (res.ok) {
+            const job = await res.json();
+            if (job.status === "COMPLETE" && job.result) {
+              return handleSuccess(job.result);
+            } else if (job.status === "FAILED") {
+              return handleError(new Error(job.error || "Job failed during processing."));
+            }
+          }
+        } catch (e: any) {
+          if (e.name === "AbortError") return;
+          console.warn("Durable status check failed", e);
+        }
+      }
+      
+      const sseUrl = `${BASE}/api/jobs/${jobId}/stream`;
+      
+      // PHASE 7: RECONNECT STATE MACHINE (fetchEventSource handles this inherently, but we add custom error boundaries)
+      fetchEventSource(sseUrl, {
+        method: "GET",
+        headers: {
+          "Accept": "text/event-stream",
+          ...(token ? { "Authorization": `Bearer ${token}` } : {})
+        },
+        signal: internalController.signal,
+        openWhenHidden: true, // BLOCKER 5: Explicit visibility policy (Option A). Rely on custom wrapper for all reconnects.
+        
+        async onopen(response) {
+          // PHASE 7: FATAL ERROR HANDLING
+          if (response.ok && response.headers.get("content-type")?.includes("text/event-stream")) {
+            return; // OK
+          } else if (response.status === 401) {
+            // BLOCKER 9: Auth Failure State Machine
+            if (authRetryCount === 0) {
+              authRetryCount++;
+              throw new Error("AUTH_RETRY");
+            } else {
+              throw new Error("Fatal authentication failure: 401");
+            }
+          } else if (response.status === 403) {
+            throw new Error("Fatal authorization failure: 403");
+          } else if (response.status >= 400 && response.status < 500 && response.status !== 429) {
+            throw new Error(`Fatal client error: ${response.status}`);
+          } else {
+            // Retryable errors (5xx, 429) will throw and be caught by onerror
+            throw new Error(`Unexpected response: ${response.status}`);
+          }
+        },
+        
+        onmessage(msg) {
+          if (msg.event === "result") {
+            try {
+              const resultData = JSON.parse(msg.data);
+              handleSuccess(resultData);
+            } catch (e) {
+              handleError(new Error("Failed to parse job result."));
+            }
+          } else if (msg.event === "error") {
+            try {
+              const errData = JSON.parse(msg.data);
+              if (errData.error) {
+                handleError(new Error(errData.error));
+              }
+            } catch (e) {}
+          } else if (msg.event === "status") {
+            // Handled for debug/observability
+            // PHASE 14: OBSERVABILITY (silent tracing)
+            // console.debug(`[SSE] Job ${jobId} status:`, msg.data);
+          }
+        },
+        
+        onerror(err: any) {
+          // PHASE 7 & BLOCKER 4: EXPLICIT RECONNECT LOGIC (SINGLE OWNER)
+          // We throw the error to PREVENT fetchEventSource from natively retrying.
+          // This forces the .catch() block to take over, which re-calls connectStream(),
+          // ensuring we fetch a fresh token (BLOCKER 3) for every attempt.
+          throw err;
+        },
+        
+        onclose() {
+          if (attempt >= maxAttempts) {
+            handleError(new Error("Connection closed prematurely after maximum retries."));
+            throw new Error("Closed"); 
+          }
+          // Premature close, throw to trigger our custom retry loop
+          throw new Error("Premature close");
+        }
+      }).catch((err) => {
+        if (err.name === "AbortError" || err.message === "Closed" || err?.message?.includes("Fatal")) {
+            // Already handled
+            return;
+        }
+        // Fallback for unhandled fetchEventSource promise rejection
+        if (!internalController.signal.aborted && attempt < maxAttempts) {
+           const backoff = Math.min(500 * Math.pow(2, attempt - 1), 5000);
+           console.warn(`[SSE] Connection dropped (attempt ${attempt}). Retrying in ${backoff}ms...`);
+           setTimeout(connectStream, backoff);
+        } else if (!internalController.signal.aborted) {
+           handleError(err);
+        }
+      });
+    };
+    
+    // Start initial connection
+    connectStream();
+  });
 }
 
-export async function parseResume(file: File): Promise<ParseResponse> {
+export async function parseResume(file: File, signal?: AbortSignal): Promise<ParseResponse> {
   // Validate file size (5MB limit)
   if (file.size > 5 * 1024 * 1024) {
     throw new Error("File too large. Maximum size is 5MB.");
@@ -202,7 +232,7 @@ export async function parseResume(file: File): Promise<ParseResponse> {
     const res = await fetch(`${BASE}/api/parse`, {
       method: "POST",
       body: formData,
-      signal: AbortSignal.timeout(30000), // 30s timeout for enqueueing
+      signal: signal || AbortSignal.timeout(30000), // 30s timeout for enqueueing
     });
 
     if (!res.ok) {
@@ -214,7 +244,7 @@ export async function parseResume(file: File): Promise<ParseResponse> {
     if (!job_id) throw new Error("No job ID returned from server.");
     
     // Wait for the job via SSE
-    return await waitForJobSSE(job_id, 120000); // 120s max wait for processing
+    return await waitForJobSSE(job_id, 120000, signal); // 120s max wait for processing
 
   } catch (err: any) {
     console.error("[Parse Resume Error]", err);
@@ -261,7 +291,8 @@ export interface CombinedAnalysisResponse {
 export async function analyzeResume(
   resume_text: string,
   job_description: string,
-  preferred_model?: string
+  preferred_model?: string,
+  signal?: AbortSignal
 ): Promise<CombinedAnalysisResponse> {
   if (!resume_text.trim()) {
     throw new Error("Resume text cannot be empty.");
@@ -286,7 +317,7 @@ export async function analyzeResume(
         job_description,
         preferred_model
       }),
-      signal: AbortSignal.timeout(60000), // 60s timeout for LLM
+      signal: signal || AbortSignal.timeout(60000), // 60s timeout for LLM
     });
 
     if (!res.ok) {
@@ -296,7 +327,7 @@ export async function analyzeResume(
 
     const data = await res.json();
     if (res.status === 202 && data.job_id) {
-      return await waitForJobSSE(data.job_id, 120000);
+      return await waitForJobSSE(data.job_id, 120000, signal);
     }
     return data;
   } catch (err: any) {
@@ -403,7 +434,8 @@ export interface JobStrategyItem {
 }
 
 export async function generateResume(
-  payload: GenerateRequest
+  payload: GenerateRequest,
+  signal?: AbortSignal
 ): Promise<TemplateV1> {
   if (!payload.resume_text.trim()) {
     throw new Error("Resume text cannot be empty.");
@@ -424,7 +456,7 @@ export async function generateResume(
       method: "POST",
       headers,
       body: JSON.stringify(payload),
-      signal: AbortSignal.timeout(30000), // 30s timeout for enqueueing
+      signal: signal || AbortSignal.timeout(30000), // 30s timeout for enqueueing
     });
 
     if (!res.ok) {
@@ -436,7 +468,7 @@ export async function generateResume(
     if (!job_id) throw new Error("No job ID returned from server.");
     
     // Wait for the job via SSE
-    return await waitForJobSSE(job_id, 180000); // 180s max wait for generation
+    return await waitForJobSSE(job_id, 180000, signal); // 180s max wait for generation
 
   } catch (err: any) {
     console.error("[Generate Resume Error]", err);

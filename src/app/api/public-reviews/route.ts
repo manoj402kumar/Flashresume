@@ -5,11 +5,13 @@ export async function GET() {
   try {
     const res = await fetch(`${backendUrl}/api/public/reviews`, {
       cache: "no-store",
-    });
-    if (!res.ok) return NextResponse.json([], { status: 200 });
-    const data = await res.json();
-    return NextResponse.json(data);
-  } catch {
+      signal: AbortSignal.timeout(3000)
+    }).catch(() => null);
+    
+    if (!res || !res.ok) return NextResponse.json([], { status: 200 });
+    const data = await res.json().catch(() => []);
+    return NextResponse.json(data || []);
+  } catch (err) {
     return NextResponse.json([]);
   }
 }

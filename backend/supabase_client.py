@@ -59,3 +59,14 @@ async def sb(query_lambda, fallback=None):
                     return fallback
                 raise
         raise
+
+_async_supabase = None
+
+async def get_async_client():
+    global _async_supabase
+    if not _url or not _key:
+        return None
+    if _async_supabase is None:
+        from supabase import create_async_client
+        _async_supabase = await create_async_client(_url, _key)
+    return _async_supabase

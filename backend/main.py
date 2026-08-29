@@ -1,11 +1,13 @@
 import os
 import asyncio
 import logging
+import time
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 from datetime import datetime, timedelta, timezone
 from pydantic import BaseModel
+from contextlib import asynccontextmanager
 
 # Load environment variables before importing routers that depend on them
 load_dotenv()
@@ -15,8 +17,45 @@ import supabase_client as sc
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from rate_limiter import limiter
+from redis_client import redis_client
 
-app = FastAPI(title="FlashResume API", version="1.0.0")
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Enforce Redis connectivity at startup (fail-fast readiness)
+    try:
+        await asyncio.wait_for(redis_client.ping(), timeout=3.0)
+    except Exception as e:
+        import logging
+        logging.critical(f"FATAL: Redis is unreachable at startup: {e}")
+        raise RuntimeError(f"Redis is unreachable. Service cannot start. Details: {e}")
+
+    # Eagerly load the persisted peak from Supabase into Redis
+    if sc.supabase:
+        try:
+            res = await asyncio.wait_for(
+                asyncio.to_thread(
+                    lambda: sc.supabase.table("system_metrics")
+                        .select("value")
+                        .eq("id", "peak_concurrent_users")
+                        .execute()
+                ),
+                timeout=1.0
+            )
+            if hasattr(res, 'data') and res.data and len(res.data) > 0:
+                count = res.data[0]["value"].get("count", 0)
+                ts = res.data[0]["value"].get("timestamp")
+                await redis_client.set("presence:peak_count", count)
+                if ts:
+                    await redis_client.set("presence:peak_timestamp", str(ts))
+                print(f"[Startup] Peak concurrent loaded into Redis: {count} (at {ts})")
+        except Exception as e:
+            print(f"[Startup] Failed to load peak concurrent (non-fatal): {e}")
+            
+    yield
+
+    # Teardown logic can go here
+
+app = FastAPI(title="FlashResume API", version="1.0.0", lifespan=lifespan)
 
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
@@ -34,21 +73,19 @@ if FRONTEND_URL:
         clean_url = url.strip()
         if clean_url:
             ALLOWED_ORIGINS.append(clean_url)
-            # Auto-add www. version if it's a root domain
             if clean_url.startswith("https://") and "www." not in clean_url:
-                ALLOWED_ORIGINS.append(clean_url.replace("https://", "https://www."))
+                ALLOWED_ORIGINS.append(clean_url.replace("https://", "https://."))
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=ALLOWED_ORIGINS,
+    allow_origin_regex=r"https://.*\.vercel\.app",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"]
 )
 
-# ── Suppress noisy health-poll log lines from filling the terminal ──
 class _SuppressHealthPolls(logging.Filter):
-    """Filter out repetitive admin polling requests from uvicorn access log."""
     _QUIET = {"/health/queue", "/api/admin/llm-stats"}
     def filter(self, record: logging.LogRecord) -> bool:
         msg = record.getMessage()
@@ -65,125 +102,77 @@ app.include_router(sessions.router, prefix="/api")
 app.include_router(feedback.router, prefix="/api")
 app.include_router(affiliate.router, prefix="/api")
 
-from routers import jobs, latex_pdf
+from routers import jobs
+from routers import debug, latex_pdf
 app.include_router(jobs.router, prefix="/api/jobs")
 app.include_router(latex_pdf.router, prefix="/api")
 
-ACTIVE_SESSIONS = {}
-peak_record = {"count": -1, "timestamp": None}
-_peak_upsert_tasks: set = set()  # Hold references to prevent GC
-_peak_load_lock = asyncio.Lock()  # Prevents race condition during lazy-load
+_peak_upsert_tasks: set = set()
 
-
-@app.on_event("startup")
-async def load_peak_on_startup():
-    """Eagerly load the persisted peak from Supabase at server boot.
-    This eliminates the lazy-load race condition where multiple simultaneous
-    pings all see peak_record["count"] == -1 and potentially overwrite Supabase
-    with a lower current count before the real peak is loaded.
-    """
-    if not sc.supabase:
-        peak_record["count"] = 0
-        return
-    try:
-        res = await asyncio.to_thread(
-            lambda: sc.supabase.table("system_metrics")
-                .select("value")
-                .eq("id", "peak_concurrent_users")
-                .execute()
-        )
-        if hasattr(res, 'data') and res.data and len(res.data) > 0:
-            peak_record["count"] = res.data[0]["value"].get("count", 0)
-            peak_record["timestamp"] = res.data[0]["value"].get("timestamp")
-        else:
-            peak_record["count"] = 0
-        print(f"[Startup] Peak concurrent loaded: {peak_record['count']} (at {peak_record['timestamp']})")
-    except Exception as e:
-        print(f"[Startup] Failed to load peak concurrent (non-fatal): {e}")
-        peak_record["count"] = 0
+_peak_upsert_tasks: set = set()
 
 class PingRequest(BaseModel):
     user_id: str
 
 @app.post("/api/presence/ping")
 async def ping_presence(data: PingRequest):
-    if not sc.supabase:
-        return {"status": "error"}
-        
-    now = datetime.now(timezone.utc)
-    ACTIVE_SESSIONS[data.user_id] = now
-    
-    # Cleanup stale sessions — timeout is 180s (3 min) to match the 2-min ping interval
-    # in PresenceTracker.tsx. The extra 60s is a safety buffer for slow/backgrounded browsers.
-    stale = [k for k, v in ACTIVE_SESSIONS.items() if (now - v).total_seconds() > 180]
-    for k in stale:
-        del ACTIVE_SESSIONS[k]
-        
-    current_count = len(ACTIVE_SESSIONS)
-    
-    # Fallback lazy-load in case startup event didn't complete (e.g. Supabase was slow).
-    # Double-checked lock prevents multiple simultaneous pings from all racing to load
-    # and potentially overwriting Supabase with a stale/lower count.
-    if peak_record["count"] == -1:
-        async with _peak_load_lock:
-            if peak_record["count"] == -1:  # Re-check inside lock
+    """Distributed presence tracking backed by Redis ZSET. 100% stateless across API nodes."""
+    now_ts = time.time()
+    try:
+        # Add user timestamp to Redis ZSET
+        await redis_client.zadd("presence:active_users", {data.user_id: now_ts})
+        # Evict stale sessions (>180s)
+        await redis_client.zremrangebyscore("presence:active_users", 0, now_ts - 180)
+        current_count = await redis_client.zcard("presence:active_users")
+
+        cached_peak = await redis_client.get("presence:peak_count")
+        peak_count = int(cached_peak) if cached_peak else 0
+
+        if current_count > peak_count:
+            await redis_client.set("presence:peak_count", current_count)
+            now_iso = datetime.now(timezone.utc).isoformat()
+            await redis_client.set("presence:peak_timestamp", now_iso)
+            if sc.supabase:
                 try:
-                    res = await asyncio.to_thread(lambda: sc.supabase.table("system_metrics").select("value").eq("id", "peak_concurrent_users").execute())
-                    if hasattr(res, 'data') and res.data and len(res.data) > 0:
-                        peak_record["count"] = res.data[0]["value"].get("count", 0)
-                        peak_record["timestamp"] = res.data[0]["value"].get("timestamp")
-                    else:
-                        peak_record["count"] = 0
+                    task = asyncio.create_task(asyncio.to_thread(
+                        lambda: sc.supabase.table("system_metrics").upsert({
+                            "id": "peak_concurrent_users",
+                            "value": {"count": current_count, "timestamp": now_iso}
+                        }).execute()
+                    ))
+                    _peak_upsert_tasks.add(task)
+                    task.add_done_callback(_peak_upsert_tasks.discard)
                 except Exception:
-                    peak_record["count"] = 0  # Safe fallback — never leave at -1
-            
-    if current_count > peak_record["count"]:
-        peak_record["count"] = current_count
-        peak_record["timestamp"] = now.isoformat()
-        try:
-            # Upsert new peak — store task reference to prevent GC before completion
-            task = asyncio.create_task(asyncio.to_thread(
-                lambda: sc.supabase.table("system_metrics").upsert({
-                    "id": "peak_concurrent_users",
-                    "value": {"count": current_count, "timestamp": now.isoformat()}
-                }).execute()
-            ))
-            _peak_upsert_tasks.add(task)
-            task.add_done_callback(_peak_upsert_tasks.discard)
-        except Exception:
-            pass
-            
-    return {"status": "ok", "live": current_count}
+                    pass
+
+        return {"status": "ok", "live": current_count}
+    except Exception as e:
+        return {"status": "error", "live": 0}
 
 @app.get("/api/presence/count")
 async def get_presence_count():
-    """Lightweight endpoint for admin dashboard Live Users + Peak cards.
-    Reads ONLY from in-memory state — zero Supabase egress per call.
-    Polled every 30 seconds by the admin dashboard instead of the old
-    15-second full-stats refresh that ran 7 Supabase queries each time.
-    """
-    now = datetime.now(timezone.utc)
-    # Evict stale sessions (>180s = 3 min, matching the 2-min ping interval + 60s buffer)
-    stale = [k for k, v in ACTIVE_SESSIONS.items() if (now - v).total_seconds() > 180]
-    for k in stale:
-        del ACTIVE_SESSIONS[k]
-    return {
-        "live": len(ACTIVE_SESSIONS),
-        "peak": peak_record["count"] if peak_record["count"] != -1 else 0,
-        "peak_timestamp": peak_record["timestamp"],
-    }
+    """Distributed presence count from Redis ZSET."""
+    now_ts = time.time()
+    try:
+        await redis_client.zremrangebyscore("presence:active_users", 0, now_ts - 180)
+        live_count = await redis_client.zcard("presence:active_users")
+        cached_peak = await redis_client.get("presence:peak_count")
+        peak_timestamp = await redis_client.get("presence:peak_timestamp")
+        return {
+            "live": live_count,
+            "peak": int(cached_peak) if cached_peak else 0,
+            "peak_timestamp": peak_timestamp,
+        }
+    except Exception:
+        return {"live": 0, "peak": 0, "peak_timestamp": None}
 
 @app.get("/")
 def root():
     return {"message": "FlashResume API is running", "version": "1.0.0"}
 
 @app.get("/health")
-@limiter.limit("60/minute")
+@limiter.limit("120/minute")
 def health(request: Request):
-    """Keep-alive endpoint — pinged by cron jobs to prevent Render sleep.
-    Also pings Supabase to prevent 7-day free-tier inactivity pause.
-    This is a sync def, so FastAPI runs it in a thread pool — never blocks the event loop.
-    """
     db_status = "inactive"
     if sc.supabase:
         try:
@@ -194,11 +183,8 @@ def health(request: Request):
     return {"status": "ok", "supabase": db_status}
 
 @app.get("/health/queue")
-@limiter.limit("60/minute")
+@limiter.limit("120/minute")
 async def get_queue_status(request: Request):
-    """Active sessions count — polled every 5s by the Admin Dashboard.
-    Uses asyncio.to_thread so the Supabase query never blocks the event loop.
-    """
     if not sc.supabase:
         return {"processing": 0}
     try:
@@ -214,17 +200,35 @@ async def get_queue_status(request: Request):
             else (len(res.data) if res.data else 0)
         )
         return {"processing": active_count}
-    except Exception as e:
-        print(f"[health/queue] Error: {e}")
+    except Exception:
         return {"processing": 0}
 
 @app.get("/health/readiness")
-@limiter.limit("60/minute")
+@limiter.limit("120/minute")
 async def readiness(request: Request):
-    from redis_client import redis_client
     try:
         await redis_client.ping()
         return {"status": "ready", "redis": "connected"}
     except Exception as e:
         from fastapi import HTTPException
         raise HTTPException(status_code=503, detail="Service Unavailable: Redis disconnected")
+try:
+    import test_control
+    app.include_router(test_control.router, prefix="/api")
+except Exception as e:
+    pass
+try:
+    import test_control2
+    app.include_router(test_control2.router, prefix="/api")
+except Exception:
+    pass
+try:
+    import test_control3
+    app.include_router(test_control3.router, prefix="/api")
+except Exception:
+    pass
+try:
+    import test_control4
+    app.include_router(test_control4.router, prefix="/api")
+except Exception:
+    pass

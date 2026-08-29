@@ -1,0 +1,155 @@
+ISSUE-ID: FR-PDF-001
+FEATURE: PDF Parser Fallback Chain
+SEVERITY: P1
+CONFIDENCE: HIGH
+EVIDENCE_TYPE: source
+SYMPTOM: The system uses a 2-layer fallback chain for PDF parsing with OCR fallback intentionally removed
+ROOT_CAUSE: Code explicitly states OCR fallback was removed to prevent OOM memory issues
+FILE: /home/yenigandlamanojkumar/Desktop/Flashresume/backend/services/parse_orchestrator.py:46-47
+FUNCTION: extract_resume_text
+REPRO: Upload any PDF document; system will attempt pypdfium2 first, then pdfplumber if extraction quality is poor
+FIX: Consider adding lightweight OCR fallback (like tesseract with timeout limits) for scanned resumes while monitoring memory usage
+
+ISSUE-ID: FR-PDF-002
+FEATURE: Scanned PDF Detection Logic
+SEVERITY: P2
+CONFIDENCE: HIGH
+EVIDENCE_TYPE: source
+SYMPTOM: System detects poor extraction via text length < 200 characters and garbage indicator checks
+ROOT_CAUSE: Heuristic-based detection in is_extraction_good() function may misclassify legitimate short resumes as poor quality
+FILE: /home/yenigandlamanojkumar/Desktop/Flashresume/backend/services/pdf_parser.py:27-41
+FUNCTION: is_extraction_good
+REPRO: Upload a legitimate resume with less than 200 characters of text; system will incorrectly flag it as poor extraction
+FIX: Increase minimum text threshold or add additional validation criteria to avoid false positives
+
+ISSUE-ID: FR-PDF-003
+FEATURE: PDF Page Handling Limits
+SEVERITY: P3
+CONFIDENCE: HIGH
+EVIDENCE_TYPE: source
+SYMPTOM: No explicit maximum page limit enforced during PDF processing
+ROOT_CAUSE: Code processes all pages in PDF without bounds checking
+FILE: /home/yenigandlamanojkumar/Desktop/Flashresume/backend/services/pdf_parser.py:14-24
+FUNCTION: extract_with_pdfplumber
+REPRO: Upload a PDF with thousands of pages; system will attempt to process all pages potentially causing memory exhaustion
+FIX: Add page count validation with reasonable limit (e.g., 50 pages max) before processing
+
+ISSUE-ID: FR-PDF-004
+FEATURE: File Size Limits
+SEVERITY: P1
+CONFIDENCE: HIGH
+EVIDENCE_TYPE: source
+SYMPTOM: Hard 5MB file size limit enforced at upload
+ROOT_CAUSE: MAX_FILE_BYTES constant prevents larger files from being processed
+FILE: /home/yenigandlamanojkumar/Desktop/Flashresume/backend/routers/parse.py:14
+FUNCTION: parse_resume
+REPRO: Upload any file larger than 5MB; system returns HTTP 413 error
+FIX: Current limit is appropriate for resume files; no change needed
+
+ISSUE-ID: FR-PDF-005
+FEATURE: Memory Behavior per Parser
+SEVERITY: P2
+CONFIDENCE: HIGH
+EVIDENCE_TYPE: source
+SYMPTOM: pypdfium2 uses ~15MB lightweight memory; pdfplumber uses heavy Python heap memory
+ROOT_CAUSE: Architectural difference between C++ engine (pypdfium2) and pure Python library (pdfplumber)
+FILE: /home/yenigandlamanojkumar/Desktop/Flashresume/backend/services/parse_orchestrator.py:31,45
+FUNCTION: extract_with_pypdfium2, extract_with_pdfplumber (via import)
+REPRO: Process large, complex PDF; pdfplumber fallback will consume significantly more memory than pypdfium2
+FIX: Current design is appropriate; monitor memory usage in production and consider adjusting fallback thresholds
+
+ISSUE-ID: FR-PDF-006
+FEATURE: Temp File Cleanup in PDF Processing
+SEVERITY: P3
+CONFIDENCE: MEDIUM
+EVIDENCE_TYPE: inference
+SYMPHOT: No explicit temporary file creation in PDF parsing; all processing happens in-memory
+ROOT_CAUSE: PDF parsing libraries work directly on byte streams without writing to disk
+FILE: /home/yenigandlamanojkumar/Desktop/Flashresume/backend/services/pdf_parser.py:1-24
+FUNCTION: extract_with_pdfplumber
+REPRO: Process any PDF; no temporary files created during parsing phase
+FIX: No action needed; in-memory processing avoids temp file cleanup issues
+
+ISSUE-ID: FR-PDF-007
+FEATURE: PDF Parser Error Handling
+SEVERITY: P2
+CONFIDENCE: HIGH
+EVIDENCE_TYPE: source
+SYMPTOM: Layered error handling with graceful degradation and informative error messages
+ROOT_CAUSE: Orchestrator catches extraction failures and falls back to alternative parsers
+FILE: /home/yenigandlamanojkumar/Desktop/Flashresume/backend/services/parse_orchestrator.py:52-78
+FUNCTION: extract_resume_text
+REPRO: Upload corrupted PDF; system tries pypdfium2, then pdfplumber, then raises clear ValueError
+FIX: Current error handling is appropriate; maintains user experience while preventing crashes
+
+ISSUE-ID: FR-LTX-001
+FEATURE: LaTeX Shell Injection Protection
+SEVERITY: P1
+CONFIDENCE: HIGH
+EVIDENCE_TYPE: source
+SYMPTOM: LaTeX compiler uses -no-shell-escape flag and avoids shell=True
+ROOT_CAUSE: Explicit security measures in subprocess call prevent shell injection
+FILE: /home/yenigandlamanojkumar/Desktop/Flashresume/backend/services/latex_compiler.py:22-29
+FUNCTION: compile_latex_to_pdf
+REPRO: Attempt to inject shell commands via LaTeX code; -no-shell-escape prevents execution
+FIX: Current implementation is secure; no changes needed
+
+ISSUE-ID: FR-LTX-002
+FEATURE: LaTeX Temp Directory Isolation
+SEVERITY: P1
+CONFIDENCE: HIGH
+EVIDENCE_TYPE: source
+SYMPTOM: LaTeX compilation uses isolated temporary directory that auto-cleans
+ROOT_CAUSE: tempfile.TemporaryDirectory() context manager ensures cleanup
+FILE: /home/yenigandlamanojkumar/Desktop/Flashresume/backend/services/latex_compiler.py:13
+FUNCTION: compile_latex_to_pdf
+REPRO: Compile any LaTeX code; temporary directory and contents automatically removed after completion
+FIX: Current implementation is secure; no changes needed
+
+ISSUE-ID: FR-LTX-003
+FEATURE: LaTeX Command Timeout
+SEVERITY: P2
+CONFIDENCE: HIGH
+EVIDENCE_TYPE: source
+SYMPTOM: 15-second timeout prevents infinite compilation loops
+ROOT_CAUSE: asyncio.wait_for() with 15.0 second timeout on subprocess execution
+FILE: /home/yenigandlamanojkumar/Desktop/Flashresume/backend/services/latex_compiler.py:42
+FUNCTION: compile_latex_to_pdf
+REPRO: Compile LaTeX with infinite loop; process terminates after 15 seconds
+FIX: Current timeout is appropriate; no changes needed
+
+ISSUE-ID: FR-LTX-004
+FEATURE: LaTeX Intermediate File Cleanup
+SEVERITY: P2
+CONFIDENCE: MEDIUM
+EVIDENCE_TYPE: inference
+SYMPTEM: Temporary directory cleanup should remove .aux, .log, .out files
+ROOT_CAUSE: tempfile.TemporaryDirectory() cleans entire directory contents on exit
+FILE: /home/yenigandlamanojkumar/Desktop/Flashresume/backend/services/latex_compiler.py:13,57
+FUNCTION: compile_latex_to_pdf
+REPRO: Compile LaTeX code; check that no intermediate files remain after completion
+FIX: Current implementation properly cleans up intermediate files via directory removal
+
+ISSUE-ID: FR-LTX-005
+FEATURE: LaTeX Symlink/Path Traversal Protection
+SEVERITY: P2
+CONFIDENCE: MEDIUM
+EVIDENCE_TYPE: inference
+SYMPTEM: Isolated temp directory with random name prevents path traversal attacks
+ROOT_CAUSE: tempfile.TemporaryDirectory() creates unpredictable directory paths
+FILE: /home/yenigandlamanojkamarb/Desktop/Flashresume/backend/services/latex_compiler.py:13
+FUNCTION: compile_latex_to_pdf
+REPRO: Attempt to create symlinks in LateX code pointing to sensitive paths; isolated temp dir contains them
+FIX: Current implementation provides adequate protection; no changes needed
+
+ISSUE-ID: FR-LTX-006
+FEATURE: LaTeX Error Handling for Malformed Input
+SEVERITY: P2
+CONFIDENCE: HIGH
+EVIDENCE_TYPE: source
+SYMPTEM: Detailed error messages returned when LaTeX compilation fails
+ROOT_CAUSE: Captures stdout/stderr from subprocess and includes in RuntimeError
+FILE: /home/yenigandlamanojkumar/Desktop/Flashresume/backend/services/latex_compiler.py:45
+FUNCTION: compile_latex_to_pdf
+REPRO: Upload malformed LaTeX code; system returns specific error message about compilation failure
+FIX: Current error handling is appropriate; provides useful feedback without exposing internal details

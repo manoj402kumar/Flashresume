@@ -1,3 +1,8 @@
+
+
+> [!NOTE]
+> **Update**: The single-use SSE ticket (`/stream-ticket`) and `?token=` architecture has been fully replaced with a Fetch-based SSE implementation utilizing `Authorization: Bearer` headers. All references to GETDEL tickets are strictly historical.
+
 # Security Audit
 
 > **Last verified**: 2026-08-28  

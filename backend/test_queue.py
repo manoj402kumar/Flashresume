@@ -1,3 +1,5 @@
+import pytest
+pytestmark = pytest.mark.asyncio
 import asyncio
 from queue_manager import queue_manager
 import uuid

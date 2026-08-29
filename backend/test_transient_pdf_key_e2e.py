@@ -1,3 +1,5 @@
+import pytest
+pytestmark = pytest.mark.asyncio
 """
 test_transient_pdf_key_e2e.py
 ==============================

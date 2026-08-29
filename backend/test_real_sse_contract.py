@@ -1,3 +1,5 @@
+import pytest
+pytestmark = pytest.mark.asyncio
 import asyncio
 import uuid
 import json

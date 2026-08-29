@@ -1,8 +1,11 @@
+import os
+import base64
+import json
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 from fastapi import Request
-import base64
-import json
+
+REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379")
 
 def extract_user_id_from_jwt(auth_header: str) -> str | None:
     if not auth_header or not auth_header.startswith("Bearer "):
@@ -31,4 +34,7 @@ def dynamic_key_func(request: Request) -> str:
     
     return f"ip:{get_remote_address(request)}"
 
-limiter = Limiter(key_func=dynamic_key_func)
+limiter = Limiter(
+    key_func=dynamic_key_func,
+    storage_uri=REDIS_URL
+)
